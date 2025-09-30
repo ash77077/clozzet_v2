@@ -1,0 +1,312 @@
+<div class="users-management-container">
+  <!-- Breadcrumb Navigation -->
+  <nav class="breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-item">Dashboard</a>
+    <span class="breadcrumb-separator">></span>
+    <span class="breadcrumb-current">Users Management</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">Users Management</h1>
+        <p class="page-description">Manage all users in the system</p>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-primary" *ngIf="isAdminOrManager()">
+          <span class="icon">➕</span>
+          Add User
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <div class="error-message">
+      <h3>Error Loading Users</h3>
+      <p>{{ error }}</p>
+      <button class="btn btn-secondary" (click)="loadUsers()">Retry</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="users-content" *ngIf="!isLoading && !error">
+
+    <!-- Filters and Search -->
+    <section class="filters-section">
+      <div class="filters-container">
+        <!-- Search -->
+        <div class="search-group">
+          <label for="search">Search Users</label>
+          <div class="search-input-container">
+            <input
+              id="search"
+              type="text"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange()"
+              placeholder="Search by name, email, or company..."
+              class="search-input">
+            <span class="search-icon">🔍</span>
+          </div>
+        </div>
+
+        <!-- Role Filter -->
+        <div class="filter-group">
+          <label for="role-filter">Role</label>
+          <p-select 
+            [options]="availableRoles" 
+            [(ngModel)]="selectedRole"
+            (onChange)="onRoleChange()"
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select Role"
+            id="role-filter"
+            class="w-full">
+          </p-select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-group">
+          <label for="status-filter">Status</label>
+          <p-select 
+            [options]="[
+              { label: 'All Status', value: '' },
+              { label: 'Active', value: 'active' },
+              { label: 'Inactive', value: 'inactive' }
+            ]" 
+            [(ngModel)]="selectedStatus"
+            (onChange)="onStatusChange()"
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select Status"
+            id="status-filter"
+            class="w-full">
+          </p-select>
+        </div>
+
+        <!-- Results Count -->
+        <div class="results-info">
+          <span class="results-count">
+            Showing {{ getPaginatedUsers().length }} of {{ filteredUsers.length }} users
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Users Table -->
+    <section class="table-section">
+      <p-table 
+        [value]="filteredUsers" 
+        [loading]="isLoading"
+        [paginator]="true" 
+        [rows]="itemsPerPage"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        responsiveLayout="scroll"
+        styleClass="p-datatable-gridlines p-datatable-striped"
+        [scrollable]="true">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="firstName" style="min-width: 200px">
+              <div class="flex align-items-center">
+                Name
+                <p-sortIcon field="firstName"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="email" style="min-width: 250px">
+              <div class="flex align-items-center">
+                Email
+                <p-sortIcon field="email"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="company.name" style="min-width: 200px">
+              <div class="flex align-items-center">
+                Company
+                <p-sortIcon field="company.name"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="role" style="min-width: 120px">
+              <div class="flex align-items-center">
+                Role
+                <p-sortIcon field="role"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="lastLogin" style="min-width: 150px">
+              <div class="flex align-items-center">
+                Last Login
+                <p-sortIcon field="lastLogin"></p-sortIcon>
+              </div>
+            </th>
+            <th style="min-width: 100px">Status</th>
+            <th style="min-width: 200px">Actions</th>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="body" let-user>
+          <tr>
+            <td>
+              <div class="flex align-items-center gap-2">
+                <div class="user-avatar">
+                  <span>{{ user.firstName[0] }}{{ user.lastName[0] }}</span>
+                </div>
+                <span>{{ user.firstName }} {{ user.lastName }}</span>
+              </div>
+            </td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.company?.name || 'N/A' }}</td>
+            <td>
+              <p-tag 
+                [value]="getRoleDisplayName(user.role)"
+                [severity]="getRoleSeverity(user.role)">
+              </p-tag>
+            </td>
+            <td>{{ formatDate(user.lastLogin!) }}</td>
+            <td>
+              <p-tag 
+                [value]="user.isActive ? 'Active' : 'Inactive'"
+                [severity]="user.isActive ? 'success' : 'danger'">
+              </p-tag>
+            </td>
+            <td>
+              <div class="flex gap-2">
+                <p-button 
+                  icon="pi pi-eye" 
+                  (onClick)="viewUserDetails(user)"
+                  severity="info"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="View Details">
+                </p-button>
+                <p-button 
+                  icon="pi pi-pencil" 
+                  (onClick)="editUser(user)"
+                  severity="warn"
+                  [text]="true"
+                  [rounded]="true"
+                  *ngIf="isAdminOrManager()"
+                  pTooltip="Edit User">
+                </p-button>
+                <p-button 
+                  [icon]="user.isActive ? 'pi pi-pause' : 'pi pi-play'" 
+                  (onClick)="toggleUserStatus(user)"
+                  [severity]="user.isActive ? 'warn' : 'success'"
+                  [text]="true"
+                  [rounded]="true"
+                  *ngIf="isAdminOrManager() && user.id !== currentUser?.id"
+                  [pTooltip]="user.isActive ? 'Deactivate User' : 'Activate User'">
+                </p-button>
+                <p-button 
+                  icon="pi pi-trash" 
+                  (onClick)="deleteUser(user)"
+                  severity="danger"
+                  [text]="true"
+                  [rounded]="true"
+                  *ngIf="isAdminOrManager() && user.id !== currentUser?.id"
+                  pTooltip="Delete User">
+                </p-button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="text-center p-4">
+              <div class="empty-state">
+                <i class="pi pi-users" style="font-size: 3rem"></i>
+                <h3>No Users Found</h3>
+                <p>No users match your current filters. Try adjusting your search criteria.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+
+  <!-- User Details Dialog -->
+  <p-dialog 
+    header="User Details" 
+    [(visible)]="showUserDetails" 
+    [modal]="true" 
+    [style]="{width: '50vw'}"
+    [draggable]="false" 
+    [resizable]="false"
+    *ngIf="selectedUser">
+    
+    <div class="user-profile-dialog">
+      <div class="profile-header">
+        <div class="profile-avatar large">
+          <span>{{ selectedUser.firstName[0] }}{{ selectedUser.lastName[0] }}</span>
+        </div>
+        <div class="profile-basic">
+          <h3>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</h3>
+          <p>{{ selectedUser.email }}</p>
+        </div>
+      </div>
+      
+      <div class="profile-details-grid">
+        <div class="detail-item">
+          <label>Role:</label>
+          <p-tag 
+            [value]="getRoleDisplayName(selectedUser.role)"
+            [severity]="getRoleSeverity(selectedUser.role)">
+          </p-tag>
+        </div>
+        <div class="detail-item" *ngIf="selectedUser.company">
+          <label>Company:</label>
+          <span>{{ selectedUser.company.name }}</span>
+        </div>
+        <div class="detail-item" *ngIf="selectedUser.jobTitle">
+          <label>Job Title:</label>
+          <span>{{ selectedUser.jobTitle }}</span>
+        </div>
+        <div class="detail-item">
+          <label>Status:</label>
+          <p-tag 
+            [value]="selectedUser.isActive ? 'Active' : 'Inactive'"
+            [severity]="selectedUser.isActive ? 'success' : 'danger'">
+          </p-tag>
+        </div>
+        <div class="detail-item">
+          <label>Last Login:</label>
+          <span>{{ formatDate(selectedUser.lastLogin!) }}</span>
+        </div>
+        <div class="detail-item" *ngIf="selectedUser.createdAt">
+          <label>Member Since:</label>
+          <span>{{ formatDate(selectedUser.createdAt) }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer" *ngIf="isAdminOrManager()">
+      <p-button 
+        label="Close" 
+        icon="pi pi-times" 
+        (onClick)="closeUserDetails()"
+        severity="secondary">
+      </p-button>
+      <p-button 
+        label="Edit User" 
+        icon="pi pi-pencil" 
+        (onClick)="editUser(selectedUser)"
+        severity="primary">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+  
+  <!-- Confirmation Dialog -->
+  <p-confirmDialog></p-confirmDialog>
+</div>

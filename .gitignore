@@ -5,6 +5,10 @@
 /tmp
 /out-tsc
 /bazel-out
+.claude
+/.claude
+*/.claude
+*.claude
 
 # Node
 /node_modules

@@ -1,0 +1,108 @@
+<section class="services-section">
+  <div class="container">
+    <!-- Services Header -->
+    <div class="section-header">
+      <h2 class="section-title">Why Choose CLOZZET?</h2>
+      <p class="section-subtitle">
+        We deliver exceptional value through our comprehensive B2B textile solutions
+      </p>
+    </div>
+
+    <!-- Services Grid -->
+    <div class="services-grid">
+      <div 
+        *ngFor="let service of services; trackBy: trackByServiceId"
+        class="service-card"
+        [class.highlighted]="service.highlight">
+        <div class="service-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path 
+              stroke-linecap="round" 
+              stroke-linejoin="round" 
+              stroke-width="2" 
+              [attr.d]="getIconPath(service.icon)">
+            </path>
+          </svg>
+        </div>
+        
+        <div class="service-content">
+          <h3 class="service-title">{{ service.title }}</h3>
+          <p class="service-description">{{ service.description }}</p>
+          
+          <ul class="service-features">
+            <li *ngFor="let feature of service.features" class="feature-item">
+              <svg class="feature-check" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              {{ feature }}
+            </li>
+          </ul>
+        </div>
+        
+        <div *ngIf="service.highlight" class="highlight-badge">
+          Most Popular
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-section">
+      <h3 class="stats-title">Trusted by Businesses Worldwide</h3>
+      <div class="stats-grid">
+        <div 
+          *ngFor="let stat of stats; trackBy: trackByStatLabel"
+          class="stat-card">
+          <div class="stat-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path 
+                stroke-linecap="round" 
+                stroke-linejoin="round" 
+                stroke-width="2" 
+                [attr.d]="getIconPath(stat.icon)">
+              </path>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-number">{{ stat.number }}</span>
+            <span class="stat-label">{{ stat.label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Process Section -->
+    <div class="process-section">
+      <h3 class="process-title">Simple 4-Step Process</h3>
+      <div class="process-steps">
+        <div class="step">
+          <div class="step-number">01</div>
+          <div class="step-content">
+            <h4>Request Quote</h4>
+            <p>Share your requirements and get a detailed quote within 24 hours.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">02</div>
+          <div class="step-content">
+            <h4>Design Review</h4>
+            <p>Our team creates mockups and reviews your branding specifications.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">03</div>
+          <div class="step-content">
+            <h4>Production</h4>
+            <p>High-quality manufacturing with regular updates on progress.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">04</div>
+          <div class="step-content">
+            <h4>Delivery</h4>
+            <p>Fast, reliable shipping with tracking and quality assurance.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

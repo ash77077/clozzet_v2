@@ -1,0 +1,52 @@
+<div class="portfolio-page page-wrapper">
+  <!-- Page Header -->
+  <section class="page-header">
+    <div class="container">
+      <h1 class="page-title">Our Portfolio</h1>
+      <p class="page-subtitle">
+        Explore our successful projects and see how we've helped businesses elevate their brand
+      </p>
+    </div>
+  </section>
+
+  <!-- Portfolio Content -->
+  <section class="portfolio-content">
+    <div class="container">
+      <!-- Category Filter -->
+      <div class="portfolio-filter">
+        <button
+          *ngFor="let category of categories"
+          class="filter-btn"
+          [class.active]="activeCategory === category"
+          (click)="setActiveCategory(category)">
+          {{ category }}
+        </button>
+      </div>
+
+      <!-- Portfolio Grid -->
+      <div class="portfolio-grid">
+        <div *ngFor="let item of filteredPortfolio" class="portfolio-item">
+          <div class="portfolio-image">
+            <img [src]="item.image" [alt]="item.title" />
+            <div class="portfolio-overlay">
+              <div class="overlay-content">
+                <h3 class="portfolio-title">{{ item.title }}</h3>
+                <p class="portfolio-description">{{ item.description }}</p>
+                <span class="portfolio-category">{{ item.category }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA Section -->
+      <div class="portfolio-cta">
+        <div class="cta-content">
+          <h2>Ready to Start Your Project?</h2>
+          <p>Join our growing list of satisfied clients and let us help you create amazing branded apparel.</p>
+          <button class="btn btn-primary btn-lg">Get Your Free Quote</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

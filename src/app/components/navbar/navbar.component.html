@@ -1,0 +1,201 @@
+<nav class="navbar" [class.scrolled]="isScrolled" [class.hidden]="shouldHideNavbar" *ngIf="!shouldHideNavbar">
+  <div class="navbar-container">
+    <!-- Logo -->
+    <div class="navbar-brand">
+      <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
+        <div class="logo">
+          <img src="/images/logo-black.png" alt="CLOZZET" class="logo-image">
+        </div>
+      </a>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <div class="navbar-menu desktop-menu">
+      <ul class="nav-list">
+        <li 
+          *ngFor="let item of navItems" 
+          class="nav-item"
+          [class.has-dropdown]="item.children"
+          [class.dropdown-open]="activeDropdown === item.label">
+          
+          <a 
+            *ngIf="!item.children"
+            [routerLink]="item.route"
+            class="nav-link"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: item.route === '/'}">
+            {{ item.label }}
+          </a>
+
+          <span 
+            *ngIf="item.children"
+            class="nav-link dropdown-trigger"
+            (click)="toggleDropdown(item.label, $event)">
+            {{ item.label }}
+            <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </span>
+
+          <!-- Dropdown Menu -->
+          <div *ngIf="item.children" class="nav-dropdown">
+            <div class="dropdown-content">
+              <a 
+                *ngFor="let child of item.children"
+                [routerLink]="child.route"
+                class="dropdown-link"
+                routerLinkActive="active">
+                {{ child.label }}
+              </a>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="navbar-actions desktop-actions">
+      <!-- Authenticated User Actions -->
+      <ng-container *ngIf="currentUser$ | async as user; else unauthenticatedActions">
+        <button class="btn btn-primary dashboard-btn" (click)="openDashboard()">
+          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+          </svg>
+          Dashboard
+        </button>
+        <div class="user-menu">
+          <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+          <button class="btn btn-secondary logout-btn" (click)="logout()">
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </ng-container>
+      
+      <!-- Unauthenticated User Actions -->
+      <ng-template #unauthenticatedActions>
+        <button class="btn btn-secondary login-btn" (click)="openLogin()">
+          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+          Login
+        </button>
+        <button class="btn btn-primary" (click)="scrollToQuote()">
+          Get Free Quote
+          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </button>
+      </ng-template>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button 
+      class="mobile-menu-btn" 
+      (click)="toggleMobileMenu()"
+      [class.active]="isMobileMenuOpen">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+  </div>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" [class.active]="isMobileMenuOpen">
+    <div class="mobile-menu-header">
+      <div class="mobile-logo">
+        <img src="/images/logo-white.png" alt="CLOZZET" class="mobile-logo-image">
+      </div>
+      <button class="mobile-close-btn" (click)="closeMobileMenu()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="mobile-menu-content">
+      <ul class="mobile-nav-list">
+        <li 
+          *ngFor="let item of navItems" 
+          class="mobile-nav-item"
+          [class.has-dropdown]="item.children">
+          
+          <a 
+            *ngIf="!item.children"
+            [routerLink]="item.route"
+            class="mobile-nav-link"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: item.route === '/'}"
+            (click)="closeMobileMenu()">
+            {{ item.label }}
+          </a>
+
+          <div *ngIf="item.children" class="mobile-dropdown">
+            <span 
+              class="mobile-nav-link dropdown-trigger"
+              (click)="toggleDropdown(item.label, $event)">
+              {{ item.label }}
+              <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </span>
+            
+            <div class="mobile-dropdown-content" [class.active]="activeDropdown === item.label">
+              <a 
+                *ngFor="let child of item.children"
+                [routerLink]="child.route"
+                class="mobile-dropdown-link"
+                routerLinkActive="active"
+                (click)="closeMobileMenu()">
+                {{ child.label }}
+              </a>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="mobile-cta">
+        <!-- Authenticated User Actions -->
+        <ng-container *ngIf="currentUser$ | async as user; else mobileUnauthenticatedActions">
+          <div class="mobile-user-info">
+            <span class="mobile-user-name">{{ user.firstName }} {{ user.lastName }}</span>
+            <span class="mobile-user-role">{{ user.role }}</span>
+          </div>
+          <button class="btn btn-primary btn-lg mobile-dashboard-btn" (click)="openDashboard()">
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+            </svg>
+            Dashboard
+          </button>
+          <button class="btn btn-secondary btn-lg mobile-logout-btn" (click)="logout()">
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </button>
+        </ng-container>
+        
+        <!-- Unauthenticated User Actions -->
+        <ng-template #mobileUnauthenticatedActions>
+          <button class="btn btn-secondary btn-lg mobile-login-btn" (click)="openLogin()">
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            Login
+          </button>
+          <button class="btn btn-primary btn-lg mobile-cta-btn" (click)="scrollToQuote()">
+            Get Free Quote
+            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+            </svg>
+          </button>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</nav>

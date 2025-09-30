@@ -1,0 +1,186 @@
+<section id="products-section" class="products-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Our Product Range</h2>
+      <p class="section-subtitle">
+        Discover our comprehensive collection of premium branded apparel and promotional items
+      </p>
+    </div>
+
+    <div class="category-filter">
+      <button
+        *ngFor="let category of categories"
+        class="filter-btn"
+        [class.active]="activeCategory === category"
+        (click)="setActiveCategory(category)">
+        {{ category }}
+      </button>
+    </div>
+
+    <div class="products-grid">
+      <div 
+        *ngFor="let product of filteredProducts; trackBy: trackByProductId"
+        class="product-card">
+        <div class="product-image" (click)="viewProductImage(product)">
+          <img [src]="product.image" [alt]="product.name" loading="lazy">
+          <div class="product-overlay">
+            <div class="overlay-content">
+              <button class="overlay-btn primary" (click)="requestQuote(); $event.stopPropagation()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                Quote
+              </button>
+              <button class="overlay-btn secondary" (click)="viewProductDetails(product); $event.stopPropagation()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                View
+              </button>
+            </div>
+          </div>
+          <div class="price-badge">
+            From ${{ product.startingPrice }}
+          </div>
+          <div class="zoom-indicator">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="product-content">
+          <div class="product-category">{{ product.category }}</div>
+          <h3 class="product-title">{{ product.name }}</h3>
+          <p class="product-description">{{ product.description }}</p>
+          
+          <div class="product-features">
+            <div 
+              *ngFor="let feature of product.features"
+              class="feature-tag">
+              <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              {{ feature }}
+            </div>
+          </div>
+          
+          <div class="product-actions">
+            <button class="btn btn-primary" (click)="requestQuote()">
+              Get Quote
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+            <button class="btn btn-secondary" (click)="viewProductDetails(product)">
+              View Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="products-cta">
+      <div class="cta-content">
+        <h3>Need a Custom Solution?</h3>
+        <p>Can't find exactly what you're looking for? We specialize in creating custom branded apparel solutions tailored to your specific business needs.</p>
+        <button class="btn btn-primary btn-lg">
+          Contact Our Experts
+          <svg class="ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div *ngIf="showImageModal" class="modal-backdrop" (click)="closeModal()">
+    <div class="image-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedProduct?.name }}</h3>
+        <button class="close-btn" (click)="closeModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img [src]="selectedProduct?.image" [alt]="selectedProduct?.name" class="full-image">
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div *ngIf="showDetailsModal" class="modal-backdrop" (click)="closeModal()">
+    <div class="details-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedProduct?.name }}</h3>
+        <button class="close-btn" (click)="closeModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="details-content">
+          <div class="product-image-section">
+            <img [src]="selectedProduct?.image" [alt]="selectedProduct?.name" class="product-detail-image">
+            <div class="product-price">
+              <span class="price-label">Starting from</span>
+              <span class="price-value">${{ selectedProduct?.startingPrice }}</span>
+            </div>
+          </div>
+          <div class="product-info-section">
+            <div class="product-category-badge">{{ selectedProduct?.category }}</div>
+            <h4>{{ selectedProduct?.name }}</h4>
+            <p class="product-full-description">{{ selectedProduct?.description }}</p>
+            
+            <div class="features-section">
+              <h5>Key Features</h5>
+              <ul class="features-list">
+                <li *ngFor="let feature of selectedProduct?.features">
+                  <svg class="feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  {{ feature }}
+                </li>
+              </ul>
+            </div>
+
+            <div class="materials-section">
+              <h5>Available Materials</h5>
+              <div class="material-tags">
+                <span *ngFor="let material of selectedProduct?.materials" class="material-tag">
+                  {{ material }}
+                </span>
+              </div>
+            </div>
+
+            <div class="thickness-section">
+              <h5>Fabric Thickness</h5>
+              <div class="thickness-tags">
+                <span *ngFor="let thickness of selectedProduct?.thickness" class="thickness-tag">
+                  {{ thickness }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="modal-actions">
+              <button class="btn btn-primary btn-lg" (click)="requestQuote()">
+                Get Custom Quote
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+              <button class="btn btn-secondary" (click)="closeModal()">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

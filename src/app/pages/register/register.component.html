@@ -1,0 +1,369 @@
+<div class="register-container">
+  <div class="register-card">
+    <!-- Header -->
+    <div class="register-header">
+      <div class="logo">
+        <img src="/images/logo-black.png" alt="CLOZZET" class="register-logo-image">
+      </div>
+      <h2>Create Business Account</h2>
+      <p>Join our B2B platform for premium branded textiles</p>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+      <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+        <div class="step-number">1</div>
+        <div class="step-label">Personal Info</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 1"></div>
+      <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+        <div class="step-number">2</div>
+        <div class="step-label">Position</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 2"></div>
+      <div class="step" [class.active]="currentStep >= 3" [class.completed]="currentStep > 3">
+        <div class="step-number">3</div>
+        <div class="step-label">Company</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Personal Information -->
+    <form *ngIf="currentStep === 1" [formGroup]="personalForm" class="register-form">
+      <h3>Personal Information</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">First Name *</label>
+          <input 
+            type="text" 
+            id="firstName" 
+            formControlName="firstName"
+            class="form-control"
+            [class.error]="getFieldError(personalForm, 'firstName')"
+            placeholder="Enter your first name">
+          <div class="error-message" *ngIf="getFieldError(personalForm, 'firstName')">
+            {{ getFieldError(personalForm, 'firstName') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Last Name *</label>
+          <input 
+            type="text" 
+            id="lastName" 
+            formControlName="lastName"
+            class="form-control"
+            [class.error]="getFieldError(personalForm, 'lastName')"
+            placeholder="Enter your last name">
+          <div class="error-message" *ngIf="getFieldError(personalForm, 'lastName')">
+            {{ getFieldError(personalForm, 'lastName') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address *</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email"
+          class="form-control"
+          [class.error]="getFieldError(personalForm, 'email')"
+          placeholder="Enter your business email">
+        <div class="error-message" *ngIf="getFieldError(personalForm, 'email')">
+          {{ getFieldError(personalForm, 'email') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number *</label>
+        <input 
+          type="tel" 
+          id="phone" 
+          formControlName="phone"
+          class="form-control"
+          [class.error]="getFieldError(personalForm, 'phone')"
+          placeholder="Enter your phone number">
+        <div class="error-message" *ngIf="getFieldError(personalForm, 'phone')">
+          {{ getFieldError(personalForm, 'phone') }}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <div class="password-input">
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              id="password" 
+              formControlName="password"
+              class="form-control"
+              [class.error]="getFieldError(personalForm, 'password')"
+              placeholder="Create a password">
+            <button 
+              type="button" 
+              class="password-toggle"
+              (click)="togglePasswordVisibility()">
+              <svg *ngIf="!showPassword" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+              <svg *ngIf="showPassword" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="getFieldError(personalForm, 'password')">
+            {{ getFieldError(personalForm, 'password') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password *</label>
+          <div class="password-input">
+            <input 
+              [type]="showConfirmPassword ? 'text' : 'password'" 
+              id="confirmPassword" 
+              formControlName="confirmPassword"
+              class="form-control"
+              [class.error]="getFieldError(personalForm, 'confirmPassword')"
+              placeholder="Confirm your password">
+            <button 
+              type="button" 
+              class="password-toggle"
+              (click)="toggleConfirmPasswordVisibility()">
+              <svg *ngIf="!showConfirmPassword" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+              <svg *ngIf="showConfirmPassword" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="getFieldError(personalForm, 'confirmPassword')">
+            {{ getFieldError(personalForm, 'confirmPassword') }}
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Step 2: Position Information -->
+    <form *ngIf="currentStep === 2" [formGroup]="positionForm" class="register-form">
+      <h3>Position Information</h3>
+      
+      <div class="form-group">
+        <label for="jobTitle">Job Title *</label>
+        <input 
+          type="text" 
+          id="jobTitle" 
+          formControlName="jobTitle"
+          class="form-control"
+          [class.error]="getFieldError(positionForm, 'jobTitle')"
+          placeholder="e.g., Procurement Manager, Marketing Director">
+        <div class="error-message" *ngIf="getFieldError(positionForm, 'jobTitle')">
+          {{ getFieldError(positionForm, 'jobTitle') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="department">Department *</label>
+        <select 
+          id="department" 
+          formControlName="department"
+          class="form-control"
+          [class.error]="getFieldError(positionForm, 'department')">
+          <option value="">Select your department</option>
+          <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+        </select>
+        <div class="error-message" *ngIf="getFieldError(positionForm, 'department')">
+          {{ getFieldError(positionForm, 'department') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="employeeId">Employee ID (Optional)</label>
+        <input 
+          type="text" 
+          id="employeeId" 
+          formControlName="employeeId"
+          class="form-control"
+          placeholder="Your employee ID if applicable">
+      </div>
+    </form>
+
+    <!-- Step 3: Company Information -->
+    <form *ngIf="currentStep === 3" [formGroup]="companyForm" class="register-form">
+      <h3>Company Information</h3>
+      
+      <div class="form-group">
+        <label for="companyName">Company Name *</label>
+        <input 
+          type="text" 
+          id="companyName" 
+          formControlName="companyName"
+          class="form-control"
+          [class.error]="getFieldError(companyForm, 'companyName')"
+          placeholder="Enter your company name">
+        <div class="error-message" *ngIf="getFieldError(companyForm, 'companyName')">
+          {{ getFieldError(companyForm, 'companyName') }}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="companyEmail">Company Email *</label>
+          <input 
+            type="email" 
+            id="companyEmail" 
+            formControlName="companyEmail"
+            class="form-control"
+            [class.error]="getFieldError(companyForm, 'companyEmail')"
+            placeholder="company@domain.com">
+          <div class="error-message" *ngIf="getFieldError(companyForm, 'companyEmail')">
+            {{ getFieldError(companyForm, 'companyEmail') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="companyPhone">Company Phone *</label>
+          <input 
+            type="tel" 
+            id="companyPhone" 
+            formControlName="companyPhone"
+            class="form-control"
+            [class.error]="getFieldError(companyForm, 'companyPhone')"
+            placeholder="Company phone number">
+          <div class="error-message" *ngIf="getFieldError(companyForm, 'companyPhone')">
+            {{ getFieldError(companyForm, 'companyPhone') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="companyAddress">Company Address *</label>
+        <input 
+          type="text" 
+          id="companyAddress" 
+          formControlName="companyAddress"
+          class="form-control"
+          [class.error]="getFieldError(companyForm, 'companyAddress')"
+          placeholder="Street address">
+        <div class="error-message" *ngIf="getFieldError(companyForm, 'companyAddress')">
+          {{ getFieldError(companyForm, 'companyAddress') }}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="industry">Industry *</label>
+          <select 
+            id="industry" 
+            formControlName="industry"
+            class="form-control"
+            [class.error]="getFieldError(companyForm, 'industry')">
+            <option value="">Select industry</option>
+            <option *ngFor="let ind of industries" [value]="ind">{{ ind }}</option>
+          </select>
+          <div class="error-message" *ngIf="getFieldError(companyForm, 'industry')">
+            {{ getFieldError(companyForm, 'industry') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="companySize">Company Size *</label>
+          <select 
+            id="companySize" 
+            formControlName="companySize"
+            class="form-control"
+            [class.error]="getFieldError(companyForm, 'companySize')">
+            <option value="">Select company size</option>
+            <option *ngFor="let size of companySizes" [value]="size">{{ size }}</option>
+          </select>
+          <div class="error-message" *ngIf="getFieldError(companyForm, 'companySize')">
+            {{ getFieldError(companyForm, 'companySize') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="website">Company Website (Optional)</label>
+        <input 
+          type="url" 
+          id="website" 
+          formControlName="website"
+          class="form-control"
+          placeholder="https://www.yourcompany.com">
+      </div>
+
+      <div class="form-checkboxes">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            formControlName="agreeToTerms"
+            [class.error]="getFieldError(companyForm, 'agreeToTerms')">
+          <span class="checkmark"></span>
+          I agree to the <a class="link" (click)="openTerms()"> Terms & Conditions </a> and <a class="link" (click)="openPrivacyPolicy()"> Privacy Policy </a> *
+        </label>
+        <div class="error-message" *ngIf="getFieldError(companyForm, 'agreeToTerms')">
+          You must agree to the terms and conditions
+        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="marketingConsent">
+          <span class="checkmark"></span>
+          I would like to receive marketing communications and product updates
+        </label>
+      </div>
+    </form>
+
+    <!-- Navigation Buttons -->
+    <div class="form-navigation">
+      <button 
+        *ngIf="currentStep > 1"
+        type="button" 
+        class="btn btn-secondary"
+        (click)="previousStep()">
+        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Previous
+      </button>
+
+      <button 
+        *ngIf="currentStep < totalSteps"
+        type="button" 
+        class="btn btn-primary"
+        (click)="nextStep()">
+        Next
+        <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+
+      <button 
+        *ngIf="currentStep === totalSteps"
+        type="button" 
+        class="btn btn-primary register-btn"
+        [disabled]="!companyForm.valid || isLoading"
+        (click)="onSubmit()">
+        <span *ngIf="isLoading" class="loading-spinner"></span>
+        <svg *ngIf="!isLoading" class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        {{ isLoading ? 'Creating Account...' : 'Create Account' }}
+      </button>
+    </div>
+
+    <!-- Login Link -->
+    <div class="register-footer">
+      <p>Already have an account? 
+        <a class="link" (click)="goToLogin()">Sign in here</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="register-background">
+    <div class="bg-pattern"></div>
+  </div>
+</div>

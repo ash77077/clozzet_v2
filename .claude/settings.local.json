@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(ng generate component:*)",
+      "Bash(rm:*)",
+      "Bash(nest new:*)",
+      "Bash(nest generate:*)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": []
+  }
+}

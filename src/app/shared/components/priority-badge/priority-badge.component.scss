@@ -1,0 +1,111 @@
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: 1px solid;
+  transition: all 0.3s ease;
+  
+  &.priority-low {
+    background: linear-gradient(135deg, #d5edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border-color: #27ae60;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+  
+  &.priority-normal {
+    background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+    color: #0c5460;
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+  
+  &.priority-high {
+    background: linear-gradient(135deg, #fff4e6 0%, #ffeeba 100%);
+    color: #856404;
+    border-color: #f39c12;
+    box-shadow: 0 2px 8px rgba(243, 156, 18, 0.2);
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+  
+  &.priority-urgent {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+    border-color: #e74c3c;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
+    animation: pulse 2s infinite;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+
+  .priority-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    
+    &.low { background: #27ae60; }
+    &.normal { background: #3498db; }
+    &.high { background: #f39c12; }
+    &.urgent { background: #e74c3c; }
+  }
+
+  .priority-text {
+    white-space: nowrap;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(231, 76, 60, 0.4);
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
+  }
+}
+
+// Small variant
+.priority-badge.small {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  
+  .priority-indicator {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+// Large variant
+.priority-badge.large {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  
+  .priority-indicator {
+    width: 10px;
+    height: 10px;
+  }
+}

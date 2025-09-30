@@ -1,0 +1,462 @@
+.quote-section {
+  padding: 100px 0;
+  background: #ffffff;
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 80px;
+
+    .section-title {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--secondary-gray);
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .section-subtitle {
+      font-size: 1.25rem;
+      color: #6b7280;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+  }
+
+  .quote-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .contact-info {
+    .info-card {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: start;
+      gap: 20px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: #ffffff;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .info-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(45deg, var(--primary-orange), var(--primary-orange-light));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        flex-shrink: 0;
+
+        svg {
+          width: 30px;
+          height: 30px;
+        }
+      }
+
+      .info-content {
+        flex: 1;
+
+        h3 {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: var(--secondary-gray);
+          margin-bottom: 8px;
+          line-height: 1.3;
+        }
+
+        p {
+          font-size: 1.125rem;
+          color: #374151;
+          font-weight: 600;
+          margin-bottom: 4px;
+          line-height: 1.4;
+        }
+
+        span {
+          font-size: 0.875rem;
+          color: #6b7280;
+        }
+      }
+    }
+
+    .benefits-card {
+      background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-light) 100%);
+      border-radius: 16px;
+      padding: 32px;
+      color: #ffffff;
+
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        line-height: 1.3;
+      }
+
+      .benefits-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+          font-size: 0.95rem;
+          font-weight: 500;
+
+          svg {
+            width: 20px;
+            height: 20px;
+            color: #4ade80;
+            flex-shrink: 0;
+          }
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+
+  .form-container {
+    background: #ffffff;
+    border: 2px solid #f1f5f9;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+    .quote-form {
+      .form-section {
+        margin-bottom: 40px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .section-title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--secondary-gray);
+          margin-bottom: 24px;
+          padding-bottom: 12px;
+          border-bottom: 2px solid #f1f5f9;
+          line-height: 1.3;
+        }
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 20px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        label {
+          display: block;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 8px;
+          font-size: 0.95rem;
+        }
+
+        input,
+        select,
+        textarea {
+          width: 100%;
+          padding: 16px;
+          border: 2px solid #e5e7eb;
+          border-radius: 12px;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+          background: #ffffff;
+
+          &:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+          }
+
+          &::placeholder {
+            color: #9ca3af;
+          }
+
+          &.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+          }
+        }
+
+        textarea {
+          resize: vertical;
+          min-height: 120px;
+          line-height: 1.6;
+        }
+
+        .error-message {
+          margin-top: 8px;
+          font-size: 0.875rem;
+          color: #ef4444;
+          font-weight: 500;
+        }
+      }
+
+      .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+
+        .checkbox-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-orange);
+            cursor: pointer;
+          }
+
+          label {
+            font-size: 0.95rem;
+            color: #374151;
+            cursor: pointer;
+            margin-bottom: 0;
+          }
+        }
+      }
+
+      .form-actions {
+        text-align: center;
+        margin-top: 40px;
+
+        .submit-btn {
+          padding: 18px 40px;
+          background: linear-gradient(45deg, var(--primary-orange), var(--primary-orange-light));
+          color: #ffffff;
+          border: none;
+          border-radius: 12px;
+          font-weight: 600;
+          font-size: 1.125rem;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.3s ease;
+          min-width: 200px;
+          justify-content: center;
+
+          &:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+          }
+
+          &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+          }
+
+          .spinner {
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+          }
+
+          .success-icon {
+            color: #4ade80;
+          }
+        }
+      }
+
+      .success-message {
+        background: #f0fdf4;
+        border: 2px solid #4ade80;
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 24px;
+
+        .success-content {
+          display: flex;
+          align-items: start;
+          gap: 16px;
+
+          .success-icon {
+            width: 30px;
+            height: 30px;
+            color: #15803d;
+            flex-shrink: 0;
+          }
+
+          h4 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #15803d;
+            margin-bottom: 8px;
+            line-height: 1.3;
+          }
+
+          p {
+            color: #166534;
+            line-height: 1.6;
+            margin: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .quote-section {
+    .quote-content {
+      grid-template-columns: 1fr;
+      gap: 60px;
+    }
+
+    .contact-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+
+      .benefits-card {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .quote-section {
+    padding: 80px 0;
+
+    .section-header {
+      margin-bottom: 60px;
+
+      .section-title {
+        font-size: 2rem;
+      }
+
+      .section-subtitle {
+        font-size: 1.125rem;
+      }
+    }
+
+    .quote-content {
+      gap: 40px;
+    }
+
+    .contact-info {
+      grid-template-columns: 1fr;
+
+      .info-card {
+        padding: 24px;
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+
+        .info-icon {
+          width: 50px;
+          height: 50px;
+
+          svg {
+            width: 24px;
+            height: 24px;
+          }
+        }
+      }
+
+      .benefits-card {
+        padding: 24px;
+      }
+    }
+
+    .form-container {
+      padding: 30px;
+
+      .quote-form {
+        .form-row {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .checkbox-group {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+
+        .form-actions {
+          .submit-btn {
+            width: 100%;
+            max-width: 300px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .quote-section {
+    .form-container {
+      padding: 20px;
+
+      .quote-form {
+        .form-section .section-title {
+          font-size: 1.25rem;
+        }
+
+        .form-group {
+          input,
+          select,
+          textarea {
+            padding: 14px;
+          }
+        }
+      }
+    }
+
+    .contact-info .info-card {
+      padding: 20px;
+    }
+  }
+}

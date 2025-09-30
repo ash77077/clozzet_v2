@@ -1,0 +1,115 @@
+<nav class="secondary-navbar" *ngIf="isAuthenticated">
+  <div class="secondary-navbar-container">
+    <!-- Main Admin Navigation -->
+    <div class="nav-section" *ngIf="isAdminOrManager()">
+      <div class="nav-group">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <i class="pi pi-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/orders" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-shopping-cart"></i>
+              <span>Orders</span>
+              <span class="badge" *ngIf="orderStats && orderStats.pending > 0">{{ orderStats.pending }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/manufacturing" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-cog"></i>
+              <span>Manufacturing</span>
+              <span class="badge urgent" *ngIf="orderStats && orderStats.inProgress > 0">{{ orderStats.inProgress }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/users" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-users"></i>
+              <span>Users</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/companies" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-building"></i>
+              <span>Companies</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Customer/User Navigation -->
+    <div class="nav-section" *ngIf="isCustomerOrUser()">
+      <div class="nav-group">
+        <h4 class="nav-group-title">My Account</h4>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <i class="pi pi-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/my-orders" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-shopping-bag"></i>
+              <span>My Orders</span>
+              <span class="badge" *ngIf="userOrderStats && userOrderStats.total > 0">{{ userOrderStats.total }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/product-details" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-file-plus"></i>
+              <span>New Order</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="nav-section quick-actions">
+      <div class="nav-group">
+        <div class="action-buttons">
+          <button 
+            *ngIf="isAdminOrManager()" 
+            class="btn btn-sm btn-primary" 
+            routerLink="/product-details"
+            pTooltip="Create new order">
+            <i class="pi pi-plus"></i>
+            New Order
+          </button>
+          <button 
+            *ngIf="isAdminOrManager()" 
+            class="btn btn-sm btn-secondary" 
+            (click)="exportData()"
+            pTooltip="Export reports">
+            <i class="pi pi-download"></i>
+            Export
+          </button>
+          <button 
+            class="btn btn-sm btn-info" 
+            (click)="refreshData()"
+            pTooltip="Refresh data">
+            <i class="pi pi-refresh"></i>
+            Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Info & Notifications -->
+    <div class="nav-section user-section">
+      <div class="user-info" *ngIf="currentUser">
+        <div class="user-avatar">
+          <i class="pi pi-user"></i>
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</span>
+          <span class="user-role">{{ currentUser.role | titlecase }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

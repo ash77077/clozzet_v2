@@ -1,0 +1,44 @@
+<div class="contact-page page-wrapper">
+  <!-- Page Header -->
+  <section class="page-header">
+    <div class="container">
+      <h1 class="page-title">Contact Us</h1>
+      <p class="page-subtitle">
+        Ready to get started? Get in touch with our team for a free consultation and quote
+      </p>
+    </div>
+  </section>
+
+  <!-- Contact Information -->
+  <section class="contact-info-section">
+    <div class="container">
+      <div class="contact-grid">
+        <div *ngFor="let info of contactInfo" class="contact-card">
+          <div class="contact-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="info.icon"></path>
+            </svg>
+          </div>
+          <div class="contact-details">
+            <h3 class="contact-title">{{ info.title }}</h3>
+            <p class="contact-value">{{ info.value }}</p>
+            <p class="contact-description">{{ info.description }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="office-hours-card">
+        <h3 class="office-hours-title">Office Hours</h3>
+        <div class="hours-list">
+          <div *ngFor="let schedule of officeHours" class="hours-item">
+            <span class="hours-day">{{ schedule.day }}</span>
+            <span class="hours-time">{{ schedule.hours }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quote Form -->
+  <app-quote-form></app-quote-form>
+</div>

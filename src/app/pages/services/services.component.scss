@@ -1,0 +1,45 @@
+.services-page {
+  .page-header {
+    padding: 40px 0 40px;
+    background: linear-gradient(45deg, var(--primary-orange), var(--primary-orange-light));
+    color: white;
+    text-align: center;
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .page-title {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .page-subtitle {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .services-page {
+    .page-header {
+      padding: 40px 0 20px;
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .page-subtitle {
+        font-size: 1.125rem;
+      }
+    }
+  }
+}

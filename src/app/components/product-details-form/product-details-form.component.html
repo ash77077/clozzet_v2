@@ -1,0 +1,843 @@
+<div class="product-form-container">
+  <div class="form-header">
+    <h2 class="form-title">
+      <span class="title-icon">📋</span>
+      Product Details Form
+    </h2>
+    <p class="form-description">Complete product specifications for manufacturing team</p>
+  </div>
+
+  <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form">
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">ℹ️</span>
+        Basic Information
+      </h3>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="orderNumber" class="form-label">Order Number <small class="text-muted">(auto-generated if left empty)</small></label>
+          <input
+            type="text"
+            id="orderNumber"
+            formControlName="orderNumber"
+            class="form-input"
+            placeholder="Leave empty for auto-generation (1, 2, 3...)"
+            [class.error]="getFieldError('orderNumber')">
+          <span class="error-message" *ngIf="getFieldError('orderNumber')">
+            {{ getFieldError('orderNumber') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="clientName" class="form-label">Client Name*</label>
+          <input
+            type="text"
+            id="clientName"
+            formControlName="clientName"
+            class="form-input"
+            placeholder="Company or individual name"
+            [class.error]="getFieldError('clientName')">
+          <span class="error-message" *ngIf="getFieldError('clientName')">
+            {{ getFieldError('clientName') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="salesPerson" class="form-label">Sales Person*</label>
+          <input
+            type="text"
+            id="salesPerson"
+            formControlName="salesPerson"
+            class="form-input"
+            placeholder="Sales representative name"
+            [class.error]="getFieldError('salesPerson')">
+          <span class="error-message" *ngIf="getFieldError('salesPerson')">
+            {{ getFieldError('salesPerson') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="deadline" class="form-label">Deadline*</label>
+          <input
+            type="date"
+            id="deadline"
+            formControlName="deadline"
+            class="form-input"
+            [class.error]="getFieldError('deadline')">
+          <span class="error-message" *ngIf="getFieldError('deadline')">
+            {{ getFieldError('deadline') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity" class="form-label">Total Quantity*</label>
+          <input
+            type="number"
+            id="quantity"
+            formControlName="quantity"
+            class="form-input auto-calculated"
+            placeholder="Auto-calculated from sizes"
+            min="1"
+            readonly
+            [class.error]="getFieldError('quantity')">
+          <small class="field-help">This field is automatically calculated from size quantities below</small>
+          <span class="error-message" *ngIf="getFieldError('quantity')">
+            {{ getFieldError('quantity') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Priority*</label>
+          <div class="priority-selection">
+            <div class="priority-option priority-low" 
+                 [class.selected]="productForm.get('priority')?.value === 'low'"
+                 (click)="selectPriority('low')">
+              <div class="priority-indicator low"></div>
+              <span class="priority-text">{{ getPriorityDisplayName('low') }}</span>
+            </div>
+            <div class="priority-option priority-normal" 
+                 [class.selected]="productForm.get('priority')?.value === 'normal'"
+                 (click)="selectPriority('normal')">
+              <div class="priority-indicator normal"></div>
+              <span class="priority-text">{{ getPriorityDisplayName('normal') }}</span>
+            </div>
+            <div class="priority-option priority-high" 
+                 [class.selected]="productForm.get('priority')?.value === 'high'"
+                 (click)="selectPriority('high')">
+              <div class="priority-indicator high"></div>
+              <span class="priority-text">{{ getPriorityDisplayName('high') }}</span>
+            </div>
+            <div class="priority-option priority-urgent" 
+                 [class.selected]="productForm.get('priority')?.value === 'urgent'"
+                 (click)="selectPriority('urgent')">
+              <div class="priority-indicator urgent"></div>
+              <span class="priority-text">{{ getPriorityDisplayName('urgent') }}</span>
+            </div>
+          </div>
+          <span class="error-message" *ngIf="getFieldError('priority')">
+            {{ getFieldError('priority') }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Specifications Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">👕</span>
+        Product Specifications
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="clothType" class="form-label">Cloth Type*</label>
+          <select 
+            id="clothType" 
+            formControlName="clothType" 
+            class="form-select"
+            [class.error]="getFieldError('clothType')">
+            <option value="">Select cloth type</option>
+            <option *ngFor="let type of clothTypes" [value]="type.value">
+              {{ type.label }} - {{ type.description }}
+            </option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('clothType')">
+            {{ getFieldError('clothType') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="textileType" class="form-label">Textile Type*</label>
+          <select 
+            id="textileType" 
+            formControlName="textileType" 
+            class="form-select"
+            [class.error]="getFieldError('textileType')">
+            <option value="">Select textile</option>
+            <option *ngFor="let textile of textileTypes" [value]="textile.value">
+              {{ textile.label }}
+            </option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('textileType')">
+            {{ getFieldError('textileType') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="fabricWeight" class="form-label">Fabric Weight (GSM)</label>
+          <input
+            type="number"
+            id="fabricWeight"
+            formControlName="fabricWeight"
+            class="form-input"
+            placeholder="e.g., 180"
+            min="50">
+        </div>
+      </div>
+
+      <!-- Colors Selection -->
+      <div class="form-group full-width">
+        <label class="form-label">Colors*</label>
+        <div class="color-grid">
+          <div 
+            *ngFor="let color of colorOptions" 
+            class="color-option"
+            [class.selected]="isColorSelected(color.value)">
+            <input
+              type="checkbox"
+              [id]="'color-' + color.value"
+              [value]="color.value"
+              (change)="onColorChange(color.value, $event)"
+              class="color-checkbox">
+            <label [for]="'color-' + color.value" class="color-label">
+              <span 
+                class="color-swatch" 
+                [style.background-color]="color.hex"
+                [class.white-border]="color.value === 'white'"></span>
+              <span class="color-name">{{ color.label }}</span>
+            </label>
+          </div>
+        </div>
+        <span class="error-message" *ngIf="getFieldError('colors')">
+          {{ getFieldError('colors') }}
+        </span>
+      </div>
+
+      <!-- Custom Color Details -->
+      <div class="form-group full-width" *ngIf="isColorSelected('custom')">
+        <label for="customColorDetails" class="form-label">Custom Color Details*</label>
+        <textarea
+          id="customColorDetails"
+          formControlName="customColorDetails"
+          class="form-textarea"
+          placeholder="Specify custom color requirements, Pantone codes, etc."
+          rows="3"
+          [class.error]="getFieldError('customColorDetails')"></textarea>
+        <span class="error-message" *ngIf="getFieldError('customColorDetails')">
+          {{ getFieldError('customColorDetails') }}
+        </span>
+      </div>
+
+      <!-- Size Quantities -->
+      <div class="form-group full-width">
+        <label class="form-label">Size Quantities*</label>
+        <div class="size-quantity-grid">
+          <div 
+            *ngFor="let size of getSizesForClothType()" 
+            class="size-quantity-item">
+            <label class="size-label">{{ size }}</label>
+            <input
+              type="number"
+              [id]="'size-qty-' + size"
+              class="size-quantity-input"
+              [value]="getSizeQuantity(size)"
+              (input)="onSizeQuantityChange(size, $event)"
+              min="0"
+              placeholder="Qty">
+          </div>
+        </div>
+        
+        <!-- Total Quantity Display -->
+        <div class="total-quantity-display" *ngIf="hasSizeQuantities()">
+          <span class="total-label">Total Quantity:</span>
+          <span class="total-value">{{ getTotalQuantity() }} pieces</span>
+        </div>
+        
+        <div class="size-help-text">
+          <small>Enter the quantity needed for each size. Total quantity will be calculated automatically.</small>
+        </div>
+        
+        <span class="error-message" *ngIf="!hasSizeQuantities() && selectedClothType">
+          Please specify quantities for at least one size
+        </span>
+      </div>
+    </div>
+
+    <!-- Design & Printing Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">🎨</span>
+        Design & Printing
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="printingMethod" class="form-label">Printing Method*</label>
+          <select 
+            id="printingMethod" 
+            formControlName="printingMethod" 
+            class="form-select"
+            [class.error]="getFieldError('printingMethod')">
+            <option value="">Select printing method</option>
+            <option *ngFor="let method of printingMethods" [value]="method.value">
+              {{ method.label }}
+            </option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('printingMethod')">
+            {{ getFieldError('printingMethod') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="logoPosition" class="form-label">Logo Position</label>
+          <select id="logoPosition" formControlName="logoPosition" class="form-select">
+            <option value="">Select position</option>
+            <option value="front-center">Front Center</option>
+            <option value="front-left">Front Left</option>
+            <option value="front-right">Front Right</option>
+            <option value="back-center">Back Center</option>
+            <option value="sleeve">Sleeve</option>
+            <option value="multiple">Multiple Positions</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="logoSize" class="form-label">Logo Size (cm)</label>
+          <input
+            type="text"
+            id="logoSize"
+            formControlName="logoSize"
+            class="form-input"
+            placeholder="e.g., 10x8 cm">
+        </div>
+
+        <!-- Logo Files Upload -->
+        <div class="form-group full-width">
+          <label class="form-label">Logo Files</label>
+          <div class="file-upload-section">
+            <div class="file-upload-area">
+              <input
+                type="file"
+                id="logoFiles"
+                multiple
+                accept="image/*,.pdf,.ai,.psd"
+                (change)="onFileSelect($event, 'logo')"
+                class="file-input"
+                hidden>
+              <label for="logoFiles" class="file-upload-label">
+                <span class="upload-icon">📎</span>
+                <span>Click to upload logo files</span>
+                <small>Support: Images, PDF, AI, PSD (Max 50MB each)</small>
+              </label>
+            </div>
+            <div class="uploaded-files" *ngIf="logoFiles.length > 0">
+              <div class="file-item" *ngFor="let file of logoFiles; let i = index">
+                <span class="file-name">{{ file.name }}</span>
+                <span class="file-size">{{ getFileSize(file.size) }}</span>
+                <button type="button" class="remove-file-btn" (click)="removeFile(i, 'logo')">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Design Files Upload -->
+        <div class="form-group full-width">
+          <label class="form-label">Design Files</label>
+          <div class="file-upload-section">
+            <div class="file-upload-area">
+              <input
+                type="file"
+                id="designFiles"
+                multiple
+                accept="image/*,.pdf,.ai,.psd"
+                (change)="onFileSelect($event, 'design')"
+                class="file-input"
+                hidden>
+              <label for="designFiles" class="file-upload-label">
+                <span class="upload-icon">🎨</span>
+                <span>Click to upload design files</span>
+                <small>Support: Images, PDF, AI, PSD (Max 50MB each)</small>
+              </label>
+            </div>
+            <div class="uploaded-files" *ngIf="designFiles.length > 0">
+              <div class="file-item" *ngFor="let file of designFiles; let i = index">
+                <span class="file-name">{{ file.name }}</span>
+                <span class="file-size">{{ getFileSize(file.size) }}</span>
+                <button type="button" class="remove-file-btn" (click)="removeFile(i, 'design')">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reference Images Upload -->
+        <div class="form-group full-width">
+          <label class="form-label">Reference Images</label>
+          <div class="file-upload-section">
+            <div class="file-upload-area">
+              <input
+                type="file"
+                id="referenceImages"
+                multiple
+                accept="image/*"
+                (change)="onFileSelect($event, 'reference')"
+                class="file-input"
+                hidden>
+              <label for="referenceImages" class="file-upload-label">
+                <span class="upload-icon">🖼️</span>
+                <span>Click to upload reference images</span>
+                <small>Support: Images only (Max 50MB each)</small>
+              </label>
+            </div>
+            <div class="uploaded-files" *ngIf="referenceImages.length > 0">
+              <div class="file-item" *ngFor="let file of referenceImages; let i = index">
+                <span class="file-name">{{ file.name }}</span>
+                <span class="file-size">{{ getFileSize(file.size) }}</span>
+                <button type="button" class="remove-file-btn" (click)="removeFile(i, 'reference')">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="pantoneColors" class="form-label">Pantone Colors</label>
+          <input
+            type="text"
+            id="pantoneColors"
+            formControlName="pantoneColors"
+            class="form-input"
+            placeholder="e.g., Pantone 286 C, Pantone 485 C">
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Specific Fields Based on Cloth Type -->
+    
+    <!-- T-Shirt Specific Fields -->
+    <div class="form-section" *ngIf="selectedClothType === 't-shirts'">
+      <h3 class="section-title">
+        <span class="section-icon">👕</span>
+        T-Shirt Specifications
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="neckStyle" class="form-label">Neck Style*</label>
+          <select 
+            id="neckStyle" 
+            formControlName="neckStyle" 
+            class="form-select"
+            [class.error]="getFieldError('neckStyle')">
+            <option value="">Select neck style</option>
+            <option value="crew-neck">Crew Neck</option>
+            <option value="v-neck">V-Neck</option>
+            <option value="scoop-neck">Scoop Neck</option>
+            <option value="henley">Henley</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('neckStyle')">
+            {{ getFieldError('neckStyle') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="sleeveType" class="form-label">Sleeve Type*</label>
+          <select 
+            id="sleeveType" 
+            formControlName="sleeveType" 
+            class="form-select"
+            [class.error]="getFieldError('sleeveType')">
+            <option value="">Select sleeve type</option>
+            <option value="short-sleeve">Short Sleeve</option>
+            <option value="long-sleeve">Long Sleeve</option>
+            <option value="3-4-sleeve">3/4 Sleeve</option>
+            <option value="sleeveless">Sleeveless</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('sleeveType')">
+            {{ getFieldError('sleeveType') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="fit" class="form-label">Fit*</label>
+          <select 
+            id="fit" 
+            formControlName="fit" 
+            class="form-select"
+            [class.error]="getFieldError('fit')">
+            <option value="">Select fit</option>
+            <option value="regular">Regular Fit</option>
+            <option value="slim">Slim Fit</option>
+            <option value="loose">Loose Fit</option>
+            <option value="oversized">Oversized</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('fit')">
+            {{ getFieldError('fit') }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hoodie Specific Fields -->
+    <div class="form-section" *ngIf="selectedClothType === 'hoodies'">
+      <h3 class="section-title">
+        <span class="section-icon">🧥</span>
+        Hoodie Specifications
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="hoodieStyle" class="form-label">Hoodie Style*</label>
+          <select 
+            id="hoodieStyle" 
+            formControlName="hoodieStyle" 
+            class="form-select"
+            [class.error]="getFieldError('hoodieStyle')">
+            <option value="">Select hoodie style</option>
+            <option value="pullover">Pullover Hoodie</option>
+            <option value="zip-up">Zip-Up Hoodie</option>
+            <option value="half-zip">Half-Zip Hoodie</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('hoodieStyle')">
+            {{ getFieldError('hoodieStyle') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="pocketType" class="form-label">Pocket Type*</label>
+          <select 
+            id="pocketType" 
+            formControlName="pocketType" 
+            class="form-select"
+            [class.error]="getFieldError('pocketType')">
+            <option value="">Select pocket type</option>
+            <option value="kangaroo">Kangaroo Pocket</option>
+            <option value="side-pockets">Side Pockets</option>
+            <option value="no-pockets">No Pockets</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('pocketType')">
+            {{ getFieldError('pocketType') }}
+          </span>
+        </div>
+
+        <div class="form-group" *ngIf="f['hoodieStyle'].value === 'zip-up' || f['hoodieStyle'].value === 'half-zip'">
+          <label for="zipperType" class="form-label">Zipper Type</label>
+          <select id="zipperType" formControlName="zipperType" class="form-select">
+            <option value="">Select zipper type</option>
+            <option value="metal">Metal Zipper</option>
+            <option value="plastic">Plastic Zipper</option>
+            <option value="invisible">Invisible Zipper</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Polo Specific Fields -->
+    <div class="form-section" *ngIf="selectedClothType === 'polos'">
+      <h3 class="section-title">
+        <span class="section-icon">👔</span>
+        Polo Specifications
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="collarStyle" class="form-label">Collar Style*</label>
+          <select 
+            id="collarStyle" 
+            formControlName="collarStyle" 
+            class="form-select"
+            [class.error]="getFieldError('collarStyle')">
+            <option value="">Select collar style</option>
+            <option value="classic">Classic Collar</option>
+            <option value="button-down">Button-Down Collar</option>
+            <option value="spread">Spread Collar</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('collarStyle')">
+            {{ getFieldError('collarStyle') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="buttonCount" class="form-label">Button Count*</label>
+          <select 
+            id="buttonCount" 
+            formControlName="buttonCount" 
+            class="form-select"
+            [class.error]="getFieldError('buttonCount')">
+            <option value="">Select button count</option>
+            <option value="2">2 Buttons</option>
+            <option value="3">3 Buttons</option>
+            <option value="4">4 Buttons</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('buttonCount')">
+            {{ getFieldError('buttonCount') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="placketStyle" class="form-label">Placket Style</label>
+          <select id="placketStyle" formControlName="placketStyle" class="form-select">
+            <option value="">Select placket style</option>
+            <option value="standard">Standard Placket</option>
+            <option value="reinforced">Reinforced Placket</option>
+            <option value="hidden">Hidden Placket</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Eco Bag Specific Fields -->
+    <div class="form-section" *ngIf="selectedClothType === 'ecobags'">
+      <h3 class="section-title">
+        <span class="section-icon">🛍️</span>
+        Eco Bag Specifications
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="bagStyle" class="form-label">Bag Style*</label>
+          <select 
+            id="bagStyle" 
+            formControlName="bagStyle" 
+            class="form-select"
+            [class.error]="getFieldError('bagStyle')">
+            <option value="">Select bag style</option>
+            <option value="tote">Tote Bag</option>
+            <option value="shopping">Shopping Bag</option>
+            <option value="drawstring">Drawstring Bag</option>
+            <option value="messenger">Messenger Bag</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('bagStyle')">
+            {{ getFieldError('bagStyle') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="handleType" class="form-label">Handle Type*</label>
+          <select 
+            id="handleType" 
+            formControlName="handleType" 
+            class="form-select"
+            [class.error]="getFieldError('handleType')">
+            <option value="">Select handle type</option>
+            <option value="short">Short Handles</option>
+            <option value="long">Long Handles</option>
+            <option value="reinforced">Reinforced Handles</option>
+            <option value="rope">Rope Handles</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('handleType')">
+            {{ getFieldError('handleType') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="bagDimensions" class="form-label">Bag Dimensions*</label>
+          <input
+            type="text"
+            id="bagDimensions"
+            formControlName="bagDimensions"
+            class="form-input"
+            placeholder="e.g., 40x35x10 cm"
+            [class.error]="getFieldError('bagDimensions')">
+          <span class="error-message" *ngIf="getFieldError('bagDimensions')">
+            {{ getFieldError('bagDimensions') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="reinforcement" class="form-label">Reinforcement</label>
+          <select id="reinforcement" formControlName="reinforcement" class="form-select">
+            <option value="">Select reinforcement</option>
+            <option value="bottom">Bottom Reinforcement</option>
+            <option value="corners">Corner Reinforcement</option>
+            <option value="full">Full Reinforcement</option>
+            <option value="none">No Reinforcement</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cap Specific Fields -->
+    <div class="form-section" *ngIf="selectedClothType === 'caps'">
+      <h3 class="section-title">
+        <span class="section-icon">🧢</span>
+        Cap Specifications
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="capStyle" class="form-label">Cap Style*</label>
+          <select 
+            id="capStyle" 
+            formControlName="capStyle" 
+            class="form-select"
+            [class.error]="getFieldError('capStyle')">
+            <option value="">Select cap style</option>
+            <option value="baseball">Baseball Cap</option>
+            <option value="snapback">Snapback</option>
+            <option value="trucker">Trucker Cap</option>
+            <option value="dad-hat">Dad Hat</option>
+            <option value="beanie">Beanie</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('capStyle')">
+            {{ getFieldError('capStyle') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="visorType" class="form-label">Visor Type*</label>
+          <select 
+            id="visorType" 
+            formControlName="visorType" 
+            class="form-select"
+            [class.error]="getFieldError('visorType')">
+            <option value="">Select visor type</option>
+            <option value="curved">Curved Visor</option>
+            <option value="flat">Flat Visor</option>
+            <option value="no-visor">No Visor</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('visorType')">
+            {{ getFieldError('visorType') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="closure" class="form-label">Closure Type</label>
+          <select id="closure" formControlName="closure" class="form-select">
+            <option value="">Select closure type</option>
+            <option value="adjustable">Adjustable Strap</option>
+            <option value="snapback">Snapback</option>
+            <option value="fitted">Fitted</option>
+            <option value="elastic">Elastic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Apron Specific Fields -->
+    <div class="form-section" *ngIf="selectedClothType === 'aprons'">
+      <h3 class="section-title">
+        <span class="section-icon">👘</span>
+        Apron Specifications
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="apronStyle" class="form-label">Apron Style*</label>
+          <select 
+            id="apronStyle" 
+            formControlName="apronStyle" 
+            class="form-select"
+            [class.error]="getFieldError('apronStyle')">
+            <option value="">Select apron style</option>
+            <option value="bib">Bib Apron</option>
+            <option value="waist">Waist Apron</option>
+            <option value="chef">Chef Apron</option>
+            <option value="cobbler">Cobbler Apron</option>
+          </select>
+          <span class="error-message" *ngIf="getFieldError('apronStyle')">
+            {{ getFieldError('apronStyle') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="neckStrap" class="form-label">Neck Strap</label>
+          <select id="neckStrap" formControlName="neckStrap" class="form-select">
+            <option value="">Select neck strap</option>
+            <option value="adjustable">Adjustable Neck Strap</option>
+            <option value="fixed">Fixed Neck Strap</option>
+            <option value="halter">Halter Style</option>
+            <option value="none">No Neck Strap</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="waistTie" class="form-label">Waist Tie</label>
+          <select id="waistTie" formControlName="waistTie" class="form-select">
+            <option value="">Select waist tie</option>
+            <option value="long-ties">Long Ties</option>
+            <option value="short-ties">Short Ties</option>
+            <option value="buckle">Buckle Closure</option>
+            <option value="none">No Waist Tie</option>
+          </select>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="pocketDetails" class="form-label">Pocket Details</label>
+          <textarea
+            id="pocketDetails"
+            formControlName="pocketDetails"
+            class="form-textarea"
+            placeholder="Describe pocket requirements (number, size, position)"
+            rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Details Section -->
+    <div class="form-section">
+      <h3 class="section-title">
+        <span class="section-icon">📝</span>
+        Additional Details
+      </h3>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="specialInstructions" class="form-label">Special Instructions</label>
+          <textarea
+            id="specialInstructions"
+            formControlName="specialInstructions"
+            class="form-textarea"
+            placeholder="Any special manufacturing instructions or requirements"
+            rows="4"></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="packagingRequirements" class="form-label">Packaging Requirements</label>
+          <textarea
+            id="packagingRequirements"
+            formControlName="packagingRequirements"
+            class="form-textarea"
+            placeholder="Specific packaging or labeling requirements"
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="shippingAddress" class="form-label">Shipping Address</label>
+          <textarea
+            id="shippingAddress"
+            formControlName="shippingAddress"
+            class="form-textarea"
+            placeholder="Complete shipping address for delivery"
+            rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Section -->
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-secondary"
+        (click)="productForm.reset(); selectedClothType = '';">
+        Reset Form
+      </button>
+      
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="isSubmitting || productForm.invalid">
+        <span *ngIf="!isSubmitting">
+          <span class="btn-icon">📤</span>
+          Send to Manufacturing
+        </span>
+        <span *ngIf="isSubmitting" class="loading-text">
+          <span class="spinner"></span>
+          Sending...
+        </span>
+      </button>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div class="message success-message" *ngIf="submitSuccess">
+      <span class="message-icon">✅</span>
+      Product details sent successfully to manufacturing team!
+    </div>
+
+    <div class="message error-message" *ngIf="submitError">
+      <span class="message-icon">❌</span>
+      Error sending product details. Please try again.
+    </div>
+  </form>
+</div>

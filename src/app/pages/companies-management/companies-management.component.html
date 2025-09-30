@@ -1,0 +1,312 @@
+<div class="companies-management-container">
+  <!-- Breadcrumb Navigation -->
+  <nav class="breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-item">Dashboard</a>
+    <span class="breadcrumb-separator">></span>
+    <span class="breadcrumb-current">Companies Management</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">Companies Management</h1>
+        <p class="page-description">Manage all companies in the system</p>
+      </div>
+      <div class="header-right">
+        <p-button 
+          label="Add Company" 
+          icon="pi pi-plus" 
+          severity="success"
+          *ngIf="isAdminOrManager()">
+        </p-button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading companies...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <div class="error-message">
+      <h3>Error Loading Companies</h3>
+      <p>{{ error }}</p>
+      <p-button label="Retry" (onClick)="loadCompanies()" severity="secondary"></p-button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="companies-content" *ngIf="!isLoading && !error">
+    
+    <!-- Filters and Search -->
+    <section class="filters-section">
+      <div class="filters-container">
+        <!-- Search -->
+        <div class="search-group">
+          <label for="search">Search Companies</label>
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              id="search"
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (input)="onSearchChange()"
+              placeholder="Search by name, email, or industry..."
+              class="w-full">
+          </span>
+        </div>
+
+        <!-- Industry Filter -->
+        <div class="filter-group">
+          <label for="industry-filter">Industry</label>
+          <p-select 
+            [options]="availableIndustries" 
+            [(ngModel)]="selectedIndustry"
+            (onChange)="onIndustryChange()"
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select Industry"
+            id="industry-filter"
+            class="w-full">
+          </p-select>
+        </div>
+
+        <!-- Size Filter -->
+        <div class="filter-group">
+          <label for="size-filter">Size</label>
+          <p-select 
+            [options]="availableSizes" 
+            [(ngModel)]="selectedSize"
+            (onChange)="onSizeChange()"
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select Size"
+            id="size-filter"
+            class="w-full">
+          </p-select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Companies Table -->
+    <section class="table-section">
+      <p-table 
+        [value]="filteredCompanies" 
+        [loading]="isLoading"
+        [paginator]="true" 
+        [rows]="itemsPerPage"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        responsiveLayout="scroll"
+        styleClass="p-datatable-gridlines p-datatable-striped"
+        [scrollable]="true">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="name" style="min-width: 200px">
+              <div class="flex align-items-center">
+                Company Name
+                <p-sortIcon field="name"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="industry" style="min-width: 150px">
+              <div class="flex align-items-center">
+                Industry
+                <p-sortIcon field="industry"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="size" style="min-width: 120px">
+              <div class="flex align-items-center">
+                Size
+                <p-sortIcon field="size"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="totalEmployees" style="min-width: 120px">
+              <div class="flex align-items-center">
+                Employees
+                <p-sortIcon field="totalEmployees"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="totalOrders" style="min-width: 100px">
+              <div class="flex align-items-center">
+                Orders
+                <p-sortIcon field="totalOrders"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="totalOrderValue" style="min-width: 120px">
+              <div class="flex align-items-center">
+                Total Value
+                <p-sortIcon field="totalOrderValue"></p-sortIcon>
+              </div>
+            </th>
+            <th style="min-width: 100px">Status</th>
+            <th style="min-width: 200px">Actions</th>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="body" let-company>
+          <tr>
+            <td>
+              <div class="company-info">
+                <strong>{{ company.name }}</strong>
+                <div class="company-email">{{ company.email }}</div>
+              </div>
+            </td>
+            <td>{{ company.industry }}</td>
+            <td>
+              <p-tag 
+                [value]="company.size"
+                [severity]="getSizeSeverity(company.size)">
+              </p-tag>
+            </td>
+            <td>{{ company.totalEmployees }}</td>
+            <td>{{ company.totalOrders }}</td>
+            <td><strong>{{ formatCurrency(company.totalOrderValue) }}</strong></td>
+            <td>
+              <p-tag 
+                [value]="company.isActive ? 'Active' : 'Inactive'"
+                [severity]="company.isActive ? 'success' : 'danger'">
+              </p-tag>
+            </td>
+            <td>
+              <div class="flex gap-2">
+                <p-button 
+                  icon="pi pi-eye" 
+                  (onClick)="viewCompanyDetails(company)"
+                  severity="info"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="View Details">
+                </p-button>
+                <p-button 
+                  icon="pi pi-pencil" 
+                  (onClick)="editCompany(company)"
+                  severity="warn"
+                  [text]="true"
+                  [rounded]="true"
+                  *ngIf="isAdminOrManager()"
+                  pTooltip="Edit Company">
+                </p-button>
+                <p-button 
+                  [icon]="company.isActive ? 'pi pi-pause' : 'pi pi-play'" 
+                  (onClick)="toggleCompanyStatus(company)"
+                  [severity]="company.isActive ? 'warn' : 'success'"
+                  [text]="true"
+                  [rounded]="true"
+                  *ngIf="isAdminOrManager()"
+                  [pTooltip]="company.isActive ? 'Deactivate Company' : 'Activate Company'">
+                </p-button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center p-4">
+              <div class="empty-state">
+                <i class="pi pi-building" style="font-size: 3rem"></i>
+                <h3>No Companies Found</h3>
+                <p>No companies match your current filters. Try adjusting your search criteria.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+
+  <!-- Company Details Dialog -->
+  <p-dialog 
+    header="Company Details" 
+    [(visible)]="showCompanyDetails" 
+    [modal]="true" 
+    [style]="{width: '60vw'}"
+    [draggable]="false" 
+    [resizable]="false"
+    *ngIf="selectedCompany">
+    
+    <div class="company-details-dialog">
+      <!-- Company Header -->
+      <div class="company-header">
+        <div class="company-info">
+          <h3>{{ selectedCompany.name }}</h3>
+          <p>{{ selectedCompany.email }}</p>
+          <p-tag 
+            [value]="selectedCompany.isActive ? 'Active' : 'Inactive'"
+            [severity]="selectedCompany.isActive ? 'success' : 'danger'">
+          </p-tag>
+        </div>
+      </div>
+
+      <!-- Company Details -->
+      <div class="details-grid">
+        <div class="detail-section">
+          <h4>Company Information</h4>
+          <div class="detail-items">
+            <div class="detail-item">
+              <label>Industry:</label>
+              <span>{{ selectedCompany.industry }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Size:</label>
+              <p-tag 
+                [value]="selectedCompany.size"
+                [severity]="getSizeSeverity(selectedCompany.size)">
+              </p-tag>
+            </div>
+            <div class="detail-item">
+              <label>Total Employees:</label>
+              <span>{{ selectedCompany.totalEmployees }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h4>Order Statistics</h4>
+          <div class="detail-items">
+            <div class="detail-item">
+              <label>Total Orders:</label>
+              <span><strong>{{ selectedCompany.totalOrders }}</strong></span>
+            </div>
+            <div class="detail-item">
+              <label>Total Order Value:</label>
+              <span><strong>{{ formatCurrency(selectedCompany.totalOrderValue) }}</strong></span>
+            </div>
+            <div class="detail-item" *ngIf="selectedCompany.createdAt">
+              <label>Member Since:</label>
+              <span>{{ formatDate(selectedCompany.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Close" 
+        icon="pi pi-times" 
+        (onClick)="closeCompanyDetails()"
+        severity="secondary">
+      </p-button>
+      <p-button 
+        label="Edit Company" 
+        icon="pi pi-pencil" 
+        (onClick)="editCompany(selectedCompany)"
+        severity="primary"
+        *ngIf="isAdminOrManager()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+  
+  <!-- Confirmation Dialog -->
+  <p-confirmDialog></p-confirmDialog>
+</div>

@@ -1,0 +1,428 @@
+<div class="manufacturing-container">
+  <!-- Breadcrumb Navigation -->
+  <nav class="breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-item">Dashboard</a>
+    <span class="breadcrumb-separator">></span>
+    <span class="breadcrumb-current">Manufacturing</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="page-title">Manufacturing Dashboard</h1>
+        <p class="page-description">Manage production orders and track manufacturing status</p>
+      </div>
+      <div class="header-right">
+        <div class="header-stats">
+          <div class="stat-card urgent">
+            <span class="stat-number">{{ orderStats?.urgent || 0 }}</span>
+            <span class="stat-label">Urgent Orders</span>
+          </div>
+          <div class="stat-card in-progress">
+            <span class="stat-number">{{ orderStats?.inProgress || 0 }}</span>
+            <span class="stat-label">In Progress</span>
+          </div>
+          <div class="stat-card pending">
+            <span class="stat-number">{{ orderStats?.pending || 0 }}</span>
+            <span class="stat-label">Pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading manufacturing orders...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <div class="error-message">
+      <h3>Error Loading Manufacturing Orders</h3>
+      <p>{{ error }}</p>
+      <p-button label="Retry" (onClick)="loadOrders()" severity="secondary"></p-button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="manufacturing-content" *ngIf="!isLoading && !error">
+    
+    <!-- Filters and Search -->
+    <section class="filters-section">
+      <div class="filters-container">
+        <!-- Search -->
+        <div class="search-group">
+          <label for="search">Search Orders</label>
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              id="search"
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (input)="onSearchChange()"
+              placeholder="Search by order number or client..."
+              class="w-full">
+          </span>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-group">
+          <label for="status-filter">Manufacturing Status</label>
+          <p-select 
+            [options]="manufacturingStatuses" 
+            [(ngModel)]="selectedStatus"
+            (onChange)="onStatusChange()"
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select Status"
+            appendTo="body"
+            id="status-filter"
+            class="w-full">
+          </p-select>
+        </div>
+
+        <!-- Priority Filter -->
+        <div class="filter-group">
+          <label for="priority-filter">Priority</label>
+          <p-select 
+            [options]="priorityOptions" 
+            [(ngModel)]="selectedPriority"
+            (onChange)="onPriorityChange()"
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select Priority"
+            appendTo="body"
+            id="priority-filter"
+            class="w-full">
+          </p-select>
+        </div>
+
+        <!-- Deadline Filter -->
+        <div class="filter-group">
+          <label for="deadline-filter">Deadline</label>
+          <p-select 
+            [options]="deadlineOptions" 
+            [(ngModel)]="selectedDeadline"
+            (onChange)="onDeadlineChange()"
+            optionLabel="label" 
+            optionValue="value"
+            placeholder="Select Deadline"
+            appendTo="body"
+            id="deadline-filter"
+            class="w-full">
+          </p-select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manufacturing Orders Table -->
+    <section class="table-section">
+      <p-table 
+        [value]="filteredOrders" 
+        [loading]="isLoading"
+        [paginator]="true" 
+        [rows]="itemsPerPage"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        responsiveLayout="scroll"
+        styleClass="p-datatable-gridlines p-datatable-striped"
+        [scrollable]="false">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="orderNumber" style="min-width: 150px">
+              <div class="flex align-items-center">
+                Order Number
+                <p-sortIcon field="orderNumber"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="clientName" style="min-width: 200px">
+              <div class="flex align-items-center">
+                Client & Product
+                <p-sortIcon field="clientName"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="quantity" style="min-width: 100px">
+              <div class="flex align-items-center">
+                Quantity
+                <p-sortIcon field="quantity"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="priority" style="min-width: 120px">
+              <div class="flex align-items-center">
+                Priority
+                <p-sortIcon field="priority"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="deadline" style="min-width: 150px">
+              <div class="flex align-items-center">
+                Deadline
+                <p-sortIcon field="deadline"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="manufacturingStatus" style="min-width: 180px">
+              <div class="flex align-items-center">
+                Manufacturing Status
+                <p-sortIcon field="manufacturingStatus"></p-sortIcon>
+              </div>
+            </th>
+            <th pSortableColumn="createdAt" style="min-width: 150px">
+              <div class="flex align-items-center">
+                Order Date
+                <p-sortIcon field="createdAt"></p-sortIcon>
+              </div>
+            </th>
+            <th style="min-width: 250px">Actions</th>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="body" let-order>
+          <tr [class]="getRowClass(order)">
+            <td>
+              <div class="order-info">
+                <strong class="order-number">{{ order.orderNumber }}</strong>
+                <div class="order-meta">
+                  <span class="sales-person">{{ order.salesPerson }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="client-product-info">
+                <div class="client-name">{{ order.clientName }}</div>
+                <div class="product-details">
+                  <span class="cloth-type">{{ order.clothType }}</span>
+                  <span class="separator">•</span>
+                  <span class="textile-type">{{ order.textileType }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="quantity-info">
+                <strong class="quantity">{{ order.quantity }}</strong>
+                <div class="printing-method">{{ order.printingMethod }}</div>
+              </div>
+            </td>
+            <td>
+              <app-priority-badge [priority]="order.priority"></app-priority-badge>
+            </td>
+            <td>
+              <span class="deadline-date" [class.urgent]="isDeadlineUrgent(order.deadline)">
+                {{ formatDate(order.deadline) }}
+                <div class="days-remaining" [class]="getDaysRemainingClass(order.deadline)" *ngIf="getDaysRemaining(order.deadline) !== null">
+                  <i class="pi pi-calendar" style="margin-right: 0.25rem;"></i>
+                  {{ Math.abs(getDaysRemaining(order.deadline)!) }} 
+                  {{ getDaysRemaining(order.deadline)! < 0 ? 'days overdue' : 'days remaining' }}
+                </div>
+              </span>
+            </td>
+            <td>
+              <div class="status-container">
+                <p-select 
+                  [options]="manufacturingStatuses" 
+                  [(ngModel)]="order.manufacturingStatus"
+                  (onChange)="updateManufacturingStatus(order, $event)"
+                  optionLabel="label" 
+                  optionValue="value"
+                  [style]="{'width': '160px'}"
+                  [disabled]="!isAdminOrManager()"
+                  placeholder="Select Status"
+                  appendTo="body">
+                  <ng-template pTemplate="selectedItem" let-selectedOption>
+                    <div [class]="getManufacturingStatusClass(selectedOption.value || 'pending')" 
+                         style="display: flex; align-items: center; gap: 0.25rem; width: 100%;">
+                      <i [class]="getStatusIcon(selectedOption.value || 'pending')"></i>
+                      {{ selectedOption.label }}
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="item" let-option>
+                    <div [class]="getManufacturingStatusClass(option.value)" 
+                         style="display: flex; align-items: center; gap: 0.25rem; width: 100%; padding: 0.25rem;">
+                      <i [class]="getStatusIcon(option.value)"></i>
+                      {{ option.label }}
+                    </div>
+                  </ng-template>
+                </p-select>
+              </div>
+            </td>
+            <td>{{ formatDate(order.createdAt!) }}</td>
+            <td>
+              <div class="flex gap-2">
+                <p-button 
+                  icon="pi pi-eye" 
+                  (onClick)="viewOrderDetails(order)"
+                  severity="info"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="View Details">
+                </p-button>
+                <p-button 
+                  icon="pi pi-file-edit" 
+                  (onClick)="addManufacturingNotes(order)"
+                  severity="warn"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="Add Notes">
+                </p-button>
+                <p-button 
+                  icon="pi pi-clock" 
+                  (onClick)="viewTimeline(order)"
+                  severity="secondary"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="View Timeline">
+                </p-button>
+                <p-button 
+                  icon="pi pi-print" 
+                  (onClick)="printWorkOrder(order)"
+                  severity="success"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="Print Work Order">
+                </p-button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="text-center p-4">
+              <div class="empty-state">
+                <i class="pi pi-cog" style="font-size: 3rem"></i>
+                <h3>No Manufacturing Orders Found</h3>
+                <p>No orders match your current filters. Try adjusting your search criteria.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+
+  <!-- Order Details Dialog -->
+  <p-dialog 
+    header="Manufacturing Order Details" 
+    [(visible)]="showOrderDetails" 
+    [modal]="true" 
+    [style]="{'width': '70vw'}"
+    [draggable]="false" 
+    [resizable]="false"
+    *ngIf="selectedOrder">
+    
+    <div class="order-details-content">
+      <!-- Same content structure as orders-management but focused on manufacturing -->
+      <div class="manufacturing-details">
+        <h4><i class="pi pi-cog"></i> Manufacturing Information</h4>
+        <div class="info-details">
+          <p><strong>Current Status:</strong> 
+            <span [class]="getManufacturingStatusClass(selectedOrder.manufacturingStatus || 'pending')" 
+                  style="display: inline-block; margin-left: 0.5rem;">
+              <i [class]="getStatusIcon(selectedOrder.manufacturingStatus || 'pending')"></i>
+              {{ getStatusLabel(selectedOrder.manufacturingStatus || 'pending') }}
+            </span>
+          </p>
+          <p><strong>Priority:</strong> 
+            <app-priority-badge [priority]="selectedOrder.priority" style="margin-left: 0.5rem;"></app-priority-badge>
+          </p>
+          <p><strong>Deadline:</strong> 
+            <span class="deadline-date" [class.urgent]="isDeadlineUrgent(selectedOrder.deadline)" style="margin-left: 0.5rem;">
+              {{ formatDate(selectedOrder.deadline) }}
+              <span class="days-remaining" [class]="getDaysRemainingClass(selectedOrder.deadline)" *ngIf="getDaysRemaining(selectedOrder.deadline) !== null" style="margin-left: 0.5rem;">
+                ({{ Math.abs(getDaysRemaining(selectedOrder.deadline)!) }} 
+                {{ getDaysRemaining(selectedOrder.deadline)! < 0 ? 'days overdue' : 'days remaining' }})
+              </span>
+            </span>
+          </p>
+          <p><strong>Printing Method:</strong> <span style="color: #9b59b6; font-weight: 500;">{{ selectedOrder.printingMethod }}</span></p>
+          <p *ngIf="selectedOrder.colors && selectedOrder.colors.length > 0">
+            <strong>Colors Required:</strong> 
+            <span *ngFor="let color of selectedOrder.colors; let last = last" 
+                  style="background: #3498db; color: white; padding: 0.2rem 0.5rem; border-radius: 0.5rem; margin: 0.2rem; display: inline-block;">
+              {{ color }}
+            </span>
+          </p>
+          <p *ngIf="selectedOrder.pantoneColors"><strong>Pantone Colors:</strong> <span style="color: #e67e22; font-weight: 500;">{{ selectedOrder.pantoneColors }}</span></p>
+          <p *ngIf="selectedOrder.logoPosition"><strong>Logo Position:</strong> <span style="color: #1abc9c; font-weight: 500;">{{ selectedOrder.logoPosition }}</span></p>
+          <p *ngIf="selectedOrder.logoSize"><strong>Logo Size:</strong> <span style="color: #f39c12; font-weight: 500;">{{ selectedOrder.logoSize }}</span></p>
+        </div>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Close" 
+        icon="pi pi-times" 
+        (onClick)="closeOrderDetails()"
+        severity="secondary">
+      </p-button>
+      <p-button 
+        label="Update Status" 
+        icon="pi pi-refresh" 
+        *ngIf="isAdminOrManager()"
+        severity="primary">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Manufacturing Notes Dialog -->
+  <p-dialog 
+    header="Manufacturing Notes" 
+    [(visible)]="showNotesDialog" 
+    [modal]="true" 
+    [style]="{'width': '50vw'}"
+    [draggable]="false" 
+    [resizable]="false"
+    *ngIf="selectedOrder">
+    
+    <div class="notes-content">
+      <div class="form-group">
+        <label for="manufacturing-notes">Add Manufacturing Notes</label>
+        <textarea 
+          pInputTextarea
+          id="manufacturing-notes"
+          [(ngModel)]="manufacturingNotes"
+          rows="5" 
+          cols="30"
+          placeholder="Enter manufacturing notes, special instructions, or observations..."
+          class="w-full">
+        </textarea>
+      </div>
+      
+      <div class="existing-notes" *ngIf="selectedOrder.manufacturingNotes && selectedOrder.manufacturingNotes.length > 0">
+        <h5>Previous Notes</h5>
+        <div class="note-item" *ngFor="let note of selectedOrder.manufacturingNotes">
+          <div class="note-header">
+            <span class="note-date">{{ formatDate(note.date) }}</span>
+            <span class="note-author">{{ note.author }}</span>
+          </div>
+          <div class="note-content">{{ note.content }}</div>
+        </div>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Cancel" 
+        icon="pi pi-times" 
+        (onClick)="closeNotesDialog()"
+        severity="secondary">
+      </p-button>
+      <p-button 
+        label="Save Notes" 
+        icon="pi pi-check" 
+        (onClick)="saveManufacturingNotes()"
+        severity="primary">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+  
+  <!-- Confirmation Dialog -->
+  <p-confirmDialog></p-confirmDialog>
+</div>
