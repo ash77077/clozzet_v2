@@ -47,7 +47,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "dist/*"
+          source: "dist/clozzet_v2/browser/*"
           target: "/tmp/clozzet-deploy"
           strip_components: 1
 
