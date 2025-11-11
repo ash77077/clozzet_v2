@@ -22,8 +22,23 @@ jobs:
       #      - name: Install dependencies
       #        run: npm ci
       #
-      #      - name: Build Angular application
-      #        run: npm run build -- --configuration=production
+      - name: Build Angular application
+        run: npm run build -- --configuration=production
+
+      - name: Debug file matching for SCP
+        run: |
+            echo "=== Testing file patterns ==="
+            cd dist/clozzet_v2/browser
+            echo "Files in browser directory:"
+            ls -la
+            echo "Total files: $(find . -type f | wc -l)"
+            echo "Testing pattern 'dist/clozzet_v2/browser/*':"
+            shopt -s nullglob
+            files=(dist/clozzet_v2/browser/*)
+            echo "Number of files matched: ${#files[@]}"
+            for file in "${files[@]:0:5}"; do
+              echo "Matched: $file"
+            done
 
       - name: Debug SSH Key
         run: |
