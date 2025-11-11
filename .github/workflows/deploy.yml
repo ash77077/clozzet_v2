@@ -10,36 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Setup Node.js
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: '20'
-#          cache: 'npm'
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-#      - name: Install dependencies
-#        run: npm ci
-#
-#      - name: Build Angular application
-#        run: npm run build -- --configuration=production
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Debug SSH Key
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Angular application
+        run: npm run build -- --configuration=production
+
+      - name: Check what was actually built
         run: |
-          echo "Checking SSH key format..."
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/temp_key
-          chmod 600 ~/.ssh/temp_key
-          head -1 ~/.ssh/temp_key
-          tail -1 ~/.ssh/temp_key
-          echo "Key length: $(wc -l < ~/.ssh/temp_key) lines"
-
-#      - name: Test SSH Connection
-#        run: |
-#          ssh -o StrictHostKeyChecking=no -i ~/.ssh/temp_key \
-#            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful!'"
-
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Listing everything in current directory ==="
+          ls -la
+          echo "=== Checking if dist exists ==="
+          if [ -d "dist" ]; then
+            echo "dist directory exists"
+            find dist -type f -name "*.html" | head -10
+            echo "=== Full dist structure ==="
+            find dist -type d | sort
+          else
+            echo "ERROR: dist directory does not exist!"
+            echo "Build might have failed or output is elsewhere"
+          fi
 
       - name: Deploy to VPS via SSH
         uses: appleboy/scp-action@v0.1.7
@@ -48,9 +49,9 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "dist/clozzet_v2/"
+          source: "dist/"  # Start with just dist
           target: "/tmp/clozzet-deploy"
-          strip_components: 1
+          strip_components: 0  # Don't strip anything initially
 
       - name: Execute deployment script on server
         uses: appleboy/ssh-action@v1.0.3
@@ -60,8 +61,26 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            sudo rm -rf /var/www/html/*
-            sudo cp -r /tmp/clozzet-deploy/* /var/www/html/
+            echo "=== Checking what was deployed ==="
+            find /tmp/clozzet-deploy -type f | head -10
+            echo "=== Directory structure ==="
+            find /tmp/clozzet-deploy -type d | sort
+            
+            # Copy based on actual structure
+            if [ -d "/tmp/clozzet-deploy/clozzet_v2/browser" ]; then
+              echo "Found clozzet_v2/browser structure"
+              sudo rm -rf /var/www/html/*
+              sudo cp -r /tmp/clozzet-deploy/clozzet_v2/browser/* /var/www/html/
+            elif [ -d "/tmp/clozzet-deploy/browser" ]; then
+              echo "Found browser structure"
+              sudo rm -rf /var/www/html/*
+              sudo cp -r /tmp/clozzet-deploy/browser/* /var/www/html/
+            else
+              echo "Using root of deployed files"
+              sudo rm -rf /var/www/html/*
+              sudo cp -r /tmp/clozzet-deploy/* /var/www/html/
+            fi
+            
             sudo chown -R www-data:www-data /var/www/html
             sudo chmod -R 755 /var/www/html
             rm -rf /tmp/clozzet-deploy
