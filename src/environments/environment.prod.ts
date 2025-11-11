@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://your-api-domain.com',
+  apiUrl: 'https://clozzet.am/api',
   features: {
     christmasTheme: false // Set to false to disable Christmas theme
   }
