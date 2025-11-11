@@ -43,7 +43,7 @@ jobs:
       - name: Verify built files
         run: |
             echo "=== Checking build output ==="
-            ls -la dist/clozzet_v2/browser/
+            ls -la dist/clozzet_v2/*
             echo "=== Sample files ==="
             find dist/clozzet_v2/browser/ -name "*.html" -o -name "*.js" | head -1
 
@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "dist/clozzet_v2/browser/**/*"
+          source: "dist/clozzet_v2/*"
           target: "/tmp/clozzet-deploy"
           strip_components: 1
 
