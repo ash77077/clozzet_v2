@@ -1,0 +1,579 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "filter": "Filter",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "getQuote": "Get Free Quote"
+  },
+  "navbar": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "language": "Language"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "loginButton": "Login",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    },
+    "register": {
+      "title": "Register",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "registerButton": "Register",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    }
+  },
+  "orderBlank": {
+    "title": "Order Blank",
+    "newOrder": "New Order",
+    "print": "Print",
+    "sendToTelegram": "Send to Telegram",
+    "sending": "Sending...",
+    "successMessage": "Order sent to Telegram successfully!",
+    "errorMessage": "Failed to send order to Telegram. Please try again.",
+    "loadingOrder": "Loading order...",
+    "loadError": "Failed to load order details",
+    "permissionDenied": "You do not have permission to set orders. Only Manager, Admin, or Super Admin can create orders.",
+    "validation": {
+      "required": "This field is required",
+      "minLength": "This field must be at least 2 characters long"
+    },
+    "companyInfo": {
+      "name": "Clozzet",
+      "phone": "Tel: +374 12 345 678",
+      "email": "info@clozzet.am",
+      "address": "Yerevan, Armenia"
+    },
+    "sections": {
+      "basicInfo": "BASIC INFORMATION",
+      "productSpecs": "PRODUCT SPECIFICATIONS",
+      "sizeBreakdown": "SIZE BREAKDOWN",
+      "designDetails": "DESIGN DETAILS",
+      "additionalInfo": "ADDITIONAL INFORMATION"
+    },
+    "fields": {
+      "orderNumber": "Order Number",
+      "orderDate": "Order Date",
+      "clientName": "Client Name",
+      "salesPerson": "Sales Person",
+      "deadline": "Deadline",
+      "totalQuantity": "Total Quantity",
+      "priority": "Priority",
+      "clothType": "Product Type",
+      "textileType": "Textile Type",
+      "colors": "Colors",
+      "customColorDetails": "Custom Color Details",
+      "printingMethod": "Printing Method",
+      "logoPosition": "Logo Position",
+      "logoSize": "Logo Size",
+      "pantoneColors": "Pantone Colors",
+      "specialInstructions": "Special Instructions",
+      "packagingRequirements": "Packaging Requirements",
+      "shippingAddress": "Shipping Address"
+    },
+    "priority": {
+      "low": "Low Priority",
+      "normal": "Normal",
+      "high": "High Priority",
+      "urgent": "URGENT"
+    },
+    "sizes": {
+      "size": "Size",
+      "men": "Men",
+      "women": "Women",
+      "uni": "Uni",
+      "total": "TOTAL",
+      "xs": "XS",
+      "s": "S",
+      "m": "M",
+      "l": "L",
+      "xl": "XL",
+      "xxl": "2XL",
+      "xxxl": "3XL",
+      "xxxxl": "4XL"
+    },
+    "signature": {
+      "customerSignature": "Customer Signature",
+      "managerSignature": "Manager Signature",
+      "approvedBy": "Approved By"
+    },
+    "footer": {
+      "thankYou": "Thank you for your order!",
+      "contact": "Contact: sales@clozzet.com | Phone: +374 44 010 744"
+    },
+    "placeholders": {
+      "enterOrderNumber": "Enter order number",
+      "enterClientName": "Enter client name",
+      "enterSalesPerson": "Enter sales person name",
+      "selectDate": "Select date",
+      "enterQuantity": "Enter quantity",
+      "selectPriority": "Select priority",
+      "enterClothType": "e.g., T-Shirts, Hoodies",
+      "enterTextileType": "e.g., Cotton, Polyester",
+      "enterColors": "e.g., Black, White, Navy Blue",
+      "enterColorDetails": "Specify custom color requirements",
+      "enterPrintingMethod": "Enter printing method",
+      "enterLogoPosition": "e.g., Front Center",
+      "enterLogoSize": "e.g., 10x8 cm",
+      "enterPantoneColors": "Enter Pantone colors",
+      "enterInstructions": "Any special manufacturing instructions",
+      "enterPackaging": "Specific packaging or labeling requirements",
+      "enterShippingAddress": "Complete shipping address",
+      "enterSize": "0"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "statistics": "Statistics",
+    "recentOrders": "Recent Orders",
+    "pendingOrders": "Pending Orders",
+    "completedOrders": "Completed Orders",
+    "totalRevenue": "Total Revenue"
+  },
+  "products": {
+    "title": "Our Product Range",
+    "subtitle": "Discover our comprehensive collection of premium branded apparel and promotional items",
+    "allProducts": "All Products",
+    "categories": "Categories",
+    "priceRange": "Price Range",
+    "quote": "Quote",
+    "view": "View",
+    "from": "From",
+    "getQuote": "Get Quote",
+    "viewDetails": "View Details",
+    "outOfStock": "Out of Stock",
+    "inStock": "In Stock",
+    "keyFeatures": "Key Features",
+    "availableMaterials": "Available Materials",
+    "fabricThickness": "Fabric Thickness",
+    "startingFrom": "Starting from",
+    "getCustomQuote": "Get Custom Quote",
+    "close": "Close",
+    "customSolution": {
+      "title": "Need a Custom Solution?",
+      "description": "Can't find exactly what you're looking for? We specialize in creating custom branded apparel solutions tailored to your specific business needs.",
+      "button": "Contact Our Experts"
+    },
+    "items": {
+      "tshirts": {
+        "name": "Custom T-Shirts",
+        "category": "T-Shirt",
+        "description": "Premium cotton t-shirts perfect for company events, team building, and brand promotion.",
+        "features": {
+          "1": "Multiple Colors Available",
+          "2": "Screen Printing & Embroidery",
+          "3": "Bulk Discounts",
+          "4": "Unisex Sizes"
+        },
+        "materials": {
+          "1": "100% Cotton",
+          "2": "95% Cotton 5% Spandex",
+          "3": "60% Cotton 40% Polyester"
+        },
+        "thickness": {
+          "1": "150 GSM (Light)",
+          "2": "180 GSM (Medium)",
+          "3": "220 GSM (Heavy)"
+        }
+      },
+      "polo": {
+        "name": "Polo Shirts",
+        "category": "Polo",
+        "description": "Professional polo shirts ideal for corporate uniforms and business casual environments.",
+        "features": {
+          "1": "Moisture-Wicking Fabric",
+          "2": "Collar Stability",
+          "3": "Professional Fit",
+          "4": "Logo Embroidery"
+        },
+        "materials": {
+          "1": "100% Pique Cotton",
+          "2": "65% Polyester 35% Cotton",
+          "3": "92% Cotton 8% Lycra"
+        },
+        "thickness": {
+          "1": "180 GSM (Medium)",
+          "2": "200 GSM (Premium)",
+          "3": "240 GSM (Heavy Duty)"
+        }
+      },
+      "hoodies": {
+        "name": "Hoodies",
+        "category": "Hoodie",
+        "description": "Comfortable hoodies perfect for team outings and casual company wear.",
+        "features": {
+          "1": "Soft Interior Fleece",
+          "2": "Adjustable Drawstrings",
+          "3": "Kangaroo Pockets",
+          "4": "Custom Colors"
+        },
+        "materials": {
+          "1": "80% Cotton 20% Polyester",
+          "2": "100% Cotton Fleece",
+          "3": "50% Cotton 50% Polyester"
+        },
+        "thickness": {
+          "1": "280 GSM (Medium)",
+          "2": "320 GSM (Heavy)",
+          "3": "380 GSM (Premium)"
+        }
+      },
+      "caps": {
+        "name": "Custom Caps",
+        "category": "Cap",
+        "description": "High-quality caps and hats perfect for outdoor events and brand visibility.",
+        "features": {
+          "1": "Adjustable Sizing",
+          "2": "UV Protection",
+          "3": "Embroidered Logos",
+          "4": "Multiple Styles"
+        },
+        "materials": {
+          "1": "100% Cotton Twill",
+          "2": "100% Polyester Mesh",
+          "3": "65% Cotton 35% Polyester"
+        },
+        "thickness": {
+          "1": "Medium Weight",
+          "2": "Heavy Duty",
+          "3": "Lightweight Mesh"
+        }
+      },
+      "tote": {
+        "name": "Tote Bags",
+        "category": "Tote Bag",
+        "description": "Eco-friendly tote bags perfect for corporate events and promotional campaigns.",
+        "features": {
+          "1": "Large Print Area",
+          "2": "Eco-Friendly",
+          "3": "Reinforced Handles",
+          "4": "Washable"
+        },
+        "materials": {
+          "1": "100% Cotton Canvas",
+          "2": "100% Recycled Cotton",
+          "3": "80% Cotton 20% Jute"
+        },
+        "thickness": {
+          "1": "8 oz Canvas",
+          "2": "10 oz Canvas",
+          "3": "12 oz Heavy Canvas"
+        }
+      },
+      "aprons": {
+        "name": "Custom Aprons",
+        "category": "Apron",
+        "description": "Professional aprons for restaurants, cafes, and hospitality businesses.",
+        "features": {
+          "1": "Stain Resistant",
+          "2": "Adjustable Straps",
+          "3": "Multiple Pockets",
+          "4": "Easy Care Fabric"
+        },
+        "materials": {
+          "1": "100% Cotton Duck",
+          "2": "65% Polyester 35% Cotton",
+          "3": "100% Polyester Blend"
+        },
+        "thickness": {
+          "1": "Medium Weight",
+          "2": "Heavy Duty Canvas",
+          "3": "Professional Grade"
+        }
+      }
+    }
+  },
+  "footer": {
+    "description": "Premium branded textiles and promotional products for businesses. We specialize in custom apparel solutions that strengthen your brand presence.",
+    "quickLinks": {
+      "title": "Quick Links",
+      "aboutUs": "About Us",
+      "products": "Products",
+      "services": "Services",
+      "getQuote": "Get Quote",
+      "contact": "Contact"
+    },
+    "products": {
+      "title": "Our Products",
+      "tshirts": "T-Shirts",
+      "polos": "Polo Shirts",
+      "hoodies": "Hoodies",
+      "caps": "Caps & Hats",
+      "jackets": "Jackets",
+      "promotional": "Promotional Items"
+    },
+    "newsletter": {
+      "title": "Stay Updated",
+      "description": "Subscribe to our newsletter for the latest updates on products, special offers, and industry insights.",
+      "placeholder": "Enter your email",
+      "button": "Subscribe"
+    },
+    "badges": {
+      "isoCertified": "ISO Certified",
+      "qualityAssured": "Quality Assured"
+    },
+    "copyright": "© {{year}} {{company}}. All rights reserved.",
+    "legal": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "cookies": "Cookie Policy"
+    },
+    "aboutUs": "About Us",
+    "contactUs": "Contact Us",
+    "followUs": "Follow Us",
+    "allRightsReserved": "All rights reserved",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
+  "hero": {
+    "badge": "Trusted by 500+ Businesses",
+    "title": "Elevate Your Brand with",
+    "titleHighlight": "Premium Custom Apparel",
+    "description": "Transform your business identity with high-quality branded textiles. From corporate uniforms to promotional merchandise, we deliver professional custom apparel that strengthens your brand presence and builds team unity.",
+    "features": {
+      "bulkDiscount": "Bulk Order Discounts",
+      "fastTurnaround": "Fast 7-Day Turnaround",
+      "qualityGuarantee": "Premium Quality Guarantee"
+    },
+    "cta": {
+      "getQuote": "Get Free Quote",
+      "viewProducts": "View Products"
+    },
+    "stats": {
+      "clients": "Happy Clients",
+      "items": "Items Delivered",
+      "satisfaction": "Satisfaction Rate"
+    },
+    "imageBadges": {
+      "polo": "Custom Polo Shirts",
+      "hoodies": "Corporate Hoodies",
+      "caps": "Branded Caps"
+    },
+    "floating": {
+      "quality": "Quality Assured",
+      "prices": "Best Prices"
+    }
+  },
+  "services": {
+    "title": "Why Choose CLOZZET?",
+    "subtitle": "We deliver exceptional value through our comprehensive B2B textile solutions",
+    "mostPopular": "Most Popular",
+    "items": {
+      "bulkDiscount": {
+        "title": "Bulk Order Discounts",
+        "description": "Save more with our competitive bulk pricing. The more you order, the more you save.",
+        "features": {
+          "tier1": "25+ items: 10% discount",
+          "tier2": "50+ items: 15% discount",
+          "tier3": "100+ items: 20% discount",
+          "tier4": "Custom pricing for 500+ items"
+        }
+      },
+      "fastTurnaround": {
+        "title": "Fast Turnaround",
+        "description": "Get your branded apparel quickly with our industry-leading production times.",
+        "features": {
+          "standard": "7-day standard production",
+          "rush": "3-day rush service available",
+          "tracking": "Real-time order tracking",
+          "guaranteed": "Guaranteed delivery dates"
+        }
+      },
+      "premiumQuality": {
+        "title": "Premium Quality",
+        "description": "We use only the finest materials and latest printing techniques for lasting results.",
+        "features": {
+          "fabric": "Premium fabric selection",
+          "printing": "Fade-resistant printing",
+          "inspection": "Quality control inspection",
+          "guarantee": "100% satisfaction guarantee"
+        }
+      },
+      "customBranding": {
+        "title": "Custom Branding",
+        "description": "Complete brand customization with our professional design and printing services.",
+        "features": {
+          "design": "Logo design assistance",
+          "methods": "Multiple printing methods",
+          "matching": "Color matching service",
+          "compliance": "Brand guideline compliance"
+        }
+      },
+      "accountManagement": {
+        "title": "Account Management",
+        "description": "Dedicated support with personalized service for all your corporate apparel needs.",
+        "features": {
+          "manager": "Dedicated account manager",
+          "history": "Order history tracking",
+          "reorder": "Reorder simplification",
+          "support": "24/7 customer support"
+        }
+      },
+      "globalShipping": {
+        "title": "Global Shipping",
+        "description": "Reliable worldwide delivery with tracking and insurance for your peace of mind.",
+        "features": {
+          "worldwide": "Worldwide delivery",
+          "options": "Multiple shipping options",
+          "tracking": "Order tracking included",
+          "insurance": "Shipping insurance available"
+        }
+      }
+    },
+    "stats": {
+      "title": "Trusted by Businesses Worldwide",
+      "clients": "Happy Clients",
+      "items": "Items Delivered",
+      "satisfaction": "Satisfaction Rate",
+      "turnaround": "Day Turnaround"
+    },
+    "process": {
+      "title": "Simple 4-Step Process",
+      "step1": {
+        "title": "Request Quote",
+        "description": "Share your requirements and get a detailed quote within 24 hours."
+      },
+      "step2": {
+        "title": "Design Review",
+        "description": "Our team creates mockups and reviews your branding specifications."
+      },
+      "step3": {
+        "title": "Production",
+        "description": "High-quality manufacturing with regular updates on progress."
+      },
+      "step4": {
+        "title": "Delivery",
+        "description": "Fast, reliable shipping with tracking and quality assurance."
+      }
+    }
+  },
+  "quoteForm": {
+    "title": "Get Your Free Quote",
+    "subtitle": "Ready to elevate your brand? Tell us about your project and receive a detailed quote within 24 hours.",
+    "contact": {
+      "call": {
+        "title": "Call Us",
+        "phone": "+374 (44) 01 07 44",
+        "hours": "Mon-Fri 9AM-6PM EST"
+      },
+      "email": {
+        "title": "Email Us",
+        "address": "sales@clozzet.am",
+        "response": "Response within 4 hours"
+      },
+      "visit": {
+        "title": "Visit Us",
+        "address": "Sevan Street 86/3",
+        "city": "Yerevan",
+        "note": "By appointment only"
+      }
+    },
+    "benefits": {
+      "title": "Why Get a Quote?",
+      "pricing": "Transparent, competitive pricing",
+      "discounts": "Volume discounts available",
+      "noFees": "No hidden fees or charges",
+      "consultation": "Professional design consultation"
+    },
+    "form": {
+      "companyInfo": "Company Information",
+      "projectDetails": "Project Details",
+      "additionalServices": "Additional Services",
+      "projectDescription": "Project Description",
+      "companyName": "Company Name",
+      "contactName": "Contact Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "productType": "Product Type",
+      "quantity": "Quantity",
+      "budget": "Budget Range",
+      "timeline": "Timeline",
+      "message": "Tell us about your project",
+      "placeholders": {
+        "companyName": "Enter your company name",
+        "contactName": "Enter your full name",
+        "email": "Enter your email address",
+        "phone": "Enter your phone number",
+        "productType": "Select a product type",
+        "quantity": "Enter quantity needed",
+        "budget": "Select your budget range",
+        "timeline": "Select your timeline",
+        "message": "Please describe your project, including any specific design requirements, colors, or special instructions..."
+      },
+      "productTypes": {
+        "tshirts": "Custom T-Shirts",
+        "polo": "Polo Shirts",
+        "hoodies": "Hoodies & Sweatshirts",
+        "caps": "Custom Caps",
+        "jackets": "Jackets & Outerwear",
+        "promotional": "Promotional Items",
+        "other": "Other (specify in message)"
+      },
+      "budgetRanges": {
+        "under1000": "Under $1,000",
+        "1000to5000": "$1,000 - $5,000",
+        "5000to10000": "$5,000 - $10,000",
+        "10000to25000": "$10,000 - $25,000",
+        "over25000": "Over $25,000"
+      },
+      "timelines": {
+        "asap": "ASAP",
+        "1week": "Within 1 week",
+        "2weeks": "Within 2 weeks",
+        "1month": "Within 1 month",
+        "flexible": "Flexible timeline"
+      },
+      "additionalServicesList": {
+        "logoDesign": "Logo Design Assistance",
+        "rushDelivery": "Rush Delivery",
+        "sampleCreation": "Sample Creation",
+        "packaging": "Custom Packaging",
+        "shipping": "Shipping Coordination"
+      },
+      "submit": "Get Free Quote",
+      "submitting": "Submitting...",
+      "submitted": "Quote Submitted!",
+      "successTitle": "Thank you for your quote request!",
+      "successMessage": "We'll review your requirements and send you a detailed quote within 24 hours.",
+      "errors": {
+        "required": "is required",
+        "email": "Please enter a valid email address",
+        "minLength": "must be at least",
+        "pattern": "Please enter a valid phone number",
+        "minQuantity": "Quantity must be at least 1",
+        "maxQuantity": "Please contact us directly for quantities over 10,000",
+        "characters": "characters"
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-<nav class="navbar" [class.scrolled]="isScrolled" [class.hidden]="shouldHideNavbar" *ngIf="!shouldHideNavbar">
+<nav class="navbar" [class.scrolled]="isScrolled">
   <div class="navbar-container">
     <!-- Logo -->
     <div class="navbar-brand">
@@ -55,22 +55,90 @@
 
     <!-- Action Buttons -->
     <div class="navbar-actions desktop-actions">
+      <!-- Language Dropdown -->
+      <div class="language-dropdown-container">
+        <button class="language-btn" (click)="toggleLanguageMenu($event)">
+          <span class="flag">{{ getCurrentLanguageData().flag }}</span>
+          <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <!-- Language Dropdown Menu -->
+        <div class="language-dropdown-menu" [class.active]="showLanguageMenu">
+          <button
+            *ngFor="let lang of languages"
+            class="language-dropdown-item"
+            [class.active]="currentLanguage === lang.code"
+            (click)="switchLanguage(lang.code)">
+            <span class="flag">{{ lang.flag }}</span>
+            <span class="lang-name">{{ lang.name }}</span>
+            <svg *ngIf="currentLanguage === lang.code" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <!-- Authenticated User Actions -->
       <ng-container *ngIf="currentUser$ | async as user; else unauthenticatedActions">
-        <button class="btn btn-primary dashboard-btn" (click)="openDashboard()">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
-          </svg>
-          Dashboard
-        </button>
-        <div class="user-menu">
-          <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
-          <button class="btn btn-secondary logout-btn" (click)="logout()">
-            <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        <div class="user-dropdown-container">
+          <button class="user-icon-btn" (click)="toggleUserMenu($event)">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
             </svg>
-            Logout
           </button>
+
+          <!-- User Dropdown Menu -->
+          <div class="user-dropdown-menu" [class.active]="showUserMenu">
+            <div class="user-dropdown-header">
+              <div class="user-avatar">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+              <div class="user-info">
+                <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+                <span class="user-email">{{ user.email }}</span>
+                <span class="user-role-badge">{{ user.role }}</span>
+              </div>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item" (click)="openDashboard()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+              </svg>
+              {{ 'navbar.dashboard' | translate }}
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <div class="user-dropdown-section">
+              <span class="user-dropdown-section-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                </svg>
+                {{ 'navbar.language' | translate }}
+              </span>
+              <button
+                *ngFor="let lang of languages"
+                class="user-dropdown-item language-item"
+                [class.active]="currentLanguage === lang.code"
+                (click)="switchLanguage(lang.code)">
+                <span class="flag">{{ lang.flag }}</span>
+                <span class="lang-name">{{ lang.name }}</span>
+                <svg *ngIf="currentLanguage === lang.code" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="user-dropdown-divider"></div>
+            <button class="user-dropdown-item logout" (click)="logout()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+              </svg>
+              {{ 'navbar.logout' | translate }}
+            </button>
+          </div>
         </div>
       </ng-container>
       
@@ -80,10 +148,10 @@
           <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
           </svg>
-          Login
+          {{ 'navbar.login' | translate }}
         </button>
         <button class="btn btn-primary" (click)="scrollToQuote()">
-          Get Free Quote
+          {{ 'common.getQuote' | translate }}
           <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
           </svg>
@@ -160,6 +228,21 @@
       </ul>
 
       <div class="mobile-cta">
+        <!-- Mobile Language Selector -->
+        <div class="mobile-language-selector">
+          <button
+            *ngFor="let lang of languages"
+            class="mobile-language-btn"
+            [class.active]="currentLanguage === lang.code"
+            (click)="switchLanguage(lang.code)">
+            <span class="flag">{{ lang.flag }}</span>
+            <span class="lang-name">{{ lang.name }}</span>
+            <svg *ngIf="currentLanguage === lang.code" class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </button>
+        </div>
+
         <!-- Authenticated User Actions -->
         <ng-container *ngIf="currentUser$ | async as user; else mobileUnauthenticatedActions">
           <div class="mobile-user-info">
@@ -170,26 +253,26 @@
             <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
             </svg>
-            Dashboard
+            {{ 'navbar.dashboard' | translate }}
           </button>
           <button class="btn btn-secondary btn-lg mobile-logout-btn" (click)="logout()">
             <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
             </svg>
-            Logout
+            {{ 'navbar.logout' | translate }}
           </button>
         </ng-container>
-        
+
         <!-- Unauthenticated User Actions -->
         <ng-template #mobileUnauthenticatedActions>
           <button class="btn btn-secondary btn-lg mobile-login-btn" (click)="openLogin()">
             <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
             </svg>
-            Login
+            {{ 'navbar.login' | translate }}
           </button>
           <button class="btn btn-primary btn-lg mobile-cta-btn" (click)="scrollToQuote()">
-            Get Free Quote
+            {{ 'common.getQuote' | translate }}
             <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
             </svg>

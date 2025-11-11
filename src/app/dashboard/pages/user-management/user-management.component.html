@@ -1,0 +1,227 @@
+<div class="user-management">
+  <div class="page-header">
+    <div class="header-content">
+      <h1>User Management</h1>
+      <p>Manage users, roles, and permissions</p>
+    </div>
+    <button class="btn-primary" (click)="openCreateModal()">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      Add New User
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="search-box">
+      <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input
+        type="text"
+        placeholder="Search users..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        class="search-input"
+      />
+    </div>
+
+    <select [(ngModel)]="roleFilter" (ngModelChange)="onRoleFilterChange()" class="role-filter">
+      <option value="all">All Roles</option>
+      <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
+    </select>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error && !showModal" class="error-message">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && !showModal" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <!-- Users Table -->
+  <div *ngIf="!loading" class="table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td>
+            <div class="user-info">
+              <div class="user-avatar">
+                {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+              </div>
+              <div>
+                <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                <div class="user-details" *ngIf="user.jobTitle">{{ user.jobTitle }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.phone }}</td>
+          <td>
+            <span class="badge" [ngClass]="getRoleBadgeClass(user.role)">
+              {{ getRoleLabel(user.role) }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="user.isActive ? 'status-active' : 'status-inactive'">
+              {{ user.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td>{{ user.createdAt | date:'short' }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-icon" (click)="openEditModal(user)" title="Edit">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+              <button
+                class="btn-icon"
+                (click)="toggleUserActive(user)"
+                [title]="user.isActive ? 'Deactivate' : 'Activate'"
+              >
+                <svg *ngIf="user.isActive" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                </svg>
+                <svg *ngIf="!user.isActive" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </button>
+              <button class="btn-icon btn-danger" (click)="deleteUser(user)" title="Delete">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="filteredUsers.length === 0" class="empty-state">
+      <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+      </svg>
+      <p>No users found</p>
+    </div>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing ? 'Edit User' : 'Add New User' }}</h2>
+        <button class="btn-close" (click)="closeModal()">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div *ngIf="error" class="error-message">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          {{ error }}
+        </div>
+
+        <form [formGroup]="userForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input type="text" id="firstName" formControlName="firstName" [class.error]="userForm.get('firstName')?.invalid && userForm.get('firstName')?.touched" />
+              <span class="error-text" *ngIf="userForm.get('firstName')?.invalid && userForm.get('firstName')?.touched">First name is required</span>
+            </div>
+
+            <div class="form-group">
+              <label for="lastName">Last Name *</label>
+              <input type="text" id="lastName" formControlName="lastName" [class.error]="userForm.get('lastName')?.invalid && userForm.get('lastName')?.touched" />
+              <span class="error-text" *ngIf="userForm.get('lastName')?.invalid && userForm.get('lastName')?.touched">Last name is required</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email *</label>
+              <input type="email" id="email" formControlName="email" [class.error]="userForm.get('email')?.invalid && userForm.get('email')?.touched" />
+              <span class="error-text" *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched">Valid email is required</span>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone *</label>
+              <input type="tel" id="phone" formControlName="phone" [class.error]="userForm.get('phone')?.invalid && userForm.get('phone')?.touched" />
+              <span class="error-text" *ngIf="userForm.get('phone')?.invalid && userForm.get('phone')?.touched">Phone number is required</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password {{ isEditing ? '' : '*' }}</label>
+            <input type="password" id="password" formControlName="password" [class.error]="userForm.get('password')?.invalid && userForm.get('password')?.touched" [placeholder]="isEditing ? 'Leave blank to keep current password' : ''" />
+            <span class="error-text" *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched">Password must be at least 6 characters</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="jobTitle">Job Title</label>
+              <input type="text" id="jobTitle" formControlName="jobTitle" />
+            </div>
+
+            <div class="form-group">
+              <label for="department">Department</label>
+              <input type="text" id="department" formControlName="department" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="employeeId">Employee ID</label>
+              <input type="text" id="employeeId" formControlName="employeeId" />
+            </div>
+
+            <div class="form-group">
+              <label for="role">Role *</label>
+              <select id="role" formControlName="role">
+                <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isActive" />
+              <span>Active</span>
+            </label>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()" [disabled]="loading">Cancel</button>
+        <button class="btn-primary" (click)="saveUser()" [disabled]="loading">
+          <span *ngIf="!loading">{{ isEditing ? 'Update User' : 'Create User' }}</span>
+          <span *ngIf="loading">Saving...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

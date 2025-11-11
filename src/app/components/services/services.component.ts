@@ -1,19 +1,20 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface Service {
   id: number;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   icon: string;
-  features: string[];
+  featureKeys: string[];
   highlight?: boolean;
 }
 
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './services.component.html',
   styleUrls: ['./services.component.scss']
 })
@@ -21,84 +22,84 @@ export class ServicesComponent {
   services: Service[] = [
     {
       id: 1,
-      title: 'Bulk Order Discounts',
-      description: 'Save more with our competitive bulk pricing. The more you order, the more you save.',
+      titleKey: 'services.items.bulkDiscount.title',
+      descriptionKey: 'services.items.bulkDiscount.description',
       icon: 'discount',
-      features: [
-        '25+ items: 10% discount',
-        '50+ items: 15% discount',
-        '100+ items: 20% discount',
-        'Custom pricing for 500+ items'
+      featureKeys: [
+        'services.items.bulkDiscount.features.tier1',
+        'services.items.bulkDiscount.features.tier2',
+        'services.items.bulkDiscount.features.tier3',
+        'services.items.bulkDiscount.features.tier4'
       ]
     },
     {
       id: 2,
-      title: 'Fast Turnaround',
-      description: 'Get your branded apparel quickly with our industry-leading production times.',
+      titleKey: 'services.items.fastTurnaround.title',
+      descriptionKey: 'services.items.fastTurnaround.description',
       icon: 'clock',
-      features: [
-        '7-day standard production',
-        '3-day rush service available',
-        'Real-time order tracking',
-        'Guaranteed delivery dates'
+      featureKeys: [
+        'services.items.fastTurnaround.features.standard',
+        'services.items.fastTurnaround.features.rush',
+        'services.items.fastTurnaround.features.tracking',
+        'services.items.fastTurnaround.features.guaranteed'
       ],
       highlight: true
     },
     {
       id: 3,
-      title: 'Premium Quality',
-      description: 'We use only the finest materials and latest printing techniques for lasting results.',
+      titleKey: 'services.items.premiumQuality.title',
+      descriptionKey: 'services.items.premiumQuality.description',
       icon: 'quality',
-      features: [
-        'Premium fabric selection',
-        'Fade-resistant printing',
-        'Quality control inspection',
-        '100% satisfaction guarantee'
+      featureKeys: [
+        'services.items.premiumQuality.features.fabric',
+        'services.items.premiumQuality.features.printing',
+        'services.items.premiumQuality.features.inspection',
+        'services.items.premiumQuality.features.guarantee'
       ]
     },
     {
       id: 4,
-      title: 'Custom Branding',
-      description: 'Complete brand customization with our professional design and printing services.',
+      titleKey: 'services.items.customBranding.title',
+      descriptionKey: 'services.items.customBranding.description',
       icon: 'design',
-      features: [
-        'Logo design assistance',
-        'Multiple printing methods',
-        'Color matching service',
-        'Brand guideline compliance'
+      featureKeys: [
+        'services.items.customBranding.features.design',
+        'services.items.customBranding.features.methods',
+        'services.items.customBranding.features.matching',
+        'services.items.customBranding.features.compliance'
       ]
     },
     {
       id: 5,
-      title: 'Account Management',
-      description: 'Dedicated support with personalized service for all your corporate apparel needs.',
+      titleKey: 'services.items.accountManagement.title',
+      descriptionKey: 'services.items.accountManagement.description',
       icon: 'support',
-      features: [
-        'Dedicated account manager',
-        'Order history tracking',
-        'Reorder simplification',
-        '24/7 customer support'
+      featureKeys: [
+        'services.items.accountManagement.features.manager',
+        'services.items.accountManagement.features.history',
+        'services.items.accountManagement.features.reorder',
+        'services.items.accountManagement.features.support'
       ]
     },
     {
       id: 6,
-      title: 'Global Shipping',
-      description: 'Reliable worldwide delivery with tracking and insurance for your peace of mind.',
+      titleKey: 'services.items.globalShipping.title',
+      descriptionKey: 'services.items.globalShipping.description',
       icon: 'shipping',
-      features: [
-        'Worldwide delivery',
-        'Multiple shipping options',
-        'Order tracking included',
-        'Shipping insurance available'
+      featureKeys: [
+        'services.items.globalShipping.features.worldwide',
+        'services.items.globalShipping.features.options',
+        'services.items.globalShipping.features.tracking',
+        'services.items.globalShipping.features.insurance'
       ]
     }
   ];
 
   stats = [
-    { number: '500+', label: 'Happy Clients', icon: 'users' },
-    { number: '50K+', label: 'Items Delivered', icon: 'package' },
-    { number: '99%', label: 'Satisfaction Rate', icon: 'star' },
-    { number: '7', label: 'Day Turnaround', icon: 'clock' }
+    { number: '500+', labelKey: 'services.stats.clients', icon: 'users' },
+    { number: '50K+', labelKey: 'services.stats.items', icon: 'package' },
+    { number: '99%', labelKey: 'services.stats.satisfaction', icon: 'star' },
+    { number: '7', labelKey: 'services.stats.turnaround', icon: 'clock' }
   ];
 
   getIconPath(iconName: string): string {

@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService, User } from '../../../services/auth.service';
 import { UserRole } from '../../../models/dashboard.models';
 
@@ -25,7 +26,8 @@ interface UserOrderStats {
     CommonModule,
     RouterModule,
     ButtonModule,
-    TooltipModule
+    TooltipModule,
+    TranslateModule
   ],
   templateUrl: './secondary-navbar.component.html',
   styleUrl: './secondary-navbar.component.scss'
@@ -37,10 +39,25 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   isAuthenticated = false;
   orderStats: OrderStats | null = null;
   userOrderStats: UserOrderStats | null = null;
+  showUserMenu = false;
 
   UserRole = UserRole;
 
-  constructor(private authService: AuthService) {}
+  // Language properties
+  currentLanguage: string = 'en';
+  languages = [
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'am', name: 'Հայերեն', flag: '🇦🇲' }
+  ];
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private translate: TranslateService
+  ) {
+    // Initialize current language
+    this.currentLanguage = this.translate.currentLang || 'en';
+  }
 
   ngOnInit(): void {
     this.loadCurrentUser();
@@ -95,5 +112,30 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     // TODO: Implement data refresh functionality
     console.log('Refreshing data...');
     this.loadOrderStats();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.user-dropdown-container')) {
+      this.showUserMenu = false;
+    }
+  }
+
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.showUserMenu = false;
+    this.router.navigate(['/']);
+  }
+
+  switchLanguage(langCode: string): void {
+    this.currentLanguage = langCode;
+    this.translate.use(langCode);
+    localStorage.setItem('selectedLanguage', langCode);
   }
 }

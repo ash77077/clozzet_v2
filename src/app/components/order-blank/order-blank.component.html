@@ -1,0 +1,461 @@
+<div class="order-blank-container">
+	<!-- Action Buttons (hidden when printing) -->
+	<div class="action-bar no-print">
+		<!-- New Order Button (only in view mode) -->
+		<button *ngIf="isViewMode" class="btn btn-secondary" (click)="newOrder()">
+			<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+			</svg>
+			{{ 'orderBlank.newOrder' | translate }}
+		</button>
+
+		<!-- Set Order Button (only in create mode and with permission) -->
+		<button *ngIf="!isViewMode && canSetOrder()" class="btn btn-success" (click)="sendOrder()" [disabled]="sending">
+			<svg *ngIf="!sending" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+				<path
+						stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+			</svg>
+			<div *ngIf="sending" class="spinner-small"></div>
+			{{ sending ? ('orderBlank.sending' | translate) : ('orderBlank.sendToTelegram' | translate) }}
+		</button>
+
+		<!-- Print Button (always visible) -->
+		<button class="btn btn-primary" (click)="print()">
+			<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+				<path
+						stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+			</svg>
+			{{ 'orderBlank.print' | translate }}
+		</button>
+	</div>
+
+	<!-- Success Message -->
+	<div *ngIf="successMessage && !loading" class="success-state">
+		<p>{{ 'orderBlank.successMessage' | translate }}</p>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="loading" class="loading-state">
+		<div class="spinner"></div>
+		<p>{{ 'orderBlank.loadingOrder' | translate }}</p>
+	</div>
+
+	<!-- Error State (Only for system errors like permission denied, network errors) -->
+	<div *ngIf="error && !loading && (error === 'orderBlank.permissionDenied' || error === 'Failed to load order details' || error === 'Failed to send order to Telegram. Please try again.')" class="error-state">
+		<p>{{ error | translate }}</p>
+	</div>
+
+	<!-- Order Blank Form -->
+	<form *ngIf="!loading" [formGroup]="orderForm" class="order-blank" [class.readonly-mode]="isViewMode">
+		<!-- Header -->
+		<div class="order-header">
+			<div class="order-title">
+				<p class="order-date">{{ getCurrentDate() }}</p>
+			</div>
+		</div>
+
+		<!-- Basic Information Section -->
+		<div>
+			<table class="info-table">
+				<tbody>
+				<tr *ngIf="!isViewMode || orderForm.get('orderNumber')?.value || orderForm.get('clientName')?.value">
+					<td class="label" *ngIf="!isViewMode || orderForm.get('orderNumber')?.value">{{ 'orderBlank.fields.orderNumber' | translate }}:</td>
+					<td class="value" *ngIf="!isViewMode || orderForm.get('orderNumber')?.value">
+						<div *ngIf="!isViewMode">
+							<input
+									type="text" formControlName="orderNumber" class="editable-input"
+									[class.input-error]="isFieldInvalid('orderNumber')"
+									[placeholder]="'orderBlank.placeholders.enterOrderNumber' | translate">
+							<div *ngIf="isFieldInvalid('orderNumber')" class="field-error">
+								{{ getFieldError('orderNumber') | translate }}
+							</div>
+						</div>
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('orderNumber')?.value }}</span>
+					</td>
+					<td class="label" *ngIf="!isViewMode || orderForm.get('clientName')?.value">{{ 'orderBlank.fields.clientName' | translate }}:</td>
+					<td class="value" *ngIf="!isViewMode || orderForm.get('clientName')?.value">
+						<div *ngIf="!isViewMode">
+							<input
+									type="text" formControlName="clientName" class="editable-input"
+									[class.input-error]="isFieldInvalid('clientName')"
+									[placeholder]="'orderBlank.placeholders.enterClientName' | translate">
+							<div *ngIf="isFieldInvalid('clientName')" class="field-error">
+								{{ getFieldError('clientName') | translate }}
+							</div>
+						</div>
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('clientName')?.value }}</span>
+					</td>
+				</tr>
+				<tr *ngIf="!isViewMode || orderForm.get('salesPerson')?.value || orderForm.get('deadline')?.value">
+					<td class="label" *ngIf="!isViewMode || orderForm.get('salesPerson')?.value">{{ 'orderBlank.fields.salesPerson' | translate }}:</td>
+					<td class="value" *ngIf="!isViewMode || orderForm.get('salesPerson')?.value">
+						<div *ngIf="!isViewMode">
+							<p-autoComplete
+									formControlName="salesPerson"
+									[suggestions]="filteredSalesPersons"
+									(completeMethod)="filterSalesPersons($event)"
+									[forceSelection]="false"
+									[dropdown]="true"
+									[placeholder]="'orderBlank.placeholders.enterSalesPerson' | translate"
+									class="sales-person-autocomplete"
+									[styleClass]="isFieldInvalid('salesPerson') ? 'editable-input input-error' : 'editable-input'">
+							</p-autoComplete>
+							<div *ngIf="isFieldInvalid('salesPerson')" class="field-error">
+								{{ getFieldError('salesPerson') | translate }}
+							</div>
+						</div>
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('salesPerson')?.value }}</span>
+					</td>
+					<td class="label" *ngIf="!isViewMode || orderForm.get('deadline')?.value">{{ 'orderBlank.fields.deadline' | translate }}:</td>
+					<td class="value" *ngIf="!isViewMode || orderForm.get('deadline')?.value">
+						<div *ngIf="!isViewMode">
+							<input
+									type="date"
+									formControlName="deadline"
+									class="editable-input"
+									[class.input-error]="isFieldInvalid('deadline')">
+							<div *ngIf="isFieldInvalid('deadline')" class="field-error">
+								{{ getFieldError('deadline') | translate }}
+							</div>
+						</div>
+						<span
+								*ngIf="isViewMode"
+								class="value-display">{{ orderForm.get('deadline')?.value | date:'mediumDate' }}</span>
+					</td>
+				</tr>
+				<tr>
+					<td class="label">{{ 'orderBlank.fields.priority' | translate }}:</td>
+					<td class="value">
+						<select *ngIf="!isViewMode" formControlName="priority" class="editable-select">
+							<option value="low">{{ getPriorityLabel('low') | translate }}</option>
+							<option value="normal">{{ getPriorityLabel('normal') | translate }}</option>
+							<option value="high">{{ getPriorityLabel('high') | translate }}</option>
+							<option value="urgent">{{ getPriorityLabel('urgent') | translate }}</option>
+						</select>
+						<span
+								*ngIf="isViewMode" class="value-display">{{ getPriorityLabel(orderForm.get('priority')?.value) | translate }}</span>
+					</td>
+					<td class="label">{{ 'orderBlank.fields.totalQuantity' | translate }}:</td>
+					<td class="value">
+						<span class="total-display">{{ calculateGrandTotal() }}</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Product Specifications -->
+		<div
+				*ngIf="!isViewMode || hasValue('clothType') || hasValue('textileType') || hasValue('printingMethod') || hasValue('colors') || hasValue('customColorDetails')">
+			<h3>{{ 'orderBlank.sections.productSpecs' | translate }}</h3>
+			<table class="spec-table">
+				<tbody>
+				<tr *ngIf="!isViewMode || hasValue('clothType') || hasValue('textileType')">
+					<td class="label" *ngIf="!isViewMode || hasValue('clothType')">{{ 'orderBlank.fields.clothType' | translate }}:</td>
+					<td class="value" *ngIf="!isViewMode || hasValue('clothType')">
+						<div *ngIf="!isViewMode">
+							<input
+									type="text" formControlName="clothType" class="editable-input"
+									[class.input-error]="isFieldInvalid('clothType')"
+									[placeholder]="'orderBlank.placeholders.enterClothType' | translate">
+							<div *ngIf="isFieldInvalid('clothType')" class="field-error">
+								{{ getFieldError('clothType') | translate }}
+							</div>
+						</div>
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('clothType')?.value }}</span>
+					</td>
+					<td class="label" *ngIf="!isViewMode || hasValue('textileType')">{{ 'orderBlank.fields.textileType' | translate }}:</td>
+					<td class="value" *ngIf="!isViewMode || hasValue('textileType')">
+						<input
+								*ngIf="!isViewMode" type="text" formControlName="textileType" class="editable-input"
+								[placeholder]="'orderBlank.placeholders.enterTextileType' | translate">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('textileType')?.value }}</span>
+					</td>
+				</tr>
+				<tr *ngIf="!isViewMode || hasValue('colors')">
+					<td class="label">{{ 'orderBlank.fields.colors' | translate }}:</td>
+					<td class="value" colspan="3">
+						<input
+								*ngIf="!isViewMode" type="text" formControlName="colors" class="editable-input full-width"
+								[placeholder]="'orderBlank.placeholders.enterColors' | translate">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('colors')?.value }}</span>
+					</td>
+				</tr>
+				<tr *ngIf="!isViewMode || hasValue('customColorDetails')">
+					<td class="label">{{ 'orderBlank.fields.customColorDetails' | translate }}:</td>
+					<td class="value" colspan="3">
+						<textarea
+								*ngIf="!isViewMode" formControlName="customColorDetails" class="editable-textarea" rows="2"
+								[placeholder]="'orderBlank.placeholders.enterColorDetails' | translate"></textarea>
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('customColorDetails')?.value }}</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Size Breakdown Section -->
+		<div formGroupName="sizes">
+			<table class="size-table">
+				<thead>
+				<tr>
+					<th>{{ 'orderBlank.sizes.size' | translate }}</th>
+					<th>{{ 'orderBlank.sizes.men' | translate }}</th>
+					<th>{{ 'orderBlank.sizes.women' | translate }}</th>
+					<th>{{ 'orderBlank.sizes.uni' | translate }}</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr formGroupName="xs" *ngIf="!isViewMode || hasSizeValues('xs')">
+					<td class="size-label">{{ 'orderBlank.sizes.xs' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xs.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xs.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xs.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr formGroupName="s" *ngIf="!isViewMode || hasSizeValues('s')">
+					<td class="size-label">{{ 'orderBlank.sizes.s' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.s.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.s.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.s.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr formGroupName="m" *ngIf="!isViewMode || hasSizeValues('m')">
+					<td class="size-label">{{ 'orderBlank.sizes.m' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.m.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.m.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.m.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr formGroupName="l" *ngIf="!isViewMode || hasSizeValues('l')">
+					<td class="size-label">{{ 'orderBlank.sizes.l' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.l.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.l.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.l.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr formGroupName="xl" *ngIf="!isViewMode || hasSizeValues('xl')">
+					<td class="size-label">{{ 'orderBlank.sizes.xl' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xl.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xl.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xl.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr formGroupName="xxl" *ngIf="!isViewMode || hasSizeValues('xxl')">
+					<td class="size-label">{{ 'orderBlank.sizes.xxl' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxl.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxl.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxl.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr formGroupName="xxxl" *ngIf="!isViewMode || hasSizeValues('xxxl')">
+					<td class="size-label">{{ 'orderBlank.sizes.xxxl' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxl.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxl.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxl.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr formGroupName="xxxxl" *ngIf="!isViewMode || hasSizeValues('xxxxl')">
+					<td class="size-label">{{ 'orderBlank.sizes.xxxxl' | translate }}</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxxl.men')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxxl.women')?.value || 0 }}</span>
+					</td>
+					<td>
+						<input
+								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
+								placeholder="0" min="0">
+						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxxl.uni')?.value || 0 }}</span>
+					</td>
+				</tr>
+				<tr class="total-row">
+					<td><strong>{{ 'orderBlank.sizes.total' | translate }}</strong></td>
+					<td><strong>{{ calculateTotal('men') }}</strong></td>
+					<td><strong>{{ calculateTotal('women') }}</strong></td>
+					<td><strong>{{ calculateTotal('uni') }}</strong></td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Design Details -->
+		<div>
+			<h3>{{ 'orderBlank.sections.additionalInfo' | translate }}</h3>
+			<div *ngIf="!isViewMode || hasValue('logoPosition') || hasValue('logoSize')">
+				<table class="spec-table">
+					<tbody>
+					<tr *ngIf="!isViewMode || hasValue('logoPosition') || hasValue('logoSize')">
+						<td class="label" *ngIf="!isViewMode || hasValue('logoPosition')">{{ 'orderBlank.fields.logoPosition' | translate }}:</td>
+						<td class="value" *ngIf="!isViewMode || hasValue('logoPosition')">
+							<input
+									*ngIf="!isViewMode" type="text" formControlName="logoPosition" class="editable-input"
+									[placeholder]="'orderBlank.placeholders.enterLogoPosition' | translate">
+							<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('logoPosition')?.value }}</span>
+						</td>
+						<td class="label" *ngIf="!isViewMode || hasValue('logoSize')">{{ 'orderBlank.fields.logoSize' | translate }}:</td>
+						<td class="value" *ngIf="!isViewMode || hasValue('logoSize')">
+							<input
+									*ngIf="!isViewMode" type="text" formControlName="logoSize" class="editable-input"
+									[placeholder]="'orderBlank.placeholders.enterLogoSize' | translate">
+							<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('logoSize')?.value }}</span>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+			<div
+					*ngIf="!isViewMode || hasValue('specialInstructions') || hasValue('packagingRequirements') || hasValue('shippingAddress')">
+				<table class="notes-table">
+					<tbody>
+					<tr *ngIf="!isViewMode || hasValue('specialInstructions')">
+						<td class="label">{{ 'orderBlank.fields.specialInstructions' | translate }}:</td>
+						<td class="value">
+							<textarea
+									*ngIf="!isViewMode" formControlName="specialInstructions" class="editable-textarea" rows="3"
+									[placeholder]="'orderBlank.placeholders.enterInstructions' | translate"></textarea>
+							<span
+									*ngIf="isViewMode" class="value-display"
+									style="white-space: pre-wrap;">{{ orderForm.get('specialInstructions')?.value }}</span>
+						</td>
+					</tr>
+					<tr *ngIf="!isViewMode || hasValue('packagingRequirements')">
+						<td class="label">{{ 'orderBlank.fields.packagingRequirements' | translate }}:</td>
+						<td class="value">
+							<textarea
+									*ngIf="!isViewMode" formControlName="packagingRequirements" class="editable-textarea" rows="2"
+									[placeholder]="'orderBlank.placeholders.enterPackaging' | translate"></textarea>
+							<span
+									*ngIf="isViewMode" class="value-display"
+									style="white-space: pre-wrap;">{{ orderForm.get('packagingRequirements')?.value }}</span>
+						</td>
+					</tr>
+					<tr *ngIf="!isViewMode || hasValue('shippingAddress')">
+						<td class="label">{{ 'orderBlank.fields.shippingAddress' | translate }}:</td>
+						<td class="value">
+							<textarea
+									*ngIf="!isViewMode" formControlName="shippingAddress" class="editable-textarea" rows="3"
+									[placeholder]="'orderBlank.placeholders.enterShippingAddress' | translate"></textarea>
+							<span
+									*ngIf="isViewMode" class="value-display"
+									style="white-space: pre-wrap;">{{ orderForm.get('shippingAddress')?.value }}</span>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+
+		<!-- Footer -->
+		<div class="order-footer">
+			<p class="contact-info">{{ 'orderBlank.footer.contact' | translate }}</p>
+		</div>
+	</form>
+</div>

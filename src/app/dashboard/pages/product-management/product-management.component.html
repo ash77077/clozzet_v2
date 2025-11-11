@@ -1,0 +1,315 @@
+<div class="product-management">
+  <div class="page-header">
+    <h1>Product Management</h1>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      Add New Product
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && products.length === 0" class="loading">
+    <div class="spinner"></div>
+    <p>Loading products...</p>
+  </div>
+
+  <!-- Products Table -->
+  <div *ngIf="!loading || products.length > 0" class="products-table-container">
+    <table class="products-table">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Starting Price</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let product of products">
+          <td>
+            <img [src]="product.images[0]" [alt]="product.name" class="product-thumbnail">
+          </td>
+          <td>
+            <span class="product-id">{{ product.id }}</span>
+          </td>
+          <td>
+            <span class="product-name">{{ product.name }}</span>
+          </td>
+          <td>
+            <span class="product-category">{{ product.category }}</span>
+          </td>
+          <td>
+            <span class="product-price">${{ product.startingPrice.toFixed(2) }}</span>
+          </td>
+          <td>
+            <span class="status-badge" [class.active]="product.isActive" [class.inactive]="!product.isActive">
+              {{ product.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-icon" (click)="openEditModal(product)" title="Edit">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </button>
+            <button class="btn-icon" (click)="toggleProductActive(product)" [title]="product.isActive ? 'Deactivate' : 'Activate'">
+              <svg *ngIf="product.isActive" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+              </svg>
+              <svg *ngIf="!product.isActive" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
+            <button class="btn-icon btn-danger" (click)="deleteProduct(product)" title="Delete">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="products.length === 0 && !loading" class="empty-state">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="64" height="64">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+      </svg>
+      <h3>No Products Yet</h3>
+      <p>Get started by adding your first product</p>
+      <button class="btn btn-primary" (click)="openCreateModal()">Add Product</button>
+    </div>
+  </div>
+
+  <!-- Product Form Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing ? 'Edit Product' : 'Add New Product' }}</h2>
+        <button class="btn-close" (click)="closeModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Error Message in Modal -->
+        <div *ngIf="error" class="alert alert-error" style="margin-bottom: 1rem;">
+          {{ error }}
+        </div>
+
+        <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
+          <!-- Basic Information -->
+          <div class="form-section">
+            <h3>Basic Information</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Product ID *</label>
+                <input type="text" formControlName="id" [readonly]="isEditing" placeholder="e.g., tshirts">
+                <small>Unique identifier (lowercase, no spaces)</small>
+              </div>
+
+              <div class="form-group">
+                <label>Product Name *</label>
+                <input type="text" formControlName="name" placeholder="e.g., Custom T-Shirts">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Category *</label>
+                <input type="text" formControlName="category" placeholder="e.g., T-Shirt">
+              </div>
+
+              <div class="form-group">
+                <label>Starting Price ($) *</label>
+                <input type="number" formControlName="startingPrice" placeholder="0.00" min="0" step="0.01">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tagline *</label>
+              <input type="text" formControlName="tagline" placeholder="Brief catchy description">
+            </div>
+
+            <div class="form-group">
+              <label>Description *</label>
+              <textarea formControlName="description" rows="4" placeholder="Detailed product description"></textarea>
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" formControlName="isActive" id="isActive">
+                <label class="checkbox-label" for="isActive">Active (visible to customers)</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Images -->
+          <div class="form-section">
+            <h3>Product Images</h3>
+            <div formArrayName="images">
+              <div *ngFor="let image of images.controls; let i = index" class="array-item">
+                <input type="url" [formControlName]="i" placeholder="https://example.com/image.jpg">
+                <button type="button" class="btn-remove" (click)="removeImage(i)" *ngIf="images.length > 1">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addImage()">+ Add Image</button>
+          </div>
+
+          <!-- Features -->
+          <div class="form-section">
+            <h3>Features</h3>
+            <div formArrayName="features">
+              <div *ngFor="let feature of features.controls; let i = index" class="array-item">
+                <input type="text" [formControlName]="i" placeholder="Feature description">
+                <button type="button" class="btn-remove" (click)="removeFeature(i)" *ngIf="features.length > 1">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addFeature()">+ Add Feature</button>
+          </div>
+
+          <!-- Variants -->
+          <div class="form-section">
+            <h3>Product Variants</h3>
+            <div formArrayName="variants">
+              <div *ngFor="let variant of variants.controls; let vi = index" class="variant-group">
+                <div [formGroupName]="vi">
+                  <div class="variant-header">
+                    <h4>Variant {{ vi + 1 }}</h4>
+                    <button type="button" class="btn-remove" (click)="removeVariant(vi)" *ngIf="variants.length > 1">
+                      Remove Variant
+                    </button>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Variant Name *</label>
+                    <input type="text" formControlName="name" placeholder="e.g., Classic Cotton">
+                  </div>
+
+                  <!-- Colors -->
+                  <div class="form-group">
+                    <label>Colors</label>
+                    <div [formArrayName]="'colors'">
+                      <div *ngFor="let color of getVariantColors(vi).controls; let ci = index" class="array-item-inline">
+                        <input type="text" [formControlName]="ci" placeholder="Color name">
+                        <button type="button" class="btn-remove-small" (click)="removeVariantColor(vi, ci)">×</button>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-xs" (click)="addVariantColor(vi)">+ Add Color</button>
+                  </div>
+
+                  <!-- Sizes -->
+                  <div class="form-group">
+                    <label>Sizes</label>
+                    <div [formArrayName]="'sizes'">
+                      <div *ngFor="let size of getVariantSizes(vi).controls; let si = index" class="array-item-inline">
+                        <input type="text" [formControlName]="si" placeholder="Size">
+                        <button type="button" class="btn-remove-small" (click)="removeVariantSize(vi, si)">×</button>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-xs" (click)="addVariantSize(vi)">+ Add Size</button>
+                  </div>
+
+                  <!-- Materials -->
+                  <div class="form-group">
+                    <label>Materials</label>
+                    <div [formArrayName]="'materials'">
+                      <div *ngFor="let material of getVariantMaterials(vi).controls; let mi = index" class="array-item-inline">
+                        <input type="text" [formControlName]="mi" placeholder="Material composition">
+                        <button type="button" class="btn-remove-small" (click)="removeVariantMaterial(vi, mi)">×</button>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-xs" (click)="addVariantMaterial(vi)">+ Add Material</button>
+                  </div>
+
+                  <!-- GSM -->
+                  <div class="form-group">
+                    <label>Fabric Weight (GSM)</label>
+                    <div [formArrayName]="'gsm'">
+                      <div *ngFor="let gsm of getVariantGsm(vi).controls; let gi = index" class="array-item-inline">
+                        <input type="text" [formControlName]="gi" placeholder="e.g., 180 GSM">
+                        <button type="button" class="btn-remove-small" (click)="removeVariantGsm(vi, gi)">×</button>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-xs" (click)="addVariantGsm(vi)">+ Add GSM</button>
+                  </div>
+
+                  <!-- Variant Image -->
+                  <div class="form-group">
+                    <label>Variant Image</label>
+                    <div class="variant-image-upload">
+                      <div *ngIf="hasVariantImage(vi)" class="image-preview">
+                        <img [src]="getVariantImageUrl(variant.get('image')?.value)" alt="Variant image" />
+                        <p class="image-filename">{{ variant.get('image')?.value }}</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        (change)="onVariantImageSelected($event, vi)"
+                        #variantImageInput
+                        style="display: none;"
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-xs"
+                        (click)="variantImageInput.click()"
+                      >
+                        {{ hasVariantImage(vi) ? '📷 Change Image' : '📷 Upload Image' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addVariant()">+ Add Variant</button>
+          </div>
+
+          <!-- Use Cases -->
+          <div class="form-section">
+            <h3>Use Cases</h3>
+            <div formArrayName="useCases">
+              <div *ngFor="let useCase of useCases.controls; let i = index" class="array-item">
+                <input type="text" [formControlName]="i" placeholder="Use case description">
+                <button type="button" class="btn-remove" (click)="removeUseCase(i)" *ngIf="useCases.length > 1">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addUseCase()">+ Add Use Case</button>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading">
+              {{ loading ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

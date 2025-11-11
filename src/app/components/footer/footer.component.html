@@ -6,7 +6,7 @@
         <div class="footer-logo">
           <img src="/images/logo-white.png" alt="{{ companyInfo.name }}" class="footer-logo-image">
         </div>
-        <p class="company-description">{{ companyInfo.description }}</p>
+        <p class="company-description">{{ companyInfo.description | translate }}</p>
         
         <div class="contact-info">
           <div class="contact-item">
@@ -50,39 +50,39 @@
 
       <!-- Quick Links -->
       <div class="footer-section">
-        <h4 class="section-title">Quick Links</h4>
+        <h4 class="section-title">{{ 'footer.quickLinks.title' | translate }}</h4>
         <ul class="footer-links">
           <li *ngFor="let link of quickLinks">
-            <a [href]="link.href" class="footer-link">{{ link.name }}</a>
+            <a [href]="link.href" class="footer-link">{{ link.translationKey | translate }}</a>
           </li>
         </ul>
       </div>
 
       <!-- Products -->
       <div class="footer-section">
-        <h4 class="section-title">Our Products</h4>
+        <h4 class="section-title">{{ 'footer.products.title' | translate }}</h4>
         <ul class="footer-links">
           <li *ngFor="let category of productCategories">
-            <a [href]="category.href" class="footer-link">{{ category.name }}</a>
+            <a [href]="category.href" class="footer-link">{{ category.translationKey | translate }}</a>
           </li>
         </ul>
       </div>
 
       <!-- Newsletter -->
       <div class="footer-section newsletter-section">
-        <h4 class="section-title">Stay Updated</h4>
+        <h4 class="section-title">{{ 'footer.newsletter.title' | translate }}</h4>
         <p class="newsletter-description">
-          Subscribe to our newsletter for the latest updates on products, special offers, and industry insights.
+          {{ 'footer.newsletter.description' | translate }}
         </p>
         <form class="newsletter-form">
           <div class="input-group">
-            <input 
-              type="email" 
-              placeholder="Enter your email" 
+            <input
+              type="email"
+              [placeholder]="'footer.newsletter.placeholder' | translate"
               class="newsletter-input"
               required>
             <button type="submit" class="newsletter-btn">
-              Subscribe
+              {{ 'footer.newsletter.button' | translate }}
               <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
               </svg>
@@ -95,13 +95,13 @@
             <svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
             </svg>
-            <span>ISO Certified</span>
+            <span>{{ 'footer.badges.isoCertified' | translate }}</span>
           </div>
           <div class="badge">
             <svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
-            <span>Quality Assured</span>
+            <span>{{ 'footer.badges.qualityAssured' | translate }}</span>
           </div>
         </div>
       </div>
@@ -111,12 +111,13 @@
     <div class="footer-bottom">
       <div class="footer-bottom-content">
         <div class="copyright">
-          <p>&copy; {{ currentYear }} {{ companyInfo.name }}. All rights reserved.</p>
+          <p>{{ 'footer.copyright' | translate:{ year: currentYear, company: companyInfo.name } }}</p>
         </div>
+<!--	      TODO-->
         <div class="legal-links">
-          <a href="#privacy" class="legal-link">Privacy Policy</a>
-          <a href="#terms" class="legal-link">Terms of Service</a>
-          <a href="#cookies" class="legal-link">Cookie Policy</a>
+          <a class="legal-link">{{ 'footer.legal.privacy' | translate }}</a>
+          <a class="legal-link">{{ 'footer.legal.terms' | translate }}</a>
+          <a class="legal-link">{{ 'footer.legal.cookies' | translate }}</a>
         </div>
       </div>
     </div>

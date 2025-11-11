@@ -1,58 +1,64 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { QuoteService, QuoteRequest } from '../../services/quote.service';
+import { ProductQuoteService } from '../../services/product-quote.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-quote-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
   templateUrl: './quote-form.component.html',
   styleUrls: ['./quote-form.component.scss']
 })
-export class QuoteFormComponent {
+export class QuoteFormComponent implements OnInit {
   quoteForm: FormGroup;
   isSubmitting = false;
   submitSuccess = false;
   submitError = false;
+  private destroyRef = inject(DestroyRef);
 
   productTypes = [
-    { value: 't-shirts', label: 'Custom T-Shirts' },
-    { value: 'polo-shirts', label: 'Polo Shirts' },
-    { value: 'hoodies', label: 'Hoodies & Sweatshirts' },
-    { value: 'caps', label: 'Custom Caps' },
-    { value: 'jackets', label: 'Jackets & Outerwear' },
-    { value: 'promotional', label: 'Promotional Items' },
-    { value: 'other', label: 'Other (specify in message)' }
+    { value: 't-shirts', translationKey: 'quoteForm.form.productTypes.tshirts' },
+    { value: 'polo-shirts', translationKey: 'quoteForm.form.productTypes.polo' },
+    { value: 'hoodies', translationKey: 'quoteForm.form.productTypes.hoodies' },
+    { value: 'caps', translationKey: 'quoteForm.form.productTypes.caps' },
+    { value: 'jackets', translationKey: 'quoteForm.form.productTypes.jackets' },
+    { value: 'promotional', translationKey: 'quoteForm.form.productTypes.promotional' },
+    { value: 'other', translationKey: 'quoteForm.form.productTypes.other' }
   ];
 
   budgetRanges = [
-    { value: 'under-1000', label: 'Under $1,000' },
-    { value: '1000-5000', label: '$1,000 - $5,000' },
-    { value: '5000-10000', label: '$5,000 - $10,000' },
-    { value: '10000-25000', label: '$10,000 - $25,000' },
-    { value: 'over-25000', label: 'Over $25,000' }
+    { value: 'under-1000', translationKey: 'quoteForm.form.budgetRanges.under1000' },
+    { value: '1000-5000', translationKey: 'quoteForm.form.budgetRanges.1000to5000' },
+    { value: '5000-10000', translationKey: 'quoteForm.form.budgetRanges.5000to10000' },
+    { value: '10000-25000', translationKey: 'quoteForm.form.budgetRanges.10000to25000' },
+    { value: 'over-25000', translationKey: 'quoteForm.form.budgetRanges.over25000' }
   ];
 
   timelines = [
-    { value: 'asap', label: 'ASAP' },
-    { value: '1-week', label: 'Within 1 week' },
-    { value: '2-weeks', label: 'Within 2 weeks' },
-    { value: '1-month', label: 'Within 1 month' },
-    { value: 'flexible', label: 'Flexible timeline' }
+    { value: 'asap', translationKey: 'quoteForm.form.timelines.asap' },
+    { value: '1-week', translationKey: 'quoteForm.form.timelines.1week' },
+    { value: '2-weeks', translationKey: 'quoteForm.form.timelines.2weeks' },
+    { value: '1-month', translationKey: 'quoteForm.form.timelines.1month' },
+    { value: 'flexible', translationKey: 'quoteForm.form.timelines.flexible' }
   ];
 
   additionalServicesList = [
-    { value: 'logo-design', label: 'Logo Design Assistance' },
-    { value: 'rush-delivery', label: 'Rush Delivery' },
-    { value: 'sample-creation', label: 'Sample Creation' },
-    { value: 'packaging', label: 'Custom Packaging' },
-    { value: 'shipping', label: 'Shipping Coordination' }
+    { value: 'logo-design', translationKey: 'quoteForm.form.additionalServicesList.logoDesign' },
+    { value: 'rush-delivery', translationKey: 'quoteForm.form.additionalServicesList.rushDelivery' },
+    { value: 'sample-creation', translationKey: 'quoteForm.form.additionalServicesList.sampleCreation' },
+    { value: 'packaging', translationKey: 'quoteForm.form.additionalServicesList.packaging' },
+    { value: 'shipping', translationKey: 'quoteForm.form.additionalServicesList.shipping' }
   ];
 
   constructor(
     private fb: FormBuilder,
-    private quoteService: QuoteService
+    private quoteService: QuoteService,
+    private productQuoteService: ProductQuoteService,
+    private translate: TranslateService
   ) {
     this.quoteForm = this.fb.group({
       companyName: ['', [Validators.required, Validators.minLength(2)]],
@@ -65,6 +71,39 @@ export class QuoteFormComponent {
       message: ['', [Validators.required, Validators.minLength(10)]],
       budget: ['', Validators.required],
       timeline: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    // Subscribe to product selection using takeUntilDestroyed
+    this.productQuoteService.selectedProduct$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(productInfo => {
+        if (productInfo) {
+          this.prefillProductInfo(productInfo);
+          // Clear the product info after using it
+          this.productQuoteService.clearSelectedProduct();
+        }
+      });
+  }
+
+  private prefillProductInfo(productDetail: { productName: string; category: string }): void {
+    // Map category to productType value
+    const productTypeMap: { [key: string]: string } = {
+      'T-Shirt': 't-shirts',
+      'Polo': 'polo-shirts',
+      'Hoodie': 'hoodies',
+      'Cap': 'caps',
+      'Tote Bag': 'promotional',
+      'Apron': 'promotional'
+    };
+
+    const productTypeValue = productTypeMap[productDetail.category] || '';
+
+    // Prefill the form
+    this.quoteForm.patchValue({
+      productType: productTypeValue,
+      message: `I'm interested in getting a quote for ${productDetail.productName}. `
     });
   }
 
@@ -89,41 +128,44 @@ export class QuoteFormComponent {
   getFieldError(fieldName: string): string {
     const field = this.f[fieldName];
     if (field.errors && field.touched) {
+      const fieldLabel = this.getFieldLabel(fieldName);
+
       if (field.errors['required']) {
-        return `${this.getFieldLabel(fieldName)} is required`;
+        return `${fieldLabel} ${this.translate.instant('quoteForm.form.errors.required')}`;
       }
       if (field.errors['email']) {
-        return 'Please enter a valid email address';
+        return this.translate.instant('quoteForm.form.errors.email');
       }
       if (field.errors['minlength']) {
-        return `${this.getFieldLabel(fieldName)} must be at least ${field.errors['minlength'].requiredLength} characters`;
+        const minLength = field.errors['minlength'].requiredLength;
+        return `${fieldLabel} ${this.translate.instant('quoteForm.form.errors.minLength')} ${minLength} ${this.translate.instant('quoteForm.form.errors.characters')}`;
       }
       if (field.errors['pattern']) {
-        return 'Please enter a valid phone number';
+        return this.translate.instant('quoteForm.form.errors.pattern');
       }
       if (field.errors['min']) {
-        return 'Quantity must be at least 1';
+        return this.translate.instant('quoteForm.form.errors.minQuantity');
       }
       if (field.errors['max']) {
-        return 'Please contact us directly for quantities over 10,000';
+        return this.translate.instant('quoteForm.form.errors.maxQuantity');
       }
     }
     return '';
   }
 
   private getFieldLabel(fieldName: string): string {
-    const labels: { [key: string]: string } = {
-      companyName: 'Company name',
-      contactName: 'Contact name',
-      email: 'Email',
-      phone: 'Phone',
-      productType: 'Product type',
-      quantity: 'Quantity',
-      message: 'Message',
-      budget: 'Budget',
-      timeline: 'Timeline'
+    const labelKeys: { [key: string]: string } = {
+      companyName: 'quoteForm.form.companyName',
+      contactName: 'quoteForm.form.contactName',
+      email: 'quoteForm.form.email',
+      phone: 'quoteForm.form.phone',
+      productType: 'quoteForm.form.productType',
+      quantity: 'quoteForm.form.quantity',
+      message: 'quoteForm.form.message',
+      budget: 'quoteForm.form.budget',
+      timeline: 'quoteForm.form.timeline'
     };
-    return labels[fieldName] || fieldName;
+    return this.translate.instant(labelKeys[fieldName] || fieldName);
   }
 
   onSubmit(): void {

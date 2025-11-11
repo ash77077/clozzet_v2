@@ -36,6 +36,12 @@
               <span>Companies</span>
             </a>
           </li>
+          <li class="nav-item">
+            <a routerLink="/product-management" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-box"></i>
+              <span>Products</span>
+            </a>
+          </li>
         </ul>
       </div>
     </div>
@@ -59,7 +65,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/product-details" class="nav-link" routerLinkActive="active">
+            <a routerLink="/order-blank" class="nav-link" routerLinkActive="active">
               <i class="pi pi-file-plus"></i>
               <span>New Order</span>
             </a>
@@ -72,10 +78,10 @@
     <div class="nav-section quick-actions">
       <div class="nav-group">
         <div class="action-buttons">
-          <button 
-            *ngIf="isAdminOrManager()" 
-            class="btn btn-sm btn-primary" 
-            routerLink="/product-details"
+          <button
+            *ngIf="isAdminOrManager()"
+            class="btn btn-sm btn-primary"
+            routerLink="/order-blank"
             pTooltip="Create new order">
             <i class="pi pi-plus"></i>
             New Order
@@ -99,15 +105,51 @@
       </div>
     </div>
 
-    <!-- User Info & Notifications -->
+    <!-- User Icon & Dropdown -->
     <div class="nav-section user-section">
-      <div class="user-info" *ngIf="currentUser">
-        <div class="user-avatar">
+      <div class="user-dropdown-container" *ngIf="currentUser">
+        <button class="user-icon-btn" (click)="toggleUserMenu($event)" pTooltip="User menu">
           <i class="pi pi-user"></i>
-        </div>
-        <div class="user-details">
-          <span class="user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</span>
-          <span class="user-role">{{ currentUser.role | titlecase }}</span>
+        </button>
+
+        <!-- User Dropdown Menu -->
+        <div class="user-dropdown-menu" [class.active]="showUserMenu">
+          <div class="user-dropdown-header">
+            <div class="user-avatar">
+              <i class="pi pi-user"></i>
+            </div>
+            <div class="user-info">
+              <span class="user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</span>
+              <span class="user-email">{{ currentUser.email }}</span>
+              <span class="user-role-badge">{{ currentUser.role | titlecase }}</span>
+            </div>
+          </div>
+          <div class="user-dropdown-divider"></div>
+          <button class="user-dropdown-item" routerLink="/dashboard" (click)="showUserMenu = false">
+            <i class="pi pi-home"></i>
+            Dashboard
+          </button>
+          <div class="user-dropdown-divider"></div>
+          <div class="user-dropdown-section">
+            <span class="user-dropdown-section-title">
+              <i class="pi pi-globe"></i>
+              {{ 'navbar.language' | translate }}
+            </span>
+            <button
+              *ngFor="let lang of languages"
+              class="user-dropdown-item language-item"
+              [class.active]="currentLanguage === lang.code"
+              (click)="switchLanguage(lang.code)">
+              <span class="flag">{{ lang.flag }}</span>
+              <span class="lang-name">{{ lang.name }}</span>
+              <i *ngIf="currentLanguage === lang.code" class="pi pi-check check-icon"></i>
+            </button>
+          </div>
+          <div class="user-dropdown-divider"></div>
+          <button class="user-dropdown-item logout" (click)="logout()">
+            <i class="pi pi-sign-out"></i>
+            Logout
+          </button>
         </div>
       </div>
     </div>

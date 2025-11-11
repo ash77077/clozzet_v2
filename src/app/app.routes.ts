@@ -40,7 +40,7 @@ export const routes: Routes = [
   },
   {
     path: 'users',
-    loadComponent: () => import('./pages/users-management/users-management.component').then(m => m.UsersManagementComponent),
+    loadComponent: () => import('./dashboard/pages/user-management/user-management.component').then(m => m.UserManagementComponent),
     canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
   },
   {
@@ -63,29 +63,28 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/manufacturing/manufacturing.component').then(m => m.ManufacturingComponent),
     canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
   },
-  // Product sub-routes
   {
-    path: 'products/tshirts',
-    loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
+    path: 'product-management',
+    loadComponent: () => import('./dashboard/pages/product-management/product-management.component').then(m => m.ProductManagementComponent),
+    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
   },
   {
-    path: 'products/polos',
-    loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
+    path: 'user-management',
+    loadComponent: () => import('./dashboard/pages/user-management/user-management.component').then(m => m.UserManagementComponent),
+    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
+  },
+  // Order Blank routes
+  {
+    path: 'order-blank',
+    loadComponent: () => import('./components/order-blank/order-blank.component').then(m => m.OrderBlankComponent)
   },
   {
-    path: 'products/hoodies',
-    loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
+    path: 'order-blank/:id',
+    loadComponent: () => import('./components/order-blank/order-blank.component').then(m => m.OrderBlankComponent)
   },
+  // Dynamic product route - handles any product ID
   {
-    path: 'products/caps',
-    loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
-  },
-  {
-    path: 'products/jackets',
-    loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
-  },
-  {
-    path: 'products/promotional',
+    path: 'products/:id',
     loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
   },
   // Service sub-routes

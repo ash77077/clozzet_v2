@@ -157,11 +157,11 @@
                   id="productType"
                   formControlName="productType"
                   [class.error]="f['productType'].invalid && !f['productType'].untouched">
-                  <option value="">Select a product type</option>
-                  <option 
+                  <option value="">{{ 'quoteForm.form.placeholders.productType' | translate }}</option>
+                  <option
                     *ngFor="let product of productTypes; trackBy: trackByValue"
                     [value]="product.value">
-                    {{ product.label }}
+                    {{ product.translationKey | translate }}
                   </option>
                 </select>
                 <div class="error-message" *ngIf="getFieldError('productType')">
@@ -192,11 +192,11 @@
                   id="budget"
                   formControlName="budget"
                   [class.error]="f['budget'].invalid && !f['budget'].untouched">
-                  <option value="">Select your budget range</option>
-                  <option 
+                  <option value="">{{ 'quoteForm.form.placeholders.budget' | translate }}</option>
+                  <option
                     *ngFor="let budget of budgetRanges; trackBy: trackByValue"
                     [value]="budget.value">
-                    {{ budget.label }}
+                    {{ budget.translationKey | translate }}
                   </option>
                 </select>
                 <div class="error-message" *ngIf="getFieldError('budget')">
@@ -210,11 +210,11 @@
                   id="timeline"
                   formControlName="timeline"
                   [class.error]="f['timeline'].invalid && !f['timeline'].untouched">
-                  <option value="">Select your timeline</option>
-                  <option 
+                  <option value="">{{ 'quoteForm.form.placeholders.timeline' | translate }}</option>
+                  <option
                     *ngFor="let timeline of timelines; trackBy: trackByValue"
                     [value]="timeline.value">
-                    {{ timeline.label }}
+                    {{ timeline.translationKey | translate }}
                   </option>
                 </select>
                 <div class="error-message" *ngIf="getFieldError('timeline')">
@@ -236,7 +236,7 @@
                   [id]="service.value"
                   [checked]="isServiceSelected(service.value)"
                   (change)="onServiceChange(service.value, $event.target)">
-                <label [for]="service.value">{{ service.label }}</label>
+                <label [for]="service.value">{{ service.translationKey | translate }}</label>
               </div>
             </div>
           </div>

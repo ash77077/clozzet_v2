@@ -1,14 +1,185 @@
 <div class="products-page page-wrapper">
-  <!-- Page Header -->
-  <section class="page-header">
-    <div class="container">
-      <h1 class="page-title">Our Products</h1>
-      <p class="page-subtitle">
-        Discover our comprehensive range of premium branded apparel and promotional merchandise
-      </p>
-    </div>
-  </section>
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading product details...</p>
+  </div>
 
-  <!-- Products Showcase -->
-  <app-products></app-products>
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <div class="error-message">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <h2>{{ error }}</h2>
+      <a routerLink="/products" class="btn btn-primary">View All Products</a>
+    </div>
+  </div>
+
+  <!-- Show product detail page if a specific product is selected -->
+  <div *ngIf="currentProduct && !loading && !error; else allProducts" class="product-detail-page">
+    <!-- Product Header -->
+    <section class="product-header">
+      <div class="container">
+        <div class="breadcrumb">
+          <a routerLink="/">Home</a>
+          <span class="separator">/</span>
+          <a routerLink="/products">Products</a>
+          <span class="separator">/</span>
+          <span class="current">{{ currentProduct.name }}</span>
+        </div>
+        <h1 class="product-title">{{ currentProduct.name }}</h1>
+        <p class="product-tagline">{{ currentProduct.tagline }}</p>
+      </div>
+    </section>
+
+    <!-- Product Main Content -->
+    <section class="product-content">
+      <div class="container">
+        <div class="product-layout">
+          <!-- Image Gallery -->
+          <div class="product-images">
+            <div class="main-image">
+              <img [src]="currentProduct.images[selectedImageIndex]" [alt]="currentProduct.name">
+            </div>
+            <div class="image-thumbnails">
+              <div
+                *ngFor="let image of currentProduct.images; let i = index"
+                class="thumbnail"
+                [class.active]="selectedImageIndex === i"
+                (click)="selectImage(i)">
+                <img [src]="image" [alt]="currentProduct.name">
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Info -->
+          <div class="product-info">
+            <div class="price-section">
+              <span class="price-label">Starting from</span>
+              <span class="price">${{ currentProduct.startingPrice }}</span>
+              <span class="price-note">per unit</span>
+            </div>
+
+            <div class="description">
+              <h2>About This Product</h2>
+              <p>{{ currentProduct.description }}</p>
+            </div>
+
+            <div class="features-section">
+              <h3>Key Features</h3>
+              <ul class="features-list">
+                <li *ngFor="let feature of currentProduct.features">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  {{ feature }}
+                </li>
+              </ul>
+            </div>
+
+            <div class="cta-buttons">
+              <button class="btn btn-primary btn-lg" (click)="requestQuote()">
+                Get Custom Quote
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+              </button>
+              <a href="tel:+37444010744" class="btn btn-secondary btn-lg">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                Call Us
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Product Variants -->
+    <section class="product-variants">
+      <div class="container">
+        <h2 class="section-title">Available Variants</h2>
+        <div class="variants-grid">
+          <div *ngFor="let variant of currentProduct.variants" class="variant-card">
+            <h3>{{ variant.name }}</h3>
+
+            <div class="variant-detail">
+              <h4>Available Colors</h4>
+              <div class="color-chips">
+                <span *ngFor="let color of variant.colors" class="color-chip">{{ color }}</span>
+              </div>
+            </div>
+
+            <div class="variant-detail">
+              <h4>Sizes</h4>
+              <div class="size-chips">
+                <span *ngFor="let size of variant.sizes" class="size-chip">{{ size }}</span>
+              </div>
+            </div>
+
+            <div class="variant-detail">
+              <h4>Materials</h4>
+              <ul class="material-list">
+                <li *ngFor="let material of variant.materials">{{ material }}</li>
+              </ul>
+            </div>
+
+            <div class="variant-detail" *ngIf="variant.gsm && variant.gsm.length > 0">
+              <h4>Fabric Weight</h4>
+              <ul class="gsm-list">
+                <li *ngFor="let gsm of variant.gsm">{{ gsm }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section class="use-cases">
+      <div class="container">
+        <h2 class="section-title">Perfect For</h2>
+        <div class="use-cases-grid">
+          <div *ngFor="let useCase of currentProduct.useCases" class="use-case-card">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="40" height="40">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p>{{ useCase }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="product-cta">
+      <div class="container">
+        <div class="cta-content">
+          <h2>Ready to Order?</h2>
+          <p>Get a custom quote for {{ currentProduct.name }} tailored to your specific requirements.</p>
+          <button class="btn btn-primary btn-lg" (click)="requestQuote()">
+            Request Free Quote
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Show all products if no specific product is selected -->
+  <ng-template #allProducts>
+    <section class="page-header">
+      <div class="container">
+        <h1 class="page-title">Our Products</h1>
+        <p class="page-subtitle">
+          Discover our comprehensive range of premium branded apparel and promotional merchandise
+        </p>
+      </div>
+    </section>
+
+    <app-products></app-products>
+  </ng-template>
 </div>

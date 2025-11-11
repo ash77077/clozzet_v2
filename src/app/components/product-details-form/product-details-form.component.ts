@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ProductDetailsService, ProductDetailsFormData } from '../../services/product-details.service';
 import { getPriorityDisplayName } from '../../shared/utils/priority.utils';
@@ -34,7 +35,8 @@ export class ProductDetailsFormComponent {
   submitSuccess = false;
   submitError = false;
   selectedClothType = '';
-  
+  submittedOrderId: string | null = null;
+
   // File upload properties
   logoFiles: File[] = [];
   designFiles: File[] = [];
@@ -100,7 +102,8 @@ export class ProductDetailsFormComponent {
 
   constructor(
     private fb: FormBuilder,
-    private productDetailsService: ProductDetailsService
+    private productDetailsService: ProductDetailsService,
+    private router: Router
   ) {
     this.productForm = this.createForm();
     this.setupFormWatchers();
@@ -476,9 +479,15 @@ export class ProductDetailsFormComponent {
           this.isSubmitting = false;
           this.submitSuccess = true;
 
-          // Reset form after success
+          // Store the order ID from response
+          if (response?.data?._id) {
+            this.submittedOrderId = response.data._id;
+          }
+
+          // Reset form after success (but keep submittedOrderId for the button)
           setTimeout(() => {
             this.submitSuccess = false;
+            this.submittedOrderId = null;
             this.productForm.reset();
             this.selectedClothType = '';
             // Reset file uploads
@@ -486,7 +495,7 @@ export class ProductDetailsFormComponent {
             this.designFiles = [];
             this.referenceImages = [];
             this.uploadedFilePaths = {};
-          }, 3000);
+          }, 10000); // Extended to 10 seconds to give time to click the button
         },
         error: (error) => {
           console.error('Error submitting product details:', error);
@@ -520,6 +529,12 @@ export class ProductDetailsFormComponent {
 
   selectPriority(priority: string): void {
     this.productForm.patchValue({ priority });
+  }
+
+  viewOrderBlank(): void {
+    if (this.submittedOrderId) {
+      this.router.navigate(['/order-blank', this.submittedOrderId]);
+    }
   }
 
   getPriorityDisplayName = getPriorityDisplayName;

@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss']
 })
@@ -20,31 +21,31 @@ export class FooterComponent {
       this.shouldHideFooter = !!user; // Hide footer if user is logged in
     });
   }
-  
+
   companyInfo = {
     name: 'CLOZZET',
     tagline: 'Premium Branded Textiles',
-    description: 'Your trusted partner for high-quality custom branded apparel and promotional merchandise.',
+    description: 'footer.description',
     email: 'clozzet.corp@gmail.com',
     phone: '+374 (44) 01 07 44',
-    address: '123 Business District, Corporate City, CC 12345'
+    address: 'Sevan Street 86/3, Yerevan'
   };
 
   quickLinks = [
-    { name: 'About Us', href: '#about' },
-    { name: 'Products', href: '#products' },
-    { name: 'Services', href: '#services' },
-    { name: 'Get Quote', href: '#quote' },
-    { name: 'Contact', href: '#contact' }
+    { translationKey: 'footer.quickLinks.aboutUs', href: '#about' },
+    { translationKey: 'footer.quickLinks.products', href: '#products' },
+    { translationKey: 'footer.quickLinks.services', href: '#services' },
+    { translationKey: 'footer.quickLinks.getQuote', href: '#quote' },
+    { translationKey: 'footer.quickLinks.contact', href: '#contact' }
   ];
 
   productCategories = [
-    { name: 'Custom T-Shirts', href: '#tshirts' },
-    { name: 'Polo Shirts', href: '#polos' },
-    { name: 'Hoodies', href: '#hoodies' },
-    { name: 'Custom Caps', href: '#caps' },
-    { name: 'Jackets', href: '#jackets' },
-    { name: 'Promotional Items', href: '#promotional' }
+    { translationKey: 'footer.products.tshirts', href: '#tshirts' },
+    { translationKey: 'footer.products.polos', href: '#polos' },
+    { translationKey: 'footer.products.hoodies', href: '#hoodies' },
+    { translationKey: 'footer.products.caps', href: '#caps' },
+    { translationKey: 'footer.products.jackets', href: '#jackets' },
+    { translationKey: 'footer.products.promotional', href: '#promotional' }
   ];
 
   socialLinks = [
