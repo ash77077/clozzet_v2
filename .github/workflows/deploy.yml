@@ -25,6 +25,21 @@ jobs:
       - name: Build Angular application
         run: npm run build -- --configuration=production
 
+      - name: Debug SSH Key
+        run: |
+          echo "Checking SSH key format..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/temp_key
+          chmod 600 ~/.ssh/temp_key
+          head -1 ~/.ssh/temp_key
+          tail -1 ~/.ssh/temp_key
+          echo "Key length: $(wc -l < ~/.ssh/temp_key) lines"
+
+      - name: Test SSH Connection
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/temp_key \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful!'"
+
       - name: Deploy to VPS via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
