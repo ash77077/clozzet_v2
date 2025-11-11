@@ -40,13 +40,6 @@ jobs:
 #          ssh -o StrictHostKeyChecking=no -i ~/.ssh/temp_key \
 #            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "echo 'SSH connection successful!'"
 
-      - name: Verify built files
-        run: |
-            echo "=== Checking build output ==="
-            ls -la dist/clozzet_v2/*
-            echo "=== Sample files ==="
-            find dist/clozzet_v2/browser/ -name "*.html" -o -name "*.js" | head -1
-
 
       - name: Deploy to VPS via SSH
         uses: appleboy/scp-action@v0.1.7
@@ -55,7 +48,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          source: "dist/clozzet_v2/*"
+          source: "dist/clozzet_v2/"
           target: "/tmp/clozzet-deploy"
           strip_components: 1
 
