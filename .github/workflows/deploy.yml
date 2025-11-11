@@ -10,35 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      #      - name: Checkout code
-      #        uses: actions/checkout@v4
-      #
-      #      - name: Setup Node.js
-      #        uses: actions/setup-node@v4
-      #        with:
-      #          node-version: '20'
-      #          cache: 'npm'
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      #      - name: Install dependencies
-      #        run: npm ci
-      #
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Build Angular application
         run: npm run build -- --configuration=production
-
-      - name: Debug file matching for SCP
-        run: |
-            echo "=== Testing file patterns ==="
-            cd dist/clozzet_v2/browser
-            echo "Files in browser directory:"
-            ls -la
-            echo "Total files: $(find . -type f | wc -l)"
-            echo "Testing pattern 'dist/clozzet_v2/browser/*':"
-            shopt -s nullglob
-            files=(dist/clozzet_v2/browser/*)
-            echo "Number of files matched: ${#files[@]}"
-            for file in "${files[@]:0:5}"; do
-              echo "Matched: $file"
-            done
 
       - name: Debug SSH Key
         run: |
