@@ -1,0 +1,350 @@
+<div class="retail-sales-container">
+  <div class="header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1>Retail Sales Management</h1>
+        <p>Manage your retail products and track sales by variant</p>
+      </div>
+      <p-button
+        [label]="showStats ? 'Hide Statistics' : 'Show Statistics'"
+        [icon]="showStats ? 'pi pi-eye-slash' : 'pi pi-eye'"
+        [severity]="showStats ? 'secondary' : 'info'"
+        (onClick)="toggleStats()">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid" *ngIf="showStats">
+    <div class="stat-card">
+      <div class="stat-icon available">📦</div>
+      <div class="stat-content">
+        <h3>{{ getAvailableCount() }}</h3>
+        <p>Total Stock</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon sold">✓</div>
+      <div class="stat-content">
+        <h3>{{ getSoldCount() }}</h3>
+        <p>Total Sold</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon revenue">💰</div>
+      <div class="stat-content">
+        <h3>{{ formatCurrency(getTotalRevenue()) }}</h3>
+        <p>Total Revenue</p>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon total">📊</div>
+      <div class="stat-content">
+        <h3>{{ products.length }}</h3>
+        <p>Products</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Actions -->
+  <div class="controls">
+    <div class="filters">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange()"
+          placeholder="Search products...">
+      </div>
+
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="filterStatus" (change)="onFilterChange()">
+          <option value="all">All Products</option>
+          <option value="available">Available</option>
+          <option value="sold">Sold Items</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" (click)="openAddModal()">
+      + Add New Product
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading products...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-message" *ngIf="error && !isLoading">
+    {{ error }}
+  </div>
+
+  <!-- Products by Category Tabs -->
+  <div class="products-content" *ngIf="!isLoading && !error">
+    <div class="tabs-wrapper" *ngIf="getCategories().length > 0">
+      <p-tabs styleClass="category-tabs" [scrollable]="true">
+        <p-tablist>
+          <p-tab *ngFor="let category of getCategories()" [value]="category">
+            <div class="tab-header">
+              <span class="tab-title">{{ category }}</span>
+              <p-tag [value]="getProductsByCategory(category).length.toString()" severity="info"></p-tag>
+            </div>
+          </p-tab>
+        </p-tablist>
+
+      <p-tabpanels>
+        <p-tabpanel *ngFor="let category of getCategories()" [value]="category">
+
+        <!-- Category Stats -->
+        <div class="category-stats">
+          <div class="category-stat">
+            <i class="pi pi-box"></i>
+            <span>Available: {{ getCategoryStats(category).available }}</span>
+          </div>
+          <div class="category-stat" *ngIf="showStats">
+            <i class="pi pi-check-circle"></i>
+            <span>Sold: {{ getCategoryStats(category).sold }}</span>
+          </div>
+          <div class="category-stat" *ngIf="showStats">
+            <i class="pi pi-dollar"></i>
+            <span>Revenue: {{ formatCurrency(getCategoryStats(category).revenue) }}</span>
+          </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-grid">
+          <p-card *ngFor="let product of getProductsByCategory(category)" styleClass="product-card">
+            <ng-template pTemplate="header">
+              <div class="product-header">
+                <h3>{{ product.name }}</h3>
+                <div class="product-price">{{ formatCurrency(product.price) }}</div>
+              </div>
+            </ng-template>
+
+            <div class="product-body">
+              <p class="product-description">{{ product.description }}</p>
+
+              <!-- Variants Display -->
+              <div class="variants-section">
+                <h4>Variants:</h4>
+                <div class="variants-grid-display">
+                  <div *ngFor="let variant of product.variants" class="variant-chip"
+                       [class.out-of-stock]="getAvailableQuantity(variant) === 0">
+                    <div class="variant-info">
+                      <span class="variant-label">{{ variant.color }} - {{ variant.size }}</span>
+                      <p-tag
+                        [value]="getAvailableQuantity(variant).toString()"
+                        [severity]="getAvailableQuantity(variant) > 0 ? 'success' : 'danger'">
+                      </p-tag>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Product Stats -->
+              <div class="product-stats">
+                <div class="stat">
+                  <span class="stat-label">Total Stock:</span>
+                  <span class="stat-value">{{ product.totalQuantity }}</span>
+                </div>
+                <div class="stat" *ngIf="showStats">
+                  <span class="stat-label">Sold:</span>
+                  <span class="stat-value">{{ product.totalSold }}</span>
+                </div>
+              </div>
+            </div>
+
+            <ng-template pTemplate="footer">
+              <div class="product-actions">
+                <p-button
+                  *ngIf="product.totalQuantity > 0"
+                  label="Sell"
+                  icon="pi pi-shopping-cart"
+                  severity="success"
+                  (onClick)="openSellModal(product)">
+                </p-button>
+                <p-button
+                  label="Delete"
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [outlined]="true"
+                  (onClick)="deleteProduct(product)">
+                </p-button>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+        </p-tabpanel>
+      </p-tabpanels>
+      </p-tabs>
+    </div>
+
+    <!-- No Products Message -->
+    <div *ngIf="getCategories().length === 0" class="no-products">
+      <i class="pi pi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+      <p>No products found</p>
+      <button class="btn btn-primary" (click)="openAddModal()">Add Your First Product</button>
+    </div>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Add New Product</h2>
+        <button class="close-btn" (click)="closeAddModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Product Name *</label>
+          <input type="text" [(ngModel)]="newProduct.name" placeholder="Enter product name">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="newProduct.description" placeholder="Enter description"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price *</label>
+            <input type="number" [(ngModel)]="newProduct.price" placeholder="0.00">
+          </div>
+
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" [(ngModel)]="newProduct.category" placeholder="e.g., T-Shirt, Hoodie">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Material</label>
+          <input type="text" [(ngModel)]="newProduct.material" placeholder="e.g., Cotton, Polyester">
+        </div>
+
+        <div class="form-group">
+          <label>Variants *</label>
+          <div class="variants-section">
+            <div *ngFor="let variant of variantInputs; let i = index" class="variant-input-row">
+              <select [(ngModel)]="variant.size" class="variant-select">
+                <option value="">Select Size</option>
+                <option *ngFor="let size of availableSizes" [value]="size">{{ size }}</option>
+              </select>
+              <select [(ngModel)]="variant.color" class="variant-select">
+                <option value="">Select Color</option>
+                <option *ngFor="let color of availableColors" [value]="color">{{ color }}</option>
+              </select>
+              <input type="number" [(ngModel)]="variant.quantity" placeholder="Qty" min="1" class="variant-qty">
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeVariantInput(i)" *ngIf="variantInputs.length > 1">Remove</button>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addVariantInput()">+ Add Variant</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="addProduct()">Add Product</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sell Variant Modal -->
+  <div class="modal-overlay" *ngIf="showSellModal" (click)="closeSellModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Sell: {{ selectedProduct?.name }}</h2>
+        <button class="close-btn" (click)="closeSellModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Select variant to sell:</p>
+
+        <div class="variants-grid">
+          <div
+            *ngFor="let variant of selectedProduct?.variants"
+            class="variant-card"
+            [class.selected]="selectedVariant === variant"
+            [class.disabled]="getAvailableQuantity(variant) === 0"
+            (click)="getAvailableQuantity(variant) > 0 && selectVariant(variant)">
+            <div class="variant-info">
+              <strong>{{ variant.color }} - {{ variant.size }}</strong>
+              <span class="stock">Available: {{ getAvailableQuantity(variant) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedVariant" class="sell-details">
+          <div class="form-group">
+            <label>Quantity to Sell</label>
+            <input
+              type="number"
+              [(ngModel)]="sellQuantity"
+              [max]="getAvailableQuantity(selectedVariant)"
+              min="1"
+              placeholder="Enter quantity">
+            <small>Max: {{ getAvailableQuantity(selectedVariant) }}</small>
+          </div>
+
+          <div class="form-group">
+            <label>Sell Price (per unit)</label>
+            <input type="number" [(ngModel)]="sellPrice" placeholder="Enter sell price">
+            <small>Default Price: {{ formatCurrency(selectedProduct?.price || 0) }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeSellModal()">Cancel</button>
+        <button
+          class="btn btn-success"
+          (click)="sellVariant()"
+          [disabled]="!selectedVariant">
+          Confirm Sale
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN Modal -->
+  <p-dialog
+    header="Enter PIN"
+    [(visible)]="showPinModal"
+    [modal]="true"
+    [style]="{width: '400px'}"
+    [draggable]="false"
+    [resizable]="false">
+    <div class="pin-modal-content">
+      <p>Please enter PIN to view statistics</p>
+      <div class="pin-input-wrapper">
+        <input
+          type="password"
+          pInputText
+          [(ngModel)]="pinInput"
+          placeholder="Enter PIN"
+          maxlength="4"
+          (keyup.enter)="submitPin()"
+          autocomplete="off"
+          class="pin-input" />
+      </div>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        (onClick)="closePinModal()">
+      </p-button>
+      <p-button
+        label="Submit"
+        icon="pi pi-check"
+        (onClick)="submitPin()"
+        [disabled]="!pinInput || pinInput.length !== 4">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- PrimeNG Components -->
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+</div>
