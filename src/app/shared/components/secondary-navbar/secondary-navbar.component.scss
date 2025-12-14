@@ -15,23 +15,30 @@
     grid-template-columns: 1fr auto auto auto;
     gap: 2rem;
     align-items: center;
-    
+
     @media (max-width: 1200px) {
       grid-template-columns: 1fr auto;
       gap: 1rem;
     }
-    
+
     @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-      gap: 1rem;
+      grid-template-columns: 1fr auto;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
     }
   }
   
   .nav-section {
     &.quick-actions {
       @media (max-width: 768px) {
-        order: -1;
+        display: none;
       }
+    }
+
+    @media (max-width: 768px) {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
   
@@ -69,15 +76,29 @@
           font-size: 0.875rem;
           transition: all 0.3s ease;
           position: relative;
-          
+
+          @media (max-width: 768px) {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+          }
+
           i {
             font-size: 1rem;
             width: 16px;
             text-align: center;
+
+            @media (max-width: 768px) {
+              font-size: 0.9rem;
+              width: 14px;
+            }
           }
-          
+
           span:not(.badge) {
             white-space: nowrap;
+
+            @media (max-width: 768px) {
+              display: none;
+            }
           }
           
           .badge {
@@ -89,7 +110,16 @@
             border-radius: 1rem;
             min-width: 18px;
             text-align: center;
-            
+
+            @media (max-width: 768px) {
+              position: absolute;
+              top: 0;
+              right: 0;
+              padding: 0.15rem 0.35rem;
+              font-size: 0.65rem;
+              min-width: 16px;
+            }
+
             &.urgent {
               background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
               animation: pulse-glow 2s infinite;
@@ -200,6 +230,11 @@
         transition: all 0.3s ease;
         box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
 
+        @media (max-width: 768px) {
+          width: 36px;
+          height: 36px;
+        }
+
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(52, 152, 219, 0.5);
@@ -208,6 +243,10 @@
         i {
           color: white;
           font-size: 1.1rem;
+
+          @media (max-width: 768px) {
+            font-size: 1rem;
+          }
         }
       }
 

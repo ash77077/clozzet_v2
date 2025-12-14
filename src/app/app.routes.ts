@@ -73,6 +73,11 @@ export const routes: Routes = [
     loadComponent: () => import('./dashboard/pages/user-management/user-management.component').then(m => m.UserManagementComponent),
     canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
   },
+  {
+    path: 'retail-sales',
+    loadComponent: () => import('./dashboard/pages/retail-sales/retail-sales.component').then(m => m.RetailSalesComponent),
+    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
+  },
   // Order Blank routes
   {
     path: 'order-blank',
