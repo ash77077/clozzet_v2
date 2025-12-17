@@ -10,7 +10,35 @@ export interface ProductVariant {
   soldQuantity: number;
 }
 
+export interface ProductVariantInput {
+  size: string;
+  color: string;
+  quantity: number;
+}
+
+export interface UpdateRetailProductDto {
+  name?: string;
+  description?: string;
+  price?: number;
+  category?: string;
+  material?: string;
+  images?: string[];
+  variants?: ProductVariantInput[];
+}
+
 export interface SaleRecord {
+  size: string;
+  color: string;
+  quantity: number;
+  soldPrice: number;
+  soldDate: Date;
+}
+
+export interface SaleListItem {
+  saleId: string;
+  productId: string;
+  productName: string;
+  category: string;
   size: string;
   color: string;
   quantity: number;
@@ -23,6 +51,7 @@ export interface RetailProduct {
   name: string;
   description: string;
   price: number;
+  costPrice: number;
   category: string;
   material?: string;
   images: string[];
@@ -69,7 +98,7 @@ export class RetailProductsService {
     return this.http.post<RetailProduct>(this.apiUrl, product);
   }
 
-  updateRetailProduct(id: string, product: Partial<RetailProduct>): Observable<RetailProduct> {
+  updateRetailProduct(id: string, product: UpdateRetailProductDto): Observable<RetailProduct> {
     return this.http.patch<RetailProduct>(`${this.apiUrl}/${id}`, product);
   }
 
@@ -100,5 +129,20 @@ export class RetailProductsService {
 
   getProductImageUrl(filename: string): string {
     return `${environment.apiUrl}/retail-products/image/${filename}`;
+  }
+
+  // Get all sales history
+  getAllSales(): Observable<SaleListItem[]> {
+    return this.http.get<SaleListItem[]>(`${this.apiUrl}/sales/all`);
+  }
+
+  // Return/undo a sale
+  returnSale(productId: string, saleId: string): Observable<RetailProduct> {
+    return this.http.post<RetailProduct>(`${this.apiUrl}/${productId}/return-sale/${saleId}`, {});
+  }
+
+  // Update sold price of a sale
+  updateSalePrice(productId: string, saleId: string, newPrice: number): Observable<RetailProduct> {
+    return this.http.patch<RetailProduct>(`${this.apiUrl}/${productId}/update-sale-price/${saleId}`, { newPrice });
   }
 }

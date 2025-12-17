@@ -67,9 +67,14 @@
       </div>
     </div>
 
-    <button class="btn btn-primary" (click)="openAddModal()">
-      + Add New Product
-    </button>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn btn-success" (click)="openSalesListModal()">
+        📋 View Sales History
+      </button>
+      <button class="btn btn-primary" (click)="openAddModal()">
+        + Add New Product
+      </button>
+    </div>
   </div>
 
   <!-- Loading State -->
@@ -168,6 +173,13 @@
                   (onClick)="openSellModal(product)">
                 </p-button>
                 <p-button
+                  label="Edit"
+                  icon="pi pi-pencil"
+                  severity="info"
+                  [outlined]="true"
+                  (onClick)="openEditModal(product)">
+                </p-button>
+                <p-button
                   label="Delete"
                   icon="pi pi-trash"
                   severity="danger"
@@ -211,19 +223,29 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Price *</label>
-            <input type="number" [(ngModel)]="newProduct.price" placeholder="0.00">
+            <label>Sell Price * (AMD)</label>
+            <input type="number" [(ngModel)]="newProduct.price" placeholder="0" min="0">
           </div>
 
           <div class="form-group">
-            <label>Category</label>
-            <input type="text" [(ngModel)]="newProduct.category" placeholder="e.g., T-Shirt, Hoodie">
+            <label>Cost Price * (AMD)</label>
+            <input type="number" [(ngModel)]="newProduct.costPrice" placeholder="0" min="0">
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Material</label>
-          <input type="text" [(ngModel)]="newProduct.material" placeholder="e.g., Cotton, Polyester">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select [(ngModel)]="newProduct.category">
+              <option value="">Select Category</option>
+              <option *ngFor="let category of availableCategories" [value]="category">{{ category }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Material</label>
+            <input type="text" [(ngModel)]="newProduct.material" placeholder="e.g., Cotton, Polyester">
+          </div>
         </div>
 
         <div class="form-group">
@@ -248,6 +270,70 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
         <button class="btn btn-primary" (click)="addProduct()">Add Product</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Product Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit Product</h2>
+        <button class="close-btn" (click)="closeEditModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Product Name *</label>
+          <input type="text" [(ngModel)]="editProduct.name" placeholder="Enter product name">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="editProduct.description" placeholder="Enter description"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price *</label>
+            <input type="number" [(ngModel)]="editProduct.price" placeholder="0.00">
+          </div>
+
+          <div class="form-group">
+            <label>Category *</label>
+            <select [(ngModel)]="editProduct.category">
+              <option value="">Select Category</option>
+              <option *ngFor="let category of availableCategories" [value]="category">{{ category }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Material</label>
+          <input type="text" [(ngModel)]="editProduct.material" placeholder="e.g., Cotton, Polyester">
+        </div>
+
+        <div class="form-group">
+          <label>Variants *</label>
+          <div class="variants-section">
+            <div *ngFor="let variant of variantInputs; let i = index" class="variant-input-row">
+              <select [(ngModel)]="variant.size" class="variant-select">
+                <option value="">Select Size</option>
+                <option *ngFor="let size of availableSizes" [value]="size">{{ size }}</option>
+              </select>
+              <select [(ngModel)]="variant.color" class="variant-select">
+                <option value="">Select Color</option>
+                <option *ngFor="let color of availableColors" [value]="color">{{ color }}</option>
+              </select>
+              <input type="number" [(ngModel)]="variant.quantity" placeholder="Qty" min="0" class="variant-qty">
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeVariantInput(i)" *ngIf="variantInputs.length > 1">Remove</button>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addVariantInput()">+ Add Variant</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="updateProduct()">Update Product</button>
       </div>
     </div>
   </div>
@@ -303,6 +389,89 @@
           [disabled]="!selectedVariant">
           Confirm Sale
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales List Modal -->
+  <div class="modal-overlay" *ngIf="showSalesModal" (click)="closeSalesModal()">
+    <div class="modal modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Sales History</h2>
+        <button class="close-btn" (click)="closeSalesModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="isLoadingSales" class="loading">
+          <p>Loading sales...</p>
+        </div>
+
+        <div *ngIf="!isLoadingSales && sales.length === 0" class="no-sales">
+          <p>No sales history found</p>
+        </div>
+
+        <div *ngIf="!isLoadingSales && sales.length > 0" class="sales-table-container">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Variant</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let sale of sales">
+                <td>{{ formatDate(sale.soldDate) }}</td>
+                <td>{{ sale.productName }}</td>
+                <td>{{ sale.category }}</td>
+                <td>{{ sale.color }} - {{ sale.size }}</td>
+                <td>{{ sale.quantity }}</td>
+                <td>{{ formatCurrency(sale.soldPrice) }}</td>
+                <td>{{ formatCurrency(sale.soldPrice * sale.quantity) }}</td>
+                <td>
+                  <button class="btn btn-sm btn-warning" (click)="openEditPriceModal(sale)" title="Edit Price">
+                    💰
+                  </button>
+                  <button class="btn btn-sm btn-danger" (click)="confirmReturnSale(sale)" title="Return">
+                    ↩️
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeSalesModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Price Modal -->
+  <div class="modal-overlay" *ngIf="showEditPriceModal" (click)="closeEditPriceModal()">
+    <div class="modal modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit Sold Price</h2>
+        <button class="close-btn" (click)="closeEditPriceModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Product: {{ selectedSale?.productName }}</label>
+          <label>Variant: {{ selectedSale?.color }} - {{ selectedSale?.size }}</label>
+          <label>Current Price: {{ formatCurrency(selectedSale?.soldPrice || 0) }}</label>
+        </div>
+        <div class="form-group">
+          <label>New Price (AMD) *</label>
+          <input type="number" [(ngModel)]="newSoldPrice" placeholder="Enter new price" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeEditPriceModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="updateSoldPrice()">Update Price</button>
       </div>
     </div>
   </div>
