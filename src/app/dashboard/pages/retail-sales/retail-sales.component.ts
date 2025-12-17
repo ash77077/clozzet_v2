@@ -11,7 +11,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { RetailProductsService, RetailProduct, ProductVariant, SellVariantRequest } from '../../../services/retail-products.service';
+import { RetailProductsService, RetailProduct, ProductVariant, SellVariantRequest, UpdateRetailProductDto, SaleListItem } from '../../../services/retail-products.service';
 
 interface VariantInput {
   size: string;
@@ -50,8 +50,10 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
   searchTerm = '';
 
   showAddModal = false;
+  showEditModal = false;
   showSellModal = false;
   selectedProduct: RetailProduct | null = null;
+  editProduct: Partial<RetailProduct> = {};
 
   // For selling
   selectedVariant: ProductVariant | null = null;
@@ -62,6 +64,7 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
     name: '',
     description: '',
     price: 0,
+    costPrice: 0,
     category: '',
     material: '',
     images: [],
@@ -72,12 +75,21 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
   variantInputs: VariantInput[] = [];
   availableSizes = ['5-6', '7-8', '9-10', '11-12', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
   availableColors = ['Կարմիր', 'Կանաչ', 'Սև', 'Սպիտակ', 'Կաթնագույն', 'Բաց Մոխրագույն', 'Մուգ Մոխրագույն', 'Բորդո', 'Մելանժ', 'Մուգ Կապույտ', 'Սալաթ', 'Շականակագույն', 'Խակի'];
+  availableCategories = ['T-shirt', 'Hoodie', 'Sweatshirt Srbich', 'Sweatshirt Nachos', 'Ecobag', 'Backpack'];
 
   // For statistics PIN protection
   showStats = false;
   showPinModal = false;
   pinInput = '';
   readonly correctPin = '1409';
+
+  // For sales list
+  sales: SaleListItem[] = [];
+  showSalesModal = false;
+  isLoadingSales = false;
+  showEditPriceModal = false;
+  selectedSale: SaleListItem | null = null;
+  newSoldPrice: number = 0;
 
   constructor(
     private retailProductsService: RetailProductsService,
@@ -150,6 +162,7 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
       name: '',
       description: '',
       price: 0,
+      costPrice: 0,
       category: '',
       material: '',
       images: [],
@@ -223,6 +236,95 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
             severity: 'error',
             summary: 'Error',
             detail: 'Failed to create product: ' + (err.error?.message || 'Unknown error')
+          });
+        }
+      });
+  }
+
+  openEditModal(product: RetailProduct): void {
+    this.editProduct = {
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      category: product.category,
+      material: product.material,
+      images: product.images || [],
+      variants: product.variants || []
+    };
+
+    // Populate variant inputs with existing variants
+    this.variantInputs = product.variants.map(v => ({
+      size: v.size,
+      color: v.color,
+      quantity: v.quantity
+    }));
+
+    this.selectedProduct = product;
+    this.showEditModal = true;
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+    this.selectedProduct = null;
+    this.editProduct = {};
+  }
+
+  updateProduct(): void {
+    if (!this.editProduct.name || !this.editProduct.price || !this.selectedProduct?._id) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Please fill in required fields'
+      });
+      return;
+    }
+
+    // Filter out empty variants and map to correct structure
+    // Note: Do NOT send soldQuantity - backend preserves it automatically
+    const variants = this.variantInputs
+      .filter(v => v.size && v.color && v.quantity >= 0)
+      .map(v => ({
+        size: v.size,
+        color: v.color,
+        quantity: v.quantity
+      }));
+
+    if (variants.length === 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Please add at least one variant with size, color, and quantity'
+      });
+      return;
+    }
+
+    const productData: UpdateRetailProductDto = {
+      ...this.editProduct,
+      variants
+    };
+
+    this.retailProductsService.updateRetailProduct(this.selectedProduct._id, productData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedProduct) => {
+          const index = this.products.findIndex(p => p._id === updatedProduct._id);
+          if (index !== -1) {
+            this.products[index] = updatedProduct;
+          }
+          this.applyFilters();
+          this.closeEditModal();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Product Updated',
+            detail: 'Product updated successfully!'
+          });
+        },
+        error: (err) => {
+          console.error('Error updating product:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to update product: ' + (err.error?.message || 'Unknown error')
           });
         }
       });
@@ -338,9 +440,9 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('hy-AM', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'AMD'
     }).format(amount);
   }
 
@@ -442,5 +544,126 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
     } else {
       this.openPinModal();
     }
+  }
+
+  // Sales list methods
+  openSalesListModal(): void {
+    this.showSalesModal = true;
+    this.loadSales();
+  }
+
+  closeSalesModal(): void {
+    this.showSalesModal = false;
+  }
+
+  loadSales(): void {
+    this.isLoadingSales = true;
+    this.retailProductsService.getAllSales()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (sales) => {
+          this.sales = sales;
+          this.isLoadingSales = false;
+        },
+        error: (err) => {
+          console.error('Error loading sales:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load sales history'
+          });
+          this.isLoadingSales = false;
+        }
+      });
+  }
+
+  openEditPriceModal(sale: SaleListItem): void {
+    this.selectedSale = sale;
+    this.newSoldPrice = sale.soldPrice;
+    this.showEditPriceModal = true;
+  }
+
+  closeEditPriceModal(): void {
+    this.showEditPriceModal = false;
+    this.selectedSale = null;
+  }
+
+  updateSoldPrice(): void {
+    if (!this.selectedSale || this.newSoldPrice <= 0) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Invalid Price',
+        detail: 'Please enter a valid price'
+      });
+      return;
+    }
+
+    this.retailProductsService.updateSalePrice(
+      this.selectedSale.productId,
+      this.selectedSale.saleId,
+      this.newSoldPrice
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // Update the sale in the list
+          if (this.selectedSale) {
+            this.selectedSale.soldPrice = this.newSoldPrice;
+          }
+          this.loadProducts(); // Reload to update revenue stats
+          this.closeEditPriceModal();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Price Updated',
+            detail: 'Sold price updated successfully'
+          });
+        },
+        error: (err) => {
+          console.error('Error updating price:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to update price'
+          });
+        }
+      });
+  }
+
+  confirmReturnSale(sale: SaleListItem): void {
+    this.confirmationService.confirm({
+      message: `Are you sure you want to return this sale? (${sale.productName} - ${sale.color} ${sale.size} x${sale.quantity})`,
+      header: 'Return Sale Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.returnSale(sale);
+      }
+    });
+  }
+
+  returnSale(sale: SaleListItem): void {
+    this.retailProductsService.returnSale(sale.productId, sale.saleId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // Remove the sale from the list
+          this.sales = this.sales.filter(s => s.saleId !== sale.saleId);
+          this.loadProducts(); // Reload to update stock and stats
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sale Returned',
+            detail: 'Sale returned successfully. Stock has been restored.'
+          });
+        },
+        error: (err) => {
+          console.error('Error returning sale:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to return sale: ' + (err.error?.message || 'Unknown error')
+          });
+        }
+      });
   }
 }
