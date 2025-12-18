@@ -44,6 +44,8 @@ export interface SaleListItem {
   quantity: number;
   soldPrice: number;
   soldDate: Date;
+  isExternal: boolean;
+  isStandalone?: boolean;
 }
 
 export interface RetailProduct {
@@ -106,6 +108,11 @@ export class RetailProductsService {
     return this.http.post<RetailProduct>(`${this.apiUrl}/${id}/sell-variant`, sellRequest);
   }
 
+  // Record external sale (doesn't affect inventory)
+  recordExternalSale(id: string, sellRequest: SellVariantRequest): Observable<RetailProduct> {
+    return this.http.post<RetailProduct>(`${this.apiUrl}/${id}/external-sale`, sellRequest);
+  }
+
   restockVariant(id: string, size: string, color: string, quantity: number): Observable<RetailProduct> {
     return this.http.post<RetailProduct>(`${this.apiUrl}/${id}/restock-variant?size=${size}&color=${color}&quantity=${quantity}`, {});
   }
@@ -144,5 +151,27 @@ export class RetailProductsService {
   // Update sold price of a sale
   updateSalePrice(productId: string, saleId: string, newPrice: number): Observable<RetailProduct> {
     return this.http.patch<RetailProduct>(`${this.apiUrl}/${productId}/update-sale-price/${saleId}`, { newPrice });
+  }
+
+  // Record standalone sale (for Quick Sell when product not in database)
+  recordStandaloneSale(saleData: {
+    category: string;
+    size: string;
+    color: string;
+    quantity: number;
+    soldPrice: number;
+  }): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/standalone-sales`, saleData);
+  }
+
+  // Quick Sell: Create product and immediately sell it
+  quickSell(saleData: {
+    category: string;
+    size: string;
+    color: string;
+    quantity: number;
+    soldPrice: number;
+  }): Observable<RetailProduct> {
+    return this.http.post<RetailProduct>(`${this.apiUrl}/quick-sell`, saleData);
   }
 }

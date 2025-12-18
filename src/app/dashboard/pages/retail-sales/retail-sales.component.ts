@@ -1,17 +1,25 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
-import { TabsModule } from 'primeng/tabs';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
-import { DialogModule } from 'primeng/dialog';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { RetailProductsService, RetailProduct, ProductVariant, SellVariantRequest, UpdateRetailProductDto, SaleListItem } from '../../../services/retail-products.service';
+import {Component, OnInit, OnDestroy} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {Router} from '@angular/router';
+import {Subject, takeUntil} from 'rxjs';
+import {TabsModule} from 'primeng/tabs';
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {InputTextModule} from 'primeng/inputtext';
+import {TagModule} from 'primeng/tag';
+import {DialogModule} from 'primeng/dialog';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {ToastModule} from 'primeng/toast';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {
+  RetailProductsService,
+  RetailProduct,
+  ProductVariant,
+  SellVariantRequest,
+  UpdateRetailProductDto,
+  SaleListItem
+} from '../../../services/retail-products.service';
 
 interface VariantInput {
   size: string;
@@ -52,8 +60,19 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
   showAddModal = false;
   showEditModal = false;
   showSellModal = false;
+  showExternalSaleModal = false;
+  showQuickSellModal = false;
   selectedProduct: RetailProduct | null = null;
   editProduct: Partial<RetailProduct> = {};
+
+  // For quick sell
+  quickSell = {
+    category: '',
+    color: '',
+    size: '',
+    quantity: 1,
+    price: 0
+  };
 
   // For selling
   selectedVariant: ProductVariant | null = null;
@@ -94,8 +113,10 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
   constructor(
     private retailProductsService: RetailProductsService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
-  ) {}
+    private messageService: MessageService,
+    private router: Router
+  ) {
+  }
 
   ngOnInit(): void {
     this.loadProducts();
@@ -168,7 +189,7 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
       images: [],
       variants: []
     };
-    this.variantInputs = [{ size: '', color: '', quantity: 1 }];
+    this.variantInputs = [{size: '', color: '', quantity: 1}];
     this.showAddModal = true;
   }
 
@@ -177,7 +198,7 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
   }
 
   addVariantInput(): void {
-    this.variantInputs.push({ size: '', color: '', quantity: 1 });
+    this.variantInputs.push({size: '', color: '', quantity: 1});
   }
 
   removeVariantInput(index: number): void {
@@ -546,43 +567,6 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Sales list methods
-  openSalesListModal(): void {
-    this.showSalesModal = true;
-    this.loadSales();
-  }
-
-  closeSalesModal(): void {
-    this.showSalesModal = false;
-  }
-
-  loadSales(): void {
-    this.isLoadingSales = true;
-    this.retailProductsService.getAllSales()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (sales) => {
-          this.sales = sales;
-          this.isLoadingSales = false;
-        },
-        error: (err) => {
-          console.error('Error loading sales:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to load sales history'
-          });
-          this.isLoadingSales = false;
-        }
-      });
-  }
-
-  openEditPriceModal(sale: SaleListItem): void {
-    this.selectedSale = sale;
-    this.newSoldPrice = sale.soldPrice;
-    this.showEditPriceModal = true;
-  }
-
   closeEditPriceModal(): void {
     this.showEditPriceModal = false;
     this.selectedSale = null;
@@ -629,41 +613,68 @@ export class RetailSalesComponent implements OnInit, OnDestroy {
       });
   }
 
-  confirmReturnSale(sale: SaleListItem): void {
-    this.confirmationService.confirm({
-      message: `Are you sure you want to return this sale? (${sale.productName} - ${sale.color} ${sale.size} x${sale.quantity})`,
-      header: 'Return Sale Confirmation',
-      icon: 'pi pi-exclamation-triangle',
-      acceptButtonStyleClass: 'p-button-danger',
-      rejectButtonStyleClass: 'p-button-text',
-      accept: () => {
-        this.returnSale(sale);
-      }
-    });
+  // Quick sell methods
+  openQuickSellModal(): void {
+    this.quickSell = {
+      category: '',
+      color: '',
+      size: '',
+      quantity: 1,
+      price: 0
+    };
+    this.showQuickSellModal = true;
   }
 
-  returnSale(sale: SaleListItem): void {
-    this.retailProductsService.returnSale(sale.productId, sale.saleId)
+  closeQuickSellModal(): void {
+    this.showQuickSellModal = false;
+  }
+
+  processQuickSell(): void {
+    if (!this.quickSell.category || !this.quickSell.color || !this.quickSell.size || !this.quickSell.price || !this.quickSell.quantity) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation Error',
+        detail: 'Please fill in all fields'
+      });
+      return;
+    }
+
+    // Use the new quick sell endpoint that creates product and sells it
+    const saleData = {
+      category: this.quickSell.category,
+      size: this.quickSell.size,
+      color: this.quickSell.color,
+      quantity: this.quickSell.quantity,
+      soldPrice: this.quickSell.price
+    };
+
+    this.retailProductsService.quickSell(saleData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
-          // Remove the sale from the list
-          this.sales = this.sales.filter(s => s.saleId !== sale.saleId);
-          this.loadProducts(); // Reload to update stock and stats
+        next: (product) => {
+          // Add the newly created product to the list
+          this.products.unshift(product);
+          this.applyFilters();
+          this.closeQuickSellModal();
           this.messageService.add({
             severity: 'success',
-            summary: 'Sale Returned',
-            detail: 'Sale returned successfully. Stock has been restored.'
+            summary: 'Quick Sale Completed',
+            detail: `Sold ${this.quickSell.quantity}x ${this.quickSell.category} (${this.quickSell.color} - ${this.quickSell.size}) for ${this.formatCurrency(this.quickSell.price * this.quickSell.quantity)}`
           });
         },
         error: (err) => {
-          console.error('Error returning sale:', err);
+          console.error('Error processing quick sell:', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Failed to return sale: ' + (err.error?.message || 'Unknown error')
+            detail: 'Failed to process quick sale: ' + (err.error?.message || 'Unknown error')
           });
         }
       });
+  }
+
+  // Navigate to sales history page
+  navigateToSalesHistory(): void {
+    this.router.navigate(['/sales-history']);
   }
 }

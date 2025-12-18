@@ -231,9 +231,20 @@
       }
     }
 
-    .btn {
+    .action-buttons-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+
       @media (max-width: 768px) {
         width: 100%;
+        flex-direction: column;
+      }
+
+      .btn {
+        @media (max-width: 768px) {
+          width: 100%;
+        }
       }
     }
   }
@@ -1062,4 +1073,38 @@
 
 .sales-table {
   width: 100%;
+
+  .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    &.badge-external {
+      background-color: #FFF4E6;
+      color: #F57C00;
+      border: 1px solid #FFB74D;
+    }
+
+    &.badge-normal {
+      background-color: #E8F5E9;
+      color: #388E3C;
+      border: 1px solid #81C784;
+    }
+  }
+
+  tr.external-sale {
+    background-color: #FFFBF0;
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      background-color: inherit;
+      transform: none;
+    }
+  }
 }
