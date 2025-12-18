@@ -67,8 +67,11 @@
       </div>
     </div>
 
-    <div style="display: flex; gap: 10px;">
-      <button class="btn btn-success" (click)="openSalesListModal()">
+    <div class="action-buttons-group">
+      <button class="btn btn-warning" (click)="openQuickSellModal()">
+        ⚡ Quick Sell
+      </button>
+      <button class="btn btn-success" (click)="navigateToSalesHistory()">
         📋 View Sales History
       </button>
       <button class="btn btn-primary" (click)="openAddModal()">
@@ -393,64 +396,6 @@
     </div>
   </div>
 
-  <!-- Sales List Modal -->
-  <div class="modal-overlay" *ngIf="showSalesModal" (click)="closeSalesModal()">
-    <div class="modal modal-large" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Sales History</h2>
-        <button class="close-btn" (click)="closeSalesModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div *ngIf="isLoadingSales" class="loading">
-          <p>Loading sales...</p>
-        </div>
-
-        <div *ngIf="!isLoadingSales && sales.length === 0" class="no-sales">
-          <p>No sales history found</p>
-        </div>
-
-        <div *ngIf="!isLoadingSales && sales.length > 0" class="sales-table-container">
-          <table class="sales-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Variant</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Total</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let sale of sales">
-                <td>{{ formatDate(sale.soldDate) }}</td>
-                <td>{{ sale.productName }}</td>
-                <td>{{ sale.category }}</td>
-                <td>{{ sale.color }} - {{ sale.size }}</td>
-                <td>{{ sale.quantity }}</td>
-                <td>{{ formatCurrency(sale.soldPrice) }}</td>
-                <td>{{ formatCurrency(sale.soldPrice * sale.quantity) }}</td>
-                <td>
-                  <button class="btn btn-sm btn-warning" (click)="openEditPriceModal(sale)" title="Edit Price">
-                    💰
-                  </button>
-                  <button class="btn btn-sm btn-danger" (click)="confirmReturnSale(sale)" title="Return">
-                    ↩️
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeSalesModal()">Close</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Edit Price Modal -->
   <div class="modal-overlay" *ngIf="showEditPriceModal" (click)="closeEditPriceModal()">
     <div class="modal modal-small" (click)="$event.stopPropagation()">
@@ -472,6 +417,65 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeEditPriceModal()">Cancel</button>
         <button class="btn btn-primary" (click)="updateSoldPrice()">Update Price</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Sell Modal -->
+  <div class="modal-overlay" *ngIf="showQuickSellModal" (click)="closeQuickSellModal()">
+    <div class="modal modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>⚡ Quick Sell</h2>
+        <button class="close-btn" (click)="closeQuickSellModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="background-color: #E8F5E9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+          💡 <strong>Quick Sell:</strong> Fast checkout by selecting category, color, and size
+        </p>
+
+        <div class="form-group">
+          <label>Category *</label>
+          <select [(ngModel)]="quickSell.category">
+            <option value="">Select Category</option>
+            <option *ngFor="let category of availableCategories" [value]="category">{{ category }}</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Color *</label>
+            <select [(ngModel)]="quickSell.color">
+              <option value="">Select Color</option>
+              <option *ngFor="let color of availableColors" [value]="color">{{ color }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Size *</label>
+            <select [(ngModel)]="quickSell.size">
+              <option value="">Select Size</option>
+              <option *ngFor="let size of availableSizes" [value]="size">{{ size }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantity *</label>
+            <input type="number" [(ngModel)]="quickSell.quantity" placeholder="1" min="1">
+          </div>
+
+          <div class="form-group">
+            <label>Price (AMD) *</label>
+            <input type="number" [(ngModel)]="quickSell.price" placeholder="Enter price" min="0">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeQuickSellModal()">Cancel</button>
+        <button class="btn btn-success" (click)="processQuickSell()">
+          ⚡ Complete Sale
+        </button>
       </div>
     </div>
   </div>
