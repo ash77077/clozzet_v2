@@ -1,0 +1,645 @@
+<div class="fabric-inventory-container">
+  <div class="header-section">
+    <div class="header-top">
+      <h2>Fabric Inventory Management</h2>
+      <div class="view-toggle">
+        <button
+          class="toggle-btn"
+          [class.active]="viewMode() === 'grid'"
+          (click)="switchToGridView()"
+        >
+          📦 Inventory
+        </button>
+        <button
+          class="toggle-btn"
+          [class.active]="viewMode() === 'history'"
+          (click)="switchToHistoryView()"
+        >
+          📜 History
+        </button>
+        <button
+          class="toggle-btn"
+          [class.active]="viewMode() === 'logs'"
+          (click)="switchToLogsView()"
+        >
+          📋 Logs
+        </button>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-label">Total Value:</span>
+        <span class="stat-value">{{ totalInventoryValue() | number:'1.2-2' }} AMD</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total Stock:</span>
+        <span class="stat-value">{{ totalFabricKg() | number:'1.2-2' }} kg</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total Items:</span>
+        <span class="stat-value">{{ fabrics().length }}</span>
+      </div>
+      <div class="stat-item" *ngIf="totalWaste() > 0">
+        <span class="stat-label">Total Waste:</span>
+        <span class="stat-value">{{ totalWaste() | number:'1.2-2' }} kg</span>
+      </div>
+      <div class="stat-item low-stock" *ngIf="lowStockCount() > 0">
+        <span class="stat-label">Low Stock Alert:</span>
+        <span class="stat-value">{{ lowStockCount() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid View (Inventory) -->
+  <div *ngIf="viewMode() === 'grid'">
+    <!-- Add/Edit Form -->
+    <div class="form-section">
+    <h3>{{ editingId() ? 'Edit' : 'Add New' }} Fabric</h3>
+    <form [formGroup]="fabricForm" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name">Fabric Name *</label>
+          <input
+            type="text"
+            id="name"
+            formControlName="name"
+            class="form-control"
+            placeholder="e.g., Premium Cotton"
+          />
+          <div class="error" *ngIf="fabricForm.get('name')?.invalid && fabricForm.get('name')?.touched">
+            <small *ngIf="fabricForm.get('name')?.hasError('required')">Name is required</small>
+            <small *ngIf="fabricForm.get('name')?.hasError('minlength')">Name must be at least 2 characters</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="type">Fabric Type *</label>
+          <select id="type" formControlName="type" class="form-control">
+            <option value="" disabled>Select type</option>
+            <option *ngFor="let type of fabricTypes" [value]="type">{{ type }}</option>
+          </select>
+          <div class="error" *ngIf="fabricForm.get('type')?.invalid && fabricForm.get('type')?.touched">
+            <small *ngIf="fabricForm.get('type')?.hasError('required')">Type is required</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="color">Color *</label>
+          <input
+            type="text"
+            id="color"
+            formControlName="color"
+            class="form-control"
+            placeholder="Select or type custom color"
+            list="colorSuggestions"
+          />
+          <datalist id="colorSuggestions">
+            <option *ngFor="let color of fabricColors" [value]="color">{{ color }}</option>
+          </datalist>
+          <div class="error" *ngIf="fabricForm.get('color')?.invalid && fabricForm.get('color')?.touched">
+            <small *ngIf="fabricForm.get('color')?.hasError('required')">Color is required</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="gsm">GSM (Grams per sq. meter) *</label>
+          <input
+            type="number"
+            id="gsm"
+            formControlName="gsm"
+            class="form-control"
+            placeholder="e.g., 180"
+            list="gsmSuggestions"
+          />
+          <datalist id="gsmSuggestions">
+            <option *ngFor="let gsm of commonGSM" [value]="gsm">
+          </datalist>
+          <div class="error" *ngIf="fabricForm.get('gsm')?.invalid && fabricForm.get('gsm')?.touched">
+            <small *ngIf="fabricForm.get('gsm')?.hasError('required')">GSM is required</small>
+            <small *ngIf="fabricForm.get('gsm')?.hasError('min') || fabricForm.get('gsm')?.hasError('max')">
+              GSM must be between 50 and 500
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="pricePerKg">Price per Kg (AMD) *</label>
+          <input
+            type="number"
+            id="pricePerKg"
+            formControlName="pricePerKg"
+            class="form-control"
+            placeholder="Enter price per kilogram"
+            step="0.01"
+          />
+          <div class="error" *ngIf="fabricForm.get('pricePerKg')?.invalid && fabricForm.get('pricePerKg')?.touched">
+            <small *ngIf="fabricForm.get('pricePerKg')?.hasError('required')">Price is required</small>
+            <small *ngIf="fabricForm.get('pricePerKg')?.hasError('min')">Price must be 0 or greater</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="availableKg">Available Stock (kg) *</label>
+          <input
+            type="number"
+            id="availableKg"
+            formControlName="availableKg"
+            class="form-control"
+            placeholder="Enter available stock"
+            step="0.01"
+          />
+          <div class="error" *ngIf="fabricForm.get('availableKg')?.invalid && fabricForm.get('availableKg')?.touched">
+            <small *ngIf="fabricForm.get('availableKg')?.hasError('required')">Stock is required</small>
+            <small *ngIf="fabricForm.get('availableKg')?.hasError('min')">Stock must be 0 or greater</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="minStockLevel">Min Stock Level (kg)</label>
+          <input
+            type="number"
+            id="minStockLevel"
+            formControlName="minStockLevel"
+            class="form-control"
+            placeholder="Reorder alert threshold"
+            step="0.01"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="supplier">Supplier</label>
+          <input
+            type="text"
+            id="supplier"
+            formControlName="supplier"
+            class="form-control"
+            placeholder="Supplier name"
+          />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="notes">Notes</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            class="form-control"
+            placeholder="Additional notes or details"
+            rows="2"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="!fabricForm.valid">
+          {{ editingId() ? 'Update' : 'Add' }} Fabric
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()" *ngIf="editingId()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Filters and Controls -->
+  <div class="controls-section">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search fabrics by name, type, color, or supplier..."
+        class="search-input"
+        (input)="onSearch($event)"
+      />
+    </div>
+
+    <div class="filter-controls">
+      <div class="control-group">
+        <label for="groupBy">Group by:</label>
+        <select id="groupBy" class="control-select" (change)="onGroupByChange($event)">
+          <option value="none">No Grouping</option>
+          <option value="type">Type</option>
+          <option value="color">Color</option>
+          <option value="gsm">GSM</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="sortBy">Sort by:</label>
+        <select id="sortBy" class="control-select" (change)="onSortByChange($event)">
+          <option value="name">Name</option>
+          <option value="type">Type</option>
+          <option value="color">Color</option>
+          <option value="gsm">GSM</option>
+          <option value="stock">Stock Level</option>
+          <option value="value">Total Value</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fabric List/Grid -->
+  <div class="fabrics-list-section">
+    <div *ngIf="filteredFabrics().length === 0" class="no-data">
+      {{ searchTerm() ? 'No fabrics found matching your search.' : 'No fabrics in inventory yet. Add your first fabric above.' }}
+    </div>
+
+    <div *ngFor="let group of groupedFabrics()" class="fabric-group">
+      <div class="group-header" *ngIf="groupBy() !== 'none'">
+        <h4>{{ group.groupName }}</h4>
+        <div class="group-stats">
+          <span>{{ group.fabrics.length }} items</span>
+          <span>{{ group.totalKg | number:'1.2-2' }} kg</span>
+          <span>{{ group.totalValue | number:'1.2-2' }} AMD</span>
+        </div>
+      </div>
+
+      <div class="fabrics-grid">
+        <div
+          class="fabric-card"
+          *ngFor="let fabric of group.fabrics"
+          [class.low-stock]="isLowStock(fabric)"
+        >
+          <div class="card-header">
+            <h4>{{ fabric.name }}</h4>
+            <span class="low-stock-badge" *ngIf="isLowStock(fabric)">Low Stock</span>
+          </div>
+
+          <div class="card-body">
+            <div class="fabric-details">
+              <div class="detail-row">
+                <span class="label">Type:</span>
+                <span class="value">{{ fabric.type }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Color:</span>
+                <span class="value color-badge" [style.background-color]="fabric.color">
+                  {{ fabric.color }}
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="label">GSM:</span>
+                <span class="value">{{ fabric.gsm }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Price per Kg:</span>
+                <span class="value">{{ fabric.pricePerKg | number:'1.2-2' }} AMD</span>
+              </div>
+              <div class="detail-row highlight">
+                <span class="label">Available Stock:</span>
+                <span class="value">{{ fabric.availableKg | number:'1.2-2' }} kg</span>
+              </div>
+              <div class="detail-row" *ngIf="fabric.minStockLevel">
+                <span class="label">Min Stock Level:</span>
+                <span class="value">{{ fabric.minStockLevel | number:'1.2-2' }} kg</span>
+              </div>
+              <div class="detail-row highlight">
+                <span class="label">Total Value:</span>
+                <span class="value">{{ (fabric.availableKg * fabric.pricePerKg) | number:'1.2-2' }} AMD</span>
+              </div>
+              <div class="detail-row waste-row" *ngIf="getFabricTotalWaste(fabric.id!) > 0">
+                <span class="label">Total Waste:</span>
+                <span class="value">{{ getFabricTotalWaste(fabric.id!) | number:'1.2-2' }} kg</span>
+              </div>
+              <div class="detail-row" *ngIf="fabric.supplier">
+                <span class="label">Supplier:</span>
+                <span class="value">{{ fabric.supplier }}</span>
+              </div>
+              <div class="detail-row full-width" *ngIf="fabric.notes">
+                <span class="label">Notes:</span>
+                <span class="value">{{ fabric.notes }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-sm btn-add" (click)="openRestockModal(fabric)" title="Add fabric stock">
+              + Add
+            </button>
+            <button class="btn btn-sm btn-waste" (click)="openWasteModal(fabric)" title="Record waste">
+              Թափոն
+            </button>
+            <button class="btn btn-sm btn-edit" (click)="editFabric(fabric)" title="Edit fabric">Edit</button>
+            <button class="btn btn-sm btn-delete" (click)="deleteFabric(fabric.id!)" title="Delete fabric">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Unreturned Waste Section (in Grid View) -->
+  <div *ngIf="viewMode() === 'grid' && unreturnedWaste().length > 0" class="waste-section">
+    <h3>Active Waste (Unreturned)</h3>
+    <div class="waste-table-wrapper">
+      <table class="waste-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Fabric</th>
+            <th>Waste (kg)</th>
+            <th>Reason</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of unreturnedWaste()">
+            <td class="date-cell">{{ entry.createdAt | date:'MMM d, y HH:mm' }}</td>
+            <td class="fabric-cell">{{ entry.fabricName }}</td>
+            <td class="change-cell negative">{{ Math.abs(entry.quantityChange) | number:'1.2-2' }}</td>
+            <td class="reason-cell">{{ entry.reason || '-' }}</td>
+            <td class="actions-cell">
+              <button
+                class="btn btn-sm btn-return"
+                (click)="returnWaste(entry)"
+                title="Return waste to inventory"
+              >
+                ↩ Return
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- History View (Waste Management) -->
+  <div *ngIf="viewMode() === 'history'" class="history-section">
+    <div class="history-header">
+      <h3>Waste History & Management</h3>
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Search waste entries..."
+          class="search-input"
+          (input)="onSearch($event)"
+        />
+      </div>
+    </div>
+
+    <div class="history-table-wrapper">
+      <table class="history-table" *ngIf="filteredHistory().length > 0; else noHistory">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Fabric</th>
+            <th>Waste (kg)</th>
+            <th>Before (kg)</th>
+            <th>After (kg)</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of filteredHistory()" [class.returned]="isWasteReturned(entry.id!)">
+            <td class="date-cell">{{ entry.createdAt | date:'MMM d, y HH:mm' }}</td>
+            <td class="fabric-cell">{{ entry.fabricName }}</td>
+            <td class="change-cell negative">{{ Math.abs(entry.quantityChange) | number:'1.2-2' }}</td>
+            <td>{{ entry.quantityBefore | number:'1.2-2' }}</td>
+            <td>{{ entry.quantityAfter | number:'1.2-2' }}</td>
+            <td class="reason-cell">{{ entry.reason || '-' }}</td>
+            <td class="status-cell">
+              <span class="status-badge" [class.returned]="isWasteReturned(entry.id!)" [class.active]="!isWasteReturned(entry.id!)">
+                {{ isWasteReturned(entry.id!) ? 'Returned' : 'Active' }}
+              </span>
+            </td>
+            <td class="actions-cell">
+              <button
+                *ngIf="!isWasteReturned(entry.id!)"
+                class="btn btn-sm btn-return"
+                (click)="returnWaste(entry)"
+                title="Return waste to inventory"
+              >
+                ↩ Return
+              </button>
+              <span *ngIf="isWasteReturned(entry.id!)" class="returned-label">
+                ✓ Returned
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noHistory>
+        <p class="no-data">
+          {{ searchTerm() ? 'No waste entries found matching your search.' : 'No waste recorded yet.' }}
+        </p>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Logs View (All Inventory Actions) -->
+  <div *ngIf="viewMode() === 'logs'" class="logs-section">
+    <div class="logs-header">
+      <h3>Complete Inventory Action Logs</h3>
+      <p class="logs-subtitle">Comprehensive audit trail of all inventory changes</p>
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Search by fabric, action type, or notes..."
+          class="search-input"
+          (input)="onSearch($event)"
+        />
+      </div>
+    </div>
+
+    <div class="logs-stats" *ngIf="filteredLogs().length > 0">
+      <div class="stat-card">
+        <span class="stat-number">{{ filteredLogs().length }}</span>
+        <span class="stat-label">Total Actions</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{ wasteEntriesCount() }}</span>
+        <span class="stat-label">Waste Entries</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{ restocksCount() }}</span>
+        <span class="stat-label">Restocks</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{ productionUsesCount() }}</span>
+        <span class="stat-label">Production Uses</span>
+      </div>
+    </div>
+
+    <div class="logs-table-wrapper">
+      <table class="logs-table" *ngIf="filteredLogs().length > 0; else noLogs">
+        <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>Action Type</th>
+            <th>Fabric</th>
+            <th>Change (kg)</th>
+            <th>Stock Before</th>
+            <th>Stock After</th>
+            <th>Reason / Notes</th>
+            <th>Action By</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of filteredLogs()">
+            <td class="date-cell">
+              <div class="date-time">
+                <span class="date">{{ entry.createdAt | date:'MMM d, y' }}</span>
+                <span class="time">{{ entry.createdAt | date:'HH:mm:ss' }}</span>
+              </div>
+            </td>
+            <td class="type-cell">
+              <span class="badge" [ngClass]="getChangeTypeBadgeClass(entry.changeType)">
+                {{ getChangeTypeDisplay(entry.changeType) }}
+              </span>
+            </td>
+            <td class="fabric-cell">{{ entry.fabricName }}</td>
+            <td class="change-cell" [ngClass]="entry.quantityChange >= 0 ? 'positive' : 'negative'">
+              <strong>{{ entry.quantityChange >= 0 ? '+' : '' }}{{ entry.quantityChange | number:'1.2-2' }}</strong>
+            </td>
+            <td class="stock-cell">{{ entry.quantityBefore | number:'1.2-2' }} kg</td>
+            <td class="stock-cell">{{ entry.quantityAfter | number:'1.2-2' }} kg</td>
+            <td class="reason-cell">{{ entry.reason || '-' }}</td>
+            <td class="user-cell">
+              <span class="user-badge">
+                {{ entry.createdBy || 'System' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noLogs>
+        <p class="no-data">
+          {{ searchTerm() ? 'No log entries found matching your search.' : 'No inventory actions recorded yet.' }}
+        </p>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Waste Modal -->
+  <div class="modal-overlay" *ngIf="showWasteModal()" (click)="closeWasteModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Record Waste (Թափոն)</h3>
+        <button class="close-btn" (click)="closeWasteModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="fabric-info">
+          <p><strong>Fabric:</strong> {{ selectedFabricForWaste()?.name }}</p>
+          <p><strong>Available Stock:</strong> {{ selectedFabricForWaste()?.availableKg | number:'1.2-2' }} kg</p>
+          <p class="waste-total"><strong>Total Waste Recorded:</strong> {{ getFabricTotalWaste(selectedFabricForWaste()?.id!) | number:'1.2-2' }} kg</p>
+        </div>
+
+        <form [formGroup]="wasteForm" (ngSubmit)="submitWaste()">
+          <div class="form-group">
+            <label for="wasteKg">Waste Quantity (kg) *</label>
+            <input
+              type="number"
+              id="wasteKg"
+              formControlName="wasteKg"
+              class="form-control"
+              placeholder="Enter waste quantity in kg"
+              step="0.01"
+              autofocus
+            />
+            <div class="error" *ngIf="wasteForm.get('wasteKg')?.invalid && wasteForm.get('wasteKg')?.touched">
+              <small *ngIf="wasteForm.get('wasteKg')?.hasError('required')">Waste quantity is required</small>
+              <small *ngIf="wasteForm.get('wasteKg')?.hasError('min')">Quantity must be greater than 0</small>
+              <small *ngIf="wasteForm.get('wasteKg')?.hasError('max')">
+                Quantity cannot exceed available stock ({{ selectedFabricForWaste()?.availableKg | number:'1.2-2' }} kg)
+              </small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reason">Reason (Optional)</label>
+            <textarea
+              id="reason"
+              formControlName="reason"
+              class="form-control"
+              placeholder="Enter reason for waste..."
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="!wasteForm.valid">
+              Record Waste
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="closeWasteModal()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restock Modal -->
+  <div class="modal-overlay" *ngIf="showRestockModal()" (click)="closeRestockModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header restock-header">
+        <h3>Add Fabric Stock (Restock)</h3>
+        <button class="close-btn" (click)="closeRestockModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="fabric-info">
+          <p><strong>Fabric:</strong> {{ selectedFabricForRestock()?.name }}</p>
+          <p><strong>Type:</strong> {{ selectedFabricForRestock()?.type }}</p>
+          <p><strong>Color:</strong> {{ selectedFabricForRestock()?.color }}</p>
+          <p><strong>Current Stock:</strong> {{ selectedFabricForRestock()?.availableKg | number:'1.2-2' }} kg</p>
+        </div>
+
+        <form [formGroup]="restockForm" (ngSubmit)="submitRestock()">
+          <div class="form-group">
+            <label for="restockKg">Quantity to Add (kg) *</label>
+            <input
+              type="number"
+              id="restockKg"
+              formControlName="restockKg"
+              class="form-control"
+              placeholder="Enter quantity to add in kg"
+              step="0.01"
+              autofocus
+            />
+            <div class="error" *ngIf="restockForm.get('restockKg')?.invalid && restockForm.get('restockKg')?.touched">
+              <small *ngIf="restockForm.get('restockKg')?.hasError('required')">Quantity is required</small>
+              <small *ngIf="restockForm.get('restockKg')?.hasError('min')">Quantity must be greater than 0</small>
+            </div>
+          </div>
+
+          <div class="preview-box" *ngIf="restockForm.get('restockKg')?.value > 0">
+            <p class="preview-label">New Stock After Adding:</p>
+            <p class="preview-value">
+              {{ (selectedFabricForRestock()?.availableKg || 0) + (restockForm.get('restockKg')?.value || 0) | number:'1.2-2' }} kg
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="restockReason">Reason / Notes (Optional)</label>
+            <textarea
+              id="restockReason"
+              formControlName="reason"
+              class="form-control"
+              placeholder="e.g., New shipment from supplier, Stock replenishment..."
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="!restockForm.valid">
+              Add Stock
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="closeRestockModal()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

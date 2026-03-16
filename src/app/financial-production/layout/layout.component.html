@@ -1,0 +1,22 @@
+<div class="financial-production-layout">
+  <div class="module-header">
+    <h1>Financial & Production Management</h1>
+    <p class="subtitle">Cost tracking, profitability analysis, and production analytics</p>
+  </div>
+
+  <nav class="navigation-tabs">
+    <a
+      *ngFor="let item of navItems"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      class="nav-tab"
+    >
+      <span class="icon">{{ item.icon }}</span>
+      <span class="label">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="content-wrapper">
+    <router-outlet></router-outlet>
+  </div>
+</div>

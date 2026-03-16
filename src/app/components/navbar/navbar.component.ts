@@ -13,6 +13,7 @@ interface NavItem {
   route: string;
   icon?: string;
   children?: NavItem[];
+  special?: boolean;
 }
 
 @Component({
@@ -50,22 +51,34 @@ export class NavbarComponent implements OnInit {
   navItems: NavItem[] = [
     { label: 'Home', route: '/' },
     { label: 'About', route: '/about' },
-    {
-      label: 'Products',
-      route: '/products',
-      children: [] // Will be populated dynamically from the database
-    },
-    {
-      label: 'Services',
-      route: '/services',
-      children: [
-        { label: 'Bulk Orders', route: '/services/bulk-orders' },
-        { label: 'Custom Design', route: '/services/design' },
-        { label: 'Embroidery', route: '/services/embroidery' },
-        { label: 'Screen Printing', route: '/services/printing' }
-      ]
-    },
-    { label: 'Portfolio', route: '/portfolio' },
+    // {
+    //   label: 'Products',
+    //   route: '/products',
+    //   children: [] // Will be populated dynamically from the database
+    // },
+    // {
+    //   label: 'Services',
+    //   route: '/services',
+    //   children: [
+    //     { label: 'Bulk Orders', route: '/services/bulk-orders' },
+    //     { label: 'Custom Design', route: '/services/design' },
+    //     { label: 'Embroidery', route: '/services/embroidery' },
+    //     { label: 'Screen Printing', route: '/services/printing' }
+    //   ]
+    // },
+    // {
+    //   label: 'Special Collection',
+    //   route: '/special-collection',
+    //   special: true,
+    //   children: [
+    //     { label: 'Hoodies', route: '/special-collection/hoodies' },
+    //     { label: 'Sweatshirts', route: '/special-collection/sweatshirts' },
+    //     { label: 'T-shirts', route: '/special-collection/t-shirts' },
+    //     { label: 'Tote Bags', route: '/special-collection/tote-bags' },
+    //     { label: 'Caps', route: '/special-collection/caps' }
+    //   ]
+    // },
+    // { label: 'Portfolio', route: '/portfolio' },
     { label: 'Contact', route: '/contact' }
   ];
 
@@ -112,9 +125,9 @@ export class NavbarComponent implements OnInit {
     if (!target.closest('.user-dropdown-container')) {
       this.showUserMenu = false;
     }
-    if (!target.closest('.language-dropdown-container')) {
-      this.showLanguageMenu = false;
-    }
+    // if (!target.closest('.language-dropdown-container')) {
+    //   this.showLanguageMenu = false;
+    // }
   }
 
   toggleUserMenu(event: Event) {

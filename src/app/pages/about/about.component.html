@@ -3,9 +3,9 @@
   <section class="about-hero">
     <div class="container">
       <div class="hero-content">
-        <h1 class="hero-title">About CLOZZET</h1>
+        <h1 class="hero-title">{{ 'about.hero.title' | translate }}</h1>
         <p class="hero-subtitle">
-          Your trusted partner for premium branded textiles and promotional merchandise
+          {{ 'about.hero.subtitle' | translate }}
         </p>
         <div class="hero-image">
           <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="CLOZZET team at work" />
@@ -19,26 +19,21 @@
     <div class="container">
       <div class="story-content">
         <div class="story-text">
-          <h2 class="section-title">Our Story</h2>
+          <h2 class="section-title">{{ 'about.story.title' | translate }}</h2>
           <p class="story-paragraph">
-            Founded in 2014, CLOZZET began as a small textile company with a big vision: to help businesses 
-            strengthen their brand identity through high-quality custom apparel. What started as a passion project 
-            has grown into a trusted partner for over 500 companies worldwide.
+            {{ 'about.story.paragraph1' | translate }}
           </p>
           <p class="story-paragraph">
-            Our journey has been driven by a simple belief - that every business deserves professional, 
-            high-quality branded merchandise that truly represents their values and vision. From startup 
-            companies to Fortune 500 corporations, we've helped brands make lasting impressions.
+            {{ 'about.story.paragraph2' | translate }}
           </p>
           <p class="story-paragraph">
-            Today, we continue to innovate and expand our services, always keeping our core values at heart: 
-            quality, reliability, and exceptional customer service.
+            {{ 'about.story.paragraph3' | translate }}
           </p>
         </div>
         <div class="story-stats">
           <div *ngFor="let stat of companyStats" class="stat-item">
             <div class="stat-number">{{ stat.number }}</div>
-            <div class="stat-label">{{ stat.label }}</div>
+            <div class="stat-label">{{ stat.labelKey | translate }}</div>
           </div>
         </div>
       </div>
@@ -49,9 +44,9 @@
   <section class="our-values">
     <div class="container">
       <div class="section-header">
-        <h2 class="section-title">Our Values</h2>
+        <h2 class="section-title">{{ 'about.values.title' | translate }}</h2>
         <p class="section-subtitle">
-          The principles that guide everything we do
+          {{ 'about.values.subtitle' | translate }}
         </p>
       </div>
       <div class="values-grid">
@@ -61,44 +56,44 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="value.icon"></path>
             </svg>
           </div>
-          <h3 class="value-title">{{ value.title }}</h3>
-          <p class="value-description">{{ value.description }}</p>
+          <h3 class="value-title">{{ value.titleKey | translate }}</h3>
+          <p class="value-description">{{ value.descriptionKey | translate }}</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Our Team -->
-  <section class="our-team">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Meet Our Team</h2>
-        <p class="section-subtitle">
-          The experts behind your branded apparel solutions
-        </p>
-      </div>
-      <div class="team-grid">
-        <div *ngFor="let member of team" class="team-card">
-          <div class="team-image">
-            <img [src]="member.image" [alt]="member.name" />
-          </div>
-          <div class="team-info">
-            <h3 class="team-name">{{ member.name }}</h3>
-            <p class="team-position">{{ member.position }}</p>
-            <p class="team-bio">{{ member.bio }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<!--  <section class="our-team">-->
+<!--    <div class="container">-->
+<!--      <div class="section-header">-->
+<!--        <h2 class="section-title">{{ 'about.team.title' | translate }}</h2>-->
+<!--        <p class="section-subtitle">-->
+<!--          {{ 'about.team.subtitle' | translate }}-->
+<!--        </p>-->
+<!--      </div>-->
+<!--      <div class="team-grid">-->
+<!--        <div *ngFor="let member of team" class="team-card">-->
+<!--          <div class="team-image">-->
+<!--            <img [src]="member.image" [alt]="member.nameKey | translate" />-->
+<!--          </div>-->
+<!--          <div class="team-info">-->
+<!--            <h3 class="team-name">{{ member.nameKey | translate }}</h3>-->
+<!--            <p class="team-position">{{ member.positionKey | translate }}</p>-->
+<!--            <p class="team-bio">{{ member.bioKey | translate }}</p>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </section>-->
 
   <!-- CTA Section -->
   <section class="about-cta">
     <div class="container">
       <div class="cta-content">
-        <h2>Ready to Work With Us?</h2>
-        <p>Let's discuss how we can help elevate your brand with premium custom apparel.</p>
-        <button class="btn btn-primary btn-lg">Get Your Free Quote</button>
+        <h2>{{ 'about.cta.title' | translate }}</h2>
+        <p>{{ 'about.cta.description' | translate }}</p>
+        <button class="btn btn-primary btn-lg" (click)="getQuote()">{{ 'about.cta.button' | translate }}</button>
       </div>
     </div>
   </section>

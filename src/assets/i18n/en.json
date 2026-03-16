@@ -332,6 +332,9 @@
       "jackets": "Jackets",
       "promotional": "Promotional Items"
     },
+    "contact": {
+      "title": "Contact Us"
+    },
     "newsletter": {
       "title": "Stay Updated",
       "description": "Subscribe to our newsletter for the latest updates on products, special offers, and industry insights.",
@@ -356,13 +359,13 @@
     "termsOfService": "Terms of Service"
   },
   "hero": {
-    "badge": "Trusted by 500+ Businesses",
+    "badge": "Trusted by 150+ Businesses",
     "title": "Elevate Your Brand with",
     "titleHighlight": "Premium Custom Apparel",
     "description": "Transform your business identity with high-quality branded textiles. From corporate uniforms to promotional merchandise, we deliver professional custom apparel that strengthens your brand presence and builds team unity.",
     "features": {
       "bulkDiscount": "Bulk Order Discounts",
-      "fastTurnaround": "Fast 7-Day Turnaround",
+      "fastTurnaround": "Production time is up to 20 days (depends on cloth type and details)",
       "qualityGuarantee": "Premium Quality Guarantee"
     },
     "cta": {
@@ -393,10 +396,10 @@
         "title": "Bulk Order Discounts",
         "description": "Save more with our competitive bulk pricing. The more you order, the more you save.",
         "features": {
-          "tier1": "25+ items: 10% discount",
-          "tier2": "50+ items: 15% discount",
-          "tier3": "100+ items: 20% discount",
-          "tier4": "Custom pricing for 500+ items"
+          "tier1": "50+ items: 5% discount",
+          "tier2": "100+ items: 7% discount",
+          "tier3": "500+ items: 10% discount",
+          "tier4": "Custom pricing for 1000+ items"
         }
       },
       "fastTurnaround": {
@@ -436,7 +439,7 @@
           "manager": "Dedicated account manager",
           "history": "Order history tracking",
           "reorder": "Reorder simplification",
-          "support": "24/7 customer support"
+          "support": "Rapid response"
         }
       },
       "globalShipping": {
@@ -451,7 +454,7 @@
       }
     },
     "stats": {
-      "title": "Trusted by Businesses Worldwide",
+      "title": "We are trusted by leading businesses",
       "clients": "Happy Clients",
       "items": "Items Delivered",
       "satisfaction": "Satisfaction Rate",
@@ -477,6 +480,70 @@
       }
     }
   },
+  "trustedBrands": {
+    "title": "Trusted by",
+    "titleBold": "Leading Brands"
+  },
+  "about": {
+    "hero": {
+      "title": "About CLOZZET",
+      "subtitle": "Your trusted partner for premium branded textiles and promotional merchandise"
+    },
+    "story": {
+      "title": "Our Story",
+      "paragraph1": "Founded in 2025, CLOZZET began as a small textile company with a big vision: to help businesses strengthen their brand identity through high-quality custom apparel. What started as a passion project has grown into a trusted partner for over 500 companies worldwide.",
+      "paragraph2": "Our journey has been driven by a simple belief - that every business deserves professional, high-quality branded merchandise that truly represents their values and vision. From startup companies to Fortune 500 corporations, we've helped brands make lasting impressions.",
+      "paragraph3": "Today, we continue to innovate and expand our services, always keeping our core values at heart: quality, reliability, and exceptional customer service."
+    },
+    "stats": {
+      "yearsExperience": "Years Experience",
+      "happyClients": "Happy Clients",
+      "itemsDelivered": "Items Delivered",
+      "satisfactionRate": "Satisfaction Rate"
+    },
+    "values": {
+      "title": "Our Values",
+      "subtitle": "The principles that guide everything we do",
+      "quality": {
+        "title": "Quality First",
+        "description": "We never compromise on quality. Every item meets our strict standards."
+      },
+      "innovation": {
+        "title": "Innovation",
+        "description": "Constantly improving our processes and exploring new technologies."
+      },
+      "partnership": {
+        "title": "Partnership",
+        "description": "Building long-term relationships with our clients through trust."
+      }
+    },
+    "team": {
+      "title": "Meet Our Team",
+      "subtitle": "The experts behind your branded apparel solutions",
+      "members": {
+        "ceo": {
+          "name": "Sarah Johnson",
+          "position": "CEO & Founder",
+          "bio": "Leading CLOZZET with 15+ years in textile industry"
+        },
+        "production": {
+          "name": "Michael Chen",
+          "position": "Head of Production",
+          "bio": "Ensuring quality and timely delivery for all orders"
+        },
+        "design": {
+          "name": "Emily Rodriguez",
+          "position": "Design Director",
+          "bio": "Creating stunning custom designs that represent your brand"
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to Work With Us?",
+      "description": "Let's discuss how we can help elevate your brand with premium custom apparel.",
+      "button": "Get Your Free Quote"
+    }
+  },
   "quoteForm": {
     "title": "Get Your Free Quote",
     "subtitle": "Ready to elevate your brand? Tell us about your project and receive a detailed quote within 24 hours.",
@@ -484,7 +551,7 @@
       "call": {
         "title": "Call Us",
         "phone": "+374 (44) 01 07 44",
-        "hours": "Mon-Fri 9AM-6PM EST"
+        "hours": "Mon-Fri 09:00-18:00"
       },
       "email": {
         "title": "Email Us",
@@ -493,7 +560,7 @@
       },
       "visit": {
         "title": "Visit Us",
-        "address": "Sevan Street 86/3",
+        "address": "Sebastia 3/10",
         "city": "Yerevan",
         "note": "By appointment only"
       }
@@ -502,7 +569,6 @@
       "title": "Why Get a Quote?",
       "pricing": "Transparent, competitive pricing",
       "discounts": "Volume discounts available",
-      "noFees": "No hidden fees or charges",
       "consultation": "Professional design consultation"
     },
     "form": {
@@ -565,6 +631,21 @@
       "submitted": "Quote Submitted!",
       "successTitle": "Thank you for your quote request!",
       "successMessage": "We'll review your requirements and send you a detailed quote within 24 hours.",
+      "fileUpload": {
+        "title": "Upload Mockups (Optional)",
+        "label": "Share your design ideas",
+        "hint": "Upload images of your mockups, logos, or design ideas (max 5 files, 5MB each)",
+        "dragDrop": "Drag & drop your files here",
+        "or": "or",
+        "browse": "browse to upload",
+        "supportedFormats": "PNG, JPG, GIF up to 5MB each",
+        "button": "Choose Files",
+        "info": "{{count}} of {{max}} files uploaded",
+        "remove": "Remove file",
+        "maxFilesError": "Maximum {{max}} files allowed",
+        "fileSizeError": "{{fileName}} exceeds the maximum file size of {{maxSize}}",
+        "fileTypeError": "{{fileName}} is not a valid image file"
+      },
       "errors": {
         "required": "is required",
         "email": "Please enter a valid email address",
@@ -574,6 +655,143 @@
         "maxQuantity": "Please contact us directly for quantities over 10,000",
         "characters": "characters"
       }
+    }
+  },
+  "contact": {
+    "hero": {
+      "title": "Contact Us",
+      "subtitle": "Ready to get started? Get in touch with our team for a free consultation and quote"
+    },
+    "info": {
+      "email": {
+        "title": "Email Us",
+        "description": "Get a response within 4 hours"
+      },
+      "phone": {
+        "title": "Call Us",
+        "description": "Mon-Fri, 09:00-18:00"
+      },
+      "address": {
+        "title": "Visit Us",
+        "value": "Sebastia 3/10, Yerevan",
+        "description": "Sebastia St: 0065"
+      }
+    },
+    "officeHours": {
+      "weekdays": {
+        "day": "Monday - Friday",
+        "hours": "9:00 AM - 6:00 PM"
+      },
+      "weekends": {
+        "day": "Sunday/Saturday",
+        "hours": "Closed"
+      }
+    }
+  },
+  "portfolio": {
+    "hero": {
+      "title": "Our <strong>Portfolio</strong>",
+      "subtitle": "Discover how we've partnered with leading businesses to deliver exceptional branded textile solutions"
+    },
+    "categories": {
+      "all": "All",
+      "corporateUniforms": "Corporate Uniforms",
+      "hospitality": "Hospitality",
+      "events": "Events",
+      "healthcare": "Healthcare",
+      "sports": "Sports",
+      "marketing": "Marketing"
+    },
+    "specs": {
+      "fabric": "Fabric",
+      "tech": "Tech",
+      "leadTime": "Lead Time"
+    },
+    "items": {
+      "techStartup": {
+        "title": "Tech Startup Uniforms",
+        "description": "Custom polo shirts and t-shirts for a growing tech company",
+        "caseStudy": {
+          "fabricChoice": "Premium cotton-poly blend for durability and comfort",
+          "printingTechnique": "Embroidery and screen printing for lasting brand visibility",
+          "clientProblem": "Needed professional uniforms that reflected their innovative brand identity",
+          "ourSolution": "Designed modern polo shirts with embroidered logo and custom color matching"
+        },
+        "testimonial": {
+          "quote": "Clozzet delivered exactly what we needed. The quality exceeded our expectations and our team loves wearing them.",
+          "author": "Sarah Mitchell",
+          "position": "HR Director, TechFlow Inc."
+        }
+      },
+      "restaurant": {
+        "title": "Restaurant Chain Branding",
+        "description": "Complete branded apparel solution for restaurant staff",
+        "caseStudy": {
+          "fabricChoice": "Stain-resistant performance fabric with moisture-wicking properties",
+          "printingTechnique": "Heat transfer vinyl for detailed logo reproduction",
+          "clientProblem": "Required durable uniforms that could withstand daily commercial laundry",
+          "ourSolution": "Created custom aprons and shirts using industrial-grade fabrics with reinforced stitching"
+        },
+        "testimonial": {
+          "quote": "Outstanding quality and service. Our staff uniforms have maintained their appearance after hundreds of washes.",
+          "author": "Marcus Johnson",
+          "position": "Operations Manager, Bella Vista Restaurants"
+        }
+      },
+      "conference": {
+        "title": "Conference Merchandise",
+        "description": "Custom t-shirts and sweatshirts for annual tech conference",
+        "caseStudy": {
+          "fabricChoice": "Soft ring-spun cotton for premium feel and attendee satisfaction",
+          "printingTechnique": "DTG (Direct-to-Garment) for vibrant, detailed graphics",
+          "clientProblem": "Tight deadline for 2,000+ pieces with complex multicolor design",
+          "ourSolution": "Expedited production with quality control at every stage, delivered 2 days early"
+        }
+      },
+      "healthcare": {
+        "title": "Healthcare Uniforms",
+        "description": "Professional medical scrubs and accessories",
+        "caseStudy": {
+          "fabricChoice": "Medical-grade antimicrobial fabric for infection control",
+          "printingTechnique": "Sublimation printing for permanent, fade-resistant branding",
+          "clientProblem": "Needed comfortable, professional scrubs meeting strict healthcare standards",
+          "ourSolution": "Developed custom scrub line with strategic logo placement and functional pockets"
+        }
+      },
+      "sports": {
+        "title": "Sports Team Gear",
+        "description": "Custom athletic wear for corporate sports teams",
+        "caseStudy": {
+          "fabricChoice": "Breathable polyester mesh with UV protection",
+          "printingTechnique": "Sublimation for all-over print designs that won't crack or peel",
+          "clientProblem": "Required high-performance jerseys for multiple corporate sports leagues",
+          "ourSolution": "Created customizable jersey templates with team names and individual player numbers"
+        },
+        "testimonial": {
+          "quote": "The jerseys look professional and perform great. Best investment for our company sports program.",
+          "author": "David Chen",
+          "position": "Wellness Coordinator, Global Tech Solutions"
+        }
+      },
+      "promotional": {
+        "title": "Promotional Campaign",
+        "description": "Branded merchandise for product launch campaign",
+        "caseStudy": {
+          "fabricChoice": "Eco-friendly organic cotton to align with sustainability messaging",
+          "printingTechnique": "Water-based inks for environmentally conscious production",
+          "clientProblem": "Needed promotional items that reflected their green brand values",
+          "ourSolution": "Sourced sustainable materials and provided carbon-neutral shipping options"
+        }
+      }
+    },
+    "trustedBy": {
+      "title": "Trusted by <strong>Leading Brands</strong>",
+      "subtitle": "Join hundreds of businesses that trust us with their branded apparel needs"
+    },
+    "cta": {
+      "title": "Have a unique project in mind?",
+      "description": "Let's build your brand together with premium textile solutions tailored to your business needs.",
+      "button": "Contact Us Today"
     }
   }
 }

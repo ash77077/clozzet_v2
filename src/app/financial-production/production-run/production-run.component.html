@@ -1,0 +1,284 @@
+<div class="production-run-container">
+  <h2>Production Run Logging</h2>
+
+  <div class="content-grid">
+    <div class="form-section">
+      <h3>Log New Production Run</h3>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <form [formGroup]="productionForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="productId">Product *</label>
+          <select id="productId" formControlName="productId" class="form-control">
+            <option value="">Select Product</option>
+            <option *ngFor="let product of products()" [value]="product.id">
+              {{ product.productName }} - {{ product.totalUnitCost | number:'1.2-2' }} AMD/unit
+            </option>
+          </select>
+        </div>
+
+        <div class="product-info-card" *ngIf="selectedProduct">
+          <h4>Product Details</h4>
+          <div class="info-row">
+            <span class="label">Product:</span>
+            <span class="value">{{ selectedProduct.productName }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Unit Cost:</span>
+            <span class="value">{{ selectedProduct.totalUnitCost | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Fabric Cost:</span>
+            <span class="value">{{ selectedProduct.fabricComponent.fabricCost | number:'1.2-2' }} AMD ({{ selectedProduct.fabricComponent.gramsUsed }}g)</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Accessories Total:</span>
+            <span class="value">{{ getAccessoriesTotal() | number:'1.2-2' }} AMD ({{ selectedProduct.accessories.length }} items)</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Labor Cost:</span>
+            <span class="value">{{ selectedProduct.pieceworkLabor | number:'1.2-2' }} AMD</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quantity">Quantity to Produce *</label>
+            <input
+              type="number"
+              id="quantity"
+              formControlName="quantity"
+              class="form-control"
+              placeholder="Number of items"
+              min="1"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="startDate">Start Date *</label>
+            <input
+              type="date"
+              id="startDate"
+              formControlName="startDate"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="productionDate">Target Completion Date *</label>
+          <input
+            type="date"
+            id="productionDate"
+            formControlName="productionDate"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="sellingPricePerUnit">Selling Price Per Unit (AMD) *</label>
+          <input
+            type="number"
+            id="sellingPricePerUnit"
+            formControlName="sellingPricePerUnit"
+            class="form-control"
+            placeholder="Price per unit"
+            step="0.01"
+          />
+        </div>
+
+        <div class="calculation-summary" *ngIf="selectedProduct && productionForm.get('quantity')?.value">
+          <h4>Production Summary</h4>
+          <div class="summary-row">
+            <span>Quantity:</span>
+            <span>{{ productionForm.get('quantity')?.value }} units</span>
+          </div>
+          <div class="summary-row">
+            <span>Total Cost:</span>
+            <span>{{ calculateTotalCost() | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="summary-row">
+            <span>Total Revenue:</span>
+            <span>{{ calculateTotalRevenue() | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="summary-row total">
+            <strong>Gross Profit:</strong>
+            <strong [class.negative]="calculateGrossProfit() < 0">
+              {{ calculateGrossProfit() | number:'1.2-2' }} AMD
+            </strong>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="!productionForm.valid">
+            Log Production Run
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="info-section">
+      <div class="info-card">
+        <h4>What Happens When You Log Production?</h4>
+        <ul>
+          <li>Fabric will be deducted from inventory based on consumption</li>
+          <li>Accessories will be deducted from stock</li>
+          <li>Gross profit will be calculated automatically</li>
+          <li>Production will be tracked for monthly analytics</li>
+        </ul>
+      </div>
+
+      <div class="quick-stats" *ngIf="productionRuns().length > 0">
+        <h4>Recent Activity</h4>
+        <p><strong>Total Productions:</strong> {{ productionRuns().length }}</p>
+        <p><strong>Last Production:</strong> {{ productionRuns()[productionRuns().length - 1].productionDate | date:'MMM d, y' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="productions-list-section">
+    <h3>Production History</h3>
+    <div class="productions-table-wrapper" *ngIf="productionRuns().length > 0; else noProductions">
+      <table class="productions-table">
+        <thead>
+          <tr>
+            <th>Start Date</th>
+            <th>Target Date</th>
+            <th>Product</th>
+            <th>Progress</th>
+            <th>Status</th>
+            <th>Unit Cost</th>
+            <th>Selling Price</th>
+            <th>Gross Profit</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let run of productionRuns()" [class.completed-run]="run.status === 'completed' || run.status === 'delivered'" [class.cancelled-run]="run.status === 'cancelled'">
+            <td>{{ run.startDate | date:'MMM d, y' }}</td>
+            <td>{{ run.productionDate | date:'MMM d, y' }}</td>
+            <td>
+              <strong>{{ run.productName }}</strong>
+              <div class="run-meta" *ngIf="run.finishedDate">
+                <small>Finished: {{ run.finishedDate | date:'MMM d, y' }}</small>
+              </div>
+            </td>
+            <td>
+              <div class="progress-info">
+                <div class="progress-text">{{ run.quantityFinished || 0 }} / {{ run.quantity }}</div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" [style.width.%]="getProgressPercentage(run)"></div>
+                </div>
+                <div class="progress-percentage">{{ getProgressPercentage(run) }}%</div>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [style.background-color]="getStatusColor(run.status || 'pending')">
+                {{ getStatusLabel(run.status || 'pending') }}
+              </span>
+            </td>
+            <td>{{ run.totalUnitCost | number:'1.2-2' }} AMD</td>
+            <td>{{ run.sellingPricePerUnit | number:'1.2-2' }} AMD</td>
+            <td [class.profit]="run.grossProfit! > 0" [class.loss]="run.grossProfit! < 0">
+              <strong>{{ run.grossProfit | number:'1.2-2' }} AMD</strong>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  *ngIf="run.status !== 'completed' && run.status !== 'cancelled'"
+                  class="btn btn-sm btn-edit"
+                  (click)="openStatusModal(run)">
+                  Update Status
+                </button>
+                <button class="btn btn-sm btn-delete" (click)="deleteProduction(run.id!)">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #noProductions>
+      <p class="no-data">No production runs logged yet. Log your first production above.</p>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal-overlay" *ngIf="showStatusModal()" (click)="closeStatusModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Update Production Status</h3>
+      <button class="close-btn" (click)="closeStatusModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="run-info" *ngIf="selectedRunForStatusUpdate()">
+        <h4>{{ selectedRunForStatusUpdate()!.productName }}</h4>
+        <p><strong>Total Quantity:</strong> {{ selectedRunForStatusUpdate()!.quantity }} units</p>
+        <p><strong>Target Date:</strong> {{ selectedRunForStatusUpdate()!.productionDate | date:'MMM d, y' }}</p>
+      </div>
+
+      <form [formGroup]="statusForm">
+        <div class="form-group">
+          <label for="status">Status *</label>
+          <select id="status" formControlName="status" class="form-control">
+            <option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quantityFinished">Quantity Finished *</label>
+          <input
+            type="number"
+            id="quantityFinished"
+            formControlName="quantityFinished"
+            class="form-control"
+            min="0"
+            [max]="selectedRunForStatusUpdate()!.quantity"
+          />
+          <small class="help-text">
+            Max: {{ selectedRunForStatusUpdate()!.quantity }} units
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="statusNotes">Notes (Optional)</label>
+          <textarea
+            id="statusNotes"
+            formControlName="statusNotes"
+            class="form-control"
+            rows="3"
+            placeholder="Add any notes about this status update..."
+          ></textarea>
+        </div>
+
+        <div class="progress-preview" *ngIf="statusForm.get('quantityFinished')?.value">
+          <div class="preview-label">Progress Preview:</div>
+          <div class="progress-bar-container">
+            <div
+              class="progress-bar-fill"
+              [style.width.%]="(statusForm.get('quantityFinished')?.value / selectedRunForStatusUpdate()!.quantity) * 100"
+            ></div>
+          </div>
+          <div class="preview-text">
+            {{ statusForm.get('quantityFinished')?.value }} / {{ selectedRunForStatusUpdate()?.quantity }}
+            ({{ ((statusForm.get('quantityFinished')?.value / selectedRunForStatusUpdate()!.quantity) * 100).toFixed(0) }}%)
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="closeStatusModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" [disabled]="!statusForm.valid" (click)="submitStatusUpdate()">
+        Update Status
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,266 @@
+<div class="product-recipe-container">
+  <h2>Advanced Product Recipe</h2>
+
+  <div class="content-grid">
+    <div class="form-section">
+      <h3>{{ editingId() ? 'Edit' : 'Create' }} Product Definition</h3>
+      <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="productName">Product Name *</label>
+          <input
+            type="text"
+            id="productName"
+            formControlName="productName"
+            class="form-control"
+            placeholder="e.g., Hoodie, T-Shirt"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="productCode">Product Code</label>
+          <input
+            type="text"
+            id="productCode"
+            formControlName="productCode"
+            class="form-control"
+            placeholder="Optional SKU or code"
+          />
+        </div>
+
+        <h4>Fabric Selection</h4>
+
+        <div class="form-group">
+          <label for="fabricId">Fabric *</label>
+          <select id="fabricId" formControlName="fabricId" class="form-control">
+            <option value="">Select Fabric</option>
+            <option *ngFor="let fabric of fabrics()" [value]="fabric.id">
+              {{ fabric.name }} - {{ fabric.color }} | Stock: {{ fabric.availableKg }}kg | {{ fabric.pricePerKg }} AMD/kg
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="gramsUsed">Fabric Consumption (grams) *</label>
+          <input
+            type="number"
+            id="gramsUsed"
+            formControlName="gramsUsed"
+            class="form-control"
+            placeholder="Enter grams used per product"
+          />
+          <div class="calc-hint" *ngIf="productForm.get('fabricId')?.value && productForm.get('gramsUsed')?.value">
+            Fabric Cost: {{ calculateFabricCost() | number:'1.2-2' }} AMD
+          </div>
+        </div>
+
+        <h4>Accessories</h4>
+
+        <div formArrayName="accessories" class="accessories-section">
+          <div *ngFor="let accessory of accessoriesArray.controls; let i = index" [formGroupName]="i" class="accessory-row">
+            <div class="accessory-fields">
+              <div class="form-group">
+                <label>Accessory *</label>
+                <select formControlName="accessoryId" class="form-control">
+                  <option value="">Select Accessory</option>
+                  <option *ngFor="let acc of accessories()" [value]="acc.id">
+                    {{ acc.name }} - {{ acc.costPerUnit | number:'1.2-2' }} AMD
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Quantity *</label>
+                <input
+                  type="number"
+                  formControlName="quantity"
+                  class="form-control"
+                  placeholder="Qty"
+                  min="1"
+                />
+              </div>
+
+              <div class="form-group cost-display">
+                <label>Cost</label>
+                <div class="cost-value">
+                  {{ getAccessoryCost(accessory.get('accessoryId')?.value) * (accessory.get('quantity')?.value || 0) | number:'1.2-2' }} AMD
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-remove" (click)="removeAccessory(i)">
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-add-accessory" (click)="addAccessory()">
+            + Add Accessory
+          </button>
+
+          <div class="calc-hint" *ngIf="accessoriesArray.length > 0">
+            Total Accessories Cost: {{ calculateAccessoriesCost() | number:'1.2-2' }} AMD
+          </div>
+        </div>
+
+        <h4>Labor & Pricing</h4>
+
+        <div class="form-group">
+          <label for="pieceworkLabor">Piecework Labor Cost (AMD) *</label>
+          <input
+            type="number"
+            id="pieceworkLabor"
+            formControlName="pieceworkLabor"
+            class="form-control"
+            placeholder="Price paid to seamstress"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="sellingPrice">Selling Price (AMD)</label>
+          <input
+            type="number"
+            id="sellingPrice"
+            formControlName="sellingPrice"
+            class="form-control"
+            placeholder="Optional: for profit margin calculation"
+          />
+        </div>
+
+        <div class="cost-summary">
+          <h4>Cost Summary</h4>
+          <div class="summary-row">
+            <span>Fabric Cost:</span>
+            <span>{{ calculateFabricCost() | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="summary-row">
+            <span>Accessories Cost:</span>
+            <span>{{ calculateAccessoriesCost() | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="summary-row">
+            <span>Piecework Labor:</span>
+            <span>{{ productForm.get('pieceworkLabor')?.value || 0 | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="summary-row total">
+            <strong>Total Unit Cost:</strong>
+            <strong>{{ calculateTotalUnitCost() | number:'1.2-2' }} AMD</strong>
+          </div>
+          <div class="summary-row" *ngIf="productForm.get('sellingPrice')?.value">
+            <span>Selling Price:</span>
+            <span>{{ productForm.get('sellingPrice')?.value | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="summary-row profit" *ngIf="productForm.get('sellingPrice')?.value">
+            <span>Profit per Unit:</span>
+            <span>{{ (productForm.get('sellingPrice')?.value - calculateTotalUnitCost()) | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="summary-row profit" *ngIf="productForm.get('sellingPrice')?.value">
+            <span>Profit Margin:</span>
+            <span>{{ calculateProfitMargin() | number:'1.2-2' }}%</span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="!productForm.valid">
+            {{ editingId() ? 'Update' : 'Save' }} Product
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="cancelEdit()" *ngIf="editingId()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="products-list-section">
+      <h3>Product Definitions</h3>
+      <div class="products-list" *ngIf="products().length > 0; else noProducts">
+        <div class="product-card" *ngFor="let product of products()">
+          <div class="product-header">
+            <h4>{{ product.productName }}</h4>
+            <span class="product-code" *ngIf="product.productCode">{{ product.productCode }}</span>
+          </div>
+          <div class="product-body">
+            <div class="info-row">
+              <span class="label">Total Unit Cost:</span>
+              <span class="value cost">{{ product.totalUnitCost | number:'1.2-2' }} AMD</span>
+            </div>
+            <div class="info-row" *ngIf="product.sellingPrice">
+              <span class="label">Selling Price:</span>
+              <span class="value">{{ product.sellingPrice | number:'1.2-2' }} AMD</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Fabric:</span>
+              <span class="value">{{ product.fabricComponent.fabricName }} ({{ product.fabricComponent.gramsUsed }}g)</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Accessories:</span>
+              <span class="value">{{ product.accessories.length }} item(s)</span>
+            </div>
+          </div>
+          <div class="product-actions">
+            <button class="btn btn-sm btn-view" (click)="viewProduct(product)">View</button>
+            <button class="btn btn-sm btn-edit" (click)="editProduct(product)">Edit</button>
+            <button class="btn btn-sm btn-delete" (click)="deleteProduct(product.id!)">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noProducts>
+        <p class="no-data">No product definitions yet. Create your first product recipe above.</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <div class="product-details-modal" *ngIf="selectedProduct()" (click)="closeDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedProduct()?.productName }}</h3>
+        <button class="btn-close" (click)="closeDetails()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-section">
+          <h4>Product Information</h4>
+          <p><strong>Product Code:</strong> {{ selectedProduct()?.productCode || 'N/A' }}</p>
+          <p><strong>Total Unit Cost:</strong> {{ selectedProduct()?.totalUnitCost | number:'1.2-2' }} AMD</p>
+          <p *ngIf="selectedProduct()?.sellingPrice"><strong>Selling Price:</strong> {{ selectedProduct()?.sellingPrice | number:'1.2-2' }} AMD</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>Fabric Component</h4>
+          <p><strong>Fabric:</strong> {{ selectedProduct()?.fabricComponent?.fabricName }}</p>
+          <p><strong>Price per Kg:</strong> {{ selectedProduct()?.fabricComponent?.pricePerKg | number:'1.2-2' }} AMD</p>
+          <p><strong>Consumption:</strong> {{ selectedProduct()?.fabricComponent?.gramsUsed }} grams</p>
+          <p><strong>Fabric Cost:</strong> {{ selectedProduct()?.fabricComponent?.fabricCost | number:'1.2-2' }} AMD</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>Accessories</h4>
+          <table class="details-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Unit Cost</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let acc of selectedProduct()?.accessories">
+                <td>{{ acc.accessoryName }}</td>
+                <td>{{ acc.quantity }}</td>
+                <td>{{ acc.costPerUnit | number:'1.2-2' }} AMD</td>
+                <td>{{ acc.accessoryCost | number:'1.2-2' }} AMD</td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="3"><strong>Total Accessories Cost:</strong></td>
+                <td><strong>{{ getSelectedProductAccessoriesTotal() | number:'1.2-2' }} AMD</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="detail-section">
+          <h4>Labor</h4>
+          <p><strong>Piecework Labor:</strong> {{ selectedProduct()?.pieceworkLabor | number:'1.2-2' }} AMD</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

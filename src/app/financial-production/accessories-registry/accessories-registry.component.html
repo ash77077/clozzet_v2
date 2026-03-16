@@ -1,0 +1,154 @@
+<div class="accessories-container">
+  <h2>Accessories & Details Registry</h2>
+
+  <div class="form-section">
+    <h3>{{ editingId() ? 'Edit' : 'Add' }} Accessory Item</h3>
+    <form [formGroup]="accessoryForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">Accessory Name *</label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          class="form-control"
+          placeholder="e.g., Gold Button, Zipper, Label Tag"
+        />
+        <div class="error" *ngIf="accessoryForm.get('name')?.invalid && accessoryForm.get('name')?.touched">
+          <small *ngIf="accessoryForm.get('name')?.hasError('required')">Name is required</small>
+          <small *ngIf="accessoryForm.get('name')?.hasError('minlength')">Name must be at least 2 characters</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="unit">Unit of Measurement *</label>
+          <select
+            id="unit"
+            formControlName="unit"
+            class="form-control"
+          >
+            <option *ngFor="let unit of units" [value]="unit">{{ unit }}</option>
+          </select>
+          <div class="error" *ngIf="accessoryForm.get('unit')?.invalid && accessoryForm.get('unit')?.touched">
+            <small *ngIf="accessoryForm.get('unit')?.hasError('required')">Unit is required</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity">Quantity in Stock *</label>
+          <input
+            type="number"
+            id="quantity"
+            formControlName="quantity"
+            class="form-control"
+            placeholder="Enter quantity"
+            step="0.01"
+          />
+          <div class="error" *ngIf="accessoryForm.get('quantity')?.invalid && accessoryForm.get('quantity')?.touched">
+            <small *ngIf="accessoryForm.get('quantity')?.hasError('required')">Quantity is required</small>
+            <small *ngIf="accessoryForm.get('quantity')?.hasError('min')">Quantity must be 0 or greater</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="costPerUnit">Cost Per Unit (AMD) *</label>
+        <input
+          type="number"
+          id="costPerUnit"
+          formControlName="costPerUnit"
+          class="form-control"
+          placeholder="Enter cost per unit"
+          step="0.01"
+        />
+        <div class="error" *ngIf="accessoryForm.get('costPerUnit')?.invalid && accessoryForm.get('costPerUnit')?.touched">
+          <small *ngIf="accessoryForm.get('costPerUnit')?.hasError('required')">Cost is required</small>
+          <small *ngIf="accessoryForm.get('costPerUnit')?.hasError('min')">Cost must be 0 or greater</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="!accessoryForm.valid">
+          {{ editingId() ? 'Update' : 'Add' }} Accessory
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()" *ngIf="editingId()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="accessories-list-section">
+    <div class="list-header">
+      <h3>Accessories Registry</h3>
+      <div class="search-box">
+        <input
+          type="text"
+          placeholder="Search accessories..."
+          class="search-input"
+          (input)="onSearch($event)"
+        />
+      </div>
+    </div>
+
+    <div class="accessories-grid" *ngIf="filteredAccessories().length > 0; else noAccessories">
+      <div class="accessory-card" *ngFor="let accessory of filteredAccessories()">
+        <div class="card-header">
+          <h4>{{ accessory.name }}</h4>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <span class="label">Unit:</span>
+            <span class="value">{{ accessory.unit }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Quantity in Stock:</span>
+            <span class="value">{{ accessory.quantity }} {{ accessory.unit }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Cost Per Unit:</span>
+            <span class="value">{{ accessory.costPerUnit | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Total Value:</span>
+            <span class="value">{{ (accessory.quantity * accessory.costPerUnit) | number:'1.2-2' }} AMD</span>
+          </div>
+          <div class="info-row" *ngIf="accessory.createdAt">
+            <span class="label">Added:</span>
+            <span class="value">{{ accessory.createdAt | date:'MMM d, y' }}</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-sm btn-edit" (click)="editAccessory(accessory)">Edit</button>
+          <button class="btn btn-sm btn-delete" (click)="deleteAccessory(accessory.id!)">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noAccessories>
+      <p class="no-data">
+        {{ searchTerm() ? 'No accessories found matching your search.' : 'No accessories registered yet. Add your first accessory above.' }}
+      </p>
+    </ng-template>
+
+    <div class="summary-card" *ngIf="accessories().length > 0">
+      <h4>Registry Summary</h4>
+      <div class="summary-row">
+        <span><strong>Total Accessories:</strong></span>
+        <span>{{ accessories().length }}</span>
+      </div>
+      <div class="summary-row">
+        <span><strong>Total Inventory Value:</strong></span>
+        <span class="highlight-value">{{ getTotalInventoryValue() | number:'1.2-2' }} AMD</span>
+      </div>
+      <div class="summary-row" *ngIf="searchTerm()">
+        <span><strong>Filtered Results:</strong></span>
+        <span>{{ filteredAccessories().length }}</span>
+      </div>
+      <div class="summary-row" *ngIf="searchTerm()">
+        <span><strong>Filtered Value:</strong></span>
+        <span class="highlight-value">{{ getFilteredInventoryValue() | number:'1.2-2' }} AMD</span>
+      </div>
+    </div>
+  </div>
+</div>

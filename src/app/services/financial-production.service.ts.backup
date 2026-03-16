@@ -1,0 +1,656 @@
+import { Injectable, signal, computed } from '@angular/core';
+import {
+  MonthlyExpenseReport,
+  AccessoryItem,
+  ProductDefinition,
+  ProductionRun,
+  MonthlyAnalytics,
+  DashboardSummary,
+  InventoryFabric,
+  FabricComponent,
+  AccessoryComponent,
+  FabricInventoryHistory,
+  InventoryChangeType
+} from '../models/financial-production.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FinancialProductionService {
+  // State Signals
+  private monthlyExpenseReports = signal<MonthlyExpenseReport[]>([]);
+  private accessoryItems = signal<AccessoryItem[]>([]);
+  private productDefinitions = signal<ProductDefinition[]>([]);
+  private productionRuns = signal<ProductionRun[]>([]);
+  private inventoryFabrics = signal<InventoryFabric[]>([]);
+  private fabricInventoryHistory = signal<FabricInventoryHistory[]>([]);
+
+  // Computed Signals
+  readonly monthlyExpenseReports$ = this.monthlyExpenseReports.asReadonly();
+  readonly accessoryItems$ = this.accessoryItems.asReadonly();
+  readonly productDefinitions$ = this.productDefinitions.asReadonly();
+  readonly productionRuns$ = this.productionRuns.asReadonly();
+  readonly inventoryFabrics$ = this.inventoryFabrics.asReadonly();
+  readonly fabricInventoryHistory$ = this.fabricInventoryHistory.asReadonly();
+
+  // Computed: Current Month Analytics
+  readonly currentMonthAnalytics = computed(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    return this.calculateMonthlyAnalytics(currentMonth, currentYear);
+  });
+
+  constructor() {
+    this.initializeMockData();
+  }
+
+  // ==================== Feature 1: Monthly Expense Report ====================
+
+  addMonthlyExpenseReport(report: MonthlyExpenseReport): void {
+    const newReport: MonthlyExpenseReport = {
+      ...report,
+      id: this.generateId(),
+      totalOverhead: this.calculateTotalOverhead(report),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.monthlyExpenseReports.update(reports => [...reports, newReport]);
+  }
+
+  updateMonthlyExpenseReport(id: string, report: Partial<MonthlyExpenseReport>): void {
+    this.monthlyExpenseReports.update(reports =>
+      reports.map(r => {
+        if (r.id === id) {
+          const updated = { ...r, ...report, updatedAt: new Date() };
+          updated.totalOverhead = this.calculateTotalOverhead(updated);
+          return updated;
+        }
+        return r;
+      })
+    );
+  }
+
+  deleteMonthlyExpenseReport(id: string): void {
+    this.monthlyExpenseReports.update(reports => reports.filter(r => r.id !== id));
+  }
+
+  getMonthlyExpenseReport(month: number, year: number): MonthlyExpenseReport | undefined {
+    return this.monthlyExpenseReports().find(r => r.month === month && r.year === year);
+  }
+
+  private calculateTotalOverhead(report: MonthlyExpenseReport): number {
+    return report.rent + report.utilities + report.fixedSalaries + report.variableDailyLabor;
+  }
+
+  // ==================== Feature 2: Accessories Registry ====================
+
+  addAccessoryItem(accessory: AccessoryItem): void {
+    const newAccessory: AccessoryItem = {
+      ...accessory,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.accessoryItems.update(items => [...items, newAccessory]);
+  }
+
+  updateAccessoryItem(id: string, accessory: Partial<AccessoryItem>): void {
+    this.accessoryItems.update(items =>
+      items.map(item =>
+        item.id === id ? { ...item, ...accessory, updatedAt: new Date() } : item
+      )
+    );
+  }
+
+  deleteAccessoryItem(id: string): void {
+    this.accessoryItems.update(items => items.filter(item => item.id !== id));
+  }
+
+  getAccessoryItem(id: string): AccessoryItem | undefined {
+    return this.accessoryItems().find(item => item.id === id);
+  }
+
+  // ==================== Feature 3: Product Recipe/Definition ====================
+
+  addProductDefinition(product: ProductDefinition): void {
+    const newProduct = this.calculateProductCosts(product);
+    newProduct.id = this.generateId();
+    newProduct.createdAt = new Date();
+    newProduct.updatedAt = new Date();
+    this.productDefinitions.update(products => [...products, newProduct]);
+  }
+
+  updateProductDefinition(id: string, product: Partial<ProductDefinition>): void {
+    this.productDefinitions.update(products =>
+      products.map(p => {
+        if (p.id === id) {
+          const updated = { ...p, ...product, updatedAt: new Date() };
+          return this.calculateProductCosts(updated);
+        }
+        return p;
+      })
+    );
+  }
+
+  deleteProductDefinition(id: string): void {
+    this.productDefinitions.update(products => products.filter(p => p.id !== id));
+  }
+
+  getProductDefinition(id: string): ProductDefinition | undefined {
+    return this.productDefinitions().find(p => p.id === id);
+  }
+
+  private calculateProductCosts(product: ProductDefinition): ProductDefinition {
+    // Calculate fabric cost: (FabricPricePerKg / 1000) * GramsUsed
+    const fabricCost = (product.fabricComponent.pricePerKg / 1000) * product.fabricComponent.gramsUsed;
+    product.fabricComponent.fabricCost = fabricCost;
+
+    // Calculate accessories costs
+    let totalAccessoriesCost = 0;
+    product.accessories = product.accessories.map(acc => {
+      const cost = acc.costPerUnit * acc.quantity;
+      acc.accessoryCost = cost;
+      totalAccessoriesCost += cost;
+      return acc;
+    });
+
+    // Calculate total unit cost
+    product.totalUnitCost = fabricCost + totalAccessoriesCost + product.pieceworkLabor;
+
+    return product;
+  }
+
+  // ==================== Feature 4: Production Run & Analytics ====================
+
+  addProductionRun(production: ProductionRun): void {
+    const productDef = this.getProductDefinition(production.productId);
+    if (!productDef) {
+      throw new Error('Product definition not found');
+    }
+
+    // Calculate costs and profit
+    const totalUnitCost = productDef.totalUnitCost || 0;
+    const grossProfit = (production.sellingPricePerUnit - totalUnitCost) * production.quantity;
+
+    const newProduction: ProductionRun = {
+      ...production,
+      id: this.generateId(),
+      productDefinition: productDef,
+      productName: productDef.productName,
+      totalUnitCost,
+      grossProfit,
+      month: production.productionDate.getMonth() + 1,
+      year: production.productionDate.getFullYear(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Deduct from inventory
+    this.deductFromInventory(productDef, production.quantity);
+
+    this.productionRuns.update(runs => [...runs, newProduction]);
+  }
+
+  deleteProductionRun(id: string): void {
+    this.productionRuns.update(runs => runs.filter(r => r.id !== id));
+  }
+
+  updateProductionStatus(id: string, status: any, quantityFinished: number, statusNotes?: string, finishedDate?: Date): void {
+    this.productionRuns.update(runs =>
+      runs.map(run =>
+        run.id === id
+          ? { ...run, status, quantityFinished, statusNotes, finishedDate, updatedAt: new Date() }
+          : run
+      )
+    );
+  }
+
+  getProductionRun(id: string): ProductionRun | undefined {
+    return this.productionRuns().find(r => r.id === id);
+  }
+
+  private deductFromInventory(productDef: ProductDefinition, quantity: number): void {
+    // Deduct fabric (in kg)
+    const fabricKgUsed = (productDef.fabricComponent.gramsUsed * quantity) / 1000;
+    const fabric = this.getInventoryFabric(productDef.fabricComponent.fabricId);
+
+    if (fabric) {
+      const quantityBefore = fabric.availableKg;
+      const quantityAfter = quantityBefore - fabricKgUsed;
+
+      this.inventoryFabrics.update(fabrics =>
+        fabrics.map(f => {
+          if (f.id === productDef.fabricComponent.fabricId) {
+            return {
+              ...f,
+              availableKg: quantityAfter,
+              updatedAt: new Date()
+            };
+          }
+          return f;
+        })
+      );
+
+      // Record in history
+      this.recordInventoryChange({
+        fabricId: fabric.id!,
+        fabricName: fabric.name,
+        changeType: 'production_use',
+        quantityChange: -fabricKgUsed,
+        quantityBefore,
+        quantityAfter,
+        reason: `Used in production: ${productDef.productName} (${quantity} units)`
+      });
+    }
+
+    // Deduct accessories (count)
+    productDef.accessories.forEach(acc => {
+      const totalNeeded = acc.quantity * quantity;
+      const accessory = this.getAccessoryItem(acc.accessoryId);
+
+      if (accessory) {
+        const newQuantity = accessory.quantity - totalNeeded;
+
+        if (newQuantity < 0) {
+          console.warn(`Insufficient stock for ${accessory.name}. Required: ${totalNeeded}, Available: ${accessory.quantity}`);
+        }
+
+        // Update accessory quantity
+        this.accessoryItems.update(items =>
+          items.map(item =>
+            item.id === acc.accessoryId
+              ? { ...item, quantity: Math.max(0, newQuantity), updatedAt: new Date() }
+              : item
+          )
+        );
+      }
+    });
+  }
+
+  // ==================== Analytics Calculations ====================
+
+  calculateMonthlyAnalytics(month: number, year: number): MonthlyAnalytics {
+    // Get all production runs for the month
+    const monthProductions = this.productionRuns().filter(
+      run => run.month === month && run.year === year
+    );
+
+    // Calculate total gross profit
+    const totalGrossProfitFromSales = monthProductions.reduce(
+      (sum, run) => sum + (run.grossProfit || 0),
+      0
+    );
+
+    // Get monthly overhead
+    const expenseReport = this.getMonthlyExpenseReport(month, year);
+    const totalMonthlyOverhead = expenseReport?.totalOverhead || 0;
+
+    // Calculate net profit
+    const monthlyNetProfit = totalGrossProfitFromSales - totalMonthlyOverhead;
+
+    return {
+      month,
+      year,
+      totalGrossProfitFromSales,
+      totalMonthlyOverhead,
+      monthlyNetProfit,
+      numberOfProductions: monthProductions.length,
+      totalItemsProduced: monthProductions.reduce((sum, run) => sum + run.quantity, 0)
+    };
+  }
+
+  getDashboardSummary(): DashboardSummary {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    // Get monthly analytics
+    const monthlyAnalytics = this.calculateMonthlyAnalytics(currentMonth, currentYear);
+
+    // Get recent productions (last 10)
+    const recentProductions = [...this.productionRuns()]
+      .sort((a, b) => {
+        const dateA = a.productionDate ? new Date(a.productionDate).getTime() : 0;
+        const dateB = b.productionDate ? new Date(b.productionDate).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 10);
+
+    // Calculate top products
+    const productStats = new Map<string, { totalProduced: number; totalProfit: number }>();
+    this.productionRuns().forEach(run => {
+      const existing = productStats.get(run.productName || '') || {
+        totalProduced: 0,
+        totalProfit: 0
+      };
+      productStats.set(run.productName || '', {
+        totalProduced: existing.totalProduced + run.quantity,
+        totalProfit: existing.totalProfit + (run.grossProfit || 0)
+      });
+    });
+
+    const topProducts = Array.from(productStats.entries())
+      .map(([productName, stats]) => ({
+        productName,
+        ...stats
+      }))
+      .sort((a, b) => b.totalProfit - a.totalProfit)
+      .slice(0, 5);
+
+    return {
+      currentMonth,
+      currentYear,
+      monthlyAnalytics,
+      recentProductions,
+      topProducts
+    };
+  }
+
+  // ==================== Inventory Management ====================
+
+  addInventoryFabric(fabric: InventoryFabric): void {
+    const newFabric: InventoryFabric = {
+      ...fabric,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.inventoryFabrics.update(fabrics => [...fabrics, newFabric]);
+
+    // Record initial stock in history
+    this.recordInventoryChange({
+      fabricId: newFabric.id!,
+      fabricName: newFabric.name,
+      changeType: 'initial_stock',
+      quantityChange: newFabric.availableKg,
+      quantityBefore: 0,
+      quantityAfter: newFabric.availableKg,
+      reason: 'Initial stock entry'
+    });
+  }
+
+  updateInventoryFabric(id: string, fabric: Partial<InventoryFabric>): void {
+    const existingFabric = this.getInventoryFabric(id);
+    if (!existingFabric) return;
+
+    // Check if quantity changed
+    if (fabric.availableKg !== undefined && fabric.availableKg !== existingFabric.availableKg) {
+      const quantityChange = fabric.availableKg - existingFabric.availableKg;
+      this.recordInventoryChange({
+        fabricId: id,
+        fabricName: existingFabric.name,
+        changeType: 'adjustment',
+        quantityChange,
+        quantityBefore: existingFabric.availableKg,
+        quantityAfter: fabric.availableKg,
+        reason: 'Manual adjustment'
+      });
+    }
+
+    this.inventoryFabrics.update(fabrics =>
+      fabrics.map(f => (f.id === id ? { ...f, ...fabric, updatedAt: new Date() } : f))
+    );
+  }
+
+  deleteInventoryFabric(id: string): void {
+    this.inventoryFabrics.update(fabrics => fabrics.filter(f => f.id !== id));
+  }
+
+  getInventoryFabric(id: string): InventoryFabric | undefined {
+    return this.inventoryFabrics().find(f => f.id === id);
+  }
+
+  // Get low stock fabrics (below minimum stock level)
+  getLowStockFabrics(): InventoryFabric[] {
+    return this.inventoryFabrics().filter(
+      f => f.minStockLevel && f.availableKg < f.minStockLevel
+    );
+  }
+
+  // Get total inventory value
+  getTotalInventoryValue(): number {
+    return this.inventoryFabrics().reduce(
+      (total, fabric) => total + (fabric.availableKg * fabric.pricePerKg),
+      0
+    );
+  }
+
+  // Record waste (Թափոն)
+  recordWaste(fabricId: string, wasteKg: number, reason?: string): void {
+    const fabric = this.getInventoryFabric(fabricId);
+    if (!fabric) {
+      throw new Error('Fabric not found');
+    }
+
+    if (wasteKg <= 0) {
+      throw new Error('Waste quantity must be greater than 0');
+    }
+
+    if (wasteKg > fabric.availableKg) {
+      throw new Error('Waste quantity cannot exceed available stock');
+    }
+
+    const quantityBefore = fabric.availableKg;
+    const quantityAfter = quantityBefore - wasteKg;
+
+    // Update fabric stock
+    this.inventoryFabrics.update(fabrics =>
+      fabrics.map(f =>
+        f.id === fabricId
+          ? { ...f, availableKg: quantityAfter, updatedAt: new Date() }
+          : f
+      )
+    );
+
+    // Record in history
+    this.recordInventoryChange({
+      fabricId,
+      fabricName: fabric.name,
+      changeType: 'waste',
+      quantityChange: -wasteKg,
+      quantityBefore,
+      quantityAfter,
+      reason: reason || 'Waste recorded'
+    });
+  }
+
+  // Restock fabric
+  restockFabric(fabricId: string, restockKg: number, reason?: string): void {
+    const fabric = this.getInventoryFabric(fabricId);
+    if (!fabric) {
+      throw new Error('Fabric not found');
+    }
+
+    if (restockKg <= 0) {
+      throw new Error('Restock quantity must be greater than 0');
+    }
+
+    const quantityBefore = fabric.availableKg;
+    const quantityAfter = quantityBefore + restockKg;
+
+    // Update fabric stock
+    this.inventoryFabrics.update(fabrics =>
+      fabrics.map(f =>
+        f.id === fabricId
+          ? { ...f, availableKg: quantityAfter, updatedAt: new Date() }
+          : f
+      )
+    );
+
+    // Record in history
+    this.recordInventoryChange({
+      fabricId,
+      fabricName: fabric.name,
+      changeType: 'restock',
+      quantityChange: restockKg,
+      quantityBefore,
+      quantityAfter,
+      reason: reason || 'Restocked'
+    });
+  }
+
+  // Return waste (Reverse a waste entry)
+  returnWaste(wasteEntryId: string, reason?: string): void {
+    // Find the waste entry
+    const wasteEntry = this.fabricInventoryHistory().find(h => h.id === wasteEntryId);
+
+    if (!wasteEntry) {
+      throw new Error('Waste entry not found');
+    }
+
+    if (wasteEntry.changeType !== 'waste') {
+      throw new Error('This entry is not a waste entry');
+    }
+
+    // Check if already returned
+    const alreadyReturned = this.fabricInventoryHistory().some(
+      h => h.changeType === 'waste_return' && h.relatedEntryId === wasteEntryId
+    );
+
+    if (alreadyReturned) {
+      throw new Error('This waste has already been returned');
+    }
+
+    const fabric = this.getInventoryFabric(wasteEntry.fabricId);
+    if (!fabric) {
+      throw new Error('Fabric not found');
+    }
+
+    // The waste entry has negative quantityChange, so we need to add it back (make it positive)
+    const returnQuantity = Math.abs(wasteEntry.quantityChange);
+    const quantityBefore = fabric.availableKg;
+    const quantityAfter = quantityBefore + returnQuantity;
+
+    // Update fabric stock
+    this.inventoryFabrics.update(fabrics =>
+      fabrics.map(f =>
+        f.id === wasteEntry.fabricId
+          ? { ...f, availableKg: quantityAfter, updatedAt: new Date() }
+          : f
+      )
+    );
+
+    // Record in history
+    this.recordInventoryChange({
+      fabricId: wasteEntry.fabricId,
+      fabricName: fabric.name,
+      changeType: 'waste_return',
+      quantityChange: returnQuantity,
+      quantityBefore,
+      quantityAfter,
+      relatedEntryId: wasteEntryId,
+      reason: reason || `Waste returned from entry: ${wasteEntry.createdAt ? new Date(wasteEntry.createdAt).toLocaleDateString() : 'N/A'}`
+    });
+  }
+
+  // Check if waste entry has been returned
+  isWasteReturned(wasteEntryId: string): boolean {
+    return this.fabricInventoryHistory().some(
+      h => h.changeType === 'waste_return' && h.relatedEntryId === wasteEntryId
+    );
+  }
+
+  // Record inventory change in history
+  private recordInventoryChange(historyEntry: Omit<FabricInventoryHistory, 'id' | 'createdAt'>): void {
+    const newEntry: FabricInventoryHistory = {
+      ...historyEntry,
+      id: this.generateId(),
+      createdAt: new Date()
+    };
+    this.fabricInventoryHistory.update(history => [...history, newEntry]);
+  }
+
+  // Get history for specific fabric
+  getFabricHistory(fabricId: string): FabricInventoryHistory[] {
+    return this.fabricInventoryHistory()
+      .filter(h => h.fabricId === fabricId)
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // Most recent first
+      });
+  }
+
+  // Get all waste entries
+  getAllWasteEntries(): FabricInventoryHistory[] {
+    return this.fabricInventoryHistory()
+      .filter(h => h.changeType === 'waste')
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // Most recent first
+      });
+  }
+
+  // Get total waste for a fabric
+  getTotalWaste(fabricId: string): number {
+    return this.fabricInventoryHistory()
+      .filter(h => h.fabricId === fabricId && h.changeType === 'waste')
+      .reduce((total, h) => total + Math.abs(h.quantityChange), 0);
+  }
+
+  // Get total waste across all fabrics
+  getTotalWasteAllFabrics(): number {
+    return this.fabricInventoryHistory()
+      .filter(h => h.changeType === 'waste')
+      .reduce((total, h) => total + Math.abs(h.quantityChange), 0);
+  }
+
+  // ==================== Utility ====================
+
+  private generateId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private initializeMockData(): void {
+    // Initialize with some mock data for testing
+    this.inventoryFabrics.set([
+      {
+        id: 'fabric-1',
+        name: 'Premium Cotton',
+        type: 'Cotton',
+        color: 'White',
+        gsm: 180,
+        pricePerKg: 5000,
+        availableKg: 100,
+        minStockLevel: 20,
+        supplier: 'Textile Co.',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'fabric-2',
+        name: 'Polyester Blend',
+        type: 'Blend',
+        color: 'Black',
+        gsm: 200,
+        pricePerKg: 3500,
+        availableKg: 150,
+        minStockLevel: 30,
+        supplier: 'Fabric World',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: 'fabric-3',
+        name: 'Merino Wool',
+        type: 'Wool',
+        color: 'Navy Blue',
+        gsm: 250,
+        pricePerKg: 8000,
+        availableKg: 50,
+        minStockLevel: 15,
+        supplier: 'Wool Masters',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]);
+
+    this.accessoryItems.set([
+      { id: 'acc-1', name: 'Gold Button', unit: 'pcs', quantity: 500, costPerUnit: 25, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'acc-2', name: 'Zipper', unit: 'count', quantity: 200, costPerUnit: 50, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'acc-3', name: 'Label Tag', unit: 'pcs', quantity: 1000, costPerUnit: 10, createdAt: new Date(), updatedAt: new Date() }
+    ]);
+  }
+}

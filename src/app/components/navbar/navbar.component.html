@@ -12,13 +12,14 @@
     <!-- Desktop Navigation -->
     <div class="navbar-menu desktop-menu">
       <ul class="nav-list">
-        <li 
-          *ngFor="let item of navItems" 
+        <li
+          *ngFor="let item of navItems"
           class="nav-item"
           [class.has-dropdown]="item.children"
-          [class.dropdown-open]="activeDropdown === item.label">
-          
-          <a 
+          [class.dropdown-open]="activeDropdown === item.label"
+          [class.special-nav-item]="item.special">
+
+          <a
             *ngIf="!item.children"
             [routerLink]="item.route"
             class="nav-link"
@@ -27,9 +28,10 @@
             {{ item.label }}
           </a>
 
-          <span 
+          <span
             *ngIf="item.children"
             class="nav-link dropdown-trigger"
+            [class.special-trigger]="item.special"
             (click)="toggleDropdown(item.label, $event)">
             {{ item.label }}
             <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,12 +146,12 @@
       
       <!-- Unauthenticated User Actions -->
       <ng-template #unauthenticatedActions>
-        <button class="btn btn-secondary login-btn" (click)="openLogin()">
-          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-          </svg>
-          {{ 'navbar.login' | translate }}
-        </button>
+<!--        <button class="btn btn-secondary login-btn" (click)="openLogin()">-->
+<!--          <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">-->
+<!--            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>-->
+<!--          </svg>-->
+<!--          {{ 'navbar.login' | translate }}-->
+<!--        </button>-->
         <button class="btn btn-primary" (click)="scrollToQuote()">
           {{ 'common.getQuote' | translate }}
           <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">

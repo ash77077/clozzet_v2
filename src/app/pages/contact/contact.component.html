@@ -2,9 +2,9 @@
   <!-- Page Header -->
   <section class="page-header">
     <div class="container">
-      <h1 class="page-title">Contact Us</h1>
+      <h1 class="page-title">{{ 'contact.hero.title' | translate }}</h1>
       <p class="page-subtitle">
-        Ready to get started? Get in touch with our team for a free consultation and quote
+        {{ 'contact.hero.subtitle' | translate }}
       </p>
     </div>
   </section>
@@ -20,22 +20,22 @@
             </svg>
           </div>
           <div class="contact-details">
-            <h3 class="contact-title">{{ info.title }}</h3>
-            <p class="contact-value">{{ info.value }}</p>
-            <p class="contact-description">{{ info.description }}</p>
+            <h3 class="contact-title">{{ info.titleKey | translate }}</h3>
+            <p class="contact-value">{{ info.valueKey ? (info.valueKey | translate) : info.value }}</p>
+            <p class="contact-description">{{ info.descriptionKey | translate }}</p>
           </div>
         </div>
       </div>
 
-      <div class="office-hours-card">
-        <h3 class="office-hours-title">Office Hours</h3>
-        <div class="hours-list">
-          <div *ngFor="let schedule of officeHours" class="hours-item">
-            <span class="hours-day">{{ schedule.day }}</span>
-            <span class="hours-time">{{ schedule.hours }}</span>
-          </div>
-        </div>
-      </div>
+<!--      <div class="office-hours-card">-->
+<!--        <h3 class="office-hours-title">Office Hours</h3>-->
+<!--        <div class="hours-list">-->
+<!--          <div *ngFor="let schedule of officeHours" class="hours-item">-->
+<!--            <span class="hours-day">{{ schedule.day }}</span>-->
+<!--            <span class="hours-time">{{ schedule.hours }}</span>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
     </div>
   </section>
 

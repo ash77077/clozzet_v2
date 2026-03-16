@@ -4,7 +4,7 @@
     <div
       class="snowflake"
       *ngFor="let flake of snowflakes; let i = index"
-      [ngStyle]="getSnowflakeStyle(i)">
+      [ngStyle]="getSnowflakeStyle()">
       ❄
     </div>
   </div>
@@ -25,8 +25,8 @@
     <div class="lights-string"></div>
   </div>
 
-  <app-hero></app-hero>
-  <app-products></app-products>
-  <app-services></app-services>
+	<app-hero></app-hero>
+	<app-trusted-brands></app-trusted-brands>
+	<app-services></app-services>
   <app-quote-form></app-quote-form>
 </div>

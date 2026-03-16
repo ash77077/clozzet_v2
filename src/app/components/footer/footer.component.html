@@ -7,7 +7,39 @@
           <img src="/images/logo-white.png" alt="{{ companyInfo.name }}" class="footer-logo-image">
         </div>
         <p class="company-description">{{ companyInfo.description | translate }}</p>
-        
+
+        <div class="social-links">
+          <a
+            *ngFor="let social of socialLinks"
+            [href]="social.href"
+            class="social-link"
+            target="_blank"
+            [attr.aria-label]="social.name">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                [attr.d]="getSocialIcon(social.icon)">
+              </path>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-section">
+        <h4 class="section-title">{{ 'footer.quickLinks.title' | translate }}</h4>
+        <ul class="footer-links">
+          <li *ngFor="let link of quickLinks">
+            <a (click)="navigateToLink(link)" class="footer-link" style="cursor: pointer;">{{ link.translationKey | translate }}</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Contact Info - Moved to Right -->
+      <div class="footer-section contact-section">
+        <h4 class="section-title">{{ 'footer.contact.title' | translate }}</h4>
         <div class="contact-info">
           <div class="contact-item">
             <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,81 +59,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
             <span>{{ companyInfo.address }}</span>
-          </div>
-        </div>
-
-        <div class="social-links">
-          <a 
-            *ngFor="let social of socialLinks" 
-            [href]="social.href" 
-            class="social-link"
-            [attr.aria-label]="social.name">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path 
-                stroke-linecap="round" 
-                stroke-linejoin="round" 
-                stroke-width="2" 
-                [attr.d]="getSocialIcon(social.icon)">
-              </path>
-            </svg>
-          </a>
-        </div>
-      </div>
-
-      <!-- Quick Links -->
-      <div class="footer-section">
-        <h4 class="section-title">{{ 'footer.quickLinks.title' | translate }}</h4>
-        <ul class="footer-links">
-          <li *ngFor="let link of quickLinks">
-            <a [href]="link.href" class="footer-link">{{ link.translationKey | translate }}</a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Products -->
-      <div class="footer-section">
-        <h4 class="section-title">{{ 'footer.products.title' | translate }}</h4>
-        <ul class="footer-links">
-          <li *ngFor="let category of productCategories">
-            <a [href]="category.href" class="footer-link">{{ category.translationKey | translate }}</a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Newsletter -->
-      <div class="footer-section newsletter-section">
-        <h4 class="section-title">{{ 'footer.newsletter.title' | translate }}</h4>
-        <p class="newsletter-description">
-          {{ 'footer.newsletter.description' | translate }}
-        </p>
-        <form class="newsletter-form">
-          <div class="input-group">
-            <input
-              type="email"
-              [placeholder]="'footer.newsletter.placeholder' | translate"
-              class="newsletter-input"
-              required>
-            <button type="submit" class="newsletter-btn">
-              {{ 'footer.newsletter.button' | translate }}
-              <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-              </svg>
-            </button>
-          </div>
-        </form>
-        
-        <div class="trust-badges">
-          <div class="badge">
-            <svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-            </svg>
-            <span>{{ 'footer.badges.isoCertified' | translate }}</span>
-          </div>
-          <div class="badge">
-            <svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span>{{ 'footer.badges.qualityAssured' | translate }}</span>
           </div>
         </div>
       </div>

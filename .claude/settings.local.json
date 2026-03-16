@@ -9,7 +9,8 @@
       "Bash(nest generate:*)",
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
-      "Bash(ng generate:*)"
+      "Bash(ng generate:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }
