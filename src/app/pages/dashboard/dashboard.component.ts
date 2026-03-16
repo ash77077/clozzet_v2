@@ -5,6 +5,8 @@ import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { ChartModule } from 'primeng/chart';
 import { AuthService, User } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
+import { B2BOrdersService } from '../../services/b2b-orders.service';
+import { B2BOrder, B2BOrderStatus } from '../../models/b2b-order.model';
 import {
   UserRole,
   UserDashboardData,
@@ -37,9 +39,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   allCompanies: Company[] = [];
   allOrders: Order[] = [];
 
+  // Client Dashboard Data
+  clientOrders: B2BOrder[] = [];
+  clientStats = {
+    totalOrders: 0,
+    pendingOrders: 0,
+    inProgressOrders: 0,
+    deliveredOrders: 0
+  };
+
   // Utility properties
   UserRole = UserRole;
   OrderStatus = OrderStatus;
+  B2BOrderStatus = B2BOrderStatus;
 
   // Statistics and Charts Data
   statisticsData: any = {
@@ -66,6 +78,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private dashboardService: DashboardService,
+    private b2bOrdersService: B2BOrdersService,
     private router: Router
   ) {}
 
@@ -100,6 +113,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadDashboardDataFromBackend(): void {
+    // Check if user is admin/manager or client
+    if (this.isUserAdminOrManager()) {
+      this.loadAdminDashboard();
+    } else {
+      this.loadClientDashboard();
+    }
+  }
+
+  isUserAdminOrManager(): boolean {
+    return this.currentUser?.role === UserRole.ADMIN ||
+           this.currentUser?.role === UserRole.MANAGER;
+  }
+
+  isUserClient(): boolean {
+    return this.currentUser?.role === UserRole.BUSINESS_USER ||
+           this.currentUser?.role === UserRole.CUSTOMER ||
+           this.currentUser?.role === UserRole.USER;
+  }
+
+  private loadAdminDashboard(): void {
     // Load statistics and chart data from backend
     forkJoin({
       stats: this.dashboardService.getDashboardStats(),
@@ -119,6 +152,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  private loadClientDashboard(): void {
+    // Load client-specific orders data
+    this.b2bOrdersService.getMyOrders()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (orders) => {
+          this.clientOrders = orders || [];
+          this.calculateClientStats();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading client dashboard:', error);
+          // Don't show error - just show empty state if no company
+          this.clientOrders = [];
+          this.calculateClientStats();
+          this.isLoading = false;
+        }
+      });
+  }
+
+  private calculateClientStats(): void {
+    this.clientStats.totalOrders = this.clientOrders.length;
+    this.clientStats.pendingOrders = this.clientOrders.filter(
+      o => o.status === B2BOrderStatus.PENDING
+    ).length;
+    this.clientStats.inProgressOrders = this.clientOrders.filter(
+      o => o.status === B2BOrderStatus.IN_PRODUCTION ||
+           o.status === B2BOrderStatus.QUALITY_CHECK ||
+           o.status === B2BOrderStatus.SHIPPED
+    ).length;
+    this.clientStats.deliveredOrders = this.clientOrders.filter(
+      o => o.status === B2BOrderStatus.DELIVERED
+    ).length;
   }
 
   private initializeChartsWithBackendData(data: any): void {
@@ -405,5 +473,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
       'urgent': 'priority-urgent'
     };
     return priorityClasses[priority.toLowerCase()] || 'priority-normal';
+  }
+
+  getRecentOrders(): B2BOrder[] {
+    return this.clientOrders.slice(0, 5);
+  }
+
+  getB2BStatusClass(status: B2BOrderStatus): string {
+    const statusClasses = {
+      [B2BOrderStatus.PENDING]: 'status-pending',
+      [B2BOrderStatus.IN_PRODUCTION]: 'status-in-progress',
+      [B2BOrderStatus.QUALITY_CHECK]: 'status-quality-check',
+      [B2BOrderStatus.SHIPPED]: 'status-shipped',
+      [B2BOrderStatus.DELIVERED]: 'status-delivered',
+    };
+    return statusClasses[status] || 'status-default';
+  }
+
+  getOrderId(order: B2BOrder): string {
+    return order.id ?? (order as any)._id ?? '';
+  }
+
+  getTotalItems(order: B2BOrder): number {
+    return order.items.reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  getCompanyName(): string {
+    if (!this.currentUser?.company) return '';
+    const company = this.currentUser.company as any;
+    return company.name || company || '';
   }
 }

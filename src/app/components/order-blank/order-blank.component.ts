@@ -10,11 +10,12 @@ import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {environment} from '../../../environments/environment';
 import {AutoCompleteModule} from 'primeng/autocomplete';
 import {SalesPerson} from '../../models/sales-person.model';
+import {OrderPrintPreviewComponent, OrderPrintData} from '../../shared/components/order-print-preview/order-print-preview.component';
 
 @Component({
   selector: 'app-order-blank',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule, AutoCompleteModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, AutoCompleteModule, OrderPrintPreviewComponent],
   templateUrl: './order-blank.component.html',
   styleUrls: ['./order-blank.component.scss']
 })
@@ -29,6 +30,7 @@ export class OrderBlankComponent implements OnInit {
   successMessage: string | null = null;
   isViewMode: boolean = false;
   currentUser: any = null;
+  showPrintPreview: boolean = false;
 
   // Sales person autocomplete properties
   salesPersons: SalesPerson[] = [];
@@ -134,7 +136,31 @@ export class OrderBlankComponent implements OnInit {
   }
 
   print(): void {
-    window.print();
+    this.showPrintPreview = true;
+  }
+
+  get orderPrintData(): OrderPrintData {
+    const formValue = this.orderForm.value;
+    return {
+      orderNumber: formValue.orderNumber || '',
+      clientName: formValue.clientName || '',
+      salesPerson: formValue.salesPerson || '',
+      deadline: formValue.deadline ? new Date(formValue.deadline) : undefined,
+      priority: formValue.priority || '',
+      quantity: this.calculateGrandTotal(),
+      clothType: formValue.clothType || '',
+      textileType: formValue.textileType || '',
+      fabricWeight: formValue.fabricWeight || '',
+      colors: formValue.colors || '',
+      customColorDetails: formValue.customColorDetails || '',
+      logoPosition: formValue.logoPosition || '',
+      logoSize: formValue.logoSize || '',
+      specialInstructions: formValue.specialInstructions || '',
+      packagingRequirements: formValue.packagingRequirements || '',
+      shippingAddress: formValue.shippingAddress || '',
+      sizes: formValue.sizes || {},
+      grandTotal: this.calculateGrandTotal()
+    };
   }
 
   getCurrentDate(): string {

@@ -96,10 +96,10 @@ export class ServicesComponent {
   ];
 
   stats = [
-    { number: '500+', labelKey: 'services.stats.clients', icon: 'users' },
-    { number: '50K+', labelKey: 'services.stats.items', icon: 'package' },
-    { number: '99%', labelKey: 'services.stats.satisfaction', icon: 'star' },
-    { number: '7', labelKey: 'services.stats.turnaround', icon: 'clock' }
+    { number: '150+', labelKey: 'services.stats.clients', icon: 'users' },
+    { number: '3K+', labelKey: 'services.stats.items', icon: 'package' },
+    { number: '93%', labelKey: 'services.stats.satisfaction', icon: 'star' },
+    { number: '15-20', labelKey: 'services.stats.turnaround', icon: 'clock' }
   ];
 
   getIconPath(iconName: string): string {

@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HeroComponent } from '../../components/hero/hero.component';
-import { ProductsComponent } from '../../components/products/products.component';
 import { ServicesComponent } from '../../components/services/services.component';
 import { QuoteFormComponent } from '../../components/quote-form/quote-form.component';
+import { TrustedBrandsComponent } from '../../shared/components/trusted-brands/trusted-brands.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -12,9 +12,9 @@ import { environment } from '../../../environments/environment';
   imports: [
     CommonModule,
     HeroComponent,
-    ProductsComponent,
     ServicesComponent,
-    QuoteFormComponent
+    QuoteFormComponent,
+    TrustedBrandsComponent
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
@@ -30,7 +30,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  getSnowflakeStyle(index: number) {
+  getSnowflakeStyle() {
     const left = Math.random() * 100;
     const animationDelay = Math.random() * 10;
     const fontSize = Math.random() * 10 + 10;

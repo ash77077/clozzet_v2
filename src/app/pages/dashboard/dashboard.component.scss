@@ -1102,3 +1102,240 @@
     }
   }
 }
+
+/* ============================================
+   CLIENT DASHBOARD STYLES
+   ============================================ */
+
+.client-dashboard {
+  .company-name {
+    font-size: 0.95rem;
+    color: #666;
+    font-weight: 500;
+    margin-top: 0.25rem;
+  }
+
+  .client-stats {
+    .stat-card {
+      &.primary { border-left: 4px solid #3498db; }
+      &.warning { border-left: 4px solid #f39c12; }
+      &.info { border-left: 4px solid #3498db; }
+      &.success { border-left: 4px solid #2ecc71; }
+    }
+  }
+}
+
+/* Quick Actions Section */
+.quick-actions-section {
+  margin-bottom: 2rem;
+
+  .action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .action-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #e8e8e8;
+    text-align: center;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      border-color: #3498db;
+    }
+
+    .action-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0 0 0.5rem;
+    }
+
+    p {
+      font-size: 0.9rem;
+      color: #666;
+      margin: 0;
+    }
+  }
+}
+
+/* Recent Orders Section */
+.recent-orders-section {
+  margin-bottom: 2rem;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .view-all-link {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #2980b9;
+    }
+  }
+
+  .orders-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .client-orders-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead {
+      background: #f8f9fa;
+
+      th {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e8e8e8;
+      }
+    }
+
+    tbody {
+      .order-row {
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+
+        &:hover {
+          background: #f8f9fa;
+        }
+
+        td {
+          padding: 1rem;
+          font-size: 0.95rem;
+          color: #333;
+        }
+
+        .order-id {
+          font-weight: 600;
+          font-family: monospace;
+          color: #1a1a1a;
+        }
+
+        .order-date {
+          color: #666;
+        }
+
+        .order-items {
+          color: #666;
+        }
+
+        .status-badge {
+          display: inline-block;
+          padding: 0.35rem 0.85rem;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: capitalize;
+
+          &.status-pending {
+            background: #fef3c7;
+            color: #92400e;
+          }
+
+          &.status-in-progress {
+            background: #dbeafe;
+            color: #1e40af;
+          }
+
+          &.status-quality-check {
+            background: #e0e7ff;
+            color: #4338ca;
+          }
+
+          &.status-shipped {
+            background: #ccfbf1;
+            color: #115e59;
+          }
+
+          &.status-delivered {
+            background: #d1fae5;
+            color: #065f46;
+          }
+        }
+      }
+    }
+  }
+}
+
+/* Empty State */
+.empty-state-section {
+  margin-top: 3rem;
+
+  .empty-state {
+    background: white;
+    padding: 4rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0 0 0.5rem;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #666;
+      margin: 0 0 2rem;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 2rem;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+
+      &:hover {
+        background: #2980b9;
+      }
+    }
+  }
+}

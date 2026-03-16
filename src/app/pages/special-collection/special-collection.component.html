@@ -1,0 +1,320 @@
+<div class="special-collection-page">
+  <!-- Hero Banner -->
+  <div class="collection-hero">
+    <div class="hero-content">
+      <span class="hero-badge">Exclusive</span>
+      <h1 class="hero-title">Special Collection</h1>
+      <p class="hero-subtitle" *ngIf="currentCategory()">
+        {{ getCategoryLabel(currentCategory()) }}
+      </p>
+      <p class="hero-subtitle" *ngIf="!currentCategory()">
+        Curated pieces crafted with care
+      </p>
+    </div>
+  </div>
+
+  <!-- Category Filter -->
+  <div class="category-nav">
+    <div class="category-nav-inner">
+      <a
+        routerLink="/special-collection/all"
+        class="category-pill"
+        [class.active]="!currentCategory() || currentCategory() === 'all'">
+        All
+      </a>
+      <a
+        *ngFor="let cat of categories"
+        [routerLink]="['/special-collection', cat.value]"
+        class="category-pill"
+        [class.active]="currentCategory() === cat.value">
+        {{ cat.label }}
+      </a>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading()">
+    <div class="spinner"></div>
+    <p>Loading collection...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error()">
+    <p>{{ error() }}</p>
+    <button class="btn-retry" (click)="loadItems(currentCategory())">Try Again</button>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading() && !error() && items().length === 0">
+    <div class="empty-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="64" height="64">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+      </svg>
+    </div>
+    <h3>No items available</h3>
+    <p>Check back soon for new arrivals in this collection.</p>
+  </div>
+
+  <!-- Product Grid -->
+  <div class="products-section" *ngIf="!loading() && !error() && items().length > 0">
+    <div class="products-header">
+      <span class="product-count">{{ items().length }} item{{ items().length !== 1 ? 's' : '' }}</span>
+    </div>
+
+    <div class="products-grid">
+      <div class="product-card" *ngFor="let item of items()" (click)="openModal(item)">
+
+        <!-- Product Image -->
+        <div class="card-image">
+          <img
+            *ngIf="getCoverImage(item)"
+            [src]="getImageUrl(getCoverImage(item)!)"
+            [alt]="item.name"
+            class="product-img" />
+          <div class="placeholder-img" *ngIf="!getCoverImage(item)">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+
+          <!-- Image count badge -->
+          <div class="image-count-badge" *ngIf="item.images.length > 1">
+            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            {{ item.images.length }}
+          </div>
+
+          <div class="category-tag">{{ getCategoryLabel(item.category) }}</div>
+          <div class="availability-badge"
+            [class.in-stock]="getAvailableQuantity(item) > 0"
+            [class.out-of-stock]="getAvailableQuantity(item) === 0">
+            {{ getAvailableQuantity(item) > 0 ? 'In Stock' : 'Out of Stock' }}
+          </div>
+
+          <!-- Hover overlay -->
+          <div class="card-overlay">
+            <span class="view-label">View Details</span>
+          </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="card-body">
+          <div class="card-top-row">
+            <h3 class="product-name">{{ item.name }}</h3>
+            <span class="product-price">{{ item.price | number:'1.0-0' }} AMD</span>
+          </div>
+
+          <p class="product-description">{{ item.description }}</p>
+
+          <div class="card-meta-row">
+            <span class="product-material" *ngIf="item.material">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              {{ item.material }}
+            </span>
+            <span class="variants-count" *ngIf="item.variants.length > 0">
+              {{ getUniqueColors(item).length }} color{{ getUniqueColors(item).length !== 1 ? 's' : '' }}
+              &middot;
+              {{ getUniqueSizes(item).length }} size{{ getUniqueSizes(item).length !== 1 ? 's' : '' }}
+            </span>
+          </div>
+
+          <!-- Color swatches preview -->
+          <div class="color-swatches-preview" *ngIf="getUniqueColors(item).length > 0">
+            <span
+              class="swatch"
+              *ngFor="let color of getUniqueColors(item).slice(0, 6)"
+              [title]="color"
+              [style.background]="color.toLowerCase()">
+            </span>
+            <span class="swatch-more" *ngIf="getUniqueColors(item).length > 6">
+              +{{ getUniqueColors(item).length - 6 }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────────── Product Detail Modal ──────────────── -->
+<div
+  class="modal-backdrop"
+  *ngIf="selectedItem()"
+  (click)="onBackdropClick($event)">
+
+  <div class="modal-panel" role="dialog" aria-modal="true">
+
+    <!-- Close button -->
+    <button class="modal-close" (click)="closeModal()" aria-label="Close">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <ng-container *ngIf="selectedItem() as item">
+      <div class="modal-body">
+
+        <!-- Left: Image Gallery -->
+        <div class="modal-gallery">
+          <!-- Main Image -->
+          <div class="gallery-main">
+            <img
+              *ngIf="activeImages().length > 0"
+              [src]="getImageUrl(activeImages()[activeImageIndex()])"
+              [alt]="item.name"
+              class="gallery-main-img" />
+            <div class="gallery-placeholder" *ngIf="activeImages().length === 0">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="64" height="64">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+
+            <!-- Prev / Next arrows (only if > 1 image) -->
+            <ng-container *ngIf="activeImages().length > 1">
+              <button class="gallery-arrow gallery-arrow--prev" (click)="prevImage()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <button class="gallery-arrow gallery-arrow--next" (click)="nextImage()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+              <div class="gallery-dots">
+                <span
+                  class="gallery-dot"
+                  *ngFor="let img of activeImages(); let i = index"
+                  [class.active]="i === activeImageIndex()"
+                  (click)="setActiveImage(i)">
+                </span>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Thumbnails row -->
+          <div class="gallery-thumbs" *ngIf="activeImages().length > 1">
+            <div
+              class="thumb"
+              *ngFor="let img of activeImages(); let i = index"
+              [class.active]="i === activeImageIndex()"
+              (click)="setActiveImage(i)">
+              <img [src]="getImageUrl(img)" [alt]="item.name + ' image ' + (i + 1)" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Product Details -->
+        <div class="modal-details">
+
+          <!-- Category + badges -->
+          <div class="detail-top-row">
+            <span class="detail-category">{{ getCategoryLabel(item.category) }}</span>
+            <span class="detail-stock-badge"
+              [class.in-stock]="getAvailableQuantity(item) > 0"
+              [class.out-of-stock]="getAvailableQuantity(item) === 0">
+              {{ getAvailableQuantity(item) > 0 ? 'In Stock' : 'Out of Stock' }}
+            </span>
+          </div>
+
+          <h2 class="detail-name">{{ item.name }}</h2>
+          <p class="detail-price">{{ item.price | number:'1.0-0' }} <span class="currency">AMD</span></p>
+
+          <p class="detail-description">{{ item.description }}</p>
+
+          <div class="detail-divider"></div>
+
+          <!-- Material -->
+          <div class="detail-row" *ngIf="item.material">
+            <span class="detail-label">Material</span>
+            <span class="detail-value">{{ item.material }}</span>
+          </div>
+
+          <!-- Colors -->
+          <div class="detail-section" *ngIf="getUniqueColors(item).length > 0">
+            <div class="detail-section-header">
+              <span class="detail-label">Color</span>
+              <span class="selected-value">{{ selectedColor() }}</span>
+            </div>
+            <div class="color-options">
+              <button
+                class="color-btn"
+                *ngFor="let color of getUniqueColors(item)"
+                [class.selected]="selectedColor() === color"
+                [class.unavailable]="!isColorAvailable(item, color)"
+                [title]="color"
+                (click)="selectColor(color)">
+                <span class="color-swatch" [style.background]="color.toLowerCase()"></span>
+                <span class="color-name">{{ color }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sizes -->
+          <div class="detail-section" *ngIf="getUniqueSizes(item).length > 0">
+            <div class="detail-section-header">
+              <span class="detail-label">Size</span>
+              <span class="selected-value">{{ selectedSize() }}</span>
+            </div>
+            <div class="size-options">
+              <button
+                class="size-btn"
+                *ngFor="let size of getUniqueSizes(item)"
+                [class.selected]="selectedSize() === size"
+                [class.unavailable]="!isSizeAvailableForColor(item, size)"
+                [disabled]="!isSizeAvailableForColor(item, size)"
+                (click)="selectedSize.set(size)">
+                {{ size }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Stock for selection -->
+          <div class="detail-row stock-row" *ngIf="selectedColor() && selectedSize()">
+            <span class="detail-label">Available</span>
+            <span class="stock-count" [class.low]="getSelectedStock() > 0 && getSelectedStock() <= 5">
+              <ng-container *ngIf="getSelectedStock() > 0">
+                {{ getSelectedStock() }} unit{{ getSelectedStock() !== 1 ? 's' : '' }}
+              </ng-container>
+              <ng-container *ngIf="getSelectedStock() === 0">
+                <span class="out-text">Not available in this combination</span>
+              </ng-container>
+            </span>
+          </div>
+
+          <div class="detail-divider"></div>
+
+          <!-- All Variants Table -->
+          <div class="variants-table-section" *ngIf="item.variants.length > 0">
+            <span class="detail-label">All Variants</span>
+            <div class="variants-table">
+              <div class="variants-table-header">
+                <span>Color</span>
+                <span>Size</span>
+                <span>Available</span>
+              </div>
+              <div
+                class="variants-table-row"
+                *ngFor="let v of item.variants"
+                [class.zero-stock]="(v.quantity - v.soldQuantity) === 0">
+                <span class="vt-color">
+                  <i class="vt-dot" [style.background]="v.color.toLowerCase()"></i>
+                  {{ v.color }}
+                </span>
+                <span class="vt-size">{{ v.size }}</span>
+                <span class="vt-qty">{{ v.quantity - v.soldQuantity }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

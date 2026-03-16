@@ -43,6 +43,9 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
 
   UserRole = UserRole;
 
+  // Section toggle (Sales vs Manufacturing)
+  currentSection: 'sales' | 'manufacturing' = 'sales';
+
   // Language properties
   currentLanguage: string = 'en';
   languages = [
@@ -57,6 +60,12 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   ) {
     // Initialize current language
     this.currentLanguage = this.translate.currentLang || 'en';
+
+    // Initialize section from localStorage
+    const savedSection = localStorage.getItem('selectedSection') as 'sales' | 'manufacturing';
+    if (savedSection) {
+      this.currentSection = savedSection;
+    }
   }
 
   ngOnInit(): void {
@@ -94,13 +103,22 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   }
 
   isAdminOrManager(): boolean {
-    return this.currentUser?.role === UserRole.ADMIN || 
+    return this.currentUser?.role === UserRole.ADMIN ||
            this.currentUser?.role === UserRole.MANAGER;
   }
 
+  isAdmin(): boolean {
+    return this.currentUser?.role === UserRole.ADMIN;
+  }
+
   isCustomerOrUser(): boolean {
-    return this.currentUser?.role === UserRole.CUSTOMER || 
-           this.currentUser?.role === UserRole.USER;
+    return this.currentUser?.role === UserRole.CUSTOMER ||
+           this.currentUser?.role === UserRole.USER ||
+           this.currentUser?.role === UserRole.BUSINESS_USER;
+  }
+
+  isBusinessUser(): boolean {
+    return this.currentUser?.role === UserRole.BUSINESS_USER;
   }
 
   exportData(): void {
@@ -137,5 +155,25 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     this.currentLanguage = langCode;
     this.translate.use(langCode);
     localStorage.setItem('selectedLanguage', langCode);
+  }
+
+  switchSection(section: 'sales' | 'manufacturing'): void {
+    this.currentSection = section;
+    localStorage.setItem('selectedSection', section);
+
+    // Navigate to appropriate default page for the section
+    if (section === 'sales') {
+      this.router.navigate(['/dashboard']);
+    } else if (section === 'manufacturing') {
+      this.router.navigate(['/financial-production']);
+    }
+  }
+
+  isSalesSection(): boolean {
+    return this.currentSection === 'sales';
+  }
+
+  isManufacturingSection(): boolean {
+    return this.currentSection === 'manufacturing';
   }
 }

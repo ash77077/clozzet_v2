@@ -1,0 +1,134 @@
+// Print media query - hide everything except job ticket content
+@media print {
+  // Hide PrimeNG dialog chrome
+  ::ng-deep .p-dialog-mask {
+    background: white !important;
+  }
+
+  ::ng-deep .p-dialog {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  ::ng-deep .p-dialog-header,
+  ::ng-deep .p-dialog-footer {
+    display: none !important;
+  }
+
+  ::ng-deep .p-dialog-content {
+    padding: 0 !important;
+  }
+
+  // Force black text for high contrast
+  * {
+    color: black !important;
+    background: white !important;
+  }
+
+  // Ensure borders remain visible
+  .border-black,
+  .border-b-2,
+  .border-t-2 {
+    border-color: black !important;
+  }
+
+  .border-gray-300,
+  .border-gray-400,
+  .border-b {
+    border-color: #666 !important;
+  }
+
+  // Table styling for print
+  .size-matrix-table {
+    border: 1px solid black !important;
+
+    th, td {
+      border: 1px solid #666 !important;
+    }
+
+    .bg-gray-100,
+    .bg-gray-200 {
+      background: #f0f0f0 !important;
+    }
+  }
+
+  // Checkbox boxes
+  .checkbox-box {
+    border: 2px solid black !important;
+    background: white !important;
+  }
+
+  // Page breaks
+  .job-ticket {
+    page-break-inside: avoid;
+  }
+
+  .ticket-section {
+    page-break-inside: avoid;
+  }
+
+  // Remove any shadows or effects
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
+
+// Screen styles
+.job-ticket {
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+}
+
+.ticket-header {
+  h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+}
+
+.size-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+
+  th, td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+  }
+
+  thead th {
+    background: #f8f8f8;
+    font-weight: bold;
+  }
+
+  tbody tr:hover {
+    background: #f9f9f9;
+  }
+}
+
+.qa-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid #000;
+
+  .checkbox-box {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid #000;
+    display: inline-block;
+  }
+}
+
+// Ensure print button is easily accessible
+::ng-deep .print-preview-dialog {
+  .p-dialog-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+  }
+}

@@ -458,4 +458,10 @@
 			<p class="contact-info">{{ 'orderBlank.footer.contact' | translate }}</p>
 		</div>
 	</form>
+
+	<!-- Print Preview Modal -->
+	<app-order-print-preview
+		[(visible)]="showPrintPreview"
+		[orderData]="orderPrintData">
+	</app-order-print-preview>
 </div>

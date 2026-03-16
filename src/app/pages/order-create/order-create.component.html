@@ -1,0 +1,213 @@
+<div class="order-create-page">
+  <div class="page-card">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-text">
+        <h1 class="page-title">New B2B Order</h1>
+        <p class="page-subtitle">
+          {{ isManager() ? 'Place an order on behalf of a client company.' : 'Create a new order for your company.' }}
+        </p>
+      </div>
+      <button class="btn-secondary" (click)="cancel()">Cancel</button>
+    </div>
+
+    <!-- Success Banner -->
+    <div class="alert alert-success" *ngIf="submitSuccess">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      Order created successfully! Redirecting…
+    </div>
+
+    <!-- Error Banner -->
+    <div class="alert alert-error" *ngIf="submitError">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      </svg>
+      {{ submitError }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <!-- ── Section 1: Company ──────────────────────────────────── -->
+      <div class="form-section">
+        <h2 class="section-title">Company</h2>
+
+        <!-- Manager: company dropdown -->
+        <ng-container *ngIf="isManager()">
+          <div class="form-group">
+            <label for="companySelect">Select Client Company *</label>
+            <div class="select-wrapper" [class.loading]="loadingCompanies">
+              <select
+                id="companySelect"
+                class="form-control"
+                [disabled]="loadingCompanies"
+                (change)="onCompanySelect($event)">
+                <option value="">
+                  {{ loadingCompanies ? 'Loading companies…' : '— Select a company —' }}
+                </option>
+                <option *ngFor="let c of companies" [value]="c.id">
+                  {{ c.name }}
+                </option>
+              </select>
+              <div class="select-arrow">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual override if company is not in list -->
+          <div class="form-group">
+            <label for="companyName">Or type company name *</label>
+            <input
+              id="companyName"
+              type="text"
+              class="form-control"
+              formControlName="companyName"
+              [class.is-invalid]="isInvalid('companyName')"
+              placeholder="Company name" />
+            <div class="invalid-feedback" *ngIf="isInvalid('companyName')">Company name is required.</div>
+          </div>
+        </ng-container>
+
+        <!-- Client: read-only company name -->
+        <ng-container *ngIf="!isManager()">
+          <div class="form-group">
+            <label>Your Company</label>
+            <div class="readonly-field">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <span class="readonly-value">{{ form.get('companyName')?.value || '—' }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- ── Section 2: Order Items ──────────────────────────────── -->
+      <div class="form-section">
+        <div class="section-header-row">
+          <h2 class="section-title">Order Items</h2>
+          <button type="button" class="btn-add-item" (click)="addItem()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Item
+          </button>
+        </div>
+
+        <div formArrayName="items">
+          <div
+            *ngFor="let item of itemControls; let i = index"
+            [formGroupName]="i"
+            class="item-row">
+
+            <!-- Row number -->
+            <div class="item-index">{{ i + 1 }}</div>
+
+            <!-- Product type -->
+            <div class="form-group">
+              <label>Type *</label>
+              <div class="select-wrapper">
+                <select
+                  formControlName="type"
+                  class="form-control"
+                  [class.is-invalid]="isItemInvalid(i, 'type')">
+                  <option value="">— Select type —</option>
+                  <option *ngFor="let t of productTypes" [value]="t">{{ t }}</option>
+                </select>
+                <div class="select-arrow">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="invalid-feedback" *ngIf="isItemInvalid(i, 'type')">Type is required.</div>
+            </div>
+
+            <!-- Size -->
+            <div class="form-group">
+              <label>Size *</label>
+              <div class="select-wrapper">
+                <select
+                  formControlName="size"
+                  class="form-control"
+                  [class.is-invalid]="isItemInvalid(i, 'size')">
+                  <option value="">— Size —</option>
+                  <option *ngFor="let s of productSizes" [value]="s">{{ s }}</option>
+                </select>
+                <div class="select-arrow">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="invalid-feedback" *ngIf="isItemInvalid(i, 'size')">Size is required.</div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-group">
+              <label>Qty *</label>
+              <input
+                type="number"
+                formControlName="quantity"
+                class="form-control qty-input"
+                [class.is-invalid]="isItemInvalid(i, 'quantity')"
+                min="1" />
+              <div class="invalid-feedback" *ngIf="isItemInvalid(i, 'quantity')">Min 1.</div>
+            </div>
+
+            <!-- Remove -->
+            <button
+              type="button"
+              class="btn-remove-item"
+              [disabled]="itemsArray.length === 1"
+              (click)="removeItem(i)"
+              title="Remove item">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+
+          </div>
+        </div>
+
+        <p class="items-hint" *ngIf="itemsArray.length === 0">
+          Click "Add Item" to add products to this order.
+        </p>
+      </div>
+
+      <!-- ── Section 3: Notes ────────────────────────────────────── -->
+      <div class="form-section">
+        <h2 class="section-title">Notes</h2>
+        <div class="form-group">
+          <label for="notes">Additional instructions (optional)</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            class="form-control"
+            rows="3"
+            placeholder="Colours, logo placement, special requirements…"></textarea>
+        </div>
+      </div>
+
+      <!-- ── Form Actions ────────────────────────────────────────── -->
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="submitting">
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="submitting || submitSuccess">
+          <span *ngIf="submitting" class="spinner-sm"></span>
+          <span>{{ submitting ? 'Submitting…' : 'Place Order' }}</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

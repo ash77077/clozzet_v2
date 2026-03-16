@@ -1,9 +1,28 @@
 <nav class="secondary-navbar" *ngIf="isAuthenticated">
   <div class="secondary-navbar-container">
+    <!-- Section Toggle (Sales/Manufacturing) -->
+    <div class="section-toggle" *ngIf="isAdminOrManager()">
+      <button
+        class="toggle-btn"
+        [class.active]="currentSection === 'sales'"
+        (click)="switchSection('sales')">
+        <i class="pi pi-shopping-cart"></i>
+        <span>S</span>
+      </button>
+      <button
+        class="toggle-btn"
+        [class.active]="currentSection === 'manufacturing'"
+        (click)="switchSection('manufacturing')">
+        <i class="pi pi-cog"></i>
+        <span>M</span>
+      </button>
+    </div>
+
     <!-- Main Admin Navigation -->
     <div class="nav-section" *ngIf="isAdminOrManager()">
       <div class="nav-group">
-        <ul class="nav-list">
+        <!-- Sales Section Links -->
+        <ul class="nav-list" *ngIf="isSalesSection()">
           <li class="nav-item">
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <i class="pi pi-home"></i>
@@ -18,10 +37,9 @@
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/manufacturing" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-cog"></i>
-              <span>Manufacturing</span>
-              <span class="badge urgent" *ngIf="orderStats && orderStats.inProgress > 0">{{ orderStats.inProgress }}</span>
+            <a routerLink="/order-create" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-file-plus"></i>
+              <span>New B2B Order</span>
             </a>
           </li>
           <li class="nav-item">
@@ -40,6 +58,35 @@
             <a routerLink="/product-management" class="nav-link" routerLinkActive="active">
               <i class="pi pi-box"></i>
               <span>Products</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/retail-sales" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-shopping-bag"></i>
+              <span>Retail Sales</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/special-collection-admin" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-star"></i>
+              <span>Special Collection</span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- Manufacturing Section Links -->
+        <ul class="nav-list" *ngIf="isManufacturingSection()">
+          <li class="nav-item">
+            <a routerLink="/financial-production" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-chart-bar"></i>
+              <span>Financial Production</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/manufacturing" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-cog"></i>
+              <span>Manufacturing</span>
+              <span class="badge urgent" *ngIf="orderStats && orderStats.inProgress > 0">{{ orderStats.inProgress }}</span>
             </a>
           </li>
         </ul>
@@ -64,10 +111,16 @@
               <span class="badge" *ngIf="userOrderStats && userOrderStats.total > 0">{{ userOrderStats.total }}</span>
             </a>
           </li>
-          <li class="nav-item">
+          <li class="nav-item" *ngIf="!isBusinessUser()">
             <a routerLink="/order-blank" class="nav-link" routerLinkActive="active">
               <i class="pi pi-file-plus"></i>
               <span>New Order</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/order-create" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-send"></i>
+              <span>New B2B Order</span>
             </a>
           </li>
         </ul>
@@ -93,13 +146,6 @@
             pTooltip="Export reports">
             <i class="pi pi-download"></i>
             Export
-          </button>
-          <button 
-            class="btn btn-sm btn-info" 
-            (click)="refreshData()"
-            pTooltip="Refresh data">
-            <i class="pi pi-refresh"></i>
-            Refresh
           </button>
         </div>
       </div>

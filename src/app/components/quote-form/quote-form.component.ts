@@ -1,10 +1,15 @@
-import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { QuoteService, QuoteRequest } from '../../services/quote.service';
+import { QuoteService } from '../../services/quote.service';
 import { ProductQuoteService } from '../../services/product-quote.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+
+interface UploadedFileWithPreview {
+  file: File;
+  preview: string;
+}
 
 @Component({
   selector: 'app-quote-form',
@@ -13,7 +18,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   templateUrl: './quote-form.component.html',
   styleUrls: ['./quote-form.component.scss']
 })
-export class QuoteFormComponent implements OnInit {
+export class QuoteFormComponent implements OnInit, OnDestroy {
   quoteForm: FormGroup;
   isSubmitting = false;
   submitSuccess = false;
@@ -30,29 +35,10 @@ export class QuoteFormComponent implements OnInit {
     { value: 'other', translationKey: 'quoteForm.form.productTypes.other' }
   ];
 
-  budgetRanges = [
-    { value: 'under-1000', translationKey: 'quoteForm.form.budgetRanges.under1000' },
-    { value: '1000-5000', translationKey: 'quoteForm.form.budgetRanges.1000to5000' },
-    { value: '5000-10000', translationKey: 'quoteForm.form.budgetRanges.5000to10000' },
-    { value: '10000-25000', translationKey: 'quoteForm.form.budgetRanges.10000to25000' },
-    { value: 'over-25000', translationKey: 'quoteForm.form.budgetRanges.over25000' }
-  ];
-
-  timelines = [
-    { value: 'asap', translationKey: 'quoteForm.form.timelines.asap' },
-    { value: '1-week', translationKey: 'quoteForm.form.timelines.1week' },
-    { value: '2-weeks', translationKey: 'quoteForm.form.timelines.2weeks' },
-    { value: '1-month', translationKey: 'quoteForm.form.timelines.1month' },
-    { value: 'flexible', translationKey: 'quoteForm.form.timelines.flexible' }
-  ];
-
-  additionalServicesList = [
-    { value: 'logo-design', translationKey: 'quoteForm.form.additionalServicesList.logoDesign' },
-    { value: 'rush-delivery', translationKey: 'quoteForm.form.additionalServicesList.rushDelivery' },
-    { value: 'sample-creation', translationKey: 'quoteForm.form.additionalServicesList.sampleCreation' },
-    { value: 'packaging', translationKey: 'quoteForm.form.additionalServicesList.packaging' },
-    { value: 'shipping', translationKey: 'quoteForm.form.additionalServicesList.shipping' }
-  ];
+  uploadedFiles: UploadedFileWithPreview[] = [];
+  maxFiles = 5;
+  maxFileSize = 5 * 1024 * 1024; // 5MB
+  isDragging = false;
 
   constructor(
     private fb: FormBuilder,
@@ -64,13 +50,10 @@ export class QuoteFormComponent implements OnInit {
       companyName: ['', [Validators.required, Validators.minLength(2)]],
       contactName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required, Validators.pattern('^[+]?[0-9\\s\\-\\(\\)]{10,}$')]],
+      phone: ['', [Validators.required, Validators.pattern('^[+]?[0-9\\s\\-\\(\\)]{9,}$')]],
       productType: ['', Validators.required],
       quantity: ['', [Validators.required, Validators.min(1), Validators.max(10000)]],
-      additionalServices: [[]],
-      message: ['', [Validators.required, Validators.minLength(10)]],
-      budget: ['', Validators.required],
-      timeline: ['', Validators.required]
+      message: [''], // Made optional
     });
   }
 
@@ -111,20 +94,6 @@ export class QuoteFormComponent implements OnInit {
     return this.quoteForm.controls;
   }
 
-  onServiceChange(serviceValue: string, isChecked: any): void {
-    const currentServices = this.f['additionalServices'].value as string[];
-    if (isChecked.checked) {
-      this.f['additionalServices'].setValue([...currentServices, serviceValue]);
-    } else {
-      this.f['additionalServices'].setValue(currentServices.filter(s => s !== serviceValue));
-    }
-  }
-
-  isServiceSelected(serviceValue: string): boolean {
-    const selectedServices = this.f['additionalServices'].value as string[];
-    return selectedServices.includes(serviceValue);
-  }
-
   getFieldError(fieldName: string): string {
     const field = this.f[fieldName];
     if (field.errors && field.touched) {
@@ -162,8 +131,6 @@ export class QuoteFormComponent implements OnInit {
       productType: 'quoteForm.form.productType',
       quantity: 'quoteForm.form.quantity',
       message: 'quoteForm.form.message',
-      budget: 'quoteForm.form.budget',
-      timeline: 'quoteForm.form.timeline'
     };
     return this.translate.instant(labelKeys[fieldName] || fieldName);
   }
@@ -172,26 +139,45 @@ export class QuoteFormComponent implements OnInit {
     if (this.quoteForm.valid) {
       this.isSubmitting = true;
       this.submitError = false;
-      
-      const quoteData: QuoteRequest = this.quoteForm.value
 
-      this.quoteService.submitQuote(quoteData).subscribe({
+      const formData = new FormData();
+
+      // Add form fields
+      Object.keys(this.quoteForm.value).forEach(key => {
+        const value = this.quoteForm.value[key];
+        if (value !== null && value !== undefined && value !== '') {
+          formData.append(key, value);
+        }
+      });
+
+      // Add files
+      this.uploadedFiles.forEach((fileWithPreview) => {
+        formData.append('mockups', fileWithPreview.file, fileWithPreview.file.name);
+      });
+
+      this.quoteService.submitQuoteWithFiles(formData).subscribe({
         next: () => {
           this.isSubmitting = false;
           this.submitSuccess = true;
-          
+
           // Reset form after success
           setTimeout(() => {
             this.submitSuccess = false;
-            // this.quoteForm.reset();
-            this.f['additionalServices'].setValue([]);
+            this.quoteForm.reset();
+            // Clean up preview URLs before clearing
+            this.uploadedFiles.forEach(fileWithPreview => {
+              if (fileWithPreview.preview) {
+                URL.revokeObjectURL(fileWithPreview.preview);
+              }
+            });
+            this.uploadedFiles = [];
           }, 3000);
         },
         error: (error) => {
           console.error('Error submitting quote:', error);
           this.isSubmitting = false;
           this.submitError = true;
-          
+
           // Hide error message after 5 seconds
           setTimeout(() => {
             this.submitError = false;
@@ -206,7 +192,97 @@ export class QuoteFormComponent implements OnInit {
     }
   }
 
-  trackByValue(index: number, item: any): any {
+  trackByValue(item: any): any {
     return item.value;
+  }
+
+  onFileSelect(event: any): void {
+    const files = event.target.files;
+
+    if (files && files.length > 0) {
+      this.processFiles(files);
+    }
+
+    // Reset input
+    event.target.value = '';
+  }
+
+  removeFile(index: number): void {
+    // Clean up the preview URL to avoid memory leaks
+    const fileWithPreview = this.uploadedFiles[index];
+    if (fileWithPreview && fileWithPreview.preview) {
+      URL.revokeObjectURL(fileWithPreview.preview);
+    }
+    this.uploadedFiles.splice(index, 1);
+  }
+
+  getFileSizeString(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.processFiles(files);
+    }
+  }
+
+  private processFiles(files: FileList): void {
+    // Check total number of files
+    if (this.uploadedFiles.length + files.length > this.maxFiles) {
+      alert(this.translate.instant('quoteForm.form.fileUpload.maxFilesError', { max: this.maxFiles }));
+      return;
+    }
+
+    // Validate and add files
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Check file size
+      if (file.size > this.maxFileSize) {
+        alert(this.translate.instant('quoteForm.form.fileUpload.fileSizeError', {
+          fileName: file.name,
+          maxSize: '5MB'
+        }));
+        continue;
+      }
+
+      // Check file type (images only)
+      if (!file.type.startsWith('image/')) {
+        alert(this.translate.instant('quoteForm.form.fileUpload.fileTypeError', { fileName: file.name }));
+        continue;
+      }
+
+      // Generate preview URL for the image
+      const preview = URL.createObjectURL(file);
+      this.uploadedFiles.push({ file, preview });
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up all preview URLs when component is destroyed
+    this.uploadedFiles.forEach(fileWithPreview => {
+      if (fileWithPreview.preview) {
+        URL.revokeObjectURL(fileWithPreview.preview);
+      }
+    });
   }
 }

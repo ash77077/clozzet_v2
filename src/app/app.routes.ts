@@ -114,6 +114,47 @@ export const routes: Routes = [
     path: 'services/printing',
     loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
   },
+  {
+    path: 'financial-production',
+    loadChildren: () => import('./financial-production/financial-production-routing.module').then(m => m.FinancialProductionRoutingModule)
+  },
+  // My Orders — client dashboard
+  {
+    path: 'my-orders',
+    loadComponent: () => import('./pages/my-orders/my-orders.component').then(m => m.MyOrdersComponent),
+    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
+  },
+  // B2B Order create
+  {
+    path: 'order-create',
+    loadComponent: () => import('./pages/order-create/order-create.component').then(m => m.OrderCreateComponent),
+    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
+  },
+  // Special Collection public routes
+  {
+    path: 'special-collection',
+    loadComponent: () => import('./pages/special-collection/special-collection.component').then(m => m.SpecialCollectionComponent)
+  },
+  {
+    path: 'special-collection/:category',
+    loadComponent: () => import('./pages/special-collection/special-collection.component').then(m => m.SpecialCollectionComponent)
+  },
+  // Special Collection admin route
+  {
+    path: 'special-collection-admin',
+    loadComponent: () => import('./dashboard/pages/special-collection-admin/special-collection-admin.component').then(m => m.SpecialCollectionAdminComponent),
+    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
+  },
+  // 3D Preview - Clothing Model Viewer (Testing Route)
+  {
+    path: '3d-preview',
+    loadComponent: () => import('./components/clothing-viewer/clothing-viewer.component').then(m => m.ClothingViewerComponent)
+  },
+  // 3D Configurator - Advanced Three.js Configurator (Phase 1)
+  {
+    path: 'configurator',
+    loadComponent: () => import('./components/configurator/configurator.component').then(m => m.ConfiguratorComponent)
+  },
   // Wildcard route - must be last
   {
     path: '**',

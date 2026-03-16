@@ -2,9 +2,9 @@
   <div class="container">
     <!-- Section Header -->
     <div class="section-header">
-      <h2 class="section-title">Get Your Free Quote</h2>
+      <h2 class="section-title">{{ 'quoteForm.title' | translate }}</h2>
       <p class="section-subtitle">
-        Ready to elevate your brand? Tell us about your project and receive a detailed quote within 24 hours.
+        {{ 'quoteForm.subtitle' | translate }}
       </p>
     </div>
 
@@ -18,9 +18,9 @@
             </svg>
           </div>
           <div class="info-content">
-            <h3>Call Us</h3>
-            <p>+374 (44) 01 07 44</p>
-            <span>Mon-Fri 9AM-6PM EST</span>
+            <h3>{{ 'quoteForm.contact.call.title' | translate }}</h3>
+            <p>{{ 'quoteForm.contact.call.phone' | translate }}</p>
+            <span>{{ 'quoteForm.contact.call.hours' | translate }}</span>
           </div>
         </div>
 
@@ -31,9 +31,9 @@
             </svg>
           </div>
           <div class="info-content">
-            <h3>Email Us</h3>
-            <p>sales&#64;clozzet.am</p>
-            <span>Response within 4 hours</span>
+            <h3>{{ 'quoteForm.contact.email.title' | translate }}</h3>
+            <p>{{ 'quoteForm.contact.email.address' | translate }}</p>
+            <span>{{ 'quoteForm.contact.email.response' | translate }}</span>
           </div>
         </div>
 
@@ -45,38 +45,32 @@
             </svg>
           </div>
           <div class="info-content">
-            <h3>Visit Us</h3>
-            <p>Sevan Street 86/3<br>Yerevan</p>
-            <span>By appointment only</span>
+            <h3>{{ 'quoteForm.contact.visit.title' | translate }}</h3>
+            <p>{{ 'quoteForm.contact.visit.address' | translate }}<br>{{ 'quoteForm.contact.visit.city' | translate }}</p>
+            <span>{{ 'quoteForm.contact.visit.note' | translate }}</span>
           </div>
         </div>
 
         <div class="benefits-card">
-          <h3>Why Get a Quote?</h3>
+          <h3>{{ 'quoteForm.benefits.title' | translate }}</h3>
           <ul class="benefits-list">
             <li>
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
               </svg>
-              Transparent, competitive pricing
+              {{ 'quoteForm.benefits.pricing' | translate }}
             </li>
             <li>
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
               </svg>
-              Volume discounts available
+              {{ 'quoteForm.benefits.discounts' | translate }}
             </li>
             <li>
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
               </svg>
-              No hidden fees or charges
-            </li>
-            <li>
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              Professional design consultation
+              {{ 'quoteForm.benefits.consultation' | translate }}
             </li>
           </ul>
         </div>
@@ -87,16 +81,16 @@
         <form [formGroup]="quoteForm" (ngSubmit)="onSubmit()" class="quote-form">
           <!-- Company Information -->
           <div class="form-section">
-            <h3 class="section-title">Company Information</h3>
-            
+            <h3 class="section-title">{{ 'quoteForm.form.companyInfo' | translate }}</h3>
+
             <div class="form-row">
               <div class="form-group">
-                <label for="companyName">Company Name *</label>
+                <label for="companyName">{{ 'quoteForm.form.companyName' | translate }} *</label>
                 <input
                   type="text"
                   id="companyName"
                   formControlName="companyName"
-                  placeholder="Enter your company name"
+                  [placeholder]="'quoteForm.form.placeholders.companyName' | translate"
                   [class.error]="f['companyName'].invalid && !f['companyName'].untouched">
                 <div class="error-message" *ngIf="getFieldError('companyName')">
                   {{ getFieldError('companyName') }}
@@ -104,12 +98,12 @@
               </div>
 
               <div class="form-group">
-                <label for="contactName">Contact Name *</label>
+                <label for="contactName">{{ 'quoteForm.form.contactName' | translate }} *</label>
                 <input
                   type="text"
                   id="contactName"
                   formControlName="contactName"
-                  placeholder="Enter your full name"
+                  [placeholder]="'quoteForm.form.placeholders.contactName' | translate"
                   [class.error]="f['contactName'].invalid && !f['contactName'].untouched">
                 <div class="error-message" *ngIf="getFieldError('contactName')">
                   {{ getFieldError('contactName') }}
@@ -119,12 +113,12 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label for="email">Email Address *</label>
+                <label for="email">{{ 'quoteForm.form.email' | translate }} *</label>
                 <input
                   type="email"
                   id="email"
                   formControlName="email"
-                  placeholder="Enter your email address"
+                  [placeholder]="'quoteForm.form.placeholders.email' | translate"
                   [class.error]="f['email'].invalid && !f['email'].untouched">
                 <div class="error-message" *ngIf="getFieldError('email')">
                   {{ getFieldError('email') }}
@@ -132,12 +126,12 @@
               </div>
 
               <div class="form-group">
-                <label for="phone">Phone Number *</label>
+                <label for="phone">{{ 'quoteForm.form.phone' | translate }} *</label>
                 <input
                   type="tel"
                   id="phone"
                   formControlName="phone"
-                  placeholder="Enter your phone number"
+                  [placeholder]="'quoteForm.form.placeholders.phone' | translate"
                   [class.error]="f['phone'].invalid && !f['phone'].untouched">
                 <div class="error-message" *ngIf="getFieldError('phone')">
                   {{ getFieldError('phone') }}
@@ -148,11 +142,11 @@
 
           <!-- Project Details -->
           <div class="form-section">
-            <h3 class="section-title">Project Details</h3>
-            
+            <h3 class="section-title">{{ 'quoteForm.form.projectDetails' | translate }}</h3>
+
             <div class="form-row">
               <div class="form-group">
-                <label for="productType">Product Type *</label>
+                <label for="productType">{{ 'quoteForm.form.productType' | translate }} *</label>
                 <select
                   id="productType"
                   formControlName="productType"
@@ -170,12 +164,12 @@
               </div>
 
               <div class="form-group">
-                <label for="quantity">Quantity *</label>
+                <label for="quantity">{{ 'quoteForm.form.quantity' | translate }} *</label>
                 <input
                   type="number"
                   id="quantity"
                   formControlName="quantity"
-                  placeholder="Enter quantity needed"
+                  [placeholder]="'quoteForm.form.placeholders.quantity' | translate"
                   min="1"
                   max="10000"
                   [class.error]="f['quantity'].invalid && !f['quantity'].untouched">
@@ -184,77 +178,99 @@
                 </div>
               </div>
             </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="budget">Budget Range *</label>
-                <select
-                  id="budget"
-                  formControlName="budget"
-                  [class.error]="f['budget'].invalid && !f['budget'].untouched">
-                  <option value="">{{ 'quoteForm.form.placeholders.budget' | translate }}</option>
-                  <option
-                    *ngFor="let budget of budgetRanges; trackBy: trackByValue"
-                    [value]="budget.value">
-                    {{ budget.translationKey | translate }}
-                  </option>
-                </select>
-                <div class="error-message" *ngIf="getFieldError('budget')">
-                  {{ getFieldError('budget') }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="timeline">Timeline *</label>
-                <select
-                  id="timeline"
-                  formControlName="timeline"
-                  [class.error]="f['timeline'].invalid && !f['timeline'].untouched">
-                  <option value="">{{ 'quoteForm.form.placeholders.timeline' | translate }}</option>
-                  <option
-                    *ngFor="let timeline of timelines; trackBy: trackByValue"
-                    [value]="timeline.value">
-                    {{ timeline.translationKey | translate }}
-                  </option>
-                </select>
-                <div class="error-message" *ngIf="getFieldError('timeline')">
-                  {{ getFieldError('timeline') }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Additional Services -->
-          <div class="form-section">
-            <h3 class="section-title">Additional Services</h3>
-            <div class="checkbox-group">
-              <div 
-                *ngFor="let service of additionalServicesList; trackBy: trackByValue"
-                class="checkbox-item">
-                <input
-                  type="checkbox"
-                  [id]="service.value"
-                  [checked]="isServiceSelected(service.value)"
-                  (change)="onServiceChange(service.value, $event.target)">
-                <label [for]="service.value">{{ service.translationKey | translate }}</label>
-              </div>
-            </div>
           </div>
 
           <!-- Message -->
           <div class="form-section">
-            <h3 class="section-title">Project Description</h3>
+            <h3 class="section-title">{{ 'quoteForm.form.projectDescription' | translate }}</h3>
             <div class="form-group">
-              <label for="message">Tell us about your project *</label>
+              <label for="message">{{ 'quoteForm.form.message' | translate }}</label>
               <textarea
                 id="message"
                 formControlName="message"
                 rows="6"
-                placeholder="Please describe your project, including any specific design requirements, colors, or special instructions..."
+                [placeholder]="'quoteForm.form.placeholders.message' | translate"
                 [class.error]="f['message'].invalid && !f['message'].untouched">
               </textarea>
               <div class="error-message" *ngIf="getFieldError('message')">
                 {{ getFieldError('message') }}
+              </div>
+            </div>
+          </div>
+
+          <!-- File Upload Section -->
+          <div class="form-section">
+            <h3 class="section-title">{{ 'quoteForm.form.fileUpload.title' | translate }}</h3>
+            <div class="form-group">
+              <label for="mockups">{{ 'quoteForm.form.fileUpload.label' | translate }}</label>
+              <p class="file-upload-hint">{{ 'quoteForm.form.fileUpload.hint' | translate }}</p>
+
+              <!-- Drag & Drop Zone -->
+              <div
+                class="dropzone"
+                [class.dragging]="isDragging"
+                [class.disabled]="uploadedFiles.length >= maxFiles"
+                (dragover)="onDragOver($event)"
+                (dragleave)="onDragLeave($event)"
+                (drop)="onDrop($event)"
+                (click)="fileInput.click()">
+
+                <input
+                  type="file"
+                  id="mockups"
+                  accept="image/*"
+                  multiple
+                  (change)="onFileSelect($event)"
+                  style="display: none;"
+                  #fileInput>
+
+                <div class="dropzone-content">
+                  <div class="dropzone-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                  </div>
+
+                  <div class="dropzone-text">
+                    <p class="dropzone-title">
+                      <span class="drag-text">{{ 'quoteForm.form.fileUpload.dragDrop' | translate }}</span>
+                      <span class="or-text">{{ 'quoteForm.form.fileUpload.or' | translate }}</span>
+                      <span class="browse-text">{{ 'quoteForm.form.fileUpload.browse' | translate }}</span>
+                    </p>
+                    <p class="dropzone-subtitle">{{ 'quoteForm.form.fileUpload.supportedFormats' | translate }}</p>
+                  </div>
+
+                  <div class="file-upload-info" [class.has-files]="uploadedFiles.length > 0">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {{ 'quoteForm.form.fileUpload.info' | translate: { count: uploadedFiles.length, max: maxFiles } }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Uploaded Files List -->
+              <div class="uploaded-files-grid" *ngIf="uploadedFiles.length > 0">
+                <div class="uploaded-file-card" *ngFor="let fileWithPreview of uploadedFiles; let i = index">
+                  <button
+                    type="button"
+                    class="remove-btn"
+                    (click)="removeFile(i)"
+                    [attr.aria-label]="'quoteForm.form.fileUpload.remove' | translate">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                  </button>
+
+                  <div class="file-preview">
+                    <img [src]="fileWithPreview.preview" [alt]="fileWithPreview.file.name" />
+                  </div>
+
+                  <div class="file-info">
+                    <p class="file-name" [title]="fileWithPreview.file.name">{{ fileWithPreview.file.name }}</p>
+                    <p class="file-size">{{ getFileSizeString(fileWithPreview.file.size) }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -267,7 +283,7 @@
               [disabled]="isSubmitting"
               [class.loading]="isSubmitting">
               <span *ngIf="!isSubmitting && !submitSuccess">
-                Get Free Quote
+                {{ 'quoteForm.form.submit' | translate }}
                 <svg class="ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                 </svg>
@@ -277,13 +293,13 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Submitting...
+                {{ 'quoteForm.form.submitting' | translate }}
               </span>
               <span *ngIf="submitSuccess">
                 <svg class="success-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                Quote Submitted!
+                {{ 'quoteForm.form.submitted' | translate }}
               </span>
             </button>
           </div>
@@ -295,8 +311,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <div>
-                <h4>Thank you for your quote request!</h4>
-                <p>We'll review your requirements and send you a detailed quote within 24 hours.</p>
+                <h4>{{ 'quoteForm.form.successTitle' | translate }}</h4>
+                <p>{{ 'quoteForm.form.successMessage' | translate }}</p>
               </div>
             </div>
           </div>

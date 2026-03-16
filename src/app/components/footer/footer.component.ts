@@ -26,18 +26,24 @@ export class FooterComponent {
     name: 'CLOZZET',
     tagline: 'Premium Branded Textiles',
     description: 'footer.description',
-    email: 'clozzet.corp@gmail.com',
+    email: 'sales@clozzet.am',
     phone: '+374 (44) 01 07 44',
-    address: 'Sevan Street 86/3, Yerevan'
+    address: 'Sebastia 3/10, Yerevan'
   };
 
   quickLinks = [
-    { translationKey: 'footer.quickLinks.aboutUs', href: '#about' },
-    { translationKey: 'footer.quickLinks.products', href: '#products' },
-    { translationKey: 'footer.quickLinks.services', href: '#services' },
-    { translationKey: 'footer.quickLinks.getQuote', href: '#quote' },
-    { translationKey: 'footer.quickLinks.contact', href: '#contact' }
+    { translationKey: 'footer.quickLinks.aboutUs', route: '/about' },
+    { translationKey: 'footer.quickLinks.products', route: '/' },
+    { translationKey: 'footer.quickLinks.services', route: '/' },
+    { translationKey: 'footer.quickLinks.getQuote', route: '/contact' },
+    { translationKey: 'footer.quickLinks.contact', route: '/contact' }
   ];
+
+  navigateToLink(link: any): void {
+    if (link.route) {
+      this.router.navigate([link.route]);
+    }
+  }
 
   productCategories = [
     { translationKey: 'footer.products.tshirts', href: '#tshirts' },
@@ -49,10 +55,9 @@ export class FooterComponent {
   ];
 
   socialLinks = [
-    { name: 'LinkedIn', href: '#', icon: 'linkedin' },
-    { name: 'Facebook', href: '#', icon: 'facebook' },
-    { name: 'Twitter', href: '#', icon: 'twitter' },
-    { name: 'Instagram', href: '#', icon: 'instagram' }
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/clozzet1', icon: 'linkedin' },
+    { name: 'Facebook', href: 'https://www.facebook.com/people/Clozzet/61576798492197', icon: 'facebook'},
+    { name: 'Instagram', href: 'https://www.instagram.com/clozzet.corp/', icon: 'instagram' }
   ];
 
   getSocialIcon(iconName: string): string {

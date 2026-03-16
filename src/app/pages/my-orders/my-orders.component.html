@@ -1,0 +1,175 @@
+<div class="my-orders-page">
+  <div class="page-container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <h1 class="page-title">My Orders</h1>
+        <p class="page-subtitle">Track and manage your company's B2B orders</p>
+      </div>
+      <a routerLink="/order-create" class="btn btn-primary">
+        <i class="pi pi-plus"></i>
+        New Order
+      </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards" *ngIf="!loading()">
+      <div class="summary-card">
+        <div class="card-icon total"><i class="pi pi-list"></i></div>
+        <div class="card-info">
+          <span class="card-value">{{ totalOrders() }}</span>
+          <span class="card-label">Total Orders</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="card-icon pending"><i class="pi pi-clock"></i></div>
+        <div class="card-info">
+          <span class="card-value">{{ pendingOrders() }}</span>
+          <span class="card-label">Pending</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="card-icon active"><i class="pi pi-cog"></i></div>
+        <div class="card-info">
+          <span class="card-value">{{ activeOrders() }}</span>
+          <span class="card-label">In Progress</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="card-icon delivered"><i class="pi pi-check-circle"></i></div>
+        <div class="card-info">
+          <span class="card-value">{{ deliveredOrders() }}</span>
+          <span class="card-label">Delivered</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading()">
+      <div class="spinner"></div>
+      <p>Loading your orders...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-state" *ngIf="error() && !loading()">
+      <i class="pi pi-exclamation-triangle"></i>
+      <p>{{ error() }}</p>
+      <button class="btn btn-secondary" (click)="loadOrders()">
+        <i class="pi pi-refresh"></i> Retry
+      </button>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading() && !error() && orders().length === 0">
+      <i class="pi pi-shopping-bag"></i>
+      <h3>No orders yet</h3>
+      <p>You haven't placed any B2B orders yet. Get started by creating your first order.</p>
+      <a routerLink="/order-create" class="btn btn-primary">
+        <i class="pi pi-plus"></i> Create First Order
+      </a>
+    </div>
+
+    <!-- Orders List -->
+    <div class="orders-list" *ngIf="!loading() && !error() && orders().length > 0">
+      <div class="order-card" *ngFor="let order of orders()">
+
+        <!-- Order Card Header -->
+        <div class="order-card-header" (click)="toggleExpand(getOrderId(order))">
+          <div class="order-meta">
+            <div class="order-id">
+              <span class="label">Order</span>
+              <span class="value">#{{ getOrderId(order).slice(-8).toUpperCase() }}</span>
+            </div>
+            <div class="order-date">
+              <i class="pi pi-calendar"></i>
+              <span>{{ order.createdAt | date:'MMM d, y' }}</span>
+            </div>
+            <div class="order-items-count">
+              <i class="pi pi-box"></i>
+              <span>{{ getTotalItems(order) }} items</span>
+            </div>
+          </div>
+          <div class="order-status-badge" [style.background]="getStatusColor(order.status) + '20'" [style.color]="getStatusColor(order.status)" [style.border-color]="getStatusColor(order.status) + '40'">
+            <i class="pi pi-circle-fill"></i>
+            {{ order.status }}
+          </div>
+          <button class="expand-btn" [class.rotated]="isExpanded(getOrderId(order))">
+            <i class="pi pi-chevron-down"></i>
+          </button>
+        </div>
+
+        <!-- Progress Stepper -->
+        <div class="order-stepper">
+          <div
+            class="step"
+            *ngFor="let step of steps; let i = index; let last = last"
+            [class.completed]="isStepCompleted(order.status, step)"
+            [class.active]="isStepActive(order.status, step)"
+          >
+            <div class="step-connector" *ngIf="!last"></div>
+            <div class="step-icon-wrap">
+              <div class="step-circle" [style.background]="isStepCompleted(order.status, step) || isStepActive(order.status, step) ? step.color : '#e5e7eb'">
+                <i [class]="step.icon" [style.color]="isStepCompleted(order.status, step) || isStepActive(order.status, step) ? '#fff' : '#9ca3af'"></i>
+              </div>
+            </div>
+            <span class="step-label">{{ step.label }}</span>
+          </div>
+        </div>
+
+        <!-- Expanded Detail -->
+        <div class="order-detail" *ngIf="isExpanded(getOrderId(order))">
+          <!-- Items Table -->
+          <div class="detail-section">
+            <h4 class="detail-title">Order Items</h4>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Size</th>
+                  <th class="text-right">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of order.items">
+                  <td>{{ item.type }}</td>
+                  <td><span class="size-badge">{{ item.size }}</span></td>
+                  <td class="text-right">{{ item.quantity }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" class="total-label">Total Units</td>
+                  <td class="text-right total-value">{{ getTotalItems(order) }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Notes -->
+          <div class="detail-section" *ngIf="order.notes">
+            <h4 class="detail-title">Notes</h4>
+            <p class="notes-text">{{ order.notes }}</p>
+          </div>
+
+          <!-- Timeline -->
+          <div class="detail-section" *ngIf="order.timeline && order.timeline.length > 0">
+            <h4 class="detail-title">Status History</h4>
+            <ul class="timeline">
+              <li class="timeline-item" *ngFor="let entry of order.timeline">
+                <div class="timeline-dot" [style.background]="getStatusColor(entry.status)"></div>
+                <div class="timeline-content">
+                  <span class="timeline-status">{{ entry.status }}</span>
+                  <span class="timeline-date">{{ entry.changedAt | date:'MMM d, y · HH:mm' }}</span>
+                  <span class="timeline-note" *ngIf="entry.note">{{ entry.note }}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

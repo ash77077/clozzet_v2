@@ -1,0 +1,188 @@
+<div class="dashboard-container">
+  <h2>Financial & Production Analytics Dashboard</h2>
+
+  <div class="current-month-section">
+    <h3>Current Month Overview</h3>
+    <div class="analytics-grid">
+      <div class="stat-card primary">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <h4>Net Profit</h4>
+          <p class="stat-value" [class]="getProfitClass(currentMonthAnalytics().monthlyNetProfit)">
+            {{ currentMonthAnalytics().monthlyNetProfit | number:'1.2-2' }} AMD
+          </p>
+          <small>{{ getMonthName(currentMonthAnalytics().month) }} {{ currentMonthAnalytics().year }}</small>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <h4>Gross Profit</h4>
+          <p class="stat-value">
+            {{ currentMonthAnalytics().totalGrossProfitFromSales | number:'1.2-2' }} AMD
+          </p>
+          <small>From Sales</small>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">📉</div>
+        <div class="stat-content">
+          <h4>Overhead</h4>
+          <p class="stat-value">
+            {{ currentMonthAnalytics().totalMonthlyOverhead | number:'1.2-2' }} AMD
+          </p>
+          <small>Total Expenses</small>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">🏭</div>
+        <div class="stat-content">
+          <h4>Productions</h4>
+          <p class="stat-value">
+            {{ currentMonthAnalytics().numberOfProductions }}
+          </p>
+          <small>{{ currentMonthAnalytics().totalItemsProduced }} items produced</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-analytics-section">
+    <h3>Custom Period Analytics</h3>
+    <div class="period-selector">
+      <div class="form-group">
+        <label for="month">Month</label>
+        <select id="month" class="form-control" [value]="selectedMonth()" (change)="onMonthChange($event)">
+          <option *ngFor="let month of months" [value]="month.value">
+            {{ month.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="year">Year</label>
+        <select id="year" class="form-control" [value]="selectedYear()" (change)="onYearChange($event)">
+          <option *ngFor="let year of years" [value]="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="analytics-grid" *ngIf="customAnalytics()">
+      <div class="stat-card primary">
+        <div class="stat-content">
+          <h4>Net Profit</h4>
+          <p class="stat-value" [class]="getProfitClass(customAnalytics()!.monthlyNetProfit)">
+            {{ customAnalytics()!.monthlyNetProfit | number:'1.2-2' }} AMD
+          </p>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-content">
+          <h4>Gross Profit</h4>
+          <p class="stat-value">
+            {{ customAnalytics()!.totalGrossProfitFromSales | number:'1.2-2' }} AMD
+          </p>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-content">
+          <h4>Overhead</h4>
+          <p class="stat-value">
+            {{ customAnalytics()!.totalMonthlyOverhead | number:'1.2-2' }} AMD
+          </p>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-content">
+          <h4>Productions</h4>
+          <p class="stat-value">
+            {{ customAnalytics()!.numberOfProductions }}
+          </p>
+          <small>{{ customAnalytics()!.totalItemsProduced }} items</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="recent-productions-section">
+      <h3>Recent Productions</h3>
+      <div class="productions-list" *ngIf="dashboardSummary && dashboardSummary.recentProductions.length > 0; else noRecentProductions">
+        <div class="production-item" *ngFor="let production of dashboardSummary.recentProductions">
+          <div class="production-header">
+            <strong>{{ production.productName }}</strong>
+            <span class="date">{{ production.productionDate | date:'MMM d, y' }}</span>
+          </div>
+          <div class="production-details">
+            <div class="detail">
+              <span class="label">Quantity:</span>
+              <span class="value">{{ production.quantity }} units</span>
+            </div>
+            <div class="detail">
+              <span class="label">Profit:</span>
+              <span class="value profit" [class]="getProfitClass(production.grossProfit!)">
+                {{ production.grossProfit | number:'1.2-2' }} AMD
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noRecentProductions>
+        <p class="no-data">No recent productions to display.</p>
+      </ng-template>
+    </div>
+
+    <div class="top-products-section">
+      <h3>Top Products by Profit</h3>
+      <div class="products-list" *ngIf="dashboardSummary && dashboardSummary.topProducts.length > 0; else noTopProducts">
+        <div class="product-item" *ngFor="let product of dashboardSummary.topProducts; let i = index">
+          <div class="rank">{{ i + 1 }}</div>
+          <div class="product-info">
+            <strong>{{ product.productName }}</strong>
+            <div class="product-stats">
+              <span>{{ product.totalProduced }} units</span>
+              <span class="profit">{{ product.totalProfit | number:'1.2-2' }} AMD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noTopProducts>
+        <p class="no-data">No products to display.</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <div class="profit-formula-section">
+    <h3>Net Profit Calculation</h3>
+    <div class="formula-card">
+      <div class="formula">
+        <div class="formula-item">
+          <span class="label">Total Gross Profit from Sales</span>
+          <span class="operator">-</span>
+        </div>
+        <div class="formula-item">
+          <span class="label">Total Monthly Overhead</span>
+          <span class="operator">=</span>
+        </div>
+        <div class="formula-item result">
+          <span class="label">Monthly Net Profit</span>
+        </div>
+      </div>
+      <div class="formula-details">
+        <p><strong>Gross Profit</strong> = (Selling Price - Total Unit Cost) × Quantity</p>
+        <p><strong>Total Unit Cost</strong> = Fabric Cost + Accessories Cost + Piecework Labor</p>
+        <p><strong>Monthly Overhead</strong> = Rent + Utilities + Fixed Salaries + Variable Daily Labor</p>
+      </div>
+    </div>
+  </div>
+</div>

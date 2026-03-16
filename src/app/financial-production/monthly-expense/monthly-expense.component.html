@@ -1,0 +1,124 @@
+<div class="monthly-expense-container">
+  <h2>Monthly Overhead Settings</h2>
+
+  <div class="form-section">
+    <h3>{{ editingId() ? 'Edit' : 'Add' }} Monthly Expense Report</h3>
+    <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="month">Month *</label>
+          <select id="month" formControlName="month" class="form-control">
+            <option *ngFor="let month of months" [value]="month.value">
+              {{ month.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="year">Year *</label>
+          <select id="year" formControlName="year" class="form-control">
+            <option *ngFor="let year of years" [value]="year">
+              {{ year }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <h4>Fixed Costs</h4>
+
+      <div class="form-group">
+        <label for="rent">Rent (AMD) *</label>
+        <input
+          type="number"
+          id="rent"
+          formControlName="rent"
+          class="form-control"
+          placeholder="Enter rent amount"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="utilities">Utilities (AMD) *</label>
+        <input
+          type="number"
+          id="utilities"
+          formControlName="utilities"
+          class="form-control"
+          placeholder="Enter utilities amount"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="fixedSalaries">Fixed Salaries (AMD) *</label>
+        <input
+          type="number"
+          id="fixedSalaries"
+          formControlName="fixedSalaries"
+          class="form-control"
+          placeholder="Total for employees on fixed contracts"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="variableDailyLabor">Variable/Daily Labor Total (AMD) *</label>
+        <input
+          type="number"
+          id="variableDailyLabor"
+          formControlName="variableDailyLabor"
+          class="form-control"
+          placeholder="Total paid to daily-wage workers"
+        />
+      </div>
+
+      <div class="total-overhead">
+        <strong>Total Overhead: {{ totalOverhead | number:'1.2-2' }} AMD</strong>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="!expenseForm.valid">
+          {{ editingId() ? 'Update' : 'Save' }} Report
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()" *ngIf="editingId()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="reports-section">
+    <h3>Saved Monthly Reports</h3>
+    <div class="reports-list" *ngIf="monthlyReports().length > 0; else noReports">
+      <table class="reports-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Rent</th>
+            <th>Utilities</th>
+            <th>Fixed Salaries</th>
+            <th>Daily Labor</th>
+            <th>Total Overhead</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let report of monthlyReports()">
+            <td>{{ months[report.month - 1].label }} {{ report.year }}</td>
+            <td>{{ report.rent | number:'1.2-2' }} AMD</td>
+            <td>{{ report.utilities | number:'1.2-2' }} AMD</td>
+            <td>{{ report.fixedSalaries | number:'1.2-2' }} AMD</td>
+            <td>{{ report.variableDailyLabor | number:'1.2-2' }} AMD</td>
+            <td><strong>{{ report.totalOverhead | number:'1.2-2' }} AMD</strong></td>
+            <td class="actions">
+              <button class="btn btn-sm btn-edit" (click)="editReport(report)">Edit</button>
+              <button class="btn btn-sm btn-delete" (click)="deleteReport(report.id!)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #noReports>
+      <p class="no-data">No expense reports found. Add your first report above.</p>
+    </ng-template>
+  </div>
+</div>

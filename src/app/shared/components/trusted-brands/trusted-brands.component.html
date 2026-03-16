@@ -1,0 +1,18 @@
+<section class="trusted-brands-section">
+  <div class="container">
+    <h2 class="section-title">{{ 'trustedBrands.title' | translate }} <strong>{{ 'trustedBrands.titleBold' | translate }}</strong></h2>
+  </div>
+
+  <div class="logos-slider">
+    <div class="logos-track">
+      <!-- First set of logos -->
+      <div class="logo-item" *ngFor="let client of clientLogos">
+        <img [src]="client.logo" [alt]="client.name" />
+      </div>
+      <!-- Duplicate set for seamless infinite scroll -->
+      <div class="logo-item" *ngFor="let client of clientLogos">
+        <img [src]="client.logo" [alt]="client.name" />
+      </div>
+    </div>
+  </div>
+</section>

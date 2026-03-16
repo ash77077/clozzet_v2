@@ -13,8 +13,8 @@
 		</div>
 	</div>
 
-	<!-- Dashboard Content -->
-	<div class="dashboard-content" *ngIf="!isLoading && !error && currentUser">
+	<!-- Admin/Manager Dashboard -->
+	<div class="dashboard-content admin-dashboard" *ngIf="!isLoading && !error && currentUser && isUserAdminOrManager()">
 		<div class="welcome-section">
 			<h1>Welcome, {{ currentUser.firstName }}!</h1>
 			<p>Here's your dashboard overview</p>
@@ -59,6 +59,13 @@
 					<div class="stat-content">
 						<h3>Retail Sales</h3>
 						<p>Manage retail products</p>
+					</div>
+				</div>
+				<div class="stat-card" routerLink="/special-collection-admin">
+					<div class="stat-icon">✨</div>
+					<div class="stat-content">
+						<h3>Special Collection</h3>
+						<p>Manage exclusive items</p>
 					</div>
 				</div>
 			</div>
@@ -149,6 +156,120 @@
 						</div>
 					</div>
 				</div>
+			</div>
+		</section>
+
+	</div>
+
+	<!-- Client Dashboard (Business Users/Customers) -->
+	<div class="dashboard-content client-dashboard" *ngIf="!isLoading && !error && currentUser && isUserClient()">
+		<div class="welcome-section">
+			<h1>Welcome back, {{ currentUser.firstName }}!</h1>
+			<p class="company-name" *ngIf="getCompanyName()">{{ getCompanyName() }}</p>
+		</div>
+
+		<!-- Client Stats Grid -->
+		<section class="statistics-section">
+			<div class="stats-grid client-stats">
+				<div class="stat-card primary">
+					<div class="stat-icon">📦</div>
+					<div class="stat-content">
+						<h3>{{ clientStats.totalOrders }}</h3>
+						<p>Total Orders</p>
+					</div>
+				</div>
+				<div class="stat-card warning">
+					<div class="stat-icon">⏳</div>
+					<div class="stat-content">
+						<h3>{{ clientStats.pendingOrders }}</h3>
+						<p>Pending Orders</p>
+					</div>
+				</div>
+				<div class="stat-card info">
+					<div class="stat-icon">🔄</div>
+					<div class="stat-content">
+						<h3>{{ clientStats.inProgressOrders }}</h3>
+						<p>In Progress</p>
+					</div>
+				</div>
+				<div class="stat-card success">
+					<div class="stat-icon">✅</div>
+					<div class="stat-content">
+						<h3>{{ clientStats.deliveredOrders }}</h3>
+						<p>Delivered</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Quick Actions -->
+		<section class="quick-actions-section">
+			<h2 class="section-title">Quick Actions</h2>
+			<div class="action-cards">
+				<div class="action-card" routerLink="/order-create">
+					<div class="action-icon">➕</div>
+					<h3>New B2B Order</h3>
+					<p>Create a new bulk order for your company</p>
+				</div>
+				<div class="action-card" routerLink="/my-orders">
+					<div class="action-icon">📋</div>
+					<h3>View All Orders</h3>
+					<p>Track all your company's orders</p>
+				</div>
+				<div class="action-card" routerLink="/special-collection">
+					<div class="action-icon">✨</div>
+					<h3>Special Collection</h3>
+					<p>Browse our exclusive products</p>
+				</div>
+				<div class="action-card" routerLink="/contact">
+					<div class="action-icon">💬</div>
+					<h3>Contact Support</h3>
+					<p>Get help from our team</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- Recent Orders -->
+		<section class="recent-orders-section" *ngIf="clientOrders.length > 0">
+			<div class="section-header">
+				<h2 class="section-title">Recent Orders</h2>
+				<a routerLink="/my-orders" class="view-all-link">View All →</a>
+			</div>
+			<div class="orders-table">
+				<table class="client-orders-table">
+					<thead>
+						<tr>
+							<th>Order ID</th>
+							<th>Date</th>
+							<th>Items</th>
+							<th>Status</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr *ngFor="let order of getRecentOrders()" class="order-row">
+							<td class="order-id">#{{ getOrderId(order).slice(-8).toUpperCase() }}</td>
+							<td class="order-date">{{ order.createdAt | date:'MMM d, y' }}</td>
+							<td class="order-items">{{ getTotalItems(order) }} items</td>
+							<td>
+								<span class="status-badge" [ngClass]="getB2BStatusClass(order.status)">
+									{{ order.status }}
+								</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+
+		<!-- Empty State -->
+		<section class="empty-state-section" *ngIf="clientOrders.length === 0">
+			<div class="empty-state">
+				<div class="empty-icon">📦</div>
+				<h3>No orders yet</h3>
+				<p>Start by creating your first order</p>
+				<button class="btn-primary" routerLink="/order-create">
+					Create Your First Order
+				</button>
 			</div>
 		</section>
 

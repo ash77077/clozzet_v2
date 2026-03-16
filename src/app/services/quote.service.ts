@@ -33,4 +33,8 @@ export class QuoteService {
   submitQuote(quoteData: QuoteRequest): Observable<QuoteResponse> {
     return this.http.post<QuoteResponse>(`${this.API_URL}/quotes`, quoteData);
   }
+
+  submitQuoteWithFiles(formData: FormData): Observable<QuoteResponse> {
+    return this.http.post<QuoteResponse>(`${this.API_URL}/quotes`, formData);
+  }
 }
