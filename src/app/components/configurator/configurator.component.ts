@@ -125,11 +125,18 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
 
     // Add OrbitControls for user interaction
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true; // Smooth camera movement
+    this.controls.enableDamping = false; // Smooth camera movement
     this.controls.dampingFactor = 0.05;
     this.controls.minDistance = 2;
     this.controls.maxDistance = 10;
     this.controls.target.set(0, 0.5, 0); // Look at the center of the model
+
+    // Lock vertical rotation - only allow horizontal spinning
+    this.controls.minPolarAngle = 1;
+    this.controls.maxPolarAngle = 1;
+
+    // Disable panning to keep model centered
+    this.controls.enablePan = false;
 
     // Add Lighting for realistic fabric materials
 
@@ -202,14 +209,42 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
           }
         });
 
-        // Center and scale the model if needed
+        // Center the model using bounding box calculation
         const box = new THREE.Box3().setFromObject(this.loadedModel);
         const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        // Move model so its center is at origin
         this.loadedModel.position.sub(center);
+
+        // Position model at a comfortable height
         this.loadedModel.position.y = 0.5;
+
+        // Calculate the actual center position after repositioning
+        const finalCenter = new THREE.Vector3(0, 1, 0);
+
+        // Update OrbitControls target to the exact center of the model
+        this.controls.target.copy(finalCenter);
+
+        // Position camera to look at the center
+        // Adjust camera distance based on model size
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const cameraDistance = maxDim * 5; // Adjust multiplier as needed
+        this.camera.position.set(
+          0,
+          finalCenter.y,
+          cameraDistance
+        );
+
+        // Update controls to apply the new target
+        this.controls.update();
 
         // Add the model to the scene
         this.scene.add(this.loadedModel);
+
+        console.log('Model centered at:', finalCenter);
+        console.log('Model size:', size);
+        console.log('Camera positioned at:', this.camera.position);
       },
       (progress) => {
         // Loading progress
