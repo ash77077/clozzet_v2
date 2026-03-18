@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ProductQuoteService } from '../../services/product-quote.service';
 import { ProductsService, Product } from '../../services/products.service';
 import { TranslateModule } from '@ngx-translate/core';
+import {NgxGoogleAnalyticsModule} from "ngx-google-analytics";
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, TranslateModule, NgxGoogleAnalyticsModule],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.scss']
 })

@@ -73,7 +73,13 @@
           </div>
 
           <div class="product-actions">
-            <button class="btn btn-primary" (click)="requestQuote()">
+            <button
+              class="btn btn-primary"
+              (click)="requestQuote()"
+              gaEvent="click_get_quote"
+              gaCategory="Lead Generation"
+              gaLabel="Products Grid - Product Card"
+              [gaValue]="1">
               {{ 'products.getQuote' | translate }}
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>

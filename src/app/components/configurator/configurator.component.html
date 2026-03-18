@@ -1,68 +1,77 @@
 <div class="configurator-container">
-  <!-- 3D Canvas Container (70% width) -->
+  <!-- Left Side: 3D Canvas (70% width, fixed) -->
   <div class="canvas-wrapper" #canvasContainer>
     <!-- Three.js renderer will be appended here -->
   </div>
 
-  <!-- Sidebar with Color Controls (30% width) -->
+  <!-- Right Side: Sidebar (30% width, scrollable) -->
   <div class="sidebar">
+    <!-- Sidebar Header -->
     <div class="sidebar-header">
-      <h2>3D Clothing Configurator</h2>
-      <p>Phase 2: Color + Logo Placement</p>
+      <h2>Clothing Configurator</h2>
+      <p>Design your custom garment</p>
     </div>
 
-    <!-- Color Swatches Section -->
-    <div class="color-section">
-      <h3>Select Color</h3>
-      <div class="color-swatches">
-        <button
-          *ngFor="let color of colorSwatches"
-          class="color-swatch"
-          [style.background-color]="color.hex"
-          [title]="color.name"
-          (click)="changeAllColors(color.hex)">
-          <span class="color-name">{{ color.name }}</span>
+    <!-- Global Cloth Color Picker -->
+    <div class="global-color-section">
+      <h3>Overall Garment Color</h3>
+      <p class="info-text">Change the entire garment color at once</p>
+
+      <div class="global-color-picker-wrapper">
+        <button class="global-color-btn" (click)="openGlobalColorPicker()">
+          <div class="color-preview" [style.background-color]="globalClothColor"></div>
+          <span>Change All Parts Color</span>
         </button>
+        <input
+          type="color"
+          id="globalColorPicker"
+          class="native-color-picker"
+          [(ngModel)]="globalClothColor"
+          (change)="onGlobalColorChange($event)">
       </div>
     </div>
 
-    <!-- Part Selection Section (if mesh names are available) -->
+    <!-- Garment Part Selection with Native Color Picker -->
     <div class="part-section">
-      <h3>Change Part Color</h3>
-      <p class="info-text">Select a part and then choose a color above</p>
+      <h3>Individual Part Colors</h3>
+      <p class="info-text">Click any part to change its color independently</p>
 
-      <div class="part-buttons">
-        <button
-          *ngFor="let part of meshParts"
-          class="part-button"
-          (click)="selectedPart = part"
-          [class.active]="selectedPart === part">
-          {{ part }}
-        </button>
-      </div>
-
-      <div class="selected-part" *ngIf="selectedPart">
-        <p>Selected: <strong>{{ selectedPart }}</strong></p>
-        <div class="quick-colors">
-          <button
-            *ngFor="let color of colorSwatches.slice(0, 4)"
-            class="quick-color-btn"
-            [style.background-color]="color.hex"
-            (click)="changePartColor(selectedPart, color.hex)">
-          </button>
+      <div class="part-grid">
+        <div
+          *ngFor="let part of meshParts; let i = index"
+          class="part-card"
+          [class.active]="selectedPart === part"
+          (click)="openColorPicker(i, part)">
+          <div class="part-name">{{ part }}</div>
+          <div class="part-color-indicator" [style.background-color]="getPartColor(part)"></div>
         </div>
       </div>
+
+      <!-- Hidden native color pickers for each part -->
+      <input
+        *ngFor="let part of meshParts; let i = index"
+        type="color"
+        class="native-color-picker"
+        [id]="'colorPicker-' + i"
+        (change)="onColorChange($event, part)"
+        [value]="getPartColor(part)">
+
+      <!-- Fabric Disclaimer -->
+      <p class="fabric-disclaimer">
+        Note: Actual fabric shades in production may vary slightly from this digital representation.
+      </p>
     </div>
 
-    <!-- PHASE 2: Decal/Logo Placement Section -->
-    <div class="decal-section">
+    <!-- Logo Placement with TransformControls -->
+    <div class="logo-section">
       <h3>Logo Placement</h3>
+      <p class="info-text">Upload and place one logo on your garment</p>
 
       <!-- Logo Upload -->
       <div class="logo-upload">
         <label for="logoUpload" class="upload-label">
           <span class="upload-icon">📁</span>
-          <span class="upload-text">{{ logoTexture ? 'Logo Loaded' : 'Upload Logo (PNG)' }}</span>
+          <span class="upload-text">{{ logoTexture ? 'Logo Loaded' : 'Upload Logo' }}</span>
         </label>
         <input
           type="file"
@@ -79,59 +88,57 @@
         </button>
       </div>
 
-      <!-- Decal Mode Toggle -->
-      <div class="decal-mode-toggle">
-        <button
-          class="toggle-btn"
-          [class.active]="decalMode"
-          (click)="toggleDecalMode()"
-          [disabled]="!logoTexture">
-          {{ decalMode ? 'Decal Mode: ON' : 'Decal Mode: OFF' }}
-        </button>
-        <p class="info-text" *ngIf="!logoTexture" style="color: #f59e0b;">⚠️ Upload a logo first</p>
-        <p class="info-text" *ngIf="logoTexture && decalMode">Click on the model to place logos</p>
-        <p class="info-text" *ngIf="logoTexture && !decalMode">Enable decal mode to place logos</p>
+      <div class="logo-instructions">
+        <div *ngIf="!logoTexture" class="instruction-item warning">
+          <span class="icon">⚠️</span>
+          <span>Upload a logo first</span>
+        </div>
+        <div *ngIf="logoTexture && !hasLogo" class="instruction-item info">
+          <span class="icon">👆</span>
+          <span>Click on the model to place your logo</span>
+        </div>
+        <div *ngIf="hasLogo" class="instruction-item success">
+          <span class="icon">✓</span>
+          <span>Logo placed! Click it to transform</span>
+        </div>
       </div>
 
-      <!-- Decal Scale Slider -->
-      <div class="slider-control">
-        <label for="decalScale">
-          <strong>Scale:</strong> {{ decalScale.toFixed(3) }}
-        </label>
-        <input
-          type="range"
-          id="decalScale"
-          [(ngModel)]="decalScale"
-          (input)="updateActiveDecal()"
-          min="0.05"
-          max="3.0"
-          step="0.05"
-          class="slider">
+      <!-- TransformControls Mode Buttons -->
+      <div class="transform-controls" *ngIf="hasLogo">
+        <span class="mode-label">Transform Mode:</span>
+        <div class="mode-buttons">
+          <button
+            class="mode-btn"
+            [class.active]="transformMode === 'translate'"
+            (click)="setTransformMode('translate')">
+            <span class="mode-icon">↔️</span>
+            <span>Move</span>
+          </button>
+          <button
+            class="mode-btn"
+            [class.active]="transformMode === 'rotate'"
+            (click)="setTransformMode('rotate')">
+            <span class="mode-icon">🔄</span>
+            <span>Rotate</span>
+          </button>
+          <button
+            class="mode-btn"
+            [class.active]="transformMode === 'scale'"
+            (click)="setTransformMode('scale')">
+            <span class="mode-icon">⚖️</span>
+            <span>Scale</span>
+          </button>
+        </div>
+        <p class="mode-hint">Click the logo on the model to select it, then use the handles to transform</p>
       </div>
 
-      <!-- Decal Rotation Slider -->
-      <div class="slider-control">
-        <label for="decalRotation">
-          <strong>Rotation:</strong> {{ decalRotation }}°
-        </label>
-        <input
-          type="range"
-          id="decalRotation"
-          [(ngModel)]="decalRotation"
-          (input)="updateActiveDecal()"
-          min="0"
-          max="360"
-          step="5"
-          class="slider">
-      </div>
-
-      <!-- Clear Decals Button -->
-      <button class="clear-btn" (click)="clearAllDecals()">
-        Clear All Logos
+      <!-- Remove Logo Button -->
+      <button class="remove-placed-logo-btn" *ngIf="hasLogo" (click)="removePlacedLogo()">
+        Remove Placed Logo
       </button>
     </div>
 
-    <!-- PHASE 3: Export Production Data Section -->
+    <!-- Production Export Section -->
     <div class="export-section">
       <h3>Production Export</h3>
       <p class="info-text">Export your design for manufacturing</p>
@@ -145,8 +152,8 @@
         <p class="export-note">Exports:</p>
         <ul>
           <li>✓ Garment colors (all parts)</li>
-          <li>✓ Logo positions & rotations</li>
-          <li>✓ Scale and placement data</li>
+          <li>✓ Logo position, rotation & scale</li>
+          <li>✓ Complete manufacturing specs</li>
         </ul>
       </div>
     </div>
@@ -155,19 +162,12 @@
     <div class="instructions">
       <h4>Controls</h4>
       <ul>
-        <li><strong>Left Click + Drag:</strong> Rotate model</li>
-        <li><strong>Scroll:</strong> Zoom in/out</li>
-        <li><strong>Right Click + Drag:</strong> Pan camera</li>
-        <li><strong>Decal Mode:</strong> Click to place logos</li>
-        <li><strong>Drag Logo:</strong> Click & drag placed logos to reposition</li>
+        <li><strong>Rotate View:</strong> Left click + drag</li>
+        <li><strong>Zoom:</strong> Mouse scroll wheel</li>
+        <li><strong>Place Logo:</strong> Upload, then click model</li>
+        <li><strong>Transform Logo:</strong> Click logo, use handles</li>
+        <li><strong>Switch Mode:</strong> Use Move/Rotate/Scale buttons</li>
       </ul>
-    </div>
-
-    <!-- Model Info Section -->
-    <div class="model-info">
-      <h4>Model Information</h4>
-      <p class="note">Check browser console for mesh names in your model</p>
-      <button class="refresh-btn" (click)="loadModel()">Reload Model</button>
     </div>
   </div>
 </div>

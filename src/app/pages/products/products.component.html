@@ -79,7 +79,13 @@
             </div>
 
             <div class="cta-buttons">
-              <button class="btn btn-primary btn-lg" (click)="requestQuote()">
+              <button
+                class="btn btn-primary btn-lg"
+                (click)="requestQuote()"
+                gaEvent="click_get_quote"
+                gaCategory="Lead Generation"
+                gaLabel="Product Detail - Top Section"
+                [gaValue]='1'>
                 Get Custom Quote
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
@@ -158,7 +164,13 @@
         <div class="cta-content">
           <h2>Ready to Order?</h2>
           <p>Get a custom quote for {{ currentProduct.name }} tailored to your specific requirements.</p>
-          <button class="btn btn-primary btn-lg" (click)="requestQuote()">
+          <button
+            class="btn btn-primary btn-lg"
+            (click)="requestQuote()"
+            gaEvent="click_get_quote"
+            gaCategory="Lead Generation"
+            gaLabel="Product Detail - Bottom CTA"
+            [gaValue]='1'>
             Request Free Quote
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
