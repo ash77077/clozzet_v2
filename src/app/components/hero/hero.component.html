@@ -165,7 +165,15 @@
 			</ul>
 
 			<div class="hero-actions">
-				<button class="btn-primary" (click)="scrollToQuote()">{{ 'hero.cta.getQuote' | translate }}</button>
+				<button
+				class="btn-primary"
+				(click)="scrollToQuote()"
+				gaEvent="click_get_quote"
+				gaCategory="Lead Generation"
+				gaLabel="Hero Section - Main CTA"
+				[gaValue]="1">
+				{{ 'hero.cta.getQuote' | translate }}
+			</button>
 				<button class="btn-secondary" (click)="scrollToProducts()">{{ 'hero.cta.viewProducts' | translate }}</button>
 			</div>
 

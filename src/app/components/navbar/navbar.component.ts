@@ -7,6 +7,7 @@ import { TranslationService } from '../../services/translation.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {NgxGoogleAnalyticsModule} from "ngx-google-analytics";
 
 interface NavItem {
   label: string;
@@ -19,7 +20,7 @@ interface NavItem {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule],
+  imports: [CommonModule, RouterModule, TranslateModule, NgxGoogleAnalyticsModule],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })

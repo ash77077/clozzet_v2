@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection, Injectable } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, Injectable, importProvidersFrom } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
@@ -9,6 +9,10 @@ import { Observable } from 'rxjs';
 import { routes } from './app.routes';
 import {providePrimeNG} from "primeng/config";
 import {provideAnimations} from "@angular/platform-browser/animations";
+
+// Google Analytics 4 Integration
+import { NgxGoogleAnalyticsModule, NgxGoogleAnalyticsRouterModule } from 'ngx-google-analytics';
+import { environment } from '../environments/environment';
 
 // Custom Translation Loader
 @Injectable()
@@ -45,6 +49,14 @@ export const appConfig: ApplicationConfig = {
         useFactory: httpLoaderFactory,
         deps: [HttpClient]
       }
-    })
+    }),
+    // Google Analytics 4 Configuration
+    // NgxGoogleAnalyticsModule: Core GA4 functionality
+    // NgxGoogleAnalyticsRouterModule: Automatically tracks route changes as page views
+    // Securely pulls GA Measurement ID from environment.ts
+    importProvidersFrom([
+      NgxGoogleAnalyticsModule.forRoot(environment.googleAnalyticsId),
+      NgxGoogleAnalyticsRouterModule
+    ])
   ]
 };

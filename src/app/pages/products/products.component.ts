@@ -5,11 +5,12 @@ import { ProductsComponent as ProductsShowcaseComponent } from '../../components
 import { ProductQuoteService} from '../../services/product-quote.service';
 import { ProductsService, Product } from '../../services/products.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {NgxGoogleAnalyticsModule} from "ngx-google-analytics";
 
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [CommonModule, ProductsShowcaseComponent, RouterLink],
+  imports: [CommonModule, ProductsShowcaseComponent, RouterLink, NgxGoogleAnalyticsModule],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.scss']
 })

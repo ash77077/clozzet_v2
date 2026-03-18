@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
 
@@ -22,6 +23,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private controls!: OrbitControls;
+  private transformControl!: TransformControls;
   private loader: GLTFLoader = new GLTFLoader();
 
   // Store the loaded model for manipulation
@@ -30,25 +32,16 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   // Animation frame ID for cleanup
   private animationFrameId: number = 0;
 
-  // Color swatches for UI
-  colorSwatches = [
-    { name: 'Red', hex: '#ff0000' },
-    { name: 'Blue', hex: '#0000ff' },
-    { name: 'Green', hex: '#00ff00' },
-    { name: 'Yellow', hex: '#ffff00' },
-    { name: 'Purple', hex: '#800080' },
-    { name: 'Orange', hex: '#ff8800' },
-    { name: 'White', hex: '#ffffff' },
-    { name: 'Black', hex: '#000000' },
-  ];
-
   // Available mesh parts (assuming the 3D artist named them)
   meshParts = ['Object_14', 'Object_20', 'Object_18', 'Object_10', 'Object_8'];
+
+  // Track part colors (store as hex values)
+  private partColors: Map<string, string> = new Map();
 
   // Currently selected part for color change
   selectedPart: string = '';
 
-  // ===== PHASE 2: Decal/Logo Placement =====
+  // ===== LOGO PLACEMENT WITH TRANSFORMCONTROLS =====
 
   // Raycaster for detecting mouse clicks on the mesh
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
@@ -59,32 +52,26 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   logoTexture: THREE.Texture | null = null; // Public so template can check if logo is loaded
   private logoAspectRatio: number = 1.0; // Store logo aspect ratio (width / height)
 
-  // Decal state management
-  private activeDecalMesh: THREE.Mesh | null = null;
-  private decalState: {
-    position: THREE.Vector3;
-    normal: THREE.Vector3;
-    size: THREE.Vector3;
-    rotation: number;
-  } | null = null;
+  // Store all placed decals (LIMITED TO ONE)
+  decals: THREE.Mesh[] = [];
 
-  // UI controls for decal manipulation
-  decalScale: number = 1.0;
-  decalRotation: number = 0;
-  decalMode: boolean = false; // Toggle decal placement mode
+  // TransformControls mode ('translate', 'rotate', 'scale')
+  transformMode: 'translate' | 'rotate' | 'scale' = 'translate';
 
-  // Store all placed decals
-  private decals: THREE.Mesh[] = [];
+  // Currently selected decal for transformation
+  private selectedDecal: THREE.Mesh | null = null;
 
-  // ===== PHASE 3: Drag & Drop =====
-  private isDraggingDecal: boolean = false;
-  private draggedDecal: THREE.Mesh | null = null;
-  private targetMeshForDrag: THREE.Mesh | null = null;
+  // Global cloth color for changing all parts at once
+  globalClothColor: string = '#ffffff';
+
+  // Computed property: check if logo is placed
+  get hasLogo(): boolean {
+    return this.decals.length > 0;
+  }
 
   ngAfterViewInit(): void {
     this.initThreeJS();
     this.loadModel();
-    this.loadLogoTexture();
     this.setupClickListener();
     this.animate();
     this.setupResizeListener();
@@ -98,10 +85,9 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
 
     // Create Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xf0f0f0);
+    this.scene.background = new THREE.Color(0xf0f4f8);
 
     // Create PerspectiveCamera
-    // Parameters: FOV, aspect ratio, near clipping plane, far clipping plane
     this.camera = new THREE.PerspectiveCamera(
       45, // Field of view
       container.clientWidth / container.clientHeight, // Aspect ratio
@@ -110,7 +96,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     );
     this.camera.position.set(0, 3, 1); // Position camera to view the model
 
-    // Create WebGLRenderer with antialiasing and transparent background
+    // Create WebGLRenderer with antialiasing
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true
@@ -125,11 +111,28 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
 
     // Add OrbitControls for user interaction
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true; // Smooth camera movement
+    this.controls.enableDamping = false; // Smooth camera movement
     this.controls.dampingFactor = 0.05;
     this.controls.minDistance = 2;
     this.controls.maxDistance = 10;
     this.controls.target.set(0, 0.5, 0); // Look at the center of the model
+
+    // Lock vertical rotation - only allow horizontal spinning
+    this.controls.minPolarAngle = 1;
+    this.controls.maxPolarAngle = 1;
+
+    // Disable panning to keep model centered
+    this.controls.enablePan = false;
+
+    // Initialize TransformControls
+    this.transformControl = new TransformControls(this.camera, this.renderer.domElement);
+    this.transformControl.setMode(this.transformMode);
+    this.scene.add(this.transformControl as any);
+
+    // Listen to TransformControls dragging events to disable OrbitControls
+    this.transformControl.addEventListener('dragging-changed', (event: any) => {
+      this.controls.enabled = !event.value;
+    });
 
     // Add Lighting for realistic fabric materials
 
@@ -141,10 +144,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(5, 10, 7.5);
     directionalLight.castShadow = false;
-    directionalLight.shadow.camera.left = -10;
-    directionalLight.shadow.camera.right = 10;
-    directionalLight.shadow.camera.top = 10;
-    directionalLight.shadow.camera.bottom = -10;
     this.scene.add(directionalLight);
 
     // Additional fill light from the opposite side
@@ -184,32 +183,62 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
 
-            // IMPORTANT: Check the mesh name to identify specific parts
-            // The 3D artist should name meshes like "Body", "LeftSleeve", "RightSleeve"
-            // You can log the names to see what's available in your model:
             console.log('Found mesh:', mesh.name);
 
             // Ensure the material is a MeshStandardMaterial for proper lighting
             if (mesh.material) {
               // Clone the material to avoid shared references
-              // This is crucial so changing one part doesn't affect others
               if (Array.isArray(mesh.material)) {
                 mesh.material = mesh.material.map(mat => mat.clone());
               } else {
                 mesh.material = (mesh.material as THREE.Material).clone();
               }
             }
+
+            // Initialize part color tracking
+            if (mesh.name && this.meshParts.includes(mesh.name)) {
+              const currentColor = this.getMeshCurrentColor(mesh);
+              this.partColors.set(mesh.name, currentColor);
+            }
           }
         });
 
-        // Center and scale the model if needed
+        // Center the model using bounding box calculation
         const box = new THREE.Box3().setFromObject(this.loadedModel);
         const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        // Move model so its center is at origin
         this.loadedModel.position.sub(center);
+
+        // Position model at a comfortable height
         this.loadedModel.position.y = 0.5;
+
+        // Calculate the actual center position after repositioning
+        const finalCenter = new THREE.Vector3(0, 1, 0);
+
+        // Update OrbitControls target to the exact center of the model
+        this.controls.target.copy(finalCenter);
+
+        // Position camera to look at the center
+        // Adjust camera distance based on model size
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const cameraDistance = maxDim * 5; // Adjust multiplier as needed
+        this.camera.position.set(
+          0,
+          finalCenter.y,
+          cameraDistance
+        );
+
+        // Update controls to apply the new target
+        this.controls.update();
 
         // Add the model to the scene
         this.scene.add(this.loadedModel);
+
+        console.log('Model centered at:', finalCenter);
+        console.log('Model size:', size);
+        console.log('Camera positioned at:', this.camera.position);
       },
       (progress) => {
         // Loading progress
@@ -223,9 +252,85 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
+   * Get the current color of a mesh (for initialization)
+   */
+  private getMeshCurrentColor(mesh: THREE.Mesh): string {
+    if (mesh.material) {
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      const firstMaterial = materials[0];
+
+      if (firstMaterial instanceof THREE.MeshStandardMaterial ||
+          firstMaterial instanceof THREE.MeshPhongMaterial ||
+          firstMaterial instanceof THREE.MeshBasicMaterial) {
+        return '#' + firstMaterial.color.getHexString();
+      }
+    }
+    return '#ffffff'; // Default to white
+  }
+
+  /**
+   * Get the current color of a part (for display)
+   */
+  getPartColor(partName: string): string {
+    return this.partColors.get(partName) || '#ffffff';
+  }
+
+  /**
+   * Open the global color picker
+   */
+  openGlobalColorPicker(): void {
+    const colorPicker = document.getElementById('globalColorPicker') as HTMLInputElement;
+    if (colorPicker) {
+      colorPicker.click();
+    }
+  }
+
+  /**
+   * Handle global color change - changes all parts
+   */
+  onGlobalColorChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const hexColor = input.value;
+    this.globalClothColor = hexColor;
+
+    // Update all parts with the same color
+    this.meshParts.forEach(partName => {
+      this.changePartColor(partName, hexColor);
+      this.partColors.set(partName, hexColor);
+    });
+
+    console.log(`Changed all parts to ${hexColor}`);
+  }
+
+  /**
+   * Open the native color picker for a specific part
+   */
+  openColorPicker(index: number, partName: string): void {
+    this.selectedPart = partName;
+    const colorPicker = document.getElementById(`colorPicker-${index}`) as HTMLInputElement;
+    if (colorPicker) {
+      colorPicker.click();
+    }
+  }
+
+  /**
+   * Handle color change from native color picker
+   */
+  onColorChange(event: Event, partName: string): void {
+    const input = event.target as HTMLInputElement;
+    const hexColor = input.value;
+
+    // Update the part color
+    this.changePartColor(partName, hexColor);
+
+    // Store the color
+    this.partColors.set(partName, hexColor);
+
+    console.log(`Changed ${partName} to ${hexColor}`);
+  }
+
+  /**
    * Change the color of a specific mesh part by name
-   * @param meshName - The name of the mesh to change (e.g., "Body", "LeftSleeve")
-   * @param hexColor - The color in hex format (e.g., "#ff0000")
    */
   changePartColor(meshName: string, hexColor: string): void {
     if (!this.loadedModel) {
@@ -251,42 +356,10 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
             material.needsUpdate = true;
           }
         });
-
-        console.log(`Changed ${meshName} to ${hexColor}`);
       }
     } else {
-      console.warn(`Mesh with name "${meshName}" not found. Available meshes:`);
-      // Log all available mesh names for debugging
-      this.loadedModel.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          console.log('- ', child.name || 'Unnamed mesh');
-        }
-      });
+      console.warn(`Mesh with name "${meshName}" not found`);
     }
-  }
-
-  /**
-   * Change color of all meshes (for when mesh names are not available)
-   */
-  changeAllColors(hexColor: string): void {
-    if (!this.loadedModel) return;
-
-    this.loadedModel.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        if (mesh.material) {
-          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          materials.forEach((material) => {
-            if (material instanceof THREE.MeshStandardMaterial ||
-                material instanceof THREE.MeshPhongMaterial ||
-                material instanceof THREE.MeshBasicMaterial) {
-              material.color.set(hexColor);
-              material.needsUpdate = true;
-            }
-          });
-        }
-      }
-    });
   }
 
   /**
@@ -323,30 +396,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     this.renderer.setSize(container.clientWidth, container.clientHeight);
   }
 
-  // ===== PHASE 2: DECAL/LOGO PLACEMENT METHODS =====
-
-  /**
-   * Load the logo texture for decals
-   * This is now optional - users can upload their own logos
-   */
-  private loadLogoTexture(): void {
-    // Optional: Load a default placeholder logo
-    // Users can now upload their own logos via the file input
-    // Commenting out auto-load so users must upload their own:
-
-    // const logoPath = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/decal/decal-diffuse.png';
-    // this.textureLoader.load(
-    //   logoPath,
-    //   (texture) => {
-    //     this.logoTexture = texture;
-    //     console.log('Logo texture loaded successfully');
-    //   },
-    //   undefined,
-    //   (error) => {
-    //     console.error('Error loading logo texture:', error);
-    //   }
-    // );
-  }
+  // ===== LOGO PLACEMENT WITH TRANSFORMCONTROLS =====
 
   /**
    * Handle logo file upload from user
@@ -397,9 +447,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
               } else {
                 this.logoAspectRatio = 1.0; // Default to square if dimensions unavailable
               }
-
-              // Optional: Update existing decals with new texture
-              // (You could add this functionality if needed)
             },
             undefined,
             (error) => {
@@ -431,31 +478,33 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     // Reset aspect ratio
     this.logoAspectRatio = 1.0;
 
-    // Clear all existing decals since they use the old logo
+    // Clear all existing decals
     this.clearAllDecals();
 
-    // Disable decal mode
-    if (this.decalMode) {
-      this.toggleDecalMode();
-    }
+    // Detach transform control
+    this.transformControl.detach();
+    this.selectedDecal = null;
 
     console.log('Logo removed');
   }
 
   /**
-   * Setup click listener for decal placement and drag listeners
+   * Setup click listener for decal placement
    */
   private setupClickListener(): void {
     const canvas = this.renderer.domElement;
-    canvas.addEventListener('pointerdown', this.onPointerDown.bind(this));
-    canvas.addEventListener('pointermove', this.onPointerMove.bind(this));
-    canvas.addEventListener('pointerup', this.onPointerUp.bind(this));
+    canvas.addEventListener('click', this.onCanvasClick.bind(this));
   }
 
   /**
-   * Handle pointer down events for decal placement and drag detection
+   * Handle canvas click events for decal placement and selection
    */
-  private onPointerDown(event: PointerEvent): void {
+  private onCanvasClick(event: MouseEvent): void {
+    // If transform control is being used, don't place new decals
+    if (this.transformControl.dragging) {
+      return;
+    }
+
     // Calculate mouse position in normalized device coordinates (-1 to +1)
     const canvas = this.renderer.domElement;
     const rect = canvas.getBoundingClientRect();
@@ -465,30 +514,20 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     // Update raycaster with camera and mouse position
     this.raycaster.setFromCamera(this.mouse, this.camera);
 
-    // PHASE 3: Check if clicking on an existing decal first
+    // First, check if clicking on an existing decal
     const decalIntersects = this.raycaster.intersectObjects(this.decals, false);
 
     if (decalIntersects.length > 0) {
-      // Clicked on a decal - start dragging
-      this.isDraggingDecal = true;
-      this.draggedDecal = decalIntersects[0].object as THREE.Mesh;
-      this.controls.enabled = false; // Disable orbit controls during drag
-
-      // Find the garment mesh to raycast against
-      if (this.loadedModel) {
-        this.loadedModel.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh && !this.targetMeshForDrag) {
-            this.targetMeshForDrag = child as THREE.Mesh;
-          }
-        });
-      }
-
-      console.log('Started dragging decal');
+      // Clicked on a decal - attach TransformControls to it
+      const clickedDecal = decalIntersects[0].object as THREE.Mesh;
+      this.selectedDecal = clickedDecal;
+      this.transformControl.attach(clickedDecal);
+      console.log('Decal selected for transformation');
       return;
     }
 
-    // If not dragging, check for decal placement (only if decal mode is active)
-    if (!this.decalMode || !this.loadedModel || !this.logoTexture) {
+    // If no decal clicked and logo is loaded, place a new decal
+    if (!this.logoTexture || !this.loadedModel) {
       return;
     }
 
@@ -507,9 +546,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
         const mesh = intersection.object;
         normal.transformDirection(mesh.matrixWorld);
 
-        // Store the target mesh for dragging
-        this.targetMeshForDrag = mesh;
-
         // Add decal at the intersection point
         this.addDecal(position, normal, mesh);
       }
@@ -517,89 +553,8 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Handle pointer move events for dragging decals
-   */
-  private onPointerMove(event: PointerEvent): void {
-    if (!this.isDraggingDecal || !this.draggedDecal || !this.targetMeshForDrag) {
-      return;
-    }
-
-    // Calculate mouse position
-    const canvas = this.renderer.domElement;
-    const rect = canvas.getBoundingClientRect();
-    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-    // Update raycaster
-    this.raycaster.setFromCamera(this.mouse, this.camera);
-
-    // Raycast against the garment mesh only
-    const intersects = this.raycaster.intersectObject(this.targetMeshForDrag, true);
-
-    if (intersects.length > 0 && intersects[0].face) {
-      const intersection = intersects[0];
-      const newPosition = intersection.point;
-
-      // Ensure face is not null
-      if (!intersection.face) return;
-
-      const newNormal = intersection.face.normal.clone();
-      newNormal.transformDirection(this.targetMeshForDrag.matrixWorld);
-
-      // Dispose old decal geometry
-      if (this.draggedDecal.geometry) {
-        this.draggedDecal.geometry.dispose();
-      }
-
-      // Get current scale and rotation from decal state or use current values
-      // Apply aspect ratio to maintain logo proportions
-      const size = new THREE.Vector3(
-        0.5 * this.decalScale * this.logoAspectRatio, // Width: adjusted by aspect ratio
-        0.5 * this.decalScale,                         // Height: base size
-        0.5 * this.decalScale                          // Depth: increased to help prevent z-fighting
-      );
-
-      // Calculate orientation
-      const orientation = new THREE.Euler();
-      const dummy = new THREE.Object3D();
-      dummy.position.copy(newPosition);
-      dummy.lookAt(newPosition.clone().add(newNormal));
-      dummy.rotateZ(this.decalRotation * (Math.PI / 180));
-      orientation.copy(dummy.rotation);
-
-      // Create new DecalGeometry at new position
-      const newDecalGeometry = new DecalGeometry(
-        this.targetMeshForDrag,
-        newPosition,
-        orientation,
-        size
-      );
-
-      // Update the dragged decal mesh
-      this.draggedDecal.geometry = newDecalGeometry;
-
-      // Update decal state if this is the active decal
-      if (this.draggedDecal === this.activeDecalMesh && this.decalState) {
-        this.decalState.position = newPosition.clone();
-        this.decalState.normal = newNormal.clone();
-      }
-    }
-  }
-
-  /**
-   * Handle pointer up events to stop dragging
-   */
-  private onPointerUp(event: PointerEvent): void {
-    if (this.isDraggingDecal) {
-      this.isDraggingDecal = false;
-      this.draggedDecal = null;
-      this.controls.enabled = true; // Re-enable orbit controls
-      console.log('Stopped dragging decal');
-    }
-  }
-
-  /**
    * Add a decal to the mesh at the specified position and orientation
+   * ONLY ONE LOGO ALLOWED - removes existing logo before placing new one
    */
   private addDecal(position: THREE.Vector3, normal: THREE.Vector3, targetMesh: THREE.Mesh): void {
     if (!this.logoTexture) {
@@ -607,12 +562,17 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Calculate decal size based on the scale slider
-    // Apply aspect ratio to maintain logo proportions (width / height)
+    // IMPORTANT: Remove existing logo if present (only one logo allowed)
+    if (this.decals.length > 0) {
+      this.removePlacedLogo();
+    }
+
+    // Calculate decal size with aspect ratio
+    const baseSize = 0.5;
     const size = new THREE.Vector3(
-      0.5 * this.decalScale * this.logoAspectRatio, // Width: adjusted by aspect ratio
-      0.5 * this.decalScale,                         // Height: base size
-      0.5 * this.decalScale                          // Depth: increased to help prevent z-fighting
+      baseSize * this.logoAspectRatio, // Width: adjusted by aspect ratio
+      baseSize,                         // Height: base size
+      baseSize                          // Depth
     );
 
     // Create a helper object to calculate the correct orientation
@@ -623,14 +583,10 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     dummy.position.copy(position);
     dummy.lookAt(position.clone().add(normal));
 
-    // Apply the rotation from the slider
-    dummy.rotateZ(this.decalRotation * (Math.PI / 180)); // Convert degrees to radians
-
     // Get the rotation from the dummy object
     orientation.copy(dummy.rotation);
 
     // Create DecalGeometry
-    // DecalGeometry constructor: (mesh, position, orientation, size)
     const decalGeometry = new DecalGeometry(targetMesh, position, orientation, size);
 
     // Create material for the decal with proper settings to prevent z-fighting
@@ -640,8 +596,8 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       depthTest: true,
       depthWrite: false,
       polygonOffset: true,
-      polygonOffsetFactor: -50, // Dramatically increased to eliminate z-fighting on sharp folds
-      polygonOffsetUnits: -20,  // Dramatically increased for maximum depth separation
+      polygonOffsetFactor: -50,
+      polygonOffsetUnits: -20,
     });
 
     // Create the decal mesh
@@ -650,137 +606,34 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     // Add to scene
     this.scene.add(decalMesh);
 
-    // Store as active decal and save its state
-    this.activeDecalMesh = decalMesh;
-    this.decalState = {
-      position: position.clone(),
-      normal: normal.clone(),
-      size: size.clone(),
-      rotation: this.decalRotation
-    };
-
     // Add to decals array
     this.decals.push(decalMesh);
 
-    console.log('Decal placed at', position);
+    // Automatically select and attach transform control to the new decal
+    this.selectedDecal = decalMesh;
+    this.transformControl.attach(decalMesh);
+
+    console.log('Logo placed at', position);
   }
 
   /**
-   * Update the active decal with new scale and rotation values
-   * This is called when sliders change
+   * Set the TransformControls mode
    */
-  updateActiveDecal(): void {
-    if (!this.activeDecalMesh || !this.decalState || !this.loadedModel) {
+  setTransformMode(mode: 'translate' | 'rotate' | 'scale'): void {
+    this.transformMode = mode;
+    this.transformControl.setMode(mode);
+    console.log(`Transform mode set to: ${mode}`);
+  }
+
+  /**
+   * Remove the placed logo (but keep the uploaded texture)
+   */
+  removePlacedLogo(): void {
+    if (this.decals.length === 0) {
       return;
     }
 
-    // Remove the old decal mesh from the scene
-    this.scene.remove(this.activeDecalMesh);
-
-    // Dispose of the old geometry to prevent memory leaks
-    if (this.activeDecalMesh.geometry) {
-      this.activeDecalMesh.geometry.dispose();
-    }
-
-    // Remove from decals array
-    const index = this.decals.indexOf(this.activeDecalMesh);
-    if (index > -1) {
-      this.decals.splice(index, 1);
-    }
-
-    // Find the target mesh from the raycaster intersection
-    // We need to re-raycast or store the target mesh reference
-    const intersects = this.raycaster.intersectObject(this.loadedModel, true);
-    let targetMesh: THREE.Mesh | null = null;
-
-    if (intersects.length > 0 && intersects[0].object instanceof THREE.Mesh) {
-      targetMesh = intersects[0].object;
-    } else {
-      // Fallback: try to find any mesh in the loaded model
-      this.loadedModel.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh && !targetMesh) {
-          targetMesh = child as THREE.Mesh;
-        }
-      });
-    }
-
-    if (!targetMesh) {
-      console.warn('Could not find target mesh for decal update');
-      return;
-    }
-
-    // Create new decal with updated parameters
-    // Apply aspect ratio to maintain logo proportions
-    const size = new THREE.Vector3(
-      0.5 * this.decalScale * this.logoAspectRatio, // Width: adjusted by aspect ratio
-      0.5 * this.decalScale,                         // Height: base size
-      0.5 * this.decalScale                          // Depth: increased to help prevent z-fighting
-    );
-
-    const orientation = new THREE.Euler();
-    const dummy = new THREE.Object3D();
-
-    dummy.position.copy(this.decalState.position);
-    dummy.lookAt(this.decalState.position.clone().add(this.decalState.normal));
-    dummy.rotateZ(this.decalRotation * (Math.PI / 180));
-
-    orientation.copy(dummy.rotation);
-
-    // Create new DecalGeometry
-    const decalGeometry = new DecalGeometry(
-      targetMesh,
-      this.decalState.position,
-      orientation,
-      size
-    );
-
-    // Reuse the material or create a new one
-    const decalMaterial = new THREE.MeshPhongMaterial({
-      map: this.logoTexture!,
-      transparent: true,
-      depthTest: true,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -50, // Dramatically increased to eliminate z-fighting on sharp folds
-      polygonOffsetUnits: -20,  // Dramatically increased for maximum depth separation
-    });
-
-    // Create new mesh
-    const newDecalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
-
-    // Add to scene
-    this.scene.add(newDecalMesh);
-
-    // Update references
-    this.activeDecalMesh = newDecalMesh;
-    this.decalState.size = size;
-    this.decalState.rotation = this.decalRotation;
-
-    // Add to decals array
-    this.decals.push(newDecalMesh);
-  }
-
-  /**
-   * Toggle decal placement mode
-   */
-  toggleDecalMode(): void {
-    this.decalMode = !this.decalMode;
-
-    if (this.decalMode) {
-      // Disable orbit controls while placing decals
-      this.controls.enabled = false;
-      console.log('Decal mode enabled - Click on the model to place logos');
-    } else {
-      // Re-enable orbit controls
-      this.controls.enabled = true;
-      console.log('Decal mode disabled');
-    }
-  }
-
-  /**
-   * Clear all placed decals from the scene
-   */
-  clearAllDecals(): void {
+    // Remove from scene and dispose
     this.decals.forEach((decal) => {
       this.scene.remove(decal);
       if (decal.geometry) {
@@ -793,22 +646,28 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     });
 
     this.decals = [];
-    this.activeDecalMesh = null;
-    this.decalState = null;
+    this.selectedDecal = null;
+    this.transformControl.detach();
 
-    console.log('All decals cleared');
+    console.log('Placed logo removed');
   }
 
-  // ===== PHASE 3: EXPORT PRODUCTION DATA =====
+  /**
+   * Clear all placed decals from the scene (same as removePlacedLogo since we only have one)
+   */
+  clearAllDecals(): void {
+    this.removePlacedLogo();
+  }
+
+  // ===== EXPORT PRODUCTION DATA =====
 
   /**
    * Export the current design configuration as JSON for the manufacturing team
-   * Includes garment colors and logo placement details
    */
   exportProductionData(): void {
     const productionData: any = {
       timestamp: new Date().toISOString(),
-      version: 'v1.0',
+      version: 'v2.0',
       garment: {
         colors: this.extractGarmentColors()
       },
@@ -835,39 +694,27 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   private extractGarmentColors(): any {
     const colors: any = {};
 
-    if (!this.loadedModel) {
-      return colors;
-    }
-
-    // Traverse the model and extract colors from each mesh part
-    this.loadedModel.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        const meshName = mesh.name || 'Unnamed';
-
-        if (mesh.material) {
-          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          materials.forEach((material, index) => {
-            if (material instanceof THREE.MeshStandardMaterial ||
-                material instanceof THREE.MeshPhongMaterial ||
-                material instanceof THREE.MeshBasicMaterial) {
-              const color = material.color;
-              const colorKey = materials.length > 1 ? `${meshName}_material_${index}` : meshName;
-              colors[colorKey] = {
-                hex: '#' + color.getHexString(),
-                rgb: {
-                  r: Math.round(color.r * 255),
-                  g: Math.round(color.g * 255),
-                  b: Math.round(color.b * 255)
-                }
-              };
-            }
-          });
-        }
-      }
+    // Use the stored part colors
+    this.partColors.forEach((color, partName) => {
+      colors[partName] = {
+        hex: color,
+        rgb: this.hexToRgb(color)
+      };
     });
 
     return colors;
+  }
+
+  /**
+   * Convert hex color to RGB object
+   */
+  private hexToRgb(hex: string): { r: number, g: number, b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
   }
 
   /**
@@ -877,52 +724,25 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     const logoData: any[] = [];
 
     this.decals.forEach((decal, index) => {
-      // Get decal geometry to extract position
-      const decalGeometry = decal.geometry as DecalGeometry;
-
-      // Extract position from decal mesh
-      const position = decal.position.clone();
-
-      // Try to get the stored state for this decal
-      let storedState = null;
-      if (decal === this.activeDecalMesh && this.decalState) {
-        storedState = this.decalState;
-      }
-
-      // Calculate the center position from geometry if available
-      if (decalGeometry && decalGeometry.boundingSphere) {
-        position.copy(decalGeometry.boundingSphere.center);
-      }
-
       const logoEntry: any = {
         id: `logo_${index + 1}`,
         position: {
-          x: parseFloat(position.x.toFixed(4)),
-          y: parseFloat(position.y.toFixed(4)),
-          z: parseFloat(position.z.toFixed(4))
+          x: parseFloat(decal.position.x.toFixed(4)),
+          y: parseFloat(decal.position.y.toFixed(4)),
+          z: parseFloat(decal.position.z.toFixed(4))
         },
-        scale: parseFloat(this.decalScale.toFixed(3)),
-        rotation: parseFloat(this.decalRotation.toFixed(2)),
-        logoTexture: this.logoTexture ? 'custom_uploaded_logo.png' : 'none'
+        rotation: {
+          x: parseFloat(decal.rotation.x.toFixed(4)),
+          y: parseFloat(decal.rotation.y.toFixed(4)),
+          z: parseFloat(decal.rotation.z.toFixed(4))
+        },
+        scale: {
+          x: parseFloat(decal.scale.x.toFixed(4)),
+          y: parseFloat(decal.scale.y.toFixed(4)),
+          z: parseFloat(decal.scale.z.toFixed(4))
+        },
+        logoTexture: 'custom_uploaded_logo.png'
       };
-
-      // Add normal if available from stored state
-      if (storedState && storedState.normal) {
-        logoEntry.normal = {
-          x: parseFloat(storedState.normal.x.toFixed(4)),
-          y: parseFloat(storedState.normal.y.toFixed(4)),
-          z: parseFloat(storedState.normal.z.toFixed(4))
-        };
-      }
-
-      // Add size if available
-      if (storedState && storedState.size) {
-        logoEntry.size = {
-          x: parseFloat(storedState.size.x.toFixed(4)),
-          y: parseFloat(storedState.size.y.toFixed(4)),
-          z: parseFloat(storedState.size.z.toFixed(4))
-        };
-      }
 
       logoData.push(logoEntry);
     });
@@ -952,11 +772,9 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     // Remove resize listener
     window.removeEventListener('resize', this.onWindowResize.bind(this));
 
-    // Remove click and drag listeners for decals
+    // Remove click listener
     if (this.renderer && this.renderer.domElement) {
-      this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown.bind(this));
-      this.renderer.domElement.removeEventListener('pointermove', this.onPointerMove.bind(this));
-      this.renderer.domElement.removeEventListener('pointerup', this.onPointerUp.bind(this));
+      this.renderer.domElement.removeEventListener('click', this.onCanvasClick.bind(this));
     }
 
     // Cancel animation frame
@@ -967,6 +785,11 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     // Dispose of controls
     if (this.controls) {
       this.controls.dispose();
+    }
+
+    // Dispose of transform control
+    if (this.transformControl) {
+      this.transformControl.dispose();
     }
 
     // Dispose of all decals

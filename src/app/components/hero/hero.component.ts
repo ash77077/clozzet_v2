@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
+import {NgxGoogleAnalyticsModule} from "ngx-google-analytics";
 
 @Component({
   selector: 'app-hero',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, TranslateModule, NgxGoogleAnalyticsModule],
   templateUrl: './hero.component.html',
   styleUrls: ['./hero.component.scss']
 })

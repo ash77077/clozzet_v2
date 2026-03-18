@@ -152,7 +152,13 @@
 <!--          </svg>-->
 <!--          {{ 'navbar.login' | translate }}-->
 <!--        </button>-->
-        <button class="btn btn-primary" (click)="scrollToQuote()">
+        <button
+          class="btn btn-primary"
+          (click)="scrollToQuote()"
+          gaEvent="click_get_quote"
+          gaCategory="Lead Generation"
+          gaLabel="Navbar - Desktop CTA"
+          [gaValue]="1">
           {{ 'common.getQuote' | translate }}
           <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
@@ -273,7 +279,13 @@
             </svg>
             {{ 'navbar.login' | translate }}
           </button>
-          <button class="btn btn-primary btn-lg mobile-cta-btn" (click)="scrollToQuote()">
+          <button
+            class="btn btn-primary btn-lg mobile-cta-btn"
+            (click)="scrollToQuote()"
+            gaEvent="click_get_quote"
+            gaCategory="Lead Generation"
+            gaLabel="Navbar - Mobile Menu CTA"
+            [gaValue]="1">
             {{ 'common.getQuote' | translate }}
             <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
