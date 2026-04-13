@@ -19,6 +19,7 @@ import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
 import { Customer, CustomerStatus } from '../../models/customer.model';
 import { Interaction, InteractionType, CallOutcome, CreateInteractionDto } from '../../models/interaction.model';
+import { ExternalLinkPipe } from '../../pipes/external-link.pipe';
 
 @Component({
   selector: 'app-customer-profile',
@@ -38,6 +39,7 @@ import { Interaction, InteractionType, CallOutcome, CreateInteractionDto } from 
     InputNumberModule,
     TagModule,
     ToastModule,
+    ExternalLinkPipe,
   ],
   providers: [MessageService],
   templateUrl: './customer-profile.component.html',
@@ -56,6 +58,8 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   minFollowUpDate = new Date();
   isEditingNotes = false;
   editedNotes = '';
+  isEditMode = false;
+  editingInteractionId: string | null = null;
   private destroy$ = new Subject<void>();
 
   interactionTypeOptions = [
@@ -122,7 +126,8 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
       .subscribe((type) => {
         if (type === InteractionType.CALL) {
           this.interactionForm.get('outcome')?.setValidators([Validators.required]);
-          this.interactionForm.get('duration')?.setValidators([Validators.required, Validators.min(1)]);
+          // Duration is now optional for calls
+          this.interactionForm.get('duration')?.clearValidators();
         } else {
           this.interactionForm.get('outcome')?.clearValidators();
           this.interactionForm.get('duration')?.clearValidators();
@@ -187,38 +192,87 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
       delete formValue.nextFollowUpDate;
     }
 
-    const dto: CreateInteractionDto = {
-      ...formValue,
-      customerId: this.customerId,
-    };
+    if (this.isEditMode && this.editingInteractionId) {
+      // Update existing interaction
+      this.interactionsService
+        .update(this.editingInteractionId, formValue)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Interaction updated successfully',
+            });
+            this.closeInteractionDialog();
+            this.isSubmitting = false;
+            this.loadCustomerData();
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: error.error?.message || 'Failed to update interaction',
+            });
+            this.isSubmitting = false;
+          },
+        });
+    } else {
+      // Create new interaction
+      const dto: CreateInteractionDto = {
+        ...formValue,
+        customerId: this.customerId,
+      };
 
-    this.interactionsService
-      .create(dto)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Interaction logged successfully',
-          });
-          this.showInteractionDialog = false;
-          this.interactionForm.reset({
-            type: InteractionType.CALL,
-            interactionDate: new Date(),
-          });
-          this.isSubmitting = false;
-          this.loadCustomerData();
-        },
-        error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: error.error?.message || 'Failed to log interaction',
-          });
-          this.isSubmitting = false;
-        },
-      });
+      this.interactionsService
+        .create(dto)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Interaction logged successfully',
+            });
+            this.closeInteractionDialog();
+            this.isSubmitting = false;
+            this.loadCustomerData();
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: error.error?.message || 'Failed to log interaction',
+            });
+            this.isSubmitting = false;
+          },
+        });
+    }
+  }
+
+  openEditInteractionDialog(interaction: Interaction): void {
+    this.isEditMode = true;
+    this.editingInteractionId = interaction._id || null;
+    this.interactionForm.patchValue({
+      type: interaction.type,
+      subject: interaction.subject,
+      summary: interaction.summary,
+      outcome: interaction.outcome,
+      duration: interaction.duration,
+      interactionDate: interaction.interactionDate ? new Date(interaction.interactionDate) : new Date(),
+      nextFollowUpDate: interaction.nextFollowUpDate ? new Date(interaction.nextFollowUpDate) : null,
+    });
+    this.showInteractionDialog = true;
+  }
+
+  closeInteractionDialog(): void {
+    this.showInteractionDialog = false;
+    this.isEditMode = false;
+    this.editingInteractionId = null;
+    this.interactionForm.reset({
+      type: InteractionType.CALL,
+      interactionDate: new Date(),
+    });
   }
 
   getStatusSeverity(status: CustomerStatus): 'success' | 'warning' | 'info' {

@@ -49,6 +49,12 @@ export class InteractionsService {
     );
   }
 
+  update(id: string, updateData: any): Observable<Interaction> {
+    return this.http.patch<ApiResponse<Interaction>>(`${this.apiUrl}/${id}`, updateData).pipe(
+      map(response => response.data)
+    );
+  }
+
   markFollowUpCompleted(id: string): Observable<Interaction> {
     return this.http.patch<ApiResponse<Interaction>>(`${this.apiUrl}/${id}/complete`, {}).pipe(
       map(response => response.data)
