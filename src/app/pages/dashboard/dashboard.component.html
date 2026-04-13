@@ -13,11 +13,11 @@
 		</div>
 	</div>
 
-	<!-- Admin/Manager Dashboard -->
-	<div class="dashboard-content admin-dashboard" *ngIf="!isLoading && !error && currentUser && isUserAdminOrManager()">
+	<!-- Admin Dashboard -->
+	<div class="dashboard-content admin-dashboard" *ngIf="!isLoading && !error && currentUser && isUserAdmin()">
 		<div class="welcome-section">
 			<h1>Welcome, {{ currentUser.firstName }}!</h1>
-			<p>Here's your dashboard overview</p>
+			<p>Here's your admin dashboard overview</p>
 		</div>
 
 		<!-- Statistics Overview -->
@@ -159,6 +159,75 @@
 			</div>
 		</section>
 
+	</div>
+
+	<!-- Manager Dashboard -->
+	<div class="dashboard-content manager-dashboard" *ngIf="!isLoading && !error && currentUser && isUserManager()">
+		<div class="welcome-section">
+			<h1>Welcome, {{ currentUser.firstName }}!</h1>
+			<p>Here's your manager dashboard overview</p>
+		</div>
+
+		<!-- Manager Statistics -->
+		<section class="statistics-section">
+			<div class="stats-grid">
+				<div class="stat-card" routerLink="/admin-order-approvals">
+					<div class="stat-icon">✓</div>
+					<div class="stat-content">
+						<h3>{{ managerStats.pendingApprovals }}</h3>
+						<p>Pending Approvals</p>
+					</div>
+				</div>
+				<div class="stat-card" routerLink="/crm-dashboard">
+					<div class="stat-icon">👥</div>
+					<div class="stat-content">
+						<h3>{{ managerStats.totalCustomers }}</h3>
+						<p>Total Customers</p>
+					</div>
+				</div>
+				<div class="stat-card" routerLink="/crm-dashboard">
+					<div class="stat-icon">🔔</div>
+					<div class="stat-content">
+						<h3>{{ managerStats.followUpsToday }}</h3>
+						<p>Follow-ups Due Today</p>
+					</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-icon">💬</div>
+					<div class="stat-content">
+						<h3>{{ managerStats.recentInteractions }}</h3>
+						<p>Interactions (Last 7 Days)</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Quick Actions -->
+		<section class="quick-actions-section">
+			<h2 class="section-title">Quick Actions</h2>
+			<div class="action-cards">
+				<div class="action-card" routerLink="/crm-dashboard">
+					<div class="action-icon">👥</div>
+					<h3>Manage Customers</h3>
+					<p>View and manage customer relationships</p>
+				</div>
+				<div class="action-card" routerLink="/admin-order-approvals">
+					<div class="action-icon">✓</div>
+					<h3>Order Approvals</h3>
+					<p>Review and approve pending orders</p>
+				</div>
+				<div class="action-card" routerLink="/orders">
+					<div class="action-icon">📦</div>
+					<h3>All Orders</h3>
+					<p>View all orders and their status</p>
+				</div>
+				<div class="action-card" routerLink="/products">
+					<div class="action-icon">🏷️</div>
+					<h3>Products</h3>
+					<p>Manage product catalog</p>
+				</div>
+			</div>
+		</section>
 	</div>
 
 	<!-- Client Dashboard (Business Users/Customers) -->

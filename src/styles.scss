@@ -276,7 +276,8 @@ body {
   &.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   &.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   &.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  
+  &.grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
   &.gap-4 { gap: var(--spacing-md); }
   &.gap-6 { gap: var(--spacing-lg); }
   &.gap-8 { gap: var(--spacing-xl); }
@@ -362,3 +363,8 @@ body {
     transform: translateX(0);
   }
 }
+
+.full-width {
+  width: 100%;
+}
+

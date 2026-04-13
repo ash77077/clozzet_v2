@@ -111,6 +111,10 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     return this.currentUser?.role === UserRole.ADMIN;
   }
 
+  isManager(): boolean {
+    return this.currentUser?.role === UserRole.MANAGER;
+  }
+
   isCustomerOrUser(): boolean {
     return this.currentUser?.role === UserRole.CUSTOMER ||
            this.currentUser?.role === UserRole.USER ||

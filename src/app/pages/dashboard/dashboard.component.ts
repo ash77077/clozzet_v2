@@ -7,6 +7,8 @@ import { AuthService, User } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
 import { B2BOrdersService } from '../../services/b2b-orders.service';
 import { B2BOrder, B2BOrderStatus } from '../../models/b2b-order.model';
+import { CustomersService } from '../../services/customers.service';
+import { InteractionsService } from '../../services/interactions.service';
 import {
   UserRole,
   UserDashboardData,
@@ -48,6 +50,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     deliveredOrders: 0
   };
 
+  // Manager Dashboard Data
+  managerStats = {
+    pendingApprovals: 0,
+    totalCustomers: 0,
+    followUpsToday: 0,
+    recentInteractions: 0
+  };
+
   // Utility properties
   UserRole = UserRole;
   OrderStatus = OrderStatus;
@@ -79,6 +89,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private dashboardService: DashboardService,
     private b2bOrdersService: B2BOrdersService,
+    private customersService: CustomersService,
+    private interactionsService: InteractionsService,
     private router: Router
   ) {}
 
@@ -113,17 +125,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private loadDashboardDataFromBackend(): void {
-    // Check if user is admin/manager or client
-    if (this.isUserAdminOrManager()) {
+    // Check role and load appropriate dashboard
+    if (this.isUserAdmin()) {
       this.loadAdminDashboard();
+    } else if (this.isUserManager()) {
+      this.loadManagerDashboard();
     } else {
       this.loadClientDashboard();
     }
   }
 
+  isUserAdmin(): boolean {
+    return this.currentUser?.role === UserRole.ADMIN;
+  }
+
+  isUserManager(): boolean {
+    return this.currentUser?.role === UserRole.MANAGER;
+  }
+
   isUserAdminOrManager(): boolean {
-    return this.currentUser?.role === UserRole.ADMIN ||
-           this.currentUser?.role === UserRole.MANAGER;
+    return this.isUserAdmin() || this.isUserManager();
   }
 
   isUserClient(): boolean {
@@ -152,6 +173,86 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  private loadManagerDashboard(): void {
+    // Managers see simplified stats - no revenue, no user counts
+    // Just show what's relevant to their work
+    forkJoin({
+      customers: this.customersService.getAll(),
+      interactions: this.interactionsService.getAll(),
+      pendingInteractionFollowUps: this.interactionsService.getPendingFollowUps(),
+      orders: this.b2bOrdersService.getOrders()
+    }).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (data) => {
+        // Calculate stats
+        this.managerStats.totalCustomers = data.customers.length;
+
+        // Recent Interactions: Count interactions from the last 7 days
+        this.managerStats.recentInteractions = this.calculateRecentInteractions(data.interactions);
+
+        // Follow-ups Due Today: Check both customer nextFollowUpAt and interaction nextFollowUpDate
+        this.managerStats.followUpsToday = this.calculateFollowUpsDueToday(
+          data.customers,
+          data.pendingInteractionFollowUps
+        );
+
+        // Calculate pending approvals (orders in pending status)
+        this.managerStats.pendingApprovals = data.orders.filter(
+          o => o.status === B2BOrderStatus.PENDING
+        ).length;
+
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading manager dashboard:', error);
+        // Set defaults if services fail
+        this.managerStats = {
+          pendingApprovals: 0,
+          totalCustomers: 0,
+          followUpsToday: 0,
+          recentInteractions: 0
+        };
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private calculateRecentInteractions(interactions: any[]): number {
+    // Count interactions from the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    return interactions.filter(interaction => {
+      if (!interaction.interactionDate) return false;
+      const interactionDate = new Date(interaction.interactionDate);
+      return interactionDate >= sevenDaysAgo;
+    }).length;
+  }
+
+  private calculateFollowUpsDueToday(customers: any[], pendingInteractionFollowUps: any[]): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Count customers with nextFollowUpAt due today
+    const customerFollowUpsToday = customers.filter(c => {
+      if (!c.nextFollowUpAt) return false;
+      const followUpDate = new Date(c.nextFollowUpAt);
+      followUpDate.setHours(0, 0, 0, 0);
+      return followUpDate.getTime() === today.getTime();
+    }).length;
+
+    // Count pending interactions with nextFollowUpDate due today
+    const interactionFollowUpsToday = pendingInteractionFollowUps.filter(interaction => {
+      if (!interaction.nextFollowUpDate) return false;
+      const followUpDate = new Date(interaction.nextFollowUpDate);
+      followUpDate.setHours(0, 0, 0, 0);
+      return followUpDate.getTime() === today.getTime();
+    }).length;
+
+    // Return total (avoid double counting if both exist for same customer)
+    return customerFollowUpsToday + interactionFollowUpsToday;
   }
 
   private loadClientDashboard(): void {

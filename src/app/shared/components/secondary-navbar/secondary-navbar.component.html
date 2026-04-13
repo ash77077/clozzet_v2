@@ -1,7 +1,6 @@
 <nav class="secondary-navbar" *ngIf="isAuthenticated">
   <div class="secondary-navbar-container">
-    <!-- Section Toggle (Sales/Manufacturing) -->
-    <div class="section-toggle" *ngIf="isAdminOrManager()">
+    <div class="section-toggle" *ngIf="isAdmin()">
       <button
         class="toggle-btn"
         [class.active]="currentSection === 'sales'"
@@ -18,8 +17,34 @@
       </button>
     </div>
 
-    <!-- Main Admin Navigation -->
-    <div class="nav-section" *ngIf="isAdminOrManager()">
+    <!-- Manager Navigation -->
+    <div class="nav-section" *ngIf="isManager()">
+      <div class="nav-group">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              <i class="pi pi-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/manager-order-request" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-file-plus"></i>
+              <span>Create Order Request</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/crm-dashboard" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-sitemap"></i>
+              <span>CRM Dashboard</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Admin Navigation -->
+    <div class="nav-section" *ngIf="isAdmin()">
       <div class="nav-group">
         <!-- Sales Section Links -->
         <ul class="nav-list" *ngIf="isSalesSection()">
@@ -34,6 +59,12 @@
               <i class="pi pi-shopping-cart"></i>
               <span>Orders</span>
               <span class="badge" *ngIf="orderStats && orderStats.pending > 0">{{ orderStats.pending }}</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/admin-order-approvals" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-check-square"></i>
+              <span>Order Approvals</span>
             </a>
           </li>
           <li class="nav-item">
@@ -52,6 +83,12 @@
             <a routerLink="/companies" class="nav-link" routerLinkActive="active">
               <i class="pi pi-building"></i>
               <span>Companies</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/crm-dashboard" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-sitemap"></i>
+              <span>CRM Dashboard</span>
             </a>
           </li>
           <li class="nav-item">
@@ -132,16 +169,16 @@
       <div class="nav-group">
         <div class="action-buttons">
           <button
-            *ngIf="isAdminOrManager()"
+            *ngIf="isAdmin()"
             class="btn btn-sm btn-primary"
             routerLink="/order-blank"
             pTooltip="Create new order">
             <i class="pi pi-plus"></i>
             New Order
           </button>
-          <button 
-            *ngIf="isAdminOrManager()" 
-            class="btn btn-sm btn-secondary" 
+          <button
+            *ngIf="isAdmin()"
+            class="btn btn-sm btn-secondary"
             (click)="exportData()"
             pTooltip="Export reports">
             <i class="pi pi-download"></i>

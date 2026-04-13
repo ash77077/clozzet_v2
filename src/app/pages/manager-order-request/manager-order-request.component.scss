@@ -1,0 +1,175 @@
+.order-request-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+
+  .page-header {
+    margin-bottom: 2rem;
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 1rem;
+      margin: 0;
+    }
+  }
+
+  .order-request-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      label {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.95rem;
+
+        &.required::after {
+          content: ' *';
+          color: #e74c3c;
+        }
+      }
+
+      input,
+      textarea {
+        font-size: 1rem;
+      }
+
+      .error-message {
+        color: #e74c3c;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+      }
+
+      .help-text {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        i {
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .total-amount-field {
+      background-color: #f8f9fa;
+      border: 2px solid #27ae60;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 0.5rem;
+
+      label {
+        font-size: 1rem;
+        color: #27ae60;
+      }
+
+      .total-amount-display {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+
+        i {
+          font-size: 2rem;
+          color: #27ae60;
+        }
+
+        .total-value {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #27ae60;
+        }
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1rem;
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+
+        p-button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+// PrimeNG overrides for premium look
+::ng-deep {
+  .p-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+
+    .p-card-body {
+      padding: 2rem;
+    }
+  }
+
+  .p-inputtext,
+  .p-inputtextarea,
+  .p-inputnumber-input {
+    border-color: #e0e0e0;
+    border-radius: 6px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+
+    &:enabled:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.2);
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: #e74c3c;
+
+      &:focus {
+        box-shadow: 0 0 0 0.2rem rgba(231, 76, 60, 0.2);
+      }
+    }
+  }
+
+  .p-button {
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+  }
+
+  .p-message {
+    border-radius: 6px;
+    border-left-width: 4px;
+  }
+}
