@@ -1,0 +1,639 @@
+<div class="crm-dashboard">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <h1 class="text-3xl font-bold text-gray-800">CRM Dashboard</h1>
+    <div class="header-buttons">
+      <p-button
+        label="Add New Customer"
+        icon="pi pi-plus"
+        (onClick)="openNewCustomerDialog()"
+        styleClass="p-button-success">
+      </p-button>
+      <p-button
+        label="Import Excel"
+        icon="pi pi-upload"
+        (onClick)="openImportDialog()"
+        styleClass="p-button-info">
+      </p-button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-5 sm:grid-cols-2 lg:grid-cols-5 gap-16">
+      <p-card>
+        <div class="stat-card">
+          <div class="stat-icon bg-blue-100 text-blue-600">
+            <i class="pi pi-users"></i>
+          </div>
+          <div class="stat-content">
+            <p class="stat-label">Total Customers</p>
+            <p class="stat-value">{{ stats.totalCustomers }}</p>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card>
+        <div class="stat-card">
+          <div class="stat-icon bg-yellow-100 text-yellow-600">
+            <i class="pi pi-star"></i>
+          </div>
+          <div class="stat-content">
+            <p class="stat-label">Leads</p>
+            <p class="stat-value">{{ stats.leads }}</p>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card>
+        <div class="stat-card">
+          <div class="stat-icon bg-green-100 text-green-600">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <p class="stat-label">Active Customers</p>
+            <p class="stat-value">{{ stats.activeCustomers }}</p>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card [class.urgent-card]="stats.followUpToday > 0">
+        <div class="stat-card">
+          <div class="stat-icon bg-orange-100 text-orange-600" [class.pulse-icon]="stats.followUpToday > 0">
+            <i class="pi pi-bell"></i>
+          </div>
+          <div class="stat-content">
+            <p class="stat-label">Due TODAY</p>
+            <p class="stat-value" [class.urgent-value]="stats.followUpToday > 0">
+              {{ stats.followUpToday }}
+            </p>
+            <p class="stat-sublabel" *ngIf="stats.needingFollowUp > 0">
+              {{ stats.needingFollowUp }} total follow-ups
+            </p>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card [class.overdue-card]="stats.followUpOverdue > 0">
+        <div class="stat-card">
+          <div class="stat-icon bg-red-100 text-red-600" [class.pulse-icon]="stats.followUpOverdue > 0">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <div class="stat-content">
+            <p class="stat-label">OVERDUE</p>
+            <p class="stat-value" [class.overdue-value]="stats.followUpOverdue > 0">
+              {{ stats.followUpOverdue }}
+            </p>
+            <p class="stat-sublabel">Past due follow-ups</p>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Customers Table -->
+  <p-card>
+    <p-table
+      #customersTable
+      [value]="customers"
+      [loading]="isLoading"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} customers"
+      showGridlines
+      [globalFilterFields]="['companyName', 'contactPerson', 'email', 'phone']"
+      styleClass="p-datatable-striped">
+
+      <ng-template pTemplate="caption">
+        <div class="flex justify-between items-center">
+          <span class="text-xl font-semibold">Customers</span>
+          <span class="p-input-icon-left">
+            <input
+              pInputText
+              type="text"
+              placeholder="Search customers..."
+              (input)="customersTable.filterGlobal($any($event.target).value, 'contains')"
+              class="w-full" />
+          </span>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="companyName">
+            Company <p-sortIcon field="companyName"></p-sortIcon>
+          </th>
+          <th pSortableColumn="contactPerson">
+            Contact Person <p-sortIcon field="contactPerson"></p-sortIcon>
+          </th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th pSortableColumn="status">
+            Status <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th pSortableColumn="lastContactedAt">
+            Last Contacted <p-sortIcon field="lastContactedAt"></p-sortIcon>
+          </th>
+          <th pSortableColumn="nextFollowUpAt">
+            Follow-up <p-sortIcon field="nextFollowUpAt"></p-sortIcon>
+          </th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-customer>
+        <tr [class.follow-up-today]="isFollowUpToday(customer.nextFollowUpAt)"
+            [class.follow-up-overdue]="isFollowUpOverdue(customer.nextFollowUpAt)"
+            [class.clickable-row]="isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)"
+            (click)="(isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)) && openFollowUpDialog(customer)"
+            [pTooltip]="(isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)) ? 'Click to complete follow-up' : ''"
+            tooltipPosition="top">
+          <td>
+            <div class="flex items-center gap-2" style="min-width: 0;">
+              <i class="pi pi-bell-slash text-orange-500 text-lg animate-pulse"
+                 *ngIf="isFollowUpToday(customer.nextFollowUpAt)"
+                 pTooltip="Follow-up due TODAY!"
+                 tooltipPosition="top"
+                 style="flex-shrink: 0;"></i>
+              <div [pTooltip]="customer.companyName + (customer.industry ? ' - ' + customer.industry : '')"
+                   tooltipPosition="top"
+                   class="truncate-cell">
+                <strong class="truncate-text">{{ customer.companyName }}</strong>
+                <div class="text-sm text-gray-500 truncate-text" *ngIf="customer.industry">
+                  {{ customer.industry }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td [pTooltip]="customer.contactPerson" tooltipPosition="top">
+            <span class="truncate-text">{{ customer.contactPerson }}</span>
+          </td>
+          <td [pTooltip]="customer.phone" tooltipPosition="top">
+            <span class="truncate-text">{{ customer.phone }}</span>
+          </td>
+          <td [pTooltip]="hideEmail(customer.email)" tooltipPosition="top">
+            <span class="truncate-text">{{ hideEmail(customer.email) }}</span>
+          </td>
+          <td>
+            <p-tag
+              [value]="customer.status"
+              [severity]="getStatusSeverity(customer.status)">
+            </p-tag>
+          </td>
+          <td>{{ formatDate(customer.lastContactedAt) }}</td>
+          <td>
+            <div class="follow-up-cell">
+              <p-tag
+                *ngIf="customer.nextFollowUpAt"
+                [value]="formatDate(customer.nextFollowUpAt)"
+                [severity]="getFollowUpSeverity(customer.nextFollowUpAt)"
+                [icon]="isFollowUpToday(customer.nextFollowUpAt) ? 'pi pi-calendar-times' : isFollowUpOverdue(customer.nextFollowUpAt) ? 'pi pi-exclamation-circle' : 'pi pi-calendar'"
+                styleClass="follow-up-tag">
+              </p-tag>
+              <span *ngIf="!customer.nextFollowUpAt" class="text-gray-400">No follow-up</span>
+              <div *ngIf="isFollowUpToday(customer.nextFollowUpAt)" class="text-xs font-bold text-orange-600 mt-1">
+                DUE TODAY
+              </div>
+              <div *ngIf="isFollowUpOverdue(customer.nextFollowUpAt) && !isFollowUpToday(customer.nextFollowUpAt)" class="text-xs font-bold text-red-600 mt-1">
+                OVERDUE
+              </div>
+            </div>
+          </td>
+          <td (click)="$event.stopPropagation()">
+            <div class="flex gap-2">
+              <p-button
+                icon="pi pi-eye"
+                styleClass="p-button-rounded p-button-info p-button-text"
+                pTooltip="View Profile"
+                (onClick)="viewCustomerProfile(customer)">
+              </p-button>
+              <p-button
+                icon="pi pi-pencil"
+                styleClass="p-button-rounded p-button-success p-button-text"
+                pTooltip="Edit"
+                (onClick)="openEditCustomerDialog(customer)">
+              </p-button>
+              <p-button
+                icon="pi pi-trash"
+                styleClass="p-button-rounded p-button-danger p-button-text"
+                pTooltip="Delete"
+                (onClick)="deleteCustomer(customer)">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center py-4">
+            <div class="flex flex-col items-center gap-3">
+              <i class="pi pi-inbox text-4xl text-gray-400"></i>
+              <p class="text-gray-500">No customers found</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- Customer Dialog -->
+  <p-dialog
+    [(visible)]="showCustomerDialog"
+    [header]="isEditMode ? 'Edit Customer' : 'Add New Customer'"
+    [modal]="true"
+    [style]="{width: '600px'}"
+    [draggable]="false"
+    [resizable]="false">
+
+    <form [formGroup]="customerForm" (ngSubmit)="onSubmitCustomer()">
+      <div class="form-grid">
+        <!-- Company Name -->
+        <div class="form-field">
+          <label for="companyName" class="required">Company Name</label>
+          <input
+            pInputText
+            id="companyName"
+            formControlName="companyName"
+            placeholder="Enter company name"
+            class="w-full" />
+          <small
+            class="p-error"
+            *ngIf="customerForm.get('companyName')?.invalid && customerForm.get('companyName')?.touched">
+            Company name is required (min 2 characters)
+          </small>
+        </div>
+
+        <!-- Contact Person -->
+        <div class="form-field">
+          <label for="contactPerson" class="required">Contact Person</label>
+          <input
+            pInputText
+            id="contactPerson"
+            formControlName="contactPerson"
+            placeholder="Enter contact person name"
+            class="w-full" />
+          <small
+            class="p-error"
+            *ngIf="customerForm.get('contactPerson')?.invalid && customerForm.get('contactPerson')?.touched">
+            Contact person is required (min 2 characters)
+          </small>
+        </div>
+
+        <!-- Phone -->
+        <div class="form-field">
+          <label for="phone">Phone</label>
+          <input
+            pInputText
+            id="phone"
+            formControlName="phone"
+            placeholder="Enter phone number (optional)"
+            class="w-full" />
+        </div>
+
+        <!-- Email -->
+        <div class="form-field">
+          <label for="email">Email</label>
+          <input
+            pInputText
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="Enter email address (optional)"
+            class="w-full" />
+          <small
+            class="p-error"
+            *ngIf="customerForm.get('email')?.invalid && customerForm.get('email')?.touched">
+            Please enter a valid email address
+          </small>
+        </div>
+
+        <!-- Status -->
+        <div class="form-field">
+          <label for="status" class="required">Status</label>
+          <p-select
+            id="status"
+            formControlName="status"
+            [options]="statusOptions"
+            placeholder="Select status"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            class="w-full">
+          </p-select>
+        </div>
+
+        <!-- Industry -->
+        <div class="form-field">
+          <label for="industry">Industry</label>
+          <input
+            pInputText
+            id="industry"
+            formControlName="industry"
+            placeholder="Enter industry"
+            class="w-full" />
+        </div>
+
+        <!-- Address -->
+        <div class="form-field">
+          <label for="address">Address</label>
+          <textarea
+            pTextarea
+            id="address"
+            formControlName="address"
+            placeholder="Enter address"
+            rows="2"
+            class="w-full">
+          </textarea>
+        </div>
+
+        <!-- Website -->
+        <div class="form-field">
+          <label for="website">Website</label>
+          <input
+            pInputText
+            id="website"
+            formControlName="website"
+            placeholder="https://example.com"
+            class="w-full" />
+        </div>
+
+        <!-- LinkedIn Page -->
+        <div class="form-field">
+          <label for="linkedinPage">LinkedIn Page</label>
+          <input
+            pInputText
+            id="linkedinPage"
+            formControlName="linkedinPage"
+            placeholder="https://linkedin.com/company/..."
+            class="w-full" />
+        </div>
+
+        <!-- Next Follow-up Date -->
+        <div class="form-field">
+          <label for="nextFollowUpAt">Next Follow-up Date</label>
+          <p-datepicker
+            id="nextFollowUpAt"
+            formControlName="nextFollowUpAt"
+            [showIcon]="true"
+            dateFormat="yy-mm-dd"
+            placeholder="Select date"
+            appendTo="body"
+            class="w-full">
+          </p-datepicker>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-field full-width">
+          <label for="notes">Notes</label>
+          <textarea
+            pTextarea
+            id="notes"
+            formControlName="notes"
+            placeholder="Enter any additional notes"
+            rows="3"
+            class="w-full">
+          </textarea>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <p-button
+          label="Cancel"
+          icon="pi pi-times"
+          (onClick)="showCustomerDialog = false"
+          styleClass="p-button-text"
+          [disabled]="isSubmitting">
+        </p-button>
+        <p-button
+          label="Save"
+          icon="pi pi-check"
+          type="submit"
+          [loading]="isSubmitting"
+          [disabled]="customerForm.invalid || isSubmitting">
+        </p-button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- Import Dialog -->
+  <p-dialog
+    [(visible)]="showImportDialog"
+    header="Import Customers from Excel"
+    [modal]="true"
+    [style]="{width: '600px'}"
+    [draggable]="false"
+    [resizable]="false">
+
+    <div class="import-dialog-content">
+      <!-- Instructions -->
+      <div class="import-instructions">
+        <h3>Import Instructions:</h3>
+        <ol>
+          <li>Download the Excel template below</li>
+          <li>Fill in your customer data following the column headers</li>
+          <li>Upload the completed file</li>
+        </ol>
+
+        <div class="required-columns">
+          <strong>Required columns:</strong> Company Name, Contact Person
+          <br>
+          <strong>Optional columns:</strong> Phone, Email, Status, Address, Website, LinkedIn Page, Industry, Notes, First Contact Date, Scheduled Meeting, Next Follow Up
+        </div>
+      </div>
+
+      <!-- Download Template Button -->
+      <div class="template-download">
+        <p-button
+          label="Download Excel Template"
+          icon="pi pi-download"
+          (onClick)="downloadTemplate()"
+          styleClass="p-button-outlined p-button-secondary w-full">
+        </p-button>
+      </div>
+
+      <!-- File Upload -->
+      <div class="file-upload-section">
+        <h3>Upload Your File:</h3>
+        <input
+          type="file"
+          #fileInput
+          accept=".xlsx,.xls"
+          (change)="onFileSelected($event)"
+          style="display: none">
+
+        <div class="upload-area" (click)="fileInput.click()">
+          <i class="pi pi-cloud-upload" style="font-size: 3rem; color: #3498db;"></i>
+          <p *ngIf="!selectedFile">Click to select Excel file (.xlsx, .xls)</p>
+          <p *ngIf="selectedFile" class="selected-file">
+            <i class="pi pi-file-excel"></i> {{ selectedFile.name }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Validation Results -->
+      <div *ngIf="importResults" class="import-results">
+        <h3>Validation Results:</h3>
+        <div class="results-summary">
+          <div class="result-item success">
+            <i class="pi pi-check-circle"></i>
+            <span>Valid Rows: {{ importResults.success }}</span>
+          </div>
+          <div class="result-item error" *ngIf="importResults.failed > 0">
+            <i class="pi pi-times-circle"></i>
+            <span>Invalid Rows: {{ importResults.failed }}</span>
+          </div>
+          <div class="result-item warning" *ngIf="importResults.duplicatesRemoved > 0">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>Duplicates Removed: {{ importResults.duplicatesRemoved }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="importResults.duplicatesRemoved > 0" class="duplicate-notice">
+          <i class="pi pi-info-circle"></i>
+          <p>{{ importResults.duplicatesRemoved }} duplicate email(s) were automatically removed. Only the first occurrence of each email is kept.</p>
+        </div>
+
+        <div *ngIf="importResults.errors.length > 0" class="error-details">
+          <h4>Errors Found:</h4>
+          <div class="error-list">
+            <div *ngFor="let error of importResults.errors.slice(0, 10)" class="error-row">
+              <strong>Row {{ error.row }}:</strong> {{ error.errors.join(', ') }}
+            </div>
+            <p *ngIf="importResults.errors.length > 10" class="more-errors">
+              ...and {{ importResults.errors.length - 10 }} more errors
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="importResults.success > 0 && !importResults.importedCustomers?.length" class="approval-notice">
+          <i class="pi pi-info-circle"></i>
+          <p>{{ importResults.success }} row(s) are ready to import. Please review and confirm.</p>
+        </div>
+
+        <div *ngIf="importResults.importedCustomers?.length > 0" class="import-complete">
+          <i class="pi pi-check-circle"></i>
+          <p>Import completed successfully!</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <p-button
+        label="Close"
+        icon="pi pi-times"
+        (onClick)="closeImportDialog()"
+        styleClass="p-button-text"
+        [disabled]="isImporting">
+      </p-button>
+      <p-button
+        *ngIf="!importResults || importResults.importedCustomers?.length > 0"
+        label="Validate"
+        icon="pi pi-check-square"
+        (onClick)="validateFile()"
+        [loading]="isImporting"
+        [disabled]="!selectedFile || isImporting">
+      </p-button>
+      <p-button
+        *ngIf="importResults && !importResults.importedCustomers?.length && importResults.success > 0"
+        label="Confirm Import ({{ importResults.success }} rows)"
+        icon="pi pi-upload"
+        styleClass="p-button-success"
+        (onClick)="confirmImport()"
+        [loading]="isImporting"
+        [disabled]="isImporting">
+      </p-button>
+    </div>
+  </p-dialog>
+
+  <!-- Follow-up Action Dialog -->
+  <p-dialog
+    [(visible)]="showFollowUpDialog"
+    header="Complete Follow-up"
+    [modal]="true"
+    [style]="{width: '500px'}"
+    [draggable]="false"
+    [resizable]="false">
+
+    <div *ngIf="selectedCustomer" class="follow-up-dialog-content">
+      <!-- Customer Info -->
+      <div class="customer-info-section">
+        <h3>{{ selectedCustomer.companyName }}</h3>
+        <p>Contact: {{ selectedCustomer.contactPerson }}</p>
+        <p>Phone: {{ selectedCustomer.phone }}</p>
+      </div>
+
+      <!-- Follow-up Form -->
+      <form [formGroup]="followUpForm" (ngSubmit)="completeFollowUp()">
+        <div class="form-grid">
+          <!-- Follow-up Message -->
+          <div class="form-field full-width">
+            <label for="message" class="required">Follow-up Message</label>
+            <textarea
+              pTextarea
+              id="message"
+              formControlName="message"
+              placeholder="Enter follow-up notes..."
+              rows="4"
+              class="w-full">
+            </textarea>
+            <small
+              class="p-error"
+              *ngIf="followUpForm.get('message')?.invalid && followUpForm.get('message')?.touched">
+              Message is required (min 5 characters)
+            </small>
+          </div>
+
+          <!-- Update Status -->
+          <div class="form-field">
+            <label for="followUpStatus">Update Status</label>
+            <p-select
+              id="followUpStatus"
+              formControlName="status"
+              [options]="statusOptions"
+              placeholder="Select status"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              class="w-full">
+            </p-select>
+          </div>
+
+          <!-- Next Follow-up Date -->
+          <div class="form-field">
+            <label for="nextFollowUpDateDialog">Next Follow-up Date</label>
+            <p-datepicker
+              id="nextFollowUpDateDialog"
+              formControlName="nextFollowUpDate"
+              [showIcon]="true"
+              dateFormat="yy-mm-dd"
+              placeholder="Select date"
+              appendTo="body"
+              class="w-full">
+            </p-datepicker>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <p-button
+            label="Cancel"
+            icon="pi pi-times"
+            (onClick)="closeFollowUpDialog()"
+            styleClass="p-button-text"
+            [disabled]="isProcessingFollowUp">
+          </p-button>
+          <p-button
+            label="Mark as Done"
+            icon="pi pi-check"
+            type="submit"
+            [loading]="isProcessingFollowUp"
+            [disabled]="followUpForm.invalid || isProcessingFollowUp">
+          </p-button>
+        </div>
+      </form>
+    </div>
+  </p-dialog>
+</div>

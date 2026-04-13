@@ -1,0 +1,35 @@
+# Role & Context
+Act as a Senior Full-Stack Engineer and Software Architect. I am building a custom CRM module for my B2B textile manufacturing platform. The goal is to track client interactions, specifically phone calls and messaging history (email/chat), to ensure a professional follow-up process.
+
+# Tech Stack Requirements
+- **Frontend:** Angular 20, PrimeNG 20, TailwindCSS (Standalone Components).
+- **Backend:** NestJS with TypeORM/PostgreSQL.
+- **UI Style:** Premium B2B aesthetic, clean, high-contrast, and highly functional.
+
+# CRM Feature Requirements
+
+## 1. Client & Lead Management
+- CRUD for "Customers" (Company name, contact person, phone, email, status: Lead, Active, Inactive).
+- A detailed "Customer Profile" view.
+
+## 2. Interaction Logging System (The Core Task)
+Create an "Activity Log" feature for each customer that includes:
+- **Call Logging:**
+    - Fields: Date/Time, Duration, Subject, Summary/Notes, Outcome (Answered, Busy, Follow-up needed).
+- **Correspondence Tracking:**
+    - Fields: Channel (Email, WhatsApp, Telegram, In-person), Content/Summary, Attachments (optional).
+- **Reminder System:** Ability to set a "Next Follow-up" date which triggers a visual alert in the dashboard.
+
+## 3. UI/UX Implementation (PrimeNG)
+- Use `p-timeline` to display the history of calls and messages in a vertical, chronological order.
+- Use `p-dialog` for quick-entry forms to log a call or a message.
+- Use `p-table` with advanced filtering to sort customers by their "Last Contacted" date.
+
+# Task Instructions
+1. **Database Schema:** Design the `Interaction` and `Customer` entities in NestJS, ensuring a One-to-Many relationship.
+2. **API Development:** Create endpoints to:
+    - `POST /interactions` (Log a new call/message).
+    - `GET /customers/:id/history` (Retrieve the timeline).
+3. **Frontend Implementation:** Build a responsive CRM Dashboard in Angular using PrimeNG components. Ensure the "Log Interaction" form is intuitive and fast to use for a sales manager.
+
+Please start by providing the Backend Entities and the Frontend Service structure.

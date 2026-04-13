@@ -1,0 +1,126 @@
+<div class="order-request-container">
+  <p-toast></p-toast>
+
+  <div class="page-header">
+    <h1>Create Order Request</h1>
+    <p class="subtitle">Submit a new order request for admin approval</p>
+  </div>
+
+  <p-card>
+    <form [formGroup]="orderRequestForm" (ngSubmit)="onSubmit()" class="order-request-form">
+
+      <!-- Model/Style Name -->
+      <div class="form-field">
+        <label for="modelName" class="required">Model/Style Name</label>
+        <input
+          id="modelName"
+          type="text"
+          pInputText
+          formControlName="modelName"
+          placeholder="e.g., Oversized Hoodie V2"
+          class="w-full"
+          [class.ng-invalid]="isFieldInvalid('modelName')"
+        />
+        <small class="error-message" *ngIf="isFieldInvalid('modelName')">
+          {{ getFieldError('modelName') }}
+        </small>
+      </div>
+
+      <!-- Description/Specifications -->
+      <div class="form-field">
+        <label for="description" class="required">Description/Specifications</label>
+        <textarea
+          id="description"
+          pInputTextarea
+          formControlName="description"
+          placeholder="Fabric type, GSM, colors, attachments, and other specifications..."
+          rows="4"
+          class="w-full"
+          [class.ng-invalid]="isFieldInvalid('description')"
+        ></textarea>
+        <small class="error-message" *ngIf="isFieldInvalid('description')">
+          {{ getFieldError('description') }}
+        </small>
+      </div>
+
+      <!-- Quantity and Unit Price Row -->
+      <div class="form-row">
+        <div class="form-field">
+          <label for="quantity" class="required">Quantity</label>
+          <p-inputNumber
+            inputId="quantity"
+            formControlName="quantity"
+            [showButtons]="true"
+            [min]="1"
+            [step]="1"
+            [inputStyle]="{'width':'100%'}"
+            styleClass="w-full"
+            placeholder="Enter quantity"
+          ></p-inputNumber>
+          <small class="error-message" *ngIf="isFieldInvalid('quantity')">
+            {{ getFieldError('quantity') }}
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="unitSellingPrice" class="required">Unit Selling Price (AMD)</label>
+          <p-inputNumber
+            inputId="unitSellingPrice"
+            formControlName="unitSellingPrice"
+            mode="currency"
+            currency="AMD"
+            locale="en-US"
+            [min]="0"
+            [inputStyle]="{'width':'100%'}"
+            styleClass="w-full"
+            placeholder="Enter unit price"
+          ></p-inputNumber>
+          <small class="error-message" *ngIf="isFieldInvalid('unitSellingPrice')">
+            {{ getFieldError('unitSellingPrice') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Total Amount (Read-only, Auto-calculated) -->
+      <div class="form-field total-amount-field">
+        <label for="totalAmount">Total Amount (AMD)</label>
+        <div class="total-amount-display">
+          <i class="pi pi-calculator"></i>
+          <span class="total-value">{{ formatCurrency(orderRequestForm.get('totalAmount')?.value || 0) }} AMD</span>
+        </div>
+        <small class="help-text">
+          <i class="pi pi-info-circle"></i>
+          Automatically calculated: Quantity × Unit Price
+        </small>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <p-button
+          label="Reset"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          type="button"
+          (click)="onReset()"
+          [disabled]="isSubmitting"
+        ></p-button>
+
+        <p-button
+          label="Submit Order Request"
+          icon="pi pi-send"
+          type="submit"
+          [loading]="isSubmitting"
+          [disabled]="orderRequestForm.invalid"
+        ></p-button>
+      </div>
+
+      <!-- Info Message -->
+      <p-message
+        severity="info"
+        text="Once submitted, the admin will be notified via email to review and approve this order request."
+        [style]="{'width': '100%', 'margin-top': '1rem'}"
+      ></p-message>
+    </form>
+  </p-card>
+</div>

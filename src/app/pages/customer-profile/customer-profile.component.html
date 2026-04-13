@@ -1,0 +1,378 @@
+<div class="customer-profile">
+  <p-toast></p-toast>
+
+  <!-- Back Button -->
+  <div class="mb-4">
+    <p-button
+      label="Back to CRM Dashboard"
+      icon="pi pi-arrow-left"
+      styleClass="p-button-text"
+      (onClick)="goBack()">
+    </p-button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+    <p class="text-gray-600 mt-4">Loading customer profile...</p>
+  </div>
+
+  <!-- Customer Profile Content -->
+  <div *ngIf="!isLoading && customer">
+    <!-- Customer Details Card -->
+    <p-card styleClass="customer-details-card mb-8">
+      <div class="customer-header">
+        <div class="customer-info">
+          <div class="items-start justify-between">
+            <div>
+              <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                {{ customer.companyName }}
+              </h1>
+              <p class="text-lg text-gray-600 mb-3">
+                <i class="pi pi-user mr-2"></i>{{ customer.contactPerson }}
+              </p>
+            </div>
+            <p-tag
+              [value]="customer.status"
+              [severity]="getStatusSeverity(customer.status)"
+              styleClass="text-lg px-4 py-2">
+            </p-tag>
+          </div>
+
+          <div class="contact-details grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="contact-item" *ngIf="customer.phone">
+              <i class="pi pi-phone text-blue-600"></i>
+              <span>{{ customer.phone }}</span>
+            </div>
+            <div class="contact-item" *ngIf="customer.email">
+              <i class="pi pi-envelope text-blue-600"></i>
+              <span>{{ customer.email }}</span>
+            </div>
+            <div class="contact-item" *ngIf="customer.website">
+              <i class="pi pi-globe text-blue-600"></i>
+              <a [href]="customer.website" target="_blank" class="text-blue-600 hover:underline">
+                {{ customer.website }}
+              </a>
+            </div>
+            <div class="contact-item" *ngIf="customer.linkedinPage">
+              <i class="pi pi-linkedin text-blue-600"></i>
+              <a [href]="customer.linkedinPage" target="_blank" class="text-blue-600 hover:underline">
+                LinkedIn Profile
+              </a>
+            </div>
+            <div class="contact-item" *ngIf="customer.industry">
+              <i class="pi pi-briefcase text-blue-600"></i>
+              <span>{{ customer.industry }}</span>
+            </div>
+          </div>
+
+          <div class="customer-meta grid grid-cols-1 md:grid-cols-3 gap-4 mt-0">
+            <div class="meta-item">
+              <span class="meta-label">Last Contacted</span>
+              <span class="meta-value">{{ formatDate(customer.lastContactedAt) }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Next Follow-up</span>
+              <span class="meta-value">{{ formatDate(customer.nextFollowUpAt) }}</span>
+            </div>
+            <div class="meta-item" *ngIf="customer.address">
+              <span class="meta-label">Address</span>
+              <span class="meta-value">{{ customer.address }}</span>
+            </div>
+          </div>
+
+          <div *ngIf="customer.notes || isEditingNotes" class="notes-section mt-0 notes-container">
+            <h3 class="text-sm font-semibold text-gray-600 mb-2">Notes</h3>
+
+            <!-- View Mode -->
+            <div *ngIf="!isEditingNotes" class="notes-view-mode">
+              <p
+                class="text-gray-700 notes-text"
+                [title]="customer.notes">{{ customer.notes }}</p>
+              <button
+                class="notes-edit-icon"
+                (click)="startEditNotes()"
+                title="Edit notes">
+                <i class="pi pi-pencil"></i>
+              </button>
+            </div>
+
+            <!-- Edit Mode -->
+            <div *ngIf="isEditingNotes" class="notes-edit-mode">
+              <textarea
+                pTextarea
+                [(ngModel)]="editedNotes"
+                placeholder="Enter notes..."
+                rows="4"
+                class="full-width notes-textarea">
+              </textarea>
+              <div class="notes-actions">
+                <button
+                  class="notes-action-btn save-btn"
+                  (click)="saveNotes()"
+                  title="Save">
+                  <i class="pi pi-check"></i>
+                </button>
+                <button
+                  class="notes-action-btn cancel-btn"
+                  (click)="cancelEditNotes()"
+                  title="Cancel">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <h3 class="text-lg font-semibold mb-3">Quick Actions</h3>
+          <div class="flex gap-2">
+            <p-button
+              label="Log Call"
+              icon="pi pi-phone"
+              styleClass="p-button-primary"
+              (onClick)="openInteractionDialog(InteractionType.CALL)">
+            </p-button>
+            <p-button
+              label="Send Email"
+              icon="pi pi-envelope"
+              styleClass="p-button-help"
+              (onClick)="openInteractionDialog(InteractionType.EMAIL)">
+            </p-button>
+            <p-button
+              label="WhatsApp"
+              icon="pi pi-whatsapp"
+              styleClass="p-button-success"
+              (onClick)="openInteractionDialog(InteractionType.WHATSAPP)">
+            </p-button>
+            <p-button
+              label="Meeting"
+              icon="pi pi-users"
+              styleClass="p-button-warning"
+              (onClick)="openInteractionDialog(InteractionType.IN_PERSON)">
+            </p-button>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Interaction Timeline -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <h2 class="text-2xl font-bold text-gray-800">Interaction History</h2>
+          <p-button
+            label="Log New Interaction"
+            icon="pi pi-plus"
+            styleClass="p-button-sm"
+            (onClick)="openInteractionDialog()">
+          </p-button>
+        </div>
+      </ng-template>
+
+      <div *ngIf="interactions.length === 0" class="empty-state">
+        <i class="pi pi-inbox text-6xl text-gray-400 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">No interactions yet</h3>
+        <p class="text-gray-500 mb-4">Start logging interactions to track communication history</p>
+        <p-button
+          label="Log First Interaction"
+          icon="pi pi-plus"
+          (onClick)="openInteractionDialog()">
+        </p-button>
+      </div>
+
+      <p-timeline *ngIf="interactions.length > 0" [value]="interactions" align="alternate">
+        <ng-template pTemplate="marker" let-interaction>
+          <div
+            class="timeline-marker"
+            [style.background-color]="getInteractionColor(interaction.type)">
+            <i [class]="getInteractionIcon(interaction.type)"></i>
+          </div>
+        </ng-template>
+
+        <ng-template pTemplate="content" let-interaction>
+          <p-card styleClass="interaction-card">
+            <div class="interaction-header">
+              <div class="flex items-center gap-2">
+                <span class="interaction-type">{{ interaction.type }}</span>
+                <span *ngIf="interaction.outcome" class="call-outcome">
+                  {{ interaction.outcome }}
+                </span>
+              </div>
+              <span class="interaction-date">{{ formatDateTime(interaction.interactionDate) }}</span>
+            </div>
+
+            <h3 class="interaction-subject">{{ interaction.subject }}</h3>
+            <p class="interaction-summary">{{ interaction.summary }}</p>
+
+            <div class="interaction-footer">
+              <div class="interaction-meta">
+                <span *ngIf="interaction.duration" class="meta-badge">
+                  <i class="pi pi-clock"></i>
+                  {{ formatDuration(interaction.duration) }}
+                </span>
+                <span *ngIf="interaction.nextFollowUpDate" class="meta-badge follow-up">
+                  <i class="pi pi-calendar"></i>
+                  Follow-up: {{ formatDate(interaction.nextFollowUpDate) }}
+                </span>
+              </div>
+              <span class="logged-by">
+                Logged by {{ interaction.createdBy?.firstName }} {{ interaction.createdBy?.lastName }}
+              </span>
+            </div>
+          </p-card>
+        </ng-template>
+      </p-timeline>
+    </p-card>
+  </div>
+
+  <!-- Log Interaction Dialog -->
+  <p-dialog
+    [(visible)]="showInteractionDialog"
+    header="Log Interaction"
+    [modal]="true"
+    [style]="{width: '600px'}"
+    [draggable]="false"
+    [resizable]="false">
+
+    <form [formGroup]="interactionForm" (ngSubmit)="onSubmitInteraction()">
+      <div class="form-grid">
+        <!-- Interaction Type -->
+        <div class="form-field full-width">
+          <label for="type" class="required">Interaction Type</label>
+          <p-select
+            id="type"
+            formControlName="type"
+            [options]="interactionTypeOptions"
+            placeholder="Select type"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            class="w-full">
+            <ng-template let-option pTemplate="item">
+              <div class="flex align-center">
+                <i [class]="option.icon"></i>
+                <span class="ml-4">{{ option.label }}</span>
+              </div>
+            </ng-template>
+          </p-select>
+        </div>
+
+        <!-- Interaction Date -->
+        <div class="form-field">
+          <label for="interactionDate" class="required">Date & Time</label>
+          <p-datepicker
+            id="interactionDate"
+            formControlName="interactionDate"
+            [showTime]="true"
+            [showIcon]="true"
+            dateFormat="yy-mm-dd"
+            placeholder="Select date and time"
+            appendTo="body"
+            class="w-full">
+          </p-datepicker>
+        </div>
+
+        <!-- Call Outcome (only for calls) -->
+        <div class="form-field" *ngIf="interactionForm.get('type')?.value === InteractionType.CALL">
+          <label for="outcome" class="required">Call Outcome</label>
+          <p-select
+            id="outcome"
+            formControlName="outcome"
+            [options]="callOutcomeOptions"
+            placeholder="Select outcome"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            class="w-full">
+          </p-select>
+          <small
+            class="p-error"
+            *ngIf="interactionForm.get('outcome')?.invalid && interactionForm.get('outcome')?.touched">
+            Call outcome is required
+          </small>
+        </div>
+
+        <!-- Duration (only for calls) -->
+        <div class="form-field" *ngIf="interactionForm.get('type')?.value === InteractionType.CALL">
+          <label for="duration" class="required">Duration (minutes)</label>
+          <p-inputNumber
+            id="duration"
+            formControlName="duration"
+            [min]="1"
+            [max]="999"
+            placeholder="Enter duration"
+            class="w-full">
+          </p-inputNumber>
+          <small
+            class="p-error"
+            *ngIf="interactionForm.get('duration')?.invalid && interactionForm.get('duration')?.touched">
+            Duration is required
+          </small>
+        </div>
+
+        <!-- Subject -->
+        <div class="form-field full-width">
+          <label for="subject">Subject</label>
+          <input
+            pInputText
+            id="subject"
+            formControlName="subject"
+            placeholder="Enter subject (optional)"
+            class="w-full" />
+        </div>
+
+        <!-- Summary -->
+        <div class="form-field full-width">
+          <label for="summary" class="required">Summary</label>
+          <textarea
+            pTextarea
+            id="summary"
+            formControlName="summary"
+            placeholder="Enter detailed summary of the interaction"
+            rows="4"
+            class="w-full">
+          </textarea>
+          <small
+            class="p-error"
+            *ngIf="interactionForm.get('summary')?.invalid && interactionForm.get('summary')?.touched">
+            Summary is required (min 5 characters)
+          </small>
+        </div>
+
+        <!-- Next Follow-up Date -->
+        <div class="form-field full-width">
+          <label for="nextFollowUpDate">Next Follow-up Date</label>
+          <p-datepicker
+            id="nextFollowUpDate"
+            formControlName="nextFollowUpDate"
+            [showIcon]="true"
+            [minDate]="minFollowUpDate"
+            dateFormat="yy-mm-dd"
+            placeholder="Select follow-up date (optional)"
+            appendTo="body"
+            class="w-full">
+          </p-datepicker>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <p-button
+          label="Cancel"
+          icon="pi pi-times"
+          (onClick)="showInteractionDialog = false"
+          styleClass="p-button-text"
+          [disabled]="isSubmitting">
+        </p-button>
+        <p-button
+          label="Log Interaction"
+          icon="pi pi-check"
+          type="submit"
+          [loading]="isSubmitting"
+          [disabled]="interactionForm.invalid || isSubmitting">
+        </p-button>
+      </div>
+    </form>
+  </p-dialog>
+</div>

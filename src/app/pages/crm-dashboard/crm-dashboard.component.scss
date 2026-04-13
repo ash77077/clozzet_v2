@@ -1,0 +1,746 @@
+.crm-dashboard {
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+}
+
+.dashboard-header {
+  margin-bottom: 1.5rem;
+
+  h1 {
+    color: #2c3e50;
+    margin: 0 0 1rem 0;
+  }
+
+  .header-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .flex {
+    margin-bottom: 1rem;
+  }
+}
+
+// Statistics Cards
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+
+    &.pulse-icon {
+      animation: pulse-scale 2s ease-in-out infinite;
+    }
+  }
+
+  .stat-content {
+    flex: 1;
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin: 0 0 0.5rem 0;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+      line-height: 1;
+      transition: all 0.3s ease;
+
+      &.urgent-value {
+        color: #f59e0b;
+        font-size: 2.5rem;
+      }
+    }
+
+    .stat-sublabel {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin: 0.375rem 0 0 0;
+      font-weight: 400;
+    }
+  }
+}
+
+// Urgent card styling
+.urgent-card {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  ::ng-deep .p-card-body {
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+  }
+}
+
+// Overdue card styling
+.overdue-card {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  ::ng-deep .p-card-body {
+    background: linear-gradient(135deg, #fee2e2 0%, #ffffff 100%);
+  }
+}
+
+.overdue-value {
+  color: #dc2626 !important;
+  font-size: 2.5rem;
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+// Customer Dialog Form
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+
+    &.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 0.875rem;
+
+      &.required::after {
+        content: ' *';
+        color: #e74c3c;
+      }
+    }
+
+    input,
+    textarea,
+    ::ng-deep .p-select,
+    ::ng-deep .p-datepicker {
+      width: 100%;
+    }
+
+    small.p-error {
+      color: #e74c3c;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+// Follow-up Indicators
+.follow-up-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+
+// Pulse animation for urgent indicators
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+// Table Customization
+::ng-deep {
+  .crm-dashboard {
+    .p-card {
+      margin-bottom: 0;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .p-datatable {
+    table-layout: fixed;
+    width: 100%;
+
+    .p-datatable-thead > tr > th {
+      background-color: #34495e;
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border: none;
+
+      // Fixed column widths
+      &:nth-child(1) { width: 18%; } // Company
+      &:nth-child(2) { width: 14%; } // Contact Person
+      &:nth-child(3) { width: 11%; } // Phone
+      &:nth-child(4) { width: 14%; } // Email
+      &:nth-child(5) { width: 9%; }  // Status
+      &:nth-child(6) { width: 11%; } // Last Contacted
+      &:nth-child(7) { width: 13%; } // Next Follow-up
+      &:nth-child(8) { width: 10%; } // Actions
+    }
+
+    .p-datatable-tbody > tr {
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: #8ae5fb;
+      }
+
+      // Clickable rows styling
+      &.clickable-row {
+        cursor: pointer;
+
+        &:hover {
+          background-color: #8ae5fb !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+      }
+
+      // Today's follow-up - Amber/Orange highlight
+      &.follow-up-today {
+        background: linear-gradient(90deg, #fff3cd 0%, #ffffff 100%) !important;
+        border-left: 4px solid #f59e0b;
+        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
+
+        &:hover {
+          background: linear-gradient(90deg, #ffe69c 0%, #fff3cd 100%) !important;
+        }
+      }
+
+      // Overdue follow-up - Red highlight (but not today)
+      &.follow-up-overdue:not(.follow-up-today) {
+        border-left: 4px solid #ef4444;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+
+        &:hover {
+          background: linear-gradient(90deg, #f1e7e7 0%, #fbf0f0 100%) !important;
+        }
+      }
+
+      > td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+
+        // Follow-up cell - don't truncate
+        &:nth-child(7) {
+          overflow: visible;
+          white-space: normal;
+        }
+
+        // Actions column - don't truncate
+        &:nth-child(8) {
+          overflow: visible;
+          white-space: normal;
+        }
+      }
+    }
+
+    // Text truncation utility classes
+    .truncate-text {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
+    .truncate-cell {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+
+      .truncate-text {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .p-datatable-tbody > tr > td {
+      // Ensure cells can truncate
+      &:nth-child(1), // Company
+      &:nth-child(2), // Contact Person
+      &:nth-child(3), // Phone
+      &:nth-child(4)  // Email
+      {
+        overflow: hidden;
+        max-width: 0; // Force text truncation
+      }
+    }
+    }
+
+    .p-datatable-header {
+      padding: 1rem;
+      background-color: transparent;
+      border: none;
+    }
+
+    // Follow-up tag styling
+    .follow-up-tag {
+      font-weight: 600;
+
+      &.p-tag-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      &.p-tag-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      }
+
+      &.p-tag-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+    }
+  }
+
+  .p-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    border: none;
+
+    .p-card-body {
+      padding: 1.25rem;
+    }
+  }
+
+  .p-dialog {
+    .p-dialog-header {
+      background-color: #34495e;
+      color: white;
+      padding: 1.25rem 1.5rem;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+  }
+
+  .p-button-rounded {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .p-tag {
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.875rem;
+  }
+
+  .p-paginator {
+    padding: 0.75rem 1rem;
+  }
+
+// Responsive
+@media (max-width: 1024px) {
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem 0.75rem;
+
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 1.25rem;
+    }
+
+    .stat-content .stat-value {
+      font-size: 1.75rem;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .crm-dashboard {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    h1 {
+      font-size: 1.75rem;
+    }
+
+    .flex {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  ::ng-deep {
+    .p-datatable {
+      font-size: 0.875rem;
+
+      .p-datatable-thead > tr > th,
+      .p-datatable-tbody > tr > td {
+        padding: 0.5rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .stat-card {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+.gap-16 {
+  gap: 16px;
+}
+
+.p-input-icon-left {
+  margin-left: 16px;
+}
+
+// Import Dialog Styles
+.import-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .import-instructions {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+
+    h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    ol {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+
+      li {
+        margin: 0.25rem 0;
+        color: #555;
+      }
+    }
+
+    .required-columns {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #dee2e6;
+      font-size: 0.875rem;
+      color: #555;
+
+      strong {
+        color: #2c3e50;
+      }
+    }
+  }
+
+  .template-download {
+    margin: 0.5rem 0;
+  }
+
+  .file-upload-section {
+    h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .upload-area {
+      border: 2px dashed #3498db;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+
+      &:hover {
+        background: #e9ecef;
+        border-color: #2980b9;
+      }
+
+      p {
+        margin: 0.75rem 0 0 0;
+        color: #555;
+        font-size: 0.95rem;
+
+        &.selected-file {
+          color: #27ae60;
+          font-weight: 600;
+
+          i {
+            margin-right: 0.5rem;
+            color: #27ae60;
+          }
+        }
+      }
+    }
+  }
+
+  .import-results {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+
+    h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .results-summary {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+
+      .result-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+
+        &.success {
+          background: #d4edda;
+          color: #155724;
+
+          i {
+            color: #28a745;
+          }
+        }
+
+        &.error {
+          background: #f8d7da;
+          color: #721c24;
+
+          i {
+            color: #dc3545;
+          }
+        }
+
+        &.warning {
+          background: #fff3cd;
+          color: #856404;
+
+          i {
+            color: #ffc107;
+          }
+        }
+      }
+    }
+
+    .duplicate-notice {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: #e7f3ff;
+      border-left: 4px solid #2196f3;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+
+      i {
+        color: #1976d2;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+
+      p {
+        margin: 0;
+        color: #1565c0;
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+    }
+
+    .error-details {
+      h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #721c24;
+      }
+
+      .error-list {
+        background: white;
+        border-radius: 6px;
+        padding: 0.75rem;
+        max-height: 200px;
+        overflow-y: auto;
+
+        .error-row {
+          padding: 0.5rem;
+          border-bottom: 1px solid #f0f0f0;
+          font-size: 0.875rem;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          strong {
+            color: #dc3545;
+          }
+        }
+
+        .more-errors {
+          padding: 0.5rem;
+          text-align: center;
+          color: #666;
+          font-style: italic;
+          font-size: 0.875rem;
+        }
+      }
+    }
+
+    .approval-notice {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      border-radius: 6px;
+      margin-top: 1rem;
+
+      i {
+        color: #856404;
+        font-size: 1.25rem;
+      }
+
+      p {
+        margin: 0;
+        color: #856404;
+        font-weight: 500;
+      }
+    }
+
+    .import-complete {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      border-radius: 6px;
+      margin-top: 1rem;
+
+      i {
+        color: #155724;
+        font-size: 1.25rem;
+      }
+
+      p {
+        margin: 0;
+        color: #155724;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Follow-up Dialog Styles
+.follow-up-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .customer-info-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+
+    h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    p {
+      margin: 0.25rem 0;
+      color: #555;
+      font-size: 0.9rem;
+    }
+  }
+}

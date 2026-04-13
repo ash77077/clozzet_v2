@@ -1,0 +1,240 @@
+<div class="admin-approvals-container">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <div class="page-header">
+    <div>
+      <h1>Order Request Approvals</h1>
+      <p class="subtitle">Review and approve/reject order requests from managers</p>
+    </div>
+    <p-button
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      (click)="loadOrderRequests()"
+      [loading]="isLoading"
+    ></p-button>
+  </div>
+
+  <p-table
+    [value]="orderRequests"
+    [loading]="isLoading"
+    [paginator]="true"
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} requests"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    styleClass="p-datatable-striped"
+    responsiveLayout="scroll"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="modelName">Model/Style <p-sortIcon field="modelName"></p-sortIcon></th>
+        <th pSortableColumn="quantity">Quantity <p-sortIcon field="quantity"></p-sortIcon></th>
+        <th pSortableColumn="unitSellingPrice">Unit Price (AMD) <p-sortIcon field="unitSellingPrice"></p-sortIcon></th>
+        <th pSortableColumn="totalAmount">Total Amount (AMD) <p-sortIcon field="totalAmount"></p-sortIcon></th>
+        <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+        <th pSortableColumn="createdAt">Date <p-sortIcon field="createdAt"></p-sortIcon></th>
+        <th>Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-request>
+      <tr>
+        <td>
+          <div class="model-name">
+            {{ request.modelName }}
+            <small class="description-preview">{{ request.description.substring(0, 50) }}...</small>
+          </div>
+        </td>
+        <td>{{ request.quantity }}</td>
+        <td>{{ formatCurrency(request.unitSellingPrice) }}</td>
+        <td class="total-amount">{{ formatCurrency(request.totalAmount) }}</td>
+        <td>
+          <p-tag
+            [value]="request.status"
+            [severity]="getStatusSeverity(request.status)"
+          ></p-tag>
+        </td>
+        <td>{{ formatDate(request.createdAt) }}</td>
+        <td>
+          <p-button
+            icon="pi pi-search"
+            [text]="true"
+            [rounded]="true"
+            severity="info"
+            pTooltip="Review"
+            (click)="openReviewDialog(request)"
+            [disabled]="!isPending(request)"
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="empty-message">
+          <div class="empty-state">
+            <i class="pi pi-inbox"></i>
+            <p>No order requests found</p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- Review Dialog -->
+  <p-dialog
+    [(visible)]="showReviewDialog"
+    [modal]="true"
+    [style]="{ width: '600px' }"
+    [closable]="!isSubmitting"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <ng-template pTemplate="header">
+      <div class="dialog-header">
+        <h2>Review Order Request</h2>
+        <p-tag
+          [value]="selectedRequest?.status || ''"
+          [severity]="getStatusSeverity(selectedRequest?.status || OrderRequestStatus.PENDING_ADMIN)"
+        ></p-tag>
+      </div>
+    </ng-template>
+
+    <div class="review-dialog-content" *ngIf="selectedRequest">
+      <!-- Order Details (Read-only) -->
+      <div class="section">
+        <h3>Order Details</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Model/Style:</label>
+            <span>{{ selectedRequest.modelName }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Quantity:</label>
+            <span>{{ selectedRequest.quantity }} units</span>
+          </div>
+          <div class="detail-item">
+            <label>Unit Price:</label>
+            <span>{{ formatCurrency(selectedRequest.unitSellingPrice) }} AMD</span>
+          </div>
+          <div class="detail-item highlight">
+            <label>Total Amount:</label>
+            <span class="total-value">{{ formatCurrency(selectedRequest.totalAmount) }} AMD</span>
+          </div>
+        </div>
+        <div class="description-box">
+          <label>Description/Specifications:</label>
+          <p>{{ selectedRequest.description }}</p>
+        </div>
+      </div>
+
+      <!-- Cost Calculation Form -->
+      <div class="section" *ngIf="isPending(selectedRequest)">
+        <h3>Cost Calculation</h3>
+        <form [formGroup]="reviewForm">
+          <div class="form-field">
+            <label for="internalCost" class="required">Internal Cost (AMD)</label>
+            <p-inputNumber
+              inputId="internalCost"
+              formControlName="internalCost"
+              mode="currency"
+              currency="AMD"
+              locale="en-US"
+              [min]="0"
+              [inputStyle]="{'width':'100%'}"
+              styleClass="w-full"
+              placeholder="Enter internal cost"
+            ></p-inputNumber>
+          </div>
+
+          <!-- Profit Margin Display -->
+          <div class="profit-margin-display" [class.negative]="calculateProfitMargin() < 0">
+            <div class="profit-label">
+              <i class="pi pi-chart-line"></i>
+              <span>Estimated Profit Margin:</span>
+            </div>
+            <div class="profit-value">
+              {{ formatCurrency(calculateProfitMargin()) }} AMD
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="adminNotes">Admin Notes</label>
+            <textarea
+              id="adminNotes"
+              pInputTextarea
+              formControlName="adminNotes"
+              placeholder="Add any notes or comments for the manager..."
+              rows="3"
+              class="w-full"
+            ></textarea>
+          </div>
+        </form>
+      </div>
+
+      <!-- Approved/Rejected Details -->
+      <div class="section" *ngIf="!isPending(selectedRequest)">
+        <h3>Review Details</h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <label>Internal Cost:</label>
+            <span>{{ formatCurrency(selectedRequest.internalCost || 0) }} AMD</span>
+          </div>
+          <div class="detail-item">
+            <label>Profit Margin:</label>
+            <span [class.negative-value]="(selectedRequest.profitMargin || 0) < 0">
+              {{ formatCurrency(selectedRequest.profitMargin || 0) }} AMD
+            </span>
+          </div>
+          <div class="detail-item" *ngIf="selectedRequest.approvedAt">
+            <label>Approved Date:</label>
+            <span>{{ formatDate(selectedRequest.approvedAt) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedRequest.rejectedAt">
+            <label>Rejected Date:</label>
+            <span>{{ formatDate(selectedRequest.rejectedAt) }}</span>
+          </div>
+        </div>
+        <div class="description-box" *ngIf="selectedRequest.adminNotes">
+          <label>Admin Notes:</label>
+          <p>{{ selectedRequest.adminNotes }}</p>
+        </div>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="dialog-footer">
+        <p-button
+          label="Close"
+          icon="pi pi-times"
+          severity="secondary"
+          [outlined]="true"
+          (click)="showReviewDialog = false"
+          [disabled]="isSubmitting"
+        ></p-button>
+
+        <div class="action-buttons" *ngIf="selectedRequest && isPending(selectedRequest)">
+          <p-button
+            label="Reject"
+            icon="pi pi-times-circle"
+            severity="danger"
+            (click)="onReject()"
+            [loading]="isSubmitting"
+          ></p-button>
+
+          <p-button
+            label="Approve"
+            icon="pi pi-check-circle"
+            severity="success"
+            (click)="onApprove()"
+            [loading]="isSubmitting"
+            [disabled]="reviewForm.invalid"
+          ></p-button>
+        </div>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>
