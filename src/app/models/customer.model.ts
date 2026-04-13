@@ -4,12 +4,20 @@ export enum CustomerStatus {
   INACTIVE = 'Inactive',
 }
 
+export interface ContactPerson {
+  contactPerson: string;
+  position?: string;
+  phone?: string;
+  email?: string;
+}
+
 export interface Customer {
   _id?: string;
   companyName: string;
   contactPerson: string;
   phone?: string;
   email?: string;
+  contacts?: ContactPerson[];
   status: CustomerStatus;
   address?: string;
   website?: string;

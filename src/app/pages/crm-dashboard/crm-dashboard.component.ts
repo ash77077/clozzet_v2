@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { TableModule } from 'primeng/table';
@@ -101,17 +101,38 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   private initializeForm(): void {
     this.customerForm = this.fb.group({
       companyName: ['', [Validators.required, Validators.minLength(2)]],
-      contactPerson: ['', [Validators.required, Validators.minLength(2)]],
-      phone: [''],
-      email: ['', [Validators.email]],
+      industry: [''],
+      contacts: this.fb.array([this.createContactGroup()]),
       status: [CustomerStatus.LEAD, [Validators.required]],
       address: [''],
       website: [''],
       linkedinPage: [''],
-      industry: [''],
       notes: [''],
       nextFollowUpAt: [null],
     });
+  }
+
+  private createContactGroup(): FormGroup {
+    return this.fb.group({
+      contactPerson: [''],
+      position: [''],
+      phone: [''],
+      email: ['', [Validators.email]],
+    });
+  }
+
+  get contacts(): FormArray {
+    return this.customerForm.get('contacts') as FormArray;
+  }
+
+  addContact(): void {
+    this.contacts.push(this.createContactGroup());
+  }
+
+  removeContact(index: number): void {
+    if (this.contacts.length > 1) {
+      this.contacts.removeAt(index);
+    }
   }
 
   private initializeFollowUpForm(): void {
@@ -217,14 +238,47 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     this.customerForm.reset({
       status: CustomerStatus.LEAD,
     });
+    // Reset contacts array to single empty contact
+    this.contacts.clear();
+    this.contacts.push(this.createContactGroup());
     this.showCustomerDialog = true;
   }
 
   openEditCustomerDialog(customer: Customer): void {
     this.isEditMode = true;
     this.selectedCustomer = customer;
+
+    // Clear existing contacts
+    this.contacts.clear();
+
+    // If customer has contacts array, load all contacts
+    if (customer.contacts && customer.contacts.length > 0) {
+      customer.contacts.forEach(contact => {
+        this.contacts.push(this.fb.group({
+          contactPerson: [contact.contactPerson || ''],
+          position: [contact.position || ''],
+          phone: [contact.phone || ''],
+          email: [contact.email || ''],
+        }));
+      });
+    } else {
+      // Fallback: use primary contact fields
+      this.contacts.push(this.fb.group({
+        contactPerson: [customer.contactPerson || ''],
+        position: [''],
+        phone: [customer.phone || ''],
+        email: [customer.email || ''],
+      }));
+    }
+
     this.customerForm.patchValue({
-      ...customer,
+      companyName: customer.companyName,
+      industry: customer.industry,
+      status: customer.status,
+      address: customer.address,
+      website: customer.website,
+      linkedinPage: customer.linkedinPage,
+      notes: customer.notes,
       nextFollowUpAt: customer.nextFollowUpAt ? new Date(customer.nextFollowUpAt) : null,
     });
     this.showCustomerDialog = true;
@@ -238,6 +292,31 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
 
     this.isSubmitting = true;
     const formValue = { ...this.customerForm.value };
+
+    // Filter out empty contacts (where contactPerson is empty)
+    const validContacts = (formValue.contacts || []).filter(
+      (contact: any) => contact.contactPerson && contact.contactPerson.trim() !== ''
+    );
+
+    // Check if at least one contact exists
+    if (validContacts.length === 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'At least one contact person is required',
+      });
+      this.isSubmitting = false;
+      return;
+    }
+
+    // Use first contact as primary contact (backward compatibility)
+    const primaryContact = validContacts[0];
+    formValue.contactPerson = primaryContact.contactPerson;
+    formValue.phone = primaryContact.phone;
+    formValue.email = primaryContact.email;
+
+    // Save contacts array to backend
+    formValue.contacts = validContacts;
 
     // Convert Date object to ISO string for nextFollowUpAt
     if (formValue.nextFollowUpAt instanceof Date && !isNaN(formValue.nextFollowUpAt.getTime())) {

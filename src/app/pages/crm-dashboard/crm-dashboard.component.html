@@ -203,7 +203,7 @@
             </div>
           </td>
           <td (click)="$event.stopPropagation()">
-            <div class="flex gap-2">
+            <div class="flex">
               <p-button
                 icon="pi pi-eye"
                 styleClass="p-button-rounded p-button-info p-button-text"
@@ -267,48 +267,92 @@
           </small>
         </div>
 
-        <!-- Contact Person -->
+        <!-- Industry -->
         <div class="form-field">
-          <label for="contactPerson" class="required">Contact Person</label>
+          <label for="industry">Industry</label>
           <input
             pInputText
-            id="contactPerson"
-            formControlName="contactPerson"
-            placeholder="Enter contact person name"
-            class="w-full" />
-          <small
-            class="p-error"
-            *ngIf="customerForm.get('contactPerson')?.invalid && customerForm.get('contactPerson')?.touched">
-            Contact person is required (min 2 characters)
-          </small>
-        </div>
-
-        <!-- Phone -->
-        <div class="form-field">
-          <label for="phone">Phone</label>
-          <input
-            pInputText
-            id="phone"
-            formControlName="phone"
-            placeholder="Enter phone number (optional)"
+            id="industry"
+            formControlName="industry"
+            placeholder="Enter industry"
             class="w-full" />
         </div>
 
-        <!-- Email -->
-        <div class="form-field">
-          <label for="email">Email</label>
-          <input
-            pInputText
-            id="email"
-            type="email"
-            formControlName="email"
-            placeholder="Enter email address (optional)"
-            class="w-full" />
-          <small
-            class="p-error"
-            *ngIf="customerForm.get('email')?.invalid && customerForm.get('email')?.touched">
-            Please enter a valid email address
-          </small>
+        <!-- Contacts Array -->
+        <div class="form-field full-width">
+          <label class="required">Contact Persons</label>
+          <div formArrayName="contacts">
+            <div *ngFor="let contact of contacts.controls; let i = index"
+                 [formGroupName]="i"
+                 class="contact-row">
+              <div class="contact-fields">
+                <div class="field-group">
+                  <label [for]="'contactPerson_' + i">Contact Person <span class="text-red-500">*</span></label>
+                  <input
+                    pInputText
+                    [id]="'contactPerson_' + i"
+                    formControlName="contactPerson"
+                    placeholder="Enter name"
+                    class="w-full" />
+                </div>
+
+                <div class="field-group">
+                  <label [for]="'position_' + i">Position</label>
+                  <input
+                    pInputText
+                    [id]="'position_' + i"
+                    formControlName="position"
+                    placeholder="Enter position"
+                    class="w-full" />
+                </div>
+
+                <div class="field-group">
+                  <label [for]="'phone_' + i">Phone</label>
+                  <input
+                    pInputText
+                    [id]="'phone_' + i"
+                    formControlName="phone"
+                    placeholder="Enter phone"
+                    class="w-full" />
+                </div>
+
+                <div class="field-group">
+                  <label [for]="'email_' + i">Email</label>
+                  <input
+                    pInputText
+                    [id]="'email_' + i"
+                    type="email"
+                    formControlName="email"
+                    placeholder="Enter email"
+                    class="w-full" />
+                  <small
+                    class="p-error"
+                    *ngIf="contact.get('email')?.invalid && contact.get('email')?.touched">
+                    Please enter a valid email address
+                  </small>
+                </div>
+
+                <div class="remove-btn" *ngIf="contacts.length > 1">
+                  <button
+                    type="button"
+                    pButton
+                    icon="pi pi-times"
+                    class="p-button-rounded p-button-danger p-button-text"
+                    (click)="removeContact(i)"
+                    pTooltip="Remove contact">
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p-button
+            type="button"
+            label="Add Another Contact"
+            icon="pi pi-plus"
+            styleClass="p-button-outlined p-button-sm mt-2"
+            (onClick)="addContact()">
+          </p-button>
         </div>
 
         <!-- Status -->
@@ -324,17 +368,6 @@
             appendTo="body"
             class="w-full">
           </p-select>
-        </div>
-
-        <!-- Industry -->
-        <div class="form-field">
-          <label for="industry">Industry</label>
-          <input
-            pInputText
-            id="industry"
-            formControlName="industry"
-            placeholder="Enter industry"
-            class="w-full" />
         </div>
 
         <!-- Address -->

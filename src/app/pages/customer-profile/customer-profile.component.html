@@ -39,6 +39,34 @@
             </p-tag>
           </div>
 
+          <!-- Contact Persons Section -->
+          <div *ngIf="customer.contacts && customer.contacts.length > 0" class="contacts-section mb-4">
+            <h3 class="text-sm font-semibold text-gray-600 mb-3">Contact Persons</h3>
+            <div class="contacts-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div *ngFor="let contact of customer.contacts" class="contact-card">
+                <div class="contact-card-header">
+                  <i class="pi pi-user text-blue-600 mr-2"></i>
+                  <span class="font-semibold">{{ contact.contactPerson }}</span>
+                </div>
+                <div class="contact-card-body">
+                  <div *ngIf="contact.position" class="contact-detail">
+                    <i class="pi pi-briefcase text-gray-500"></i>
+                    <span>{{ contact.position }}</span>
+                  </div>
+                  <div *ngIf="contact.phone" class="contact-detail">
+                    <i class="pi pi-phone text-gray-500"></i>
+                    <span>{{ contact.phone }}</span>
+                  </div>
+                  <div *ngIf="contact.email" class="contact-detail">
+                    <i class="pi pi-envelope text-gray-500"></i>
+                    <span>{{ contact.email }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Company Details -->
           <div class="contact-details grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="contact-item" *ngIf="customer.phone">
               <i class="pi pi-phone text-blue-600"></i>
@@ -50,13 +78,13 @@
             </div>
             <div class="contact-item" *ngIf="customer.website">
               <i class="pi pi-globe text-blue-600"></i>
-              <a [href]="customer.website" target="_blank" class="text-blue-600 hover:underline">
+              <a [href]="customer.website | externalLink" target="_blank" class="text-blue-600 hover:underline">
                 {{ customer.website }}
               </a>
             </div>
             <div class="contact-item" *ngIf="customer.linkedinPage">
               <i class="pi pi-linkedin text-blue-600"></i>
-              <a [href]="customer.linkedinPage" target="_blank" class="text-blue-600 hover:underline">
+              <a [href]="customer.linkedinPage | externalLink" target="_blank" class="text-blue-600 hover:underline">
                 LinkedIn Profile
               </a>
             </div>
@@ -217,9 +245,17 @@
                   Follow-up: {{ formatDate(interaction.nextFollowUpDate) }}
                 </span>
               </div>
-              <span class="logged-by">
-                Logged by {{ interaction.createdBy?.firstName }} {{ interaction.createdBy?.lastName }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span class="logged-by">
+                  Logged by {{ interaction.createdByName || (interaction.createdBy?.firstName + ' ' + interaction.createdBy?.lastName) }}
+                </span>
+                <p-button
+                  icon="pi pi-pencil"
+                  styleClass="p-button-rounded p-button-text p-button-sm"
+                  pTooltip="Edit"
+                  (onClick)="openEditInteractionDialog(interaction)">
+                </p-button>
+              </div>
             </div>
           </p-card>
         </ng-template>
@@ -230,7 +266,7 @@
   <!-- Log Interaction Dialog -->
   <p-dialog
     [(visible)]="showInteractionDialog"
-    header="Log Interaction"
+    [header]="isEditMode ? 'Edit Interaction' : 'Log Interaction'"
     [modal]="true"
     [style]="{width: '600px'}"
     [draggable]="false"
@@ -294,22 +330,17 @@
           </small>
         </div>
 
-        <!-- Duration (only for calls) -->
+        <!-- Duration (only for calls, optional) -->
         <div class="form-field" *ngIf="interactionForm.get('type')?.value === InteractionType.CALL">
-          <label for="duration" class="required">Duration (minutes)</label>
+          <label for="duration">Duration (minutes)</label>
           <p-inputNumber
             id="duration"
             formControlName="duration"
             [min]="1"
             [max]="999"
-            placeholder="Enter duration"
+            placeholder="Enter duration (optional)"
             class="w-full">
           </p-inputNumber>
-          <small
-            class="p-error"
-            *ngIf="interactionForm.get('duration')?.invalid && interactionForm.get('duration')?.touched">
-            Duration is required
-          </small>
         </div>
 
         <!-- Subject -->
@@ -361,12 +392,12 @@
         <p-button
           label="Cancel"
           icon="pi pi-times"
-          (onClick)="showInteractionDialog = false"
+          (onClick)="closeInteractionDialog()"
           styleClass="p-button-text"
           [disabled]="isSubmitting">
         </p-button>
         <p-button
-          label="Log Interaction"
+          [label]="isEditMode ? 'Update Interaction' : 'Log Interaction'"
           icon="pi pi-check"
           type="submit"
           [loading]="isSubmitting"
