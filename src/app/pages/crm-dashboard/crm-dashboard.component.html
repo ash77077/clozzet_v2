@@ -332,6 +332,16 @@
                   </small>
                 </div>
 
+                <div class="field-group">
+                  <label [for]="'linkedinPage_' + i">LinkedIn</label>
+                  <input
+                    pInputText
+                    [id]="'linkedinPage_' + i"
+                    formControlName="linkedinPage"
+                    placeholder="Enter LinkedIn URL"
+                    class="w-full" />
+                </div>
+
                 <div class="remove-btn" *ngIf="contacts.length > 1">
                   <button
                     type="button"
@@ -391,17 +401,6 @@
             id="website"
             formControlName="website"
             placeholder="https://example.com"
-            class="w-full" />
-        </div>
-
-        <!-- LinkedIn Page -->
-        <div class="form-field">
-          <label for="linkedinPage">LinkedIn Page</label>
-          <input
-            pInputText
-            id="linkedinPage"
-            formControlName="linkedinPage"
-            placeholder="https://linkedin.com/company/..."
             class="w-full" />
         </div>
 
@@ -474,7 +473,7 @@
         <div class="required-columns">
           <strong>Required columns:</strong> Company Name, Contact Person
           <br>
-          <strong>Optional columns:</strong> Phone, Email, Status, Address, Website, LinkedIn Page, Industry, Notes, First Contact Date, Scheduled Meeting, Next Follow Up
+          <strong>Optional columns:</strong> Phone, Email, Status, Address, Website, Industry, Notes, First Contact Date, Scheduled Meeting, Next Follow Up
         </div>
       </div>
 
