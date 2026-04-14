@@ -20,6 +20,7 @@ import { InteractionsService } from '../../services/interactions.service';
 import { Customer, CustomerStatus } from '../../models/customer.model';
 import { Interaction, InteractionType, CallOutcome, CreateInteractionDto } from '../../models/interaction.model';
 import { ExternalLinkPipe } from '../../pipes/external-link.pipe';
+import {Tooltip} from "primeng/tooltip";
 
 @Component({
   selector: 'app-customer-profile',
@@ -40,6 +41,7 @@ import { ExternalLinkPipe } from '../../pipes/external-link.pipe';
     TagModule,
     ToastModule,
     ExternalLinkPipe,
+    Tooltip,
   ],
   providers: [MessageService],
   templateUrl: './customer-profile.component.html',
@@ -152,7 +154,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
           );
           this.isLoading = false;
         },
-        error: (error) => {
+        error: () => {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
