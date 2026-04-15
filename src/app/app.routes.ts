@@ -44,11 +44,6 @@ export const routes: Routes = [
     canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
   },
   {
-    path: 'orders',
-    loadComponent: () => import('./pages/orders-management/orders-management.component').then(m => m.OrdersManagementComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
-  },
-  {
     path: 'companies',
     loadComponent: () => import('./pages/companies-management/companies-management.component').then(m => m.CompaniesManagementComponent),
     canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
@@ -81,17 +76,6 @@ export const routes: Routes = [
   {
     path: 'sales-history',
     loadComponent: () => import('./dashboard/pages/sales-history/sales-history.component').then(m => m.SalesHistoryComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
-  },
-  // Order Request routes
-  {
-    path: 'manager-order-request',
-    loadComponent: () => import('./pages/manager-order-request/manager-order-request.component').then(m => m.ManagerOrderRequestComponent),
-    canActivate: [() => import('./guards/manager.guard').then(g => g.ManagerGuard)]
-  },
-  {
-    path: 'admin-order-approvals',
-    loadComponent: () => import('./pages/admin-order-approvals/admin-order-approvals.component').then(m => m.AdminOrderApprovalsComponent),
     canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
   },
   // CRM routes
@@ -145,27 +129,6 @@ export const routes: Routes = [
     path: 'my-orders',
     loadComponent: () => import('./pages/my-orders/my-orders.component').then(m => m.MyOrdersComponent),
     canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
-  },
-  // B2B Order create
-  {
-    path: 'order-create',
-    loadComponent: () => import('./pages/order-create/order-create.component').then(m => m.OrderCreateComponent),
-    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
-  },
-  // Special Collection public routes
-  {
-    path: 'special-collection',
-    loadComponent: () => import('./pages/special-collection/special-collection.component').then(m => m.SpecialCollectionComponent)
-  },
-  {
-    path: 'special-collection/:category',
-    loadComponent: () => import('./pages/special-collection/special-collection.component').then(m => m.SpecialCollectionComponent)
-  },
-  // Special Collection admin route
-  {
-    path: 'special-collection-admin',
-    loadComponent: () => import('./dashboard/pages/special-collection-admin/special-collection-admin.component').then(m => m.SpecialCollectionAdminComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
   },
   // 3D Preview - Clothing Model Viewer (Testing Route)
   {

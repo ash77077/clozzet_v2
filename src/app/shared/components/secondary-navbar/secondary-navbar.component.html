@@ -28,12 +28,6 @@
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/manager-order-request" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-file-plus"></i>
-              <span>Create Order Request</span>
-            </a>
-          </li>
-          <li class="nav-item">
             <a routerLink="/crm-dashboard" class="nav-link" routerLinkActive="active">
               <i class="pi pi-sitemap"></i>
               <span>CRM Dashboard</span>
@@ -52,25 +46,6 @@
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <i class="pi pi-home"></i>
               <span>Dashboard</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/orders" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-shopping-cart"></i>
-              <span>Orders</span>
-              <span class="badge" *ngIf="orderStats && orderStats.pending > 0">{{ orderStats.pending }}</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/admin-order-approvals" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-check-square"></i>
-              <span>Order Approvals</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/order-create" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-file-plus"></i>
-              <span>New B2B Order</span>
             </a>
           </li>
           <li class="nav-item">
@@ -101,12 +76,6 @@
             <a routerLink="/retail-sales" class="nav-link" routerLinkActive="active">
               <i class="pi pi-shopping-bag"></i>
               <span>Retail Sales</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/special-collection-admin" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-star"></i>
-              <span>Special Collection</span>
             </a>
           </li>
         </ul>
@@ -152,12 +121,6 @@
             <a routerLink="/order-blank" class="nav-link" routerLinkActive="active">
               <i class="pi pi-file-plus"></i>
               <span>New Order</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/order-create" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-send"></i>
-              <span>New B2B Order</span>
             </a>
           </li>
         </ul>

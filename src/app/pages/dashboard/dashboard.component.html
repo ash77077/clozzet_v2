@@ -61,13 +61,6 @@
 						<p>Manage retail products</p>
 					</div>
 				</div>
-				<div class="stat-card" routerLink="/special-collection-admin">
-					<div class="stat-icon">✨</div>
-					<div class="stat-content">
-						<h3>Special Collection</h3>
-						<p>Manage exclusive items</p>
-					</div>
-				</div>
 			</div>
 		</section>
 
@@ -171,13 +164,6 @@
 		<!-- Manager Statistics -->
 		<section class="statistics-section">
 			<div class="stats-grid">
-				<div class="stat-card" routerLink="/admin-order-approvals">
-					<div class="stat-icon">✓</div>
-					<div class="stat-content">
-						<h3>{{ managerStats.pendingApprovals }}</h3>
-						<p>Pending Approvals</p>
-					</div>
-				</div>
 				<div class="stat-card" routerLink="/crm-dashboard">
 					<div class="stat-icon">👥</div>
 					<div class="stat-content">
@@ -210,16 +196,6 @@
 					<div class="action-icon">👥</div>
 					<h3>Manage Customers</h3>
 					<p>View and manage customer relationships</p>
-				</div>
-				<div class="action-card" routerLink="/admin-order-approvals">
-					<div class="action-icon">✓</div>
-					<h3>Order Approvals</h3>
-					<p>Review and approve pending orders</p>
-				</div>
-				<div class="action-card" routerLink="/orders">
-					<div class="action-icon">📦</div>
-					<h3>All Orders</h3>
-					<p>View all orders and their status</p>
 				</div>
 				<div class="action-card" routerLink="/products">
 					<div class="action-icon">🏷️</div>
@@ -275,20 +251,10 @@
 		<section class="quick-actions-section">
 			<h2 class="section-title">Quick Actions</h2>
 			<div class="action-cards">
-				<div class="action-card" routerLink="/order-create">
-					<div class="action-icon">➕</div>
-					<h3>New B2B Order</h3>
-					<p>Create a new bulk order for your company</p>
-				</div>
 				<div class="action-card" routerLink="/my-orders">
 					<div class="action-icon">📋</div>
 					<h3>View All Orders</h3>
 					<p>Track all your company's orders</p>
-				</div>
-				<div class="action-card" routerLink="/special-collection">
-					<div class="action-icon">✨</div>
-					<h3>Special Collection</h3>
-					<p>Browse our exclusive products</p>
 				</div>
 				<div class="action-card" routerLink="/contact">
 					<div class="action-icon">💬</div>
@@ -327,18 +293,6 @@
 						</tr>
 					</tbody>
 				</table>
-			</div>
-		</section>
-
-		<!-- Empty State -->
-		<section class="empty-state-section" *ngIf="clientOrders.length === 0">
-			<div class="empty-state">
-				<div class="empty-icon">📦</div>
-				<h3>No orders yet</h3>
-				<p>Start by creating your first order</p>
-				<button class="btn-primary" routerLink="/order-create">
-					Create Your First Order
-				</button>
 			</div>
 		</section>
 
