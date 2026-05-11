@@ -106,7 +106,6 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       status: [CustomerStatus.LEAD, [Validators.required]],
       address: [''],
       website: [''],
-      linkedinPage: [''],
       notes: [''],
       nextFollowUpAt: [null],
     });
@@ -118,6 +117,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       position: [''],
       phone: [''],
       email: ['', [Validators.email]],
+      linkedinPage: [''],
     });
   }
 
@@ -157,7 +157,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
           this.calculateStats(data.customers, data.followUps);
           this.isLoading = false;
         },
-        error: (error) => {
+        error: () => {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -253,12 +253,18 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
 
     // If customer has contacts array, load all contacts
     if (customer.contacts && customer.contacts.length > 0) {
-      customer.contacts.forEach(contact => {
+      customer.contacts.forEach((contact, index) => {
+        // For the first contact, use company linkedinPage if contact doesn't have one
+        const linkedinPage = index === 0
+          ? (contact.linkedinPage || customer.linkedinPage || '')
+          : (contact.linkedinPage || '');
+
         this.contacts.push(this.fb.group({
           contactPerson: [contact.contactPerson || ''],
           position: [contact.position || ''],
           phone: [contact.phone || ''],
           email: [contact.email || ''],
+          linkedinPage: [linkedinPage],
         }));
       });
     } else {
@@ -268,6 +274,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
         position: [''],
         phone: [customer.phone || ''],
         email: [customer.email || ''],
+        linkedinPage: [customer.linkedinPage || ''],
       }));
     }
 
@@ -277,7 +284,6 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       status: customer.status,
       address: customer.address,
       website: customer.website,
-      linkedinPage: customer.linkedinPage,
       notes: customer.notes,
       nextFollowUpAt: customer.nextFollowUpAt ? new Date(customer.nextFollowUpAt) : null,
     });

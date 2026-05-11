@@ -61,6 +61,12 @@
                     <i class="pi pi-envelope text-gray-500"></i>
                     <span>{{ contact.email }}</span>
                   </div>
+                  <div *ngIf="contact.linkedinPage" class="contact-detail">
+                    <i class="pi pi-linkedin text-gray-500"></i>
+                    <a [href]="contact.linkedinPage | externalLink" target="_blank" class="text-blue-600 hover:underline">
+                      LinkedIn Profile
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -80,12 +86,6 @@
               <i class="pi pi-globe text-blue-600"></i>
               <a [href]="customer.website | externalLink" target="_blank" class="text-blue-600 hover:underline">
                 {{ customer.website }}
-              </a>
-            </div>
-            <div class="contact-item" *ngIf="customer.linkedinPage">
-              <i class="pi pi-linkedin text-blue-600"></i>
-              <a [href]="customer.linkedinPage | externalLink" target="_blank" class="text-blue-600 hover:underline">
-                LinkedIn Profile
               </a>
             </div>
             <div class="contact-item" *ngIf="customer.industry">

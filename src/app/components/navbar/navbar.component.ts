@@ -120,20 +120,31 @@ export class NavbarComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.nav-dropdown')) {
+
+    // Close nav dropdowns if clicking outside
+    if (!target.closest('.nav-dropdown') && !target.closest('.dropdown-trigger')) {
       this.activeDropdown = null;
     }
-    if (!target.closest('.user-dropdown-container')) {
+
+    // Close user menu if clicking outside
+    if (!target.closest('.user-dropdown-container') && !target.closest('.user-icon-btn')) {
       this.showUserMenu = false;
     }
-    // if (!target.closest('.language-dropdown-container')) {
-    //   this.showLanguageMenu = false;
-    // }
+
+    // Close language menu if clicking outside
+    if (!target.closest('.language-dropdown-container') && !target.closest('.language-btn')) {
+      this.showLanguageMenu = false;
+    }
   }
 
   toggleUserMenu(event: Event) {
+    event.preventDefault();
     event.stopPropagation();
     this.showUserMenu = !this.showUserMenu;
+    // Close language menu when opening user menu
+    if (this.showUserMenu) {
+      this.showLanguageMenu = false;
+    }
   }
 
   toggleMobileMenu() {
@@ -200,8 +211,13 @@ export class NavbarComponent implements OnInit {
   }
 
   toggleLanguageMenu(event: Event) {
+    event.preventDefault();
     event.stopPropagation();
     this.showLanguageMenu = !this.showLanguageMenu;
+    // Close user menu when opening language menu
+    if (this.showLanguageMenu) {
+      this.showUserMenu = false;
+    }
   }
 
   switchLanguage(languageCode: string) {

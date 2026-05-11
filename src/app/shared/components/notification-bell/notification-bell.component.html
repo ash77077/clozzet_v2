@@ -1,0 +1,90 @@
+<div class="notification-bell-container">
+  <button
+    class="notification-bell-button"
+    (click)="togglePanel($event, op)"
+    [class.has-unread]="unreadCount > 0">
+    <i class="pi pi-bell"></i>
+    <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+  </button>
+
+  <p-popover #op styleClass="notification-panel" [dismissable]="true">
+      <div class="notification-panel-content">
+        <!-- Header -->
+        <div class="notification-header">
+          <div class="header-title">
+            <i class="pi pi-bell"></i>
+            <span>Notifications</span>
+            <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+          </div>
+          <button
+            class="mark-all-read-btn"
+            *ngIf="unreadCount > 0"
+            (click)="markAllAsRead($event)"
+            title="Mark all as read">
+            <i class="pi pi-check-circle"></i>
+            Mark all read
+          </button>
+        </div>
+        <!-- Debug Info -->
+        <div style="padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc; font-size: 11px;">
+          <strong>Debug:</strong> {{ notifications.length }} notification(s) loaded
+        </div>
+
+        <!-- Notifications List -->
+        <div class="notifications-list" *ngIf="notifications.length > 0">
+          <div
+            class="notification-item"
+            *ngFor="let notification of notifications; let i = index"
+            [class.unread]="!notification.read"
+            [class]="'type-' + getNotificationColor(notification.type)"
+            (click)="navigateToNotification(notification, op)">
+
+            <div class="notification-icon" [class]="'icon-' + getNotificationColor(notification.type)">
+              <i class="pi" [ngClass]="getNotificationIcon(notification.type)"></i>
+            </div>
+
+            <div class="notification-content">
+              <div class="notification-title">
+                {{ notification.title || 'No title' }}
+              </div>
+              <div class="notification-message">
+                {{ notification.message || 'No message' }}
+              </div>
+              <div class="notification-meta">
+                <span class="notification-time">
+                  {{ notification.createdAt ? getTimeAgo(notification.createdAt) : 'Unknown time' }}
+                </span>
+                <span class="notification-order" *ngIf="notification.orderNumber">
+                  <i class="pi pi-tag"></i>
+                  {{ notification.orderNumber }}
+                </span>
+              </div>
+            </div>
+
+            <div class="notification-actions">
+              <button
+                class="action-btn read-btn"
+                *ngIf="!notification.read"
+                (click)="markAsRead(notification, $event)"
+                title="Mark as read">
+                <i class="pi pi-circle-fill"></i>
+              </button>
+              <button
+                class="action-btn delete-btn"
+                (click)="deleteNotification(notification, $event)"
+                title="Delete">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="notifications-empty" *ngIf="notifications.length === 0">
+          <i class="pi pi-bell"></i>
+          <span>No notifications</span>
+          <p>You're all caught up!</p>
+        </div>
+      </div>
+  </p-popover>
+</div>

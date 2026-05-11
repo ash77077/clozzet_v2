@@ -1,0 +1,343 @@
+import { Injectable, OnDestroy } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { io, Socket } from 'socket.io-client';
+
+export interface Notification {
+  _id?: string;
+  userId: string;
+  type: 'mention' | 'status_change' | 'order_created' | 'order_updated' | 'file_uploaded' | 'comment' | 'order_request';
+  title: string;
+  message: string;
+  link?: string;
+  orderId?: string;
+  orderNumber?: string;
+  read: boolean;
+  createdAt: Date | string;
+  fromUser?: string;
+  fromUserId?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class NotificationService implements OnDestroy {
+  private apiUrl = 'http://localhost:3000/api';
+  private socketUrl = 'http://localhost:3000';
+  private socket: Socket | null = null;
+  private notificationsSubject = new BehaviorSubject<Notification[]>([]);
+  private unreadCountSubject = new BehaviorSubject<number>(0);
+
+  public notifications$ = this.notificationsSubject.asObservable();
+  public unreadCount$ = this.unreadCountSubject.asObservable();
+
+  constructor(private http: HttpClient) {}
+
+  ngOnDestroy(): void {
+    this.disconnectSocket();
+  }
+
+  // Connect to WebSocket for real-time notifications
+  connectSocket(userId: string): void {
+    if (!userId) {
+      console.warn('Cannot connect socket: userId is required');
+      return;
+    }
+
+    console.log('Connecting to WebSocket for user:', userId);
+
+    // Disconnect existing socket if any
+    this.disconnectSocket();
+
+    // Create new socket connection
+    this.socket = io(`${this.socketUrl}/notifications`, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+
+    // Handle connection
+    this.socket.on('connect', () => {
+      console.log('✅ WebSocket connected, socket ID:', this.socket?.id);
+      // Register user with socket
+      if (this.socket) {
+        console.log('Registering user with socket:', userId);
+        this.socket.emit('register', { userId }, (response: any) => {
+          console.log('Registration response:', response);
+        });
+      }
+
+      // Fetch initial notifications
+      this.fetchNotifications(userId).subscribe({
+        next: () => console.log('Initial notifications fetched'),
+        error: (err) => console.error('Error fetching initial notifications:', err)
+      });
+    });
+
+    // Handle incoming notifications
+    this.socket.on('notification', (notification: Notification) => {
+      console.log('🔔 New notification received:', notification);
+      const currentNotifications = this.notificationsSubject.value;
+      this.notificationsSubject.next([notification, ...currentNotifications]);
+      this.updateUnreadCount([notification, ...currentNotifications]);
+    });
+
+    // Handle unread count updates
+    this.socket.on('unreadCountUpdate', (data: { count: number }) => {
+      console.log('📊 Unread count update:', data.count);
+      this.unreadCountSubject.next(data.count);
+    });
+
+    // Handle disconnect
+    this.socket.on('disconnect', (reason: string) => {
+      console.log('❌ WebSocket disconnected:', reason);
+    });
+
+    // Handle errors
+    this.socket.on('connect_error', (error) => {
+      console.error('🚫 WebSocket connection error:', error.message);
+    });
+
+    // Handle reconnection
+    this.socket.on('reconnect', (attemptNumber: number) => {
+      console.log('🔄 WebSocket reconnected after', attemptNumber, 'attempts');
+      if (this.socket) {
+        this.socket.emit('register', { userId });
+      }
+    });
+  }
+
+  // Disconnect WebSocket
+  disconnectSocket(): void {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+
+  // Fetch notifications from backend
+  fetchNotifications(userId: string): Observable<any> {
+    return new Observable(observer => {
+      this.http.get<any>(`${this.apiUrl}/notifications/${userId}`)
+        .subscribe({
+          next: (response) => {
+            const notifications = response.data || [];
+            this.notificationsSubject.next(notifications);
+            this.updateUnreadCount(notifications);
+            observer.next(response);
+            observer.complete();
+          },
+          error: (error) => {
+            console.error('Error fetching notifications:', error);
+            observer.error(error);
+          }
+        });
+    });
+  }
+
+  // Create a notification
+  createNotification(notification: Partial<Notification>): Observable<any> {
+    console.log('📮 Posting notification to API:', notification);
+    return new Observable(observer => {
+      this.http.post<any>(`${this.apiUrl}/notifications`, notification)
+        .subscribe({
+          next: (response) => {
+            console.log('✅ Notification API response:', response);
+            observer.next(response);
+            observer.complete();
+          },
+          error: (error) => {
+            console.error('❌ Notification API error:', error);
+            observer.error(error);
+          }
+        });
+    });
+  }
+
+  // Mark notification as read
+  markAsRead(notificationId: string): Observable<any> {
+    return new Observable(observer => {
+      this.http.patch<any>(`${this.apiUrl}/notifications/${notificationId}/read`, {})
+        .subscribe({
+          next: (response) => {
+            // Update local state
+            const currentNotifications = this.notificationsSubject.value;
+            const updatedNotifications = currentNotifications.map(n =>
+              n._id === notificationId ? { ...n, read: true } : n
+            );
+            this.notificationsSubject.next(updatedNotifications);
+            this.updateUnreadCount(updatedNotifications);
+            observer.next(response);
+            observer.complete();
+          },
+          error: (error) => {
+            console.error('Error marking notification as read:', error);
+            observer.error(error);
+          }
+        });
+    });
+  }
+
+  // Mark all notifications as read
+  markAllAsRead(userId: string): Observable<any> {
+    return new Observable(observer => {
+      this.http.patch<any>(`${this.apiUrl}/notifications/${userId}/read-all`, {})
+        .subscribe({
+          next: (response) => {
+            // Update local state
+            const currentNotifications = this.notificationsSubject.value;
+            const updatedNotifications = currentNotifications.map(n => ({ ...n, read: true }));
+            this.notificationsSubject.next(updatedNotifications);
+            this.updateUnreadCount(updatedNotifications);
+            observer.next(response);
+            observer.complete();
+          },
+          error: (error) => {
+            console.error('Error marking all notifications as read:', error);
+            observer.error(error);
+          }
+        });
+    });
+  }
+
+  // Delete a notification
+  deleteNotification(notificationId: string): Observable<any> {
+    return new Observable(observer => {
+      this.http.delete<any>(`${this.apiUrl}/notifications/${notificationId}`)
+        .subscribe({
+          next: (response) => {
+            // Update local state
+            const currentNotifications = this.notificationsSubject.value;
+            const updatedNotifications = currentNotifications.filter(n => n._id !== notificationId);
+            this.notificationsSubject.next(updatedNotifications);
+            this.updateUnreadCount(updatedNotifications);
+            observer.next(response);
+            observer.complete();
+          },
+          error: (error) => {
+            console.error('Error deleting notification:', error);
+            observer.error(error);
+          }
+        });
+    });
+  }
+
+  // Create mention notification
+  createMentionNotification(
+    mentionedUserId: string,
+    fromUserName: string,
+    fromUserId: string,
+    orderNumber: string,
+    orderId: string,
+    commentText: string
+  ): Observable<any> {
+    console.log('📢 Creating mention notification for user:', mentionedUserId);
+
+    const notification: Partial<Notification> = {
+      userId: mentionedUserId,
+      type: 'mention',
+      title: `${fromUserName} mentioned you`,
+      message: `${fromUserName} mentioned you in order ${orderNumber}: "${commentText.substring(0, 100)}${commentText.length > 100 ? '...' : ''}"`,
+      link: `/orders-management?order=${orderId}`,
+      orderId: orderId,
+      orderNumber: orderNumber,
+      fromUser: fromUserName,
+      fromUserId: fromUserId,
+      read: false
+      // createdAt will be added by backend automatically
+    };
+
+    console.log('📤 Sending notification to API:', notification);
+    return this.createNotification(notification);
+  }
+
+  // Update unread count
+  private updateUnreadCount(notifications: Notification[]): void {
+    const unreadCount = notifications.filter(n => !n.read).length;
+    this.unreadCountSubject.next(unreadCount);
+  }
+
+  // Get current notifications
+  getCurrentNotifications(): Notification[] {
+    return this.notificationsSubject.value;
+  }
+
+  // Get unread count
+  getUnreadCount(): number {
+    return this.unreadCountSubject.value;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Order Activity & Comments (Real-time)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Join order room to receive real-time updates
+  joinOrderRoom(orderId: string): void {
+    if (!this.socket) {
+      console.warn('Cannot join order room: socket not connected');
+      return;
+    }
+
+    console.log('📥 Joining order room:', orderId);
+    this.socket.emit('joinOrder', { orderId }, (response: any) => {
+      console.log('Join order response:', response);
+    });
+  }
+
+  // Leave order room
+  leaveOrderRoom(orderId: string): void {
+    if (!this.socket) {
+      return;
+    }
+
+    console.log('📤 Leaving order room:', orderId);
+    this.socket.emit('leaveOrder', { orderId }, (response: any) => {
+      console.log('Leave order response:', response);
+    });
+  }
+
+  // Listen for order activity updates
+  onOrderActivity(): Observable<{ orderId: string; activity: any }> {
+    return new Observable(observer => {
+      if (!this.socket) {
+        observer.error('Socket not connected');
+        return;
+      }
+
+      this.socket.on('orderActivity', (data: { orderId: string; activity: any }) => {
+        console.log('📬 Order activity received:', data);
+        observer.next(data);
+      });
+
+      // Cleanup
+      return () => {
+        if (this.socket) {
+          this.socket.off('orderActivity');
+        }
+      };
+    });
+  }
+
+  // Listen for order updates
+  onOrderUpdate(): Observable<{ orderId: string; update: any }> {
+    return new Observable(observer => {
+      if (!this.socket) {
+        observer.error('Socket not connected');
+        return;
+      }
+
+      this.socket.on('orderUpdate', (data: { orderId: string; update: any }) => {
+        console.log('📦 Order update received:', data);
+        observer.next(data);
+      });
+
+      // Cleanup
+      return () => {
+        if (this.socket) {
+          this.socket.off('orderUpdate');
+        }
+      };
+    });
+  }
+}

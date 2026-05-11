@@ -7,10 +7,6 @@
         <h1 class="page-title">My Orders</h1>
         <p class="page-subtitle">Track and manage your company's B2B orders</p>
       </div>
-      <a routerLink="/order-create" class="btn btn-primary">
-        <i class="pi pi-plus"></i>
-        New Order
-      </a>
     </div>
 
     <!-- Summary Cards -->
@@ -64,10 +60,7 @@
     <div class="empty-state" *ngIf="!loading() && !error() && orders().length === 0">
       <i class="pi pi-shopping-bag"></i>
       <h3>No orders yet</h3>
-      <p>You haven't placed any B2B orders yet. Get started by creating your first order.</p>
-      <a routerLink="/order-create" class="btn btn-primary">
-        <i class="pi pi-plus"></i> Create First Order
-      </a>
+      <p>You haven't placed any B2B orders yet.</p>
     </div>
 
     <!-- Orders List -->

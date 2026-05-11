@@ -9,6 +9,7 @@ export interface ContactPerson {
   position?: string;
   phone?: string;
   email?: string;
+  linkedinPage?: string;
 }
 
 export interface Customer {

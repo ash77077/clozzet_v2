@@ -47,12 +47,11 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.6rem 1.25rem;
+      padding: 0.3rem 0.7rem;
       border: none;
       background: transparent;
       color: rgba(255, 255, 255, 0.7);
       border-radius: 0.5rem;
-      font-size: 0.875rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -60,7 +59,7 @@
 
       @media (max-width: 768px) {
         flex: 1;
-        padding: 0.5rem 0.75rem;
+        padding: 0.2rem 0.3rem;
         font-size: 0.8rem;
         justify-content: center;
       }
@@ -115,7 +114,7 @@
 
     @media (max-width: 768px) {
       width: 100%;
-      overflow-x: auto;
+      //overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
   }
@@ -300,6 +299,10 @@
   }
   
   .user-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
     .user-dropdown-container {
       position: relative;
 

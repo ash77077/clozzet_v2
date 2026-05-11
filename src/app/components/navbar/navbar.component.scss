@@ -10,6 +10,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+  isolation: isolate;
 
   &.scrolled {
     background: rgba(255, 255, 255, 0.7);
@@ -194,6 +195,10 @@
 
     .user-dropdown-container {
       position: relative;
+      z-index: 200;
+
+      // Ensure touch events work properly on mobile
+      -webkit-tap-highlight-color: transparent;
 
       .user-icon-btn {
         width: 42px;
@@ -207,10 +212,16 @@
         cursor: pointer;
         transition: all 0.3s ease;
         box-shadow: 0 2px 8px rgba(255, 114, 0, 0.3);
+        position: relative;
+        z-index: 201;
 
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(255, 114, 0, 0.4);
+        }
+
+        &:active {
+          transform: translateY(0);
         }
 
         svg {
@@ -227,18 +238,29 @@
         width: 280px;
         background: white;
         border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
         border: 1px solid #e5e7eb;
         opacity: 0;
         visibility: hidden;
         transform: translateY(-10px);
-        transition: all 0.3s ease;
-        z-index: 100;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 200;
+        pointer-events: none;
+
+        // Mobile adjustments
+        @media (max-width: 1023px) {
+          position: fixed;
+          top: 70px;
+          right: 10px;
+          width: calc(100vw - 20px);
+          max-width: 320px;
+        }
 
         &.active {
           opacity: 1;
           visibility: visible;
           transform: translateY(0);
+          pointer-events: auto;
         }
 
         .user-dropdown-header {
