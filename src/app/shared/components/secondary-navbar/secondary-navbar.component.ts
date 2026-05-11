@@ -7,6 +7,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService, User } from '../../../services/auth.service';
 import { UserRole } from '../../../models/dashboard.models';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 
 interface OrderStats {
   pending: number;
@@ -27,7 +28,8 @@ interface UserOrderStats {
     RouterModule,
     ButtonModule,
     TooltipModule,
-    TranslateModule
+    TranslateModule,
+    NotificationBellComponent
   ],
   templateUrl: './secondary-navbar.component.html',
   styleUrl: './secondary-navbar.component.scss'

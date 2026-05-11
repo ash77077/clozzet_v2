@@ -78,12 +78,15 @@
             type="number"
             id="quantity"
             formControlName="quantity"
-            class="form-input auto-calculated"
-            placeholder="Auto-calculated from sizes"
+            class="form-input"
+            [class.auto-calculated]="hasSizeQuantities()"
+            placeholder="Enter quantity or fill size quantities below"
             min="1"
-            readonly
+            [readonly]="hasSizeQuantities()"
+            (input)="onManualQuantityChange()"
             [class.error]="getFieldError('quantity')">
-          <small class="field-help">This field is automatically calculated from size quantities below</small>
+          <small class="field-help" *ngIf="hasSizeQuantities()">Auto-calculated from size quantities below</small>
+          <small class="field-help" *ngIf="!hasSizeQuantities()">Enter total quantity or specify individual size quantities below</small>
           <span class="error-message" *ngIf="getFieldError('quantity')">
             {{ getFieldError('quantity') }}
           </span>
@@ -223,12 +226,23 @@
 
       <!-- Size Quantities -->
       <div class="form-group full-width">
-        <label class="form-label">Size Quantities*</label>
+        <label class="form-label">Size Quantities</label>
         <div class="size-quantity-grid">
-          <div 
-            *ngFor="let size of getSizesForClothType()" 
-            class="size-quantity-item">
-            <label class="size-label">{{ size }}</label>
+          <div
+            *ngFor="let size of getSizesForClothType()"
+            class="size-quantity-item"
+            [class.custom-size-item]="isCustomSize(size)">
+            <label class="size-label">
+              {{ size }}
+              <button
+                *ngIf="isCustomSize(size)"
+                type="button"
+                class="remove-size-btn"
+                (click)="removeCustomSize(size)"
+                title="Remove this size">
+                ×
+              </button>
+            </label>
             <input
               type="number"
               [id]="'size-qty-' + size"
@@ -239,20 +253,34 @@
               placeholder="Qty">
           </div>
         </div>
-        
+
+        <!-- Add Custom Size -->
+        <div class="add-size-container" *ngIf="selectedClothType">
+          <input
+            type="text"
+            [(ngModel)]="newSizeName"
+            class="add-size-input"
+            placeholder="Enter size (e.g., 5XL, 6XL)"
+            (keyup.enter)="onAddCustomSize()"
+            maxlength="10">
+          <button
+            type="button"
+            class="add-size-btn"
+            (click)="onAddCustomSize()"
+            [disabled]="!newSizeName || newSizeName.trim() === ''">
+            + Add Size
+          </button>
+        </div>
+
         <!-- Total Quantity Display -->
         <div class="total-quantity-display" *ngIf="hasSizeQuantities()">
           <span class="total-label">Total Quantity:</span>
           <span class="total-value">{{ getTotalQuantity() }} pieces</span>
         </div>
-        
+
         <div class="size-help-text">
-          <small>Enter the quantity needed for each size. Total quantity will be calculated automatically.</small>
+          <small>Enter the quantity needed for each size. You can add custom sizes like 4XL, 5XL, 6XL, etc. Total quantity will be calculated automatically, or enter it manually below.</small>
         </div>
-        
-        <span class="error-message" *ngIf="!hasSizeQuantities() && selectedClothType">
-          Please specify quantities for at least one size
-        </span>
       </div>
     </div>
 

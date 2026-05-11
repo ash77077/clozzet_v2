@@ -1,0 +1,1030 @@
+<div class="orders-management-container">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-item">Dashboard</a>
+    <span class="breadcrumb-separator">›</span>
+    <span class="breadcrumb-current">Orders Management</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <i class="pi pi-list-check"></i>
+        Orders Management
+      </h1>
+      <p class="page-description">Track and manage all orders across every stage</p>
+    </div>
+    <div class="header-right">
+      <button class="add-order-btn" (click)="openAddOrderDialog()" *ngIf="isAdminOrManager()">
+        <i class="pi pi-plus"></i>
+        Add Order
+      </button>
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode === 'kanban'" (click)="viewMode = 'kanban'" pTooltip="Kanban View">
+          <i class="pi pi-th-large"></i>
+          <span>Board</span>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" pTooltip="Table View">
+          <i class="pi pi-table"></i>
+          <span>Table</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Row -->
+  <div class="stats-row" *ngIf="!isLoading && !error">
+    <div class="stat-card stat-total">
+      <div class="stat-icon"><i class="pi pi-shopping-bag"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalOrders }}</span>
+        <span class="stat-label">Total Orders</span>
+      </div>
+    </div>
+    <div class="stat-card stat-todo">
+      <div class="stat-icon"><i class="pi pi-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ pendingCount }}</span>
+        <span class="stat-label">To-Do</span>
+      </div>
+    </div>
+    <div class="stat-card stat-inprogress">
+      <div class="stat-icon"><i class="pi pi-spinner"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ inProgressCount }}</span>
+        <span class="stat-label">In Progress</span>
+      </div>
+    </div>
+    <div class="stat-card stat-delivered">
+      <div class="stat-icon"><i class="pi pi-check-square"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ deliveredCount }}</span>
+        <span class="stat-label">Delivered</span>
+      </div>
+    </div>
+    <div class="stat-card stat-urgent">
+      <div class="stat-icon"><i class="pi pi-exclamation-triangle"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ urgentCount }}</span>
+        <span class="stat-label">Urgent</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading orders...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <i class="pi pi-exclamation-circle" style="font-size: 2.5rem; color: var(--red-400)"></i>
+    <h3>Failed to load orders</h3>
+    <p>{{ error }}</p>
+    <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadOrders()" severity="secondary"></p-button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar" *ngIf="!isLoading && !error">
+    <div class="search-wrap">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        type="text"
+        pInputText
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Search by order number, client, sales person…"
+        class="search-input" />
+    </div>
+    <div class="filter-wrap">
+      <p-select
+        [options]="availableStatuses"
+        [(ngModel)]="selectedStatusFilter"
+        (onChange)="onStatusFilterChange()"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All Statuses"
+        styleClass="status-filter">
+      </p-select>
+    </div>
+  </div>
+
+  <!-- ════════════ KANBAN VIEW ════════════ -->
+  <div class="kanban-board" *ngIf="viewMode === 'kanban' && !isLoading && !error">
+    <div class="kanban-column" *ngFor="let col of kanbanColumns; let colIndex = index" [ngClass]="col.colorClass">
+
+      <div class="col-header">
+        <div class="col-title">
+          <i [class]="col.icon"></i>
+          <span>{{ col.label }}</span>
+        </div>
+        <span class="col-badge">{{ col.orders.length }}</span>
+      </div>
+
+      <div class="col-cards"
+           cdkDropList
+           [id]="'kanban-list-' + colIndex"
+           [cdkDropListData]="col.orders"
+           [cdkDropListConnectedTo]="getConnectedLists(colIndex)"
+           (cdkDropListDropped)="onCardDrop($event, col.status)">
+        <div class="col-empty" *ngIf="col.orders.length === 0">
+          <i class="pi pi-inbox"></i>
+          <span>No orders</span>
+        </div>
+
+        <div class="order-card" *ngFor="let order of col.orders" cdkDrag>
+          <!-- Custom placeholder to maintain exact card dimensions -->
+          <div class="drag-placeholder" *cdkDragPlaceholder></div>
+
+          <div class="card-top">
+            <span class="order-number">{{ order.orderNumber }}</span>
+          </div>
+
+          <div class="card-client">
+            <i class="pi pi-user"></i>
+            <span>{{ order.clientName }}</span>
+          </div>
+
+          <div class="card-meta">
+            <span class="meta-pill">
+              <i class="pi pi-box"></i>
+              {{ order.quantity }} units
+            </span>
+            <span class="meta-pill" [class.pill-urgent]="isDeadlineUrgent(order.deadline)">
+              <i class="pi pi-calendar"></i>
+              {{ formatDate(order.deadline) }}
+            </span>
+          </div>
+
+          <div class="card-type" *ngIf="order.clothType">
+            <i class="pi pi-tag"></i>
+            {{ order.clothType }}
+          </div>
+
+          <div class="card-actions">
+            <button class="card-btn btn-view" (click)="viewOrderDetails(order)" pTooltip="View Details">
+              <i class="pi pi-eye"></i>
+            </button>
+            <button class="card-btn btn-status" (click)="openStatusDialog(order)" pTooltip="Change Status" *ngIf="isAdminOrManager()">
+              <i class="pi pi-arrows-h"></i>
+            </button>
+            <button
+              class="card-btn btn-next"
+              *ngIf="isAdminOrManager() && getNextStatus(col.status)"
+              (click)="quickStatusChange(order, getNextStatus(col.status)!)"
+              [pTooltip]="'Move to ' + getStatusLabel(getNextStatus(col.status)!)">
+              <i class="pi pi-arrow-right"></i>
+            </button>
+            <button class="card-btn btn-delete" (click)="deleteOrder(order)" pTooltip="Delete" *ngIf="isAdminOrManager()">
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ TABLE VIEW ════════════ -->
+  <div class="table-section" *ngIf="viewMode === 'table' && !isLoading && !error">
+    <p-table
+      [value]="filteredOrders"
+      [paginator]="true"
+      [rows]="15"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} orders"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-gridlines p-datatable-striped"
+      [scrollable]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="orderNumber" style="min-width:140px">Order # <p-sortIcon field="orderNumber"></p-sortIcon></th>
+          <th pSortableColumn="clientName" style="min-width:180px">Client <p-sortIcon field="clientName"></p-sortIcon></th>
+          <th pSortableColumn="salesPerson" style="min-width:140px">Sales Person <p-sortIcon field="salesPerson"></p-sortIcon></th>
+          <th pSortableColumn="quantity" style="min-width:90px">Qty <p-sortIcon field="quantity"></p-sortIcon></th>
+          <th style="min-width:110px">Priority</th>
+          <th style="min-width:120px">Status</th>
+          <th pSortableColumn="deadline" style="min-width:130px">Deadline <p-sortIcon field="deadline"></p-sortIcon></th>
+          <th style="min-width:160px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td><strong>{{ order.orderNumber }}</strong></td>
+          <td>
+            <div class="client-cell">
+              <span class="client-name">{{ order.clientName }}</span>
+              <span class="cloth-type">{{ order.clothType }}</span>
+            </div>
+          </td>
+          <td>{{ order.salesPerson }}</td>
+          <td><strong>{{ order.quantity }}</strong></td>
+          <td><app-priority-badge [priority]="order.priority"></app-priority-badge></td>
+          <td>
+            <p-tag [value]="getStatusLabel(order.status)" [severity]="getStatusSeverity(order.status)"></p-tag>
+          </td>
+          <td>
+            <span [class.deadline-urgent]="isDeadlineUrgent(order.deadline)">{{ formatDate(order.deadline) }}</span>
+          </td>
+          <td>
+            <div class="action-group">
+              <p-button icon="pi pi-eye" (onClick)="viewOrderDetails(order)" severity="info" [text]="true" [rounded]="true" pTooltip="View"></p-button>
+              <p-button icon="pi pi-arrows-h" (onClick)="openStatusDialog(order)" severity="warn" [text]="true" [rounded]="true" pTooltip="Change Status" *ngIf="isAdminOrManager()"></p-button>
+              <p-button icon="pi pi-trash" (onClick)="deleteOrder(order)" severity="danger" [text]="true" [rounded]="true" pTooltip="Delete" *ngIf="isAdminOrManager()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">
+            <div class="table-empty">
+              <i class="pi pi-shopping-cart"></i>
+              <h3>No Orders Found</h3>
+              <p>Try adjusting your search or filter.</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- ════════ Jira-Style Order Details Dialog ════════ -->
+  <p-dialog
+    [(visible)]="showOrderDetails"
+    [modal]="true"
+    [style]="{width: '95vw', maxWidth: '1380px'}"
+    [contentStyle]="{'padding': '0', 'overflow': 'hidden'}"
+    [draggable]="false"
+    [resizable]="false"
+    [showHeader]="false"
+    styleClass="jira-order-modal"
+    *ngIf="selectedOrder">
+
+    <div class="jira-modal-wrapper">
+
+      <!-- ── Custom modal header ── -->
+      <div class="jira-modal-header">
+        <div class="jira-header-left">
+          <div class="jira-breadcrumb">
+            <span>Orders</span>
+            <i class="pi pi-chevron-right"></i>
+            <span class="jira-order-num">{{ selectedOrder.orderNumber }}</span>
+          </div>
+          <div class="jira-title-row">
+            <h2 class="jira-title">{{ selectedOrder.clientName }}</h2>
+            <div class="jira-header-badges">
+              <app-priority-badge [priority]="selectedOrder.priority"></app-priority-badge>
+              <p-select
+                [options]="statusOptions"
+                [(ngModel)]="detailStatus"
+                (onChange)="onDetailStatusChange()"
+                optionLabel="label"
+                optionValue="value"
+                appendTo="body"
+                styleClass="jira-status-select">
+              </p-select>
+            </div>
+          </div>
+        </div>
+        <div class="jira-header-right">
+          <button class="jira-hdr-btn" (click)="copyOrderLink()" pTooltip="Copy link to this order">
+            <i class="pi pi-link"></i> Copy Link
+          </button>
+          <button class="jira-hdr-btn" (click)="enableEditMode()" *ngIf="!isEditMode && isAdminOrManager()" pTooltip="Edit order">
+            <i class="pi pi-pencil"></i> Edit
+          </button>
+          <button class="jira-hdr-btn btn-cancel-edit" (click)="cancelEdit()" *ngIf="isEditMode">
+            <i class="pi pi-times"></i> Cancel
+          </button>
+          <button class="jira-hdr-btn btn-save-edit" (click)="saveEdit()" *ngIf="isEditMode" [disabled]="isEditSaving">
+            <i class="pi pi-check"></i> {{ isEditSaving ? 'Saving…' : 'Save' }}
+          </button>
+          <button class="jira-hdr-btn btn-delete" (click)="closeOrderDetails(); deleteOrder(selectedOrder!)" *ngIf="isAdminOrManager()" pTooltip="Delete order">
+            <i class="pi pi-trash"></i>
+          </button>
+          <button class="jira-close-btn" (click)="closeOrderDetails()" pTooltip="Close">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Two-column body ── -->
+      <div class="jira-body">
+
+        <!-- ═══════ LEFT PANEL ═══════ -->
+        <div class="jira-left">
+
+          <!-- ──── VIEW MODE ──── -->
+          <ng-container *ngIf="!isEditMode">
+
+            <!-- Creator + dates card -->
+            <div class="jira-section creator-section">
+              <div class="creator-card">
+                <div class="creator-avatar" [style.background]="getAvatarColor(selectedOrder.salesPerson)">
+                  {{ getInitials(selectedOrder.salesPerson) }}
+                </div>
+                <div class="creator-info">
+                  <span class="creator-role">Created by</span>
+                  <span class="creator-name">{{ selectedOrder.salesPerson }}</span>
+                  <span class="creator-date">{{ formatDate(selectedOrder.createdAt) }}</span>
+                </div>
+              </div>
+              <div class="dates-strip">
+                <div class="date-chip">
+                  <i class="pi pi-play-circle"></i>
+                  <span class="dc-label">Start</span>
+                  <span class="dc-value">{{ selectedOrder.startDate ? formatDate(selectedOrder.startDate) : '—' }}</span>
+                </div>
+                <div class="date-chip" [class.urgent-chip]="isDeadlineUrgent(selectedOrder.deadline)">
+                  <i class="pi pi-flag"></i>
+                  <span class="dc-label">Deadline</span>
+                  <span class="dc-value">{{ formatDate(selectedOrder.deadline) }}</span>
+                </div>
+                <div class="date-chip">
+                  <i class="pi pi-box"></i>
+                  <span class="dc-label">Qty</span>
+                  <span class="dc-value">{{ selectedOrder.quantity }} units</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Order details -->
+            <div class="jira-section">
+              <h4 class="jira-section-label"><i class="pi pi-info-circle"></i> Order Details</h4>
+              <div class="detail-grid">
+                <div class="detail-row">
+                  <span class="dk">Client</span>
+                  <span class="dv">{{ selectedOrder.clientName }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="dk">Sales Person</span>
+                  <span class="dv">{{ selectedOrder.salesPerson }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="dk">Cloth Type</span>
+                  <span class="dv">{{ selectedOrder.clothType }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="dk">Textile</span>
+                  <span class="dv">{{ selectedOrder.textileType }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.designMethod || selectedOrder.printingMethod">
+                  <span class="dk">Design Method</span>
+                  <span class="dv">{{ selectedOrder.designMethod || selectedOrder.printingMethod }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.logoPosition">
+                  <span class="dk">Logo Position</span>
+                  <span class="dv">{{ selectedOrder.logoPosition }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.logoSize">
+                  <span class="dk">Logo Size</span>
+                  <span class="dv">{{ selectedOrder.logoSize }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.customColorDetails">
+                  <span class="dk">Color Details</span>
+                  <span class="dv">{{ selectedOrder.customColorDetails }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.specialInstructions">
+                  <span class="dk">Instructions</span>
+                  <span class="dv wrap">{{ selectedOrder.specialInstructions }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.shippingAddress">
+                  <span class="dk">Shipping</span>
+                  <span class="dv wrap">{{ selectedOrder.shippingAddress }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Size breakdown -->
+            <div class="jira-section" *ngIf="selectedOrder.sizeQuantities && getObjectKeys(selectedOrder.sizeQuantities).length > 0">
+              <h4 class="jira-section-label"><i class="pi pi-chart-bar"></i> Size Breakdown</h4>
+              <div class="size-breakdown">
+                <div class="sb-header-row">
+                  <div class="sb-cell sb-hdr" *ngFor="let sz of getObjectKeys(selectedOrder.sizeQuantities)">{{ sz }}</div>
+                </div>
+                <div class="sb-value-row">
+                  <div class="sb-cell" *ngFor="let sz of getObjectKeys(selectedOrder.sizeQuantities)">{{ selectedOrder.sizeQuantities[sz] }}</div>
+                </div>
+              </div>
+            </div>
+
+          </ng-container>
+
+          <!-- ──── EDIT MODE ──── -->
+          <ng-container *ngIf="isEditMode && editOrderForm">
+            <div class="jira-section edit-mode-form" [formGroup]="editOrderForm">
+              <h4 class="jira-section-label"><i class="pi pi-pencil"></i> Edit Order</h4>
+
+              <div class="edit-grid">
+                <div class="edit-field">
+                  <label>Client Name <span class="req">*</span></label>
+                  <input pInputText formControlName="clientName" class="full-width" placeholder="Client name" />
+                </div>
+                <div class="edit-field">
+                  <label>Sales Person</label>
+                  <input pInputText formControlName="salesPerson" class="full-width" placeholder="Sales representative" />
+                </div>
+                <div class="edit-field">
+                  <label>Priority</label>
+                  <p-select formControlName="priority" [options]="priorityOptions" optionLabel="label" optionValue="value" styleClass="full-width" appendTo="body"></p-select>
+                </div>
+                <div class="edit-field">
+                  <label>Status</label>
+                  <p-select formControlName="status" [options]="statusOptions" optionLabel="label" optionValue="value" styleClass="full-width" appendTo="body"></p-select>
+                </div>
+                <div class="edit-field">
+                  <label>Cloth Type</label>
+                  <p-select formControlName="clothType" [options]="clothTypes" styleClass="full-width" appendTo="body" placeholder="Select cloth type"></p-select>
+                </div>
+                <div class="edit-field">
+                  <label>Textile Type</label>
+                  <p-select formControlName="textileType" [options]="textileTypes" styleClass="full-width" appendTo="body" placeholder="Select textile"></p-select>
+                </div>
+                <div class="edit-field">
+                  <label>Start Date</label>
+                  <input type="date" formControlName="startDate" class="date-input full-width" />
+                </div>
+                <div class="edit-field">
+                  <label>Deadline <span class="req">*</span></label>
+                  <input type="date" formControlName="deadline" class="date-input full-width" />
+                </div>
+                <div class="edit-field">
+                  <label>Logo Position</label>
+                  <input pInputText formControlName="logoPosition" class="full-width" placeholder="e.g. Left chest" />
+                </div>
+                <div class="edit-field">
+                  <label>Logo Size</label>
+                  <input pInputText formControlName="logoSize" class="full-width" placeholder="e.g. 10cm × 5cm" />
+                </div>
+                <div class="edit-field full-span">
+                  <label>Color Details</label>
+                  <textarea pTextarea formControlName="customColorDetails" rows="2" class="full-width" placeholder="Custom color specs…"></textarea>
+                </div>
+                <div class="edit-field full-span">
+                  <label>Special Instructions</label>
+                  <textarea pTextarea formControlName="specialInstructions" rows="3" class="full-width" placeholder="Production instructions…"></textarea>
+                </div>
+                <div class="edit-field full-span">
+                  <label>Shipping Address</label>
+                  <textarea pTextarea formControlName="shippingAddress" rows="2" class="full-width" placeholder="Delivery address…"></textarea>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- ──── Attachments ──── -->
+          <div class="jira-section attachments-section">
+            <div class="attach-header">
+              <h4 class="jira-section-label"><i class="pi pi-paperclip"></i> Attachments</h4>
+              <label class="attach-trigger" [for]="'jira-file-' + (selectedOrder._id || selectedOrder.id)">
+                <i class="pi pi-plus"></i> Attach
+                <input type="file" multiple
+                  [id]="'jira-file-' + (selectedOrder._id || selectedOrder.id)"
+                  (change)="onFileSelect($event)"
+                  style="display:none" />
+              </label>
+            </div>
+
+            <!-- Pending uploads -->
+            <div class="pending-files" *ngIf="pendingFiles.length > 0">
+              <div class="pending-file" *ngFor="let pf of pendingFiles; let i = index">
+                <i class="pi pi-file"></i>
+                <span class="pf-name">{{ pf.name }}</span>
+                <span class="pf-size">{{ (pf.size / 1024).toFixed(0) }} KB</span>
+                <button class="pf-remove" (click)="removePendingFile(i)"><i class="pi pi-times"></i></button>
+              </div>
+              <button class="upload-now-btn" (click)="uploadPendingFiles()" [disabled]="isUploadingFiles">
+                <i class="pi pi-cloud-upload"></i>
+                {{ isUploadingFiles ? 'Uploading…' : 'Upload ' + pendingFiles.length + ' file(s)' }}
+              </button>
+            </div>
+
+            <!-- Existing files -->
+            <div class="files-preview-grid" *ngIf="hasFiles()">
+              <!-- Logo Files -->
+              <ng-container *ngIf="selectedOrder.logoFiles && selectedOrder.logoFiles.length > 0">
+                <div class="file-preview-item" *ngFor="let f of selectedOrder.logoFiles">
+                  <div class="file-preview-card" *ngIf="f">
+                    <div class="file-preview-content" (click)="openImagePreview(f)">
+                      <div class="file-preview-thumb" *ngIf="isImageFile(f)">
+                        <img
+                          [src]="getFileUrl(f)"
+                          [alt]="getFileName(f)"
+                          loading="lazy"
+                          (error)="onImageError($event)" />
+                      </div>
+                      <div class="file-preview-icon" *ngIf="!isImageFile(f)">
+                        <i class="pi pi-file"></i>
+                      </div>
+                      <div class="file-preview-info">
+                        <span class="file-type-badge logo">Logo</span>
+                        <span class="file-name">{{ getFileName(f) }}</span>
+                      </div>
+                    </div>
+                    <button class="file-download-btn" (click)="downloadFile(f)" pTooltip="Download">
+                      <i class="pi pi-download"></i>
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- Design Files -->
+              <ng-container *ngIf="selectedOrder.designFiles && selectedOrder.designFiles.length > 0">
+                <div class="file-preview-item" *ngFor="let f of selectedOrder.designFiles">
+                  <div class="file-preview-card" *ngIf="f">
+                    <div class="file-preview-content" (click)="openImagePreview(f)">
+                      <div class="file-preview-thumb" *ngIf="isImageFile(f)">
+                        <img
+                          [src]="getFileUrl(f)"
+                          [alt]="getFileName(f)"
+                          loading="lazy"
+                          (error)="onImageError($event)" />
+                      </div>
+                      <div class="file-preview-icon" *ngIf="!isImageFile(f)">
+                        <i class="pi pi-file"></i>
+                      </div>
+                      <div class="file-preview-info">
+                        <span class="file-type-badge design">Design</span>
+                        <span class="file-name">{{ getFileName(f) }}</span>
+                      </div>
+                    </div>
+                    <button class="file-download-btn" (click)="downloadFile(f)" pTooltip="Download">
+                      <i class="pi pi-download"></i>
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- Reference Images -->
+              <ng-container *ngIf="selectedOrder.referenceImages && selectedOrder.referenceImages.length > 0">
+                <div class="file-preview-item" *ngFor="let f of selectedOrder.referenceImages">
+                  <div class="file-preview-card" *ngIf="f">
+                    <div class="file-preview-content" (click)="openImagePreview(f)">
+                      <div class="file-preview-thumb" *ngIf="isImageFile(f)">
+                        <img
+                          [src]="getFileUrl(f)"
+                          [alt]="getFileName(f)"
+                          loading="lazy"
+                          (error)="onImageError($event)" />
+                      </div>
+                      <div class="file-preview-icon" *ngIf="!isImageFile(f)">
+                        <i class="pi pi-file"></i>
+                      </div>
+                      <div class="file-preview-info">
+                        <span class="file-type-badge reference">Reference</span>
+                        <span class="file-name">{{ getFileName(f) }}</span>
+                      </div>
+                    </div>
+                    <button class="file-download-btn" (click)="downloadFile(f)" pTooltip="Download">
+                      <i class="pi pi-download"></i>
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+
+            <!-- Debug info -->
+            <div *ngIf="!hasFiles() && pendingFiles.length === 0" style="margin-top: 0.5rem;">
+              <div class="no-attach">
+                <i class="pi pi-paperclip"></i>
+                <span>No attachments yet — click Attach to add files</span>
+              </div>
+              <div style="font-size: 0.7rem; color: #999; margin-top: 0.5rem;">
+                Debug: Logo: {{selectedOrder.logoFiles?.length || 0}},
+                Design: {{selectedOrder.designFiles?.length || 0}},
+                Reference: {{selectedOrder.referenceImages?.length || 0}}
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /jira-left -->
+
+        <!-- ═══════ RIGHT PANEL — Activity ═══════ -->
+        <div class="jira-right">
+          <div class="activity-header">
+            <h4><i class="pi pi-list"></i> Activity</h4>
+            <span class="activity-count">{{ orderActivity.length }}</span>
+          </div>
+
+          <!-- Feed -->
+          <div class="activity-feed" #activityFeed>
+            <div class="activity-empty" *ngIf="orderActivity.length === 0">
+              <i class="pi pi-comments"></i>
+              <span>No activity yet</span>
+            </div>
+
+            <div class="activity-item"
+                 *ngFor="let item of orderActivity"
+                 [class]="'act-' + item.type">
+              <div class="act-avatar" [style.background]="item.avatarColor">
+                {{ getInitials(item.author) }}
+              </div>
+              <div class="act-body">
+                <div class="act-meta">
+                  <span class="act-author">{{ item.author }}</span>
+                  <span class="act-date">{{ formatActivityDate(item.date) }}</span>
+                </div>
+
+                <!-- Created -->
+                <div class="act-content act-created" *ngIf="item.type === 'created'">
+                  <i class="pi pi-plus-circle"></i>
+                  <span [innerHTML]="item.content"></span>
+                </div>
+
+                <!-- Status change -->
+                <div class="act-content act-status" *ngIf="item.type === 'status_change'">
+                  <i class="pi pi-arrows-h"></i>
+                  <span>{{ item.content }}</span>
+                </div>
+
+                <!-- Comment -->
+                <div class="act-content act-comment" *ngIf="item.type === 'comment'">
+                  <div class="comment-bubble" [innerHTML]="renderMentions(item.content)"></div>
+                </div>
+
+                <!-- File upload -->
+                <div class="act-content act-file" *ngIf="item.type === 'file_upload'">
+                  <i class="pi pi-paperclip"></i>
+                  <span>{{ item.content }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment box -->
+          <div class="comment-box">
+            <div class="cb-avatar" [style.background]="getAvatarColor((currentUser?.firstName || '') + ' ' + (currentUser?.lastName || ''))">
+              {{ getInitials((currentUser?.firstName || '') + ' ' + (currentUser?.lastName || '')) }}
+            </div>
+            <div class="cb-input-area">
+              <div class="cb-textarea-wrapper">
+                <textarea
+                  #commentTextarea
+                  class="cb-textarea"
+                  [(ngModel)]="commentText"
+                  (input)="onCommentInput($event)"
+                  (keydown)="onCommentKeydown($event)"
+                  placeholder="Add a comment… type @ to mention someone"
+                  rows="3">
+                </textarea>
+
+                <!-- @mention dropdown -->
+                <div class="mention-dropdown" *ngIf="showMentionDropdown && mentionSuggestions.length > 0">
+                  <div class="mention-item"
+                       *ngFor="let u of mentionSuggestions; let mi = index"
+                       [class.mention-selected]="mi === mentionDropdownIndex"
+                       (mousedown)="selectMention(u)">
+                    <div class="mi-avatar" [style.background]="getAvatarColor(u.firstName + ' ' + u.lastName)">
+                      {{ getInitials(u.firstName + ' ' + u.lastName) }}
+                    </div>
+                    <div class="mi-info">
+                      <span class="mi-name">{{ u.firstName }} {{ u.lastName }}</span>
+                      <span class="mi-role">{{ u.role }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cb-footer">
+                <span class="cb-hint">Shift+Enter for new line</span>
+                <button class="cb-submit" (click)="submitComment()" [disabled]="!commentText.trim() || isSubmittingComment">
+                  <i class="pi pi-send"></i>
+                  {{ isSubmittingComment ? 'Sending…' : 'Save' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /jira-right -->
+
+      </div>
+      <!-- /jira-body -->
+    </div>
+    <!-- /jira-modal-wrapper -->
+  </p-dialog>
+
+  <!-- ════════ Status Change Dialog ════════ -->
+  <p-dialog
+    header="Change Order Status"
+    [(visible)]="showStatusDialog"
+    [modal]="true"
+    [style]="{width: '440px'}"
+    [draggable]="false">
+
+    <div class="status-dialog-body" *ngIf="orderToUpdate">
+      <div class="status-current">
+        <span class="status-label-text">Order:</span>
+        <strong>{{ orderToUpdate.orderNumber }}</strong>
+      </div>
+      <div class="status-current">
+        <span class="status-label-text">Current status:</span>
+        <p-tag *ngIf="orderToUpdate.status" [value]="getStatusLabel(orderToUpdate.status)" [severity]="getStatusSeverity(orderToUpdate.status)"></p-tag>
+      </div>
+      <div class="status-select-wrap">
+        <label class="field-label">Move to status</label>
+        <p-select [options]="statusOptions" [(ngModel)]="newStatus" optionLabel="label" optionValue="value" placeholder="Select new status" styleClass="w-full"></p-select>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancel" icon="pi pi-times" severity="secondary" (onClick)="showStatusDialog = false"></p-button>
+      <p-button label="Update" icon="pi pi-check" severity="primary" (onClick)="confirmStatusUpdate()"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- ════════ Image Preview Modal ════════ -->
+  <p-dialog
+    [(visible)]="showImagePreview"
+    [modal]="true"
+    [style]="{width: '90vw', maxWidth: '1200px'}"
+    [contentStyle]="{'padding': '0', 'overflow': 'hidden'}"
+    [draggable]="false"
+    [resizable]="true"
+    [showHeader]="true"
+    [header]="previewImageName"
+    styleClass="image-preview-modal">
+
+    <div class="image-preview-container">
+      <img
+        [src]="previewImageUrl"
+        [alt]="previewImageName"
+        class="preview-image" />
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="preview-footer">
+        <p-button label="Download" icon="pi pi-download" (onClick)="downloadFile(previewImagePath)" severity="secondary"></p-button>
+        <p-button label="Close" icon="pi pi-times" (onClick)="closeImagePreview()" severity="primary"></p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- ════════════════════════════════════════════════════
+       ADD ORDER DIALOG — Multi-step form
+       ════════════════════════════════════════════════════ -->
+  <p-dialog
+    header="Add New Order"
+    [(visible)]="showAddOrderDialog"
+    [modal]="true"
+    [style]="{width: '780px', maxWidth: '95vw'}"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeAddOrderDialog()"
+    styleClass="add-order-modal">
+
+    <div class="add-order-dialog" [formGroup]="addOrderForm">
+
+      <!-- ── Stepper header ── -->
+      <div class="stepper-header">
+        <div class="step-item" *ngFor="let step of [1,2,3,4]"
+             [class.active]="currentStep === step"
+             [class.done]="isStepDone(step)"
+             (click)="goToStep(step)">
+          <div class="step-circle">
+            <i class="pi pi-check" *ngIf="isStepDone(step)"></i>
+            <span *ngIf="!isStepDone(step)">{{ step }}</span>
+          </div>
+          <span class="step-label">
+            {{ step === 1 ? 'Basic Info' : step === 2 ? 'Product & Sizes' : step === 3 ? 'Design' : 'Dates & Notes' }}
+          </span>
+        </div>
+        <div class="stepper-line"></div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           STEP 1 — Basic Information
+           ══════════════════════════════════════════ -->
+      <div class="step-content" *ngIf="currentStep === 1">
+        <h3 class="step-title"><i class="pi pi-info-circle"></i> Basic Information</h3>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label required">Order Number</label>
+            <div class="input-with-icon">
+              <input pInputText formControlName="orderNumber" placeholder="e.g. ORD-20240415-1234" class="full-width" />
+              <button type="button" class="regen-btn" (click)="addOrderForm.patchValue({orderNumber: generateOrderNumber()})" pTooltip="Regenerate">
+                <i class="pi pi-refresh"></i>
+              </button>
+            </div>
+            <span class="field-error" *ngIf="isFieldInvalid('orderNumber')">Order number is required</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label required">Client Name</label>
+            <input pInputText formControlName="clientName" placeholder="Company or client name" class="full-width" />
+            <span class="field-error" *ngIf="isFieldInvalid('clientName')">Client name is required</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label required">Sales Person</label>
+            <input pInputText formControlName="salesPerson" placeholder="Sales representative name" class="full-width" />
+            <span class="field-error" *ngIf="isFieldInvalid('salesPerson')">Sales person is required</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label required">Priority</label>
+            <p-select formControlName="priority" [options]="priorityOptions"
+              optionLabel="label" optionValue="value" placeholder="Select priority" styleClass="full-width" appendTo="body">
+            </p-select>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label required">Initial Status</label>
+            <p-select formControlName="status" [options]="statusOptions"
+              optionLabel="label" optionValue="value" placeholder="Select status" styleClass="full-width" appendTo="body">
+            </p-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           STEP 2 — Product & Sizes
+           ══════════════════════════════════════════ -->
+      <div class="step-content" *ngIf="currentStep === 2">
+        <h3 class="step-title"><i class="pi pi-box"></i> Product & Sizes</h3>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label required">Cloth Type</label>
+            <p-select formControlName="clothType" [options]="clothTypes" placeholder="Select cloth type" styleClass="full-width" appendTo="body"></p-select>
+            <span class="field-error" *ngIf="isFieldInvalid('clothType')">Cloth type is required</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label required">Textile Type</label>
+            <p-select formControlName="textileType" [options]="textileTypes" placeholder="Select textile" styleClass="full-width" appendTo="body"></p-select>
+            <span class="field-error" *ngIf="isFieldInvalid('textileType')">Textile type is required</span>
+          </div>
+        </div>
+
+        <!-- Size quantity grid -->
+        <div class="size-grid-section">
+          <div class="size-grid-header">
+            <span class="size-grid-title"><i class="pi pi-chart-bar"></i> Size Quantities</span>
+            <span class="total-qty-badge">Total: <strong>{{ totalQuantity }}</strong> units</span>
+          </div>
+          <div class="size-grid">
+            <div class="size-cell" *ngFor="let size of sizes">
+              <span class="size-name">{{ size }}</span>
+              <input
+                type="number"
+                class="size-input"
+                [(ngModel)]="sizeQuantities[size]"
+                [ngModelOptions]="{standalone: true}"
+                min="0"
+                placeholder="0" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           STEP 3 — Design
+           ══════════════════════════════════════════ -->
+      <div class="step-content" *ngIf="currentStep === 3">
+        <h3 class="step-title"><i class="pi pi-palette"></i> Design</h3>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label required">Design Method</label>
+            <p-select formControlName="designMethod" [options]="designMethods" placeholder="Select design method" styleClass="full-width" appendTo="body"></p-select>
+            <span class="field-error" *ngIf="isFieldInvalid('designMethod')">Design method is required</span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Logo Position</label>
+            <input pInputText formControlName="logoPosition" placeholder="e.g. Left chest, Back center" class="full-width" />
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Logo Size</label>
+            <input pInputText formControlName="logoSize" placeholder="e.g. 10cm x 5cm" class="full-width" />
+          </div>
+        </div>
+
+        <div class="form-field mt-4">
+          <label class="field-label">Custom Color Details</label>
+          <textarea pTextarea formControlName="customColorDetails" rows="3" placeholder="Describe any custom color specifications…" class="full-width"></textarea>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="form-field mt-4">
+          <label class="field-label"><i class="pi pi-paperclip"></i> Attach Files (Optional)</label>
+          <div class="file-upload-zone">
+            <label class="file-upload-trigger">
+              <i class="pi pi-cloud-upload"></i>
+              <span>Click to upload files</span>
+              <input
+                type="file"
+                multiple
+                accept="image/*,.pdf,.ai,.psd,.xlsx,.xls,.doc,.docx"
+                (change)="onAddOrderFileSelect($event)"
+                style="display:none" />
+            </label>
+            <p class="file-upload-hint">Upload logo, design files, or reference images</p>
+          </div>
+
+          <!-- Pending Files List -->
+	        <div class="image-preview-modal">
+           <div class="pending-files-list" *ngIf="addOrderPendingFiles.length > 0">
+            <div class="pending-file-item" *ngFor="let file of addOrderPendingFiles; let i = index">
+              <div class="pf-icon">
+                <i class="pi" [ngClass]="isImageFile(file.name) ? 'pi-image' : 'pi-file'"></i>
+              </div>
+              <div class="pf-info">
+                <span class="pf-name">{{ file.name }}</span>
+                <span class="pf-size">{{ (file.size / 1024).toFixed(1) }} KB</span>
+              </div>
+              <button type="button" class="pf-remove-btn" (click)="removeAddOrderFile(i)">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+            <div class="files-summary">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ addOrderPendingFiles.length }} file(s) ready to upload</span>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           STEP 4 — Dates & Notes
+           ══════════════════════════════════════════ -->
+      <div class="step-content" *ngIf="currentStep === 4">
+        <h3 class="step-title"><i class="pi pi-calendar"></i> Dates & Notes</h3>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label">Start Date</label>
+            <input type="date" formControlName="startDate" class="date-input full-width" />
+          </div>
+
+          <div class="form-field">
+            <label class="field-label required">Deadline</label>
+            <input type="date" formControlName="deadline" class="date-input full-width" [class.input-error]="isFieldInvalid('deadline')" />
+            <span class="field-error" *ngIf="isFieldInvalid('deadline')">Deadline is required</span>
+          </div>
+        </div>
+
+        <div class="form-field mt-3">
+          <label class="field-label">Special Instructions</label>
+          <textarea pTextarea formControlName="specialInstructions" rows="3" placeholder="Any special instructions for production…" class="full-width"></textarea>
+        </div>
+
+        <div class="form-field mt-3">
+          <label class="field-label">Shipping Address</label>
+          <textarea pTextarea formControlName="shippingAddress" rows="3" placeholder="Delivery address…" class="full-width"></textarea>
+        </div>
+
+        <!-- Order summary -->
+        <div class="order-summary-box">
+          <h4><i class="pi pi-list"></i> Order Summary</h4>
+          <div class="summary-grid">
+            <div class="summary-item"><span class="s-label">Order #</span><span class="s-value">{{ f('orderNumber').value || '—' }}</span></div>
+            <div class="summary-item"><span class="s-label">Client</span><span class="s-value">{{ f('clientName').value || '—' }}</span></div>
+            <div class="summary-item"><span class="s-label">Cloth Type</span><span class="s-value">{{ f('clothType').value || '—' }}</span></div>
+            <div class="summary-item"><span class="s-label">Total Qty</span><span class="s-value">{{ totalQuantity }} units</span></div>
+            <div class="summary-item"><span class="s-label">Design Method</span><span class="s-value">{{ f('designMethod').value || '—' }}</span></div>
+            <div class="summary-item"><span class="s-label">Sales Person</span><span class="s-value">{{ f('salesPerson').value || '—' }}</span></div>
+            <div class="summary-item"><span class="s-label">Status</span><span class="s-value">{{ getStatusLabel(f('status').value) }}</span></div>
+            <div class="summary-item"><span class="s-label">Priority</span><span class="s-value" style="text-transform:capitalize">{{ f('priority').value || '—' }}</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Footer navigation ── -->
+    <ng-template pTemplate="footer">
+      <div class="dialog-footer">
+        <button class="footer-btn btn-cancel" (click)="closeAddOrderDialog()">
+          <i class="pi pi-times"></i> Cancel
+        </button>
+        <div class="footer-nav">
+          <button class="footer-btn btn-prev" (click)="prevStep()" [disabled]="currentStep === 1">
+            <i class="pi pi-arrow-left"></i> Back
+          </button>
+          <button class="footer-btn btn-next" (click)="nextStep()" *ngIf="currentStep < totalSteps">
+            Next <i class="pi pi-arrow-right"></i>
+          </button>
+          <button class="footer-btn btn-submit" (click)="submitOrder()" *ngIf="currentStep === totalSteps" [disabled]="isSaving">
+            <i class="pi pi-check"></i> {{ isSaving ? 'Saving…' : 'Create Order' }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+</div>

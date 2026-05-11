@@ -54,6 +54,13 @@
 						<span class="growth positive">+{{ statisticsData.monthlyGrowth }}%</span>
 					</div>
 				</div>
+				<div class="stat-card" routerLink="/orders">
+					<div class="stat-icon">📋</div>
+					<div class="stat-content">
+						<h3>Orders Board</h3>
+						<p>Kanban order management</p>
+					</div>
+				</div>
 				<div class="stat-card" routerLink="/retail-sales">
 					<div class="stat-icon">💰</div>
 					<div class="stat-content">
@@ -192,6 +199,11 @@
 		<section class="quick-actions-section">
 			<h2 class="section-title">Quick Actions</h2>
 			<div class="action-cards">
+				<div class="action-card" routerLink="/orders">
+					<div class="action-icon">📋</div>
+					<h3>Orders Board</h3>
+					<p>Track all orders by status (Kanban)</p>
+				</div>
 				<div class="action-card" routerLink="/crm-dashboard">
 					<div class="action-icon">👥</div>
 					<h3>Manage Customers</h3>

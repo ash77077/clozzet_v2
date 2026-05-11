@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ProductDetailsService, ProductDetailsFormData } from '../../services/product-details.service';
 import { getPriorityDisplayName } from '../../shared/utils/priority.utils';
 
@@ -25,7 +25,7 @@ interface ColorOption {
 @Component({
   selector: 'app-product-details-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './product-details-form.component.html',
   styleUrls: ['./product-details-form.component.scss']
 })
@@ -84,10 +84,13 @@ export class ProductDetailsFormComponent {
   ];
 
   sizeOptions = {
-    'apparel': ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'],
+    'apparel': ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL'],
     'caps': ['One Size', 'Adjustable', 'S/M', 'L/XL'],
     'bags': ['Small', 'Medium', 'Large', 'Custom']
   };
+
+  customSizes: string[] = [];
+  newSizeName: string = '';
 
   printingMethods = [
     { value: 'screen-printing', label: 'Screen Printing' },
@@ -176,6 +179,11 @@ export class ProductDetailsFormComponent {
     this.productForm.get('clothType')?.valueChanges.subscribe(value => {
       this.selectedClothType = value;
       this.updateFormValidators();
+      // Clear custom sizes when cloth type changes
+      this.customSizes = [];
+      // Clear size quantities when cloth type changes
+      this.productForm.get('sizeQuantities')?.setValue({});
+      this.updateTotalQuantity();
     });
 
     this.productForm.get('colors')?.valueChanges.subscribe(colors => {
@@ -313,6 +321,12 @@ export class ProductDetailsFormComponent {
     this.productForm.get('quantity')?.setValue(total);
   }
 
+  onManualQuantityChange(): void {
+    // This method is called when the user manually changes the quantity field
+    // It allows manual entry when size quantities aren't specified
+    // No additional logic needed as the form control handles the value
+  }
+
   getTotalQuantity(): number {
     const sizeQuantities = this.productForm.get('sizeQuantities')?.value || {};
     return Object.values(sizeQuantities).reduce((sum: number, qty: any) => sum + (qty || 0), 0);
@@ -324,13 +338,59 @@ export class ProductDetailsFormComponent {
   }
 
   getSizesForClothType(): string[] {
+    let baseSizes: string[];
     switch (this.selectedClothType) {
       case 'caps':
-        return this.sizeOptions.caps;
+        baseSizes = this.sizeOptions.caps;
+        break;
       case 'ecobags':
-        return this.sizeOptions.bags;
+        baseSizes = this.sizeOptions.bags;
+        break;
       default:
-        return this.sizeOptions.apparel;
+        baseSizes = this.sizeOptions.apparel;
+    }
+    // Combine base sizes with custom sizes
+    return [...baseSizes, ...this.customSizes];
+  }
+
+  addCustomSize(sizeName: string): void {
+    if (!sizeName || sizeName.trim() === '') {
+      return;
+    }
+
+    const trimmedSize = sizeName.trim().toUpperCase();
+
+    // Check if size already exists in base sizes or custom sizes
+    const allSizes = this.getSizesForClothType();
+    if (allSizes.includes(trimmedSize)) {
+      alert(`Size "${trimmedSize}" already exists`);
+      return;
+    }
+
+    this.customSizes.push(trimmedSize);
+  }
+
+  removeCustomSize(size: string): void {
+    const index = this.customSizes.indexOf(size);
+    if (index > -1) {
+      this.customSizes.splice(index, 1);
+
+      // Also remove the quantity for this size
+      const sizeQuantities = this.productForm.get('sizeQuantities')?.value || {};
+      delete sizeQuantities[size];
+      this.productForm.get('sizeQuantities')?.setValue(sizeQuantities);
+      this.updateTotalQuantity();
+    }
+  }
+
+  isCustomSize(size: string): boolean {
+    return this.customSizes.includes(size);
+  }
+
+  onAddCustomSize(): void {
+    if (this.newSizeName && this.newSizeName.trim() !== '') {
+      this.addCustomSize(this.newSizeName);
+      this.newSizeName = '';
     }
   }
 
@@ -427,14 +487,17 @@ export class ProductDetailsFormComponent {
         };
 
         response.data.uploadedFiles.forEach((uploadedFile: any) => {
+          // Use Cloudinary URL instead of filename
+          const fileUrl = uploadedFile.url || uploadedFile.path || uploadedFile.filename;
+
           if (logoIndex < this.logoFiles.length) {
-            this.uploadedFilePaths.logoFiles!.push(uploadedFile.filename);
+            this.uploadedFilePaths.logoFiles!.push(fileUrl);
             logoIndex++;
           } else if (designIndex < this.designFiles.length) {
-            this.uploadedFilePaths.designFiles!.push(uploadedFile.filename);
+            this.uploadedFilePaths.designFiles!.push(fileUrl);
             designIndex++;
           } else if (referenceIndex < this.referenceImages.length) {
-            this.uploadedFilePaths.referenceImages!.push(uploadedFile.filename);
+            this.uploadedFilePaths.referenceImages!.push(fileUrl);
             referenceIndex++;
           }
         });
@@ -458,10 +521,28 @@ export class ProductDetailsFormComponent {
       }
 
       const formValue = { ...this.productForm.value };
-      
+
       // Remove orderNumber if it's empty (will be auto-generated)
       if (!formValue.orderNumber || formValue.orderNumber.trim() === '') {
         delete formValue.orderNumber;
+      }
+
+      // Clean up sizeQuantities - remove entries with 0 or negative values
+      if (formValue.sizeQuantities) {
+        const cleanedSizeQuantities: { [size: string]: number } = {};
+        Object.entries(formValue.sizeQuantities).forEach(([size, quantity]) => {
+          if (quantity && (quantity as number) > 0) {
+            cleanedSizeQuantities[size] = quantity as number;
+          }
+        });
+
+        // Only include sizeQuantities if it has valid entries
+        if (Object.keys(cleanedSizeQuantities).length > 0) {
+          formValue.sizeQuantities = cleanedSizeQuantities;
+        } else {
+          // Remove sizeQuantities if empty (user entered manual quantity instead)
+          delete formValue.sizeQuantities;
+        }
       }
 
       const formData: ProductDetailsFormData = {
@@ -495,6 +576,9 @@ export class ProductDetailsFormComponent {
             this.designFiles = [];
             this.referenceImages = [];
             this.uploadedFilePaths = {};
+            // Reset custom sizes
+            this.customSizes = [];
+            this.newSizeName = '';
           }, 10000); // Extended to 10 seconds to give time to click the button
         },
         error: (error) => {

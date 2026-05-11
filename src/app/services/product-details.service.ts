@@ -7,16 +7,20 @@ export interface ProductDetailsFormData {
   orderNumber: string;
   clientName: string;
   salesPerson: string;
+  startDate?: string;
   deadline: string;
   quantity: number;
   priority: string;
+  status?: string;
+  totalAmount?: number;
   clothType: string;
   textileType: string;
   fabricWeight?: number;
   colors: string[];
   customColorDetails?: string;
   sizeQuantities: { [size: string]: number };
-  printingMethod: string;
+  printingMethod?: string;
+  designMethod?: string;
   logoPosition?: string;
   logoSize?: string;
   logoFiles?: string[];
@@ -131,6 +135,14 @@ export class ProductDetailsService {
     return this.http.patch<ProductDetailsResponse>(
       `${this.apiUrl}/${id}/status`,
       { status },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  updateProductDetails(id: string, data: Partial<ProductDetailsFormData>): Observable<ProductDetailsResponse> {
+    return this.http.patch<ProductDetailsResponse>(
+      `${this.apiUrl}/${id}`,
+      data,
       { headers: this.getHeaders() }
     );
   }

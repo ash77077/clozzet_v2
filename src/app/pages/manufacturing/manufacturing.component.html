@@ -203,7 +203,7 @@
             <td>
               <div class="quantity-info">
                 <strong class="quantity">{{ order.quantity }}</strong>
-                <div class="printing-method">{{ order.printingMethod }}</div>
+                <div class="printing-method">{{ order.designMethod || order.printingMethod }}</div>
               </div>
             </td>
             <td>
@@ -337,15 +337,14 @@
               </span>
             </span>
           </p>
-          <p><strong>Printing Method:</strong> <span style="color: #9b59b6; font-weight: 500;">{{ selectedOrder.printingMethod }}</span></p>
+          <p *ngIf="selectedOrder.designMethod || selectedOrder.printingMethod"><strong>Design Method:</strong> <span style="color: #9b59b6; font-weight: 500;">{{ selectedOrder.designMethod || selectedOrder.printingMethod }}</span></p>
           <p *ngIf="selectedOrder.colors && selectedOrder.colors.length > 0">
-            <strong>Colors Required:</strong> 
-            <span *ngFor="let color of selectedOrder.colors; let last = last" 
+            <strong>Colors Required:</strong>
+            <span *ngFor="let color of selectedOrder.colors; let last = last"
                   style="background: #3498db; color: white; padding: 0.2rem 0.5rem; border-radius: 0.5rem; margin: 0.2rem; display: inline-block;">
               {{ color }}
             </span>
           </p>
-          <p *ngIf="selectedOrder.pantoneColors"><strong>Pantone Colors:</strong> <span style="color: #e67e22; font-weight: 500;">{{ selectedOrder.pantoneColors }}</span></p>
           <p *ngIf="selectedOrder.logoPosition"><strong>Logo Position:</strong> <span style="color: #1abc9c; font-weight: 500;">{{ selectedOrder.logoPosition }}</span></p>
           <p *ngIf="selectedOrder.logoSize"><strong>Logo Size:</strong> <span style="color: #f39c12; font-weight: 500;">{{ selectedOrder.logoSize }}</span></p>
         </div>

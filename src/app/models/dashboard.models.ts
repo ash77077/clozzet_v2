@@ -164,13 +164,12 @@ export interface ProductDetails {
   colors?: string[];
   customColorDetails?: string;
   sizeQuantities?: { [size: string]: number };
-  printingMethod: string;
+  designMethod?: string;
   logoPosition?: string;
   logoSize?: string;
   logoFiles?: string[];
   designFiles?: string[];
   referenceImages?: string[];
-  pantoneColors?: string;
   neckStyle?: string;
   sleeveType?: string;
   fit?: string;
@@ -192,19 +191,20 @@ export interface ProductDetails {
   waistTie?: string;
   pocketDetails?: string;
   specialInstructions?: string;
-  packagingRequirements?: string;
   shippingAddress?: string;
   manufacturingStatus?: string;
   manufacturingNotes?: ManufacturingNote[];
-  
+
   // Legacy compatibility properties
   status?: OrderStatus;
   totalAmount?: number;
+  printingMethod?: string; // Legacy field for backward compatibility
   user?: User;
   company?: Company;
-  
+
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  startDate?: string | Date;
 }
 
 export interface ManufacturingNote {

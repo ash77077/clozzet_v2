@@ -6,14 +6,12 @@
         [class.active]="currentSection === 'sales'"
         (click)="switchSection('sales')">
         <i class="pi pi-shopping-cart"></i>
-        <span>S</span>
       </button>
       <button
         class="toggle-btn"
         [class.active]="currentSection === 'manufacturing'"
         (click)="switchSection('manufacturing')">
         <i class="pi pi-cog"></i>
-        <span>M</span>
       </button>
     </div>
 
@@ -139,20 +137,23 @@
             <i class="pi pi-plus"></i>
             New Order
           </button>
-          <button
-            *ngIf="isAdmin()"
-            class="btn btn-sm btn-secondary"
-            (click)="exportData()"
-            pTooltip="Export reports">
-            <i class="pi pi-download"></i>
-            Export
-          </button>
+<!--          <button-->
+<!--            *ngIf="isAdmin()"-->
+<!--            class="btn btn-sm btn-secondary"-->
+<!--            (click)="exportData()"-->
+<!--            pTooltip="Export reports">-->
+<!--            <i class="pi pi-download"></i>-->
+<!--            Export-->
+<!--          </button>-->
         </div>
       </div>
     </div>
 
     <!-- User Icon & Dropdown -->
     <div class="nav-section user-section">
+      <!-- Notification Bell -->
+      <app-notification-bell></app-notification-bell>
+
       <div class="user-dropdown-container" *ngIf="currentUser">
         <button class="user-icon-btn" (click)="toggleUserMenu($event)" pTooltip="User menu">
           <i class="pi pi-user"></i>
