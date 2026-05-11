@@ -22,7 +22,7 @@
     }
 
     @media (max-width: 768px) {
-      grid-template-columns: 1fr auto;
+      display: flex;
       gap: 0.75rem;
       padding: 0.75rem 1rem;
     }
@@ -38,7 +38,7 @@
     backdrop-filter: blur(5px);
 
     @media (max-width: 768px) {
-      width: 100%;
+      width: 20%;
       grid-column: 1 / -1;
       order: -1;
     }
@@ -353,6 +353,16 @@
         transform: translateY(-10px);
         transition: all 0.3s ease;
         z-index: 1000;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+
+        @media (max-width: 768px) {
+          position: fixed;
+          right: 10px;
+          width: calc(100vw - 20px);
+          max-width: 320px;
+          max-height: calc(100vh - 120px);
+        }
 
         &.active {
           opacity: 1;
@@ -497,6 +507,69 @@
             i {
               font-size: 0.875rem;
               color: #9ca3af;
+            }
+
+            // Dropdown toggle for "Other" section
+            &.dropdown-toggle {
+              cursor: pointer;
+              padding: 12px 20px;
+              background: transparent;
+              border: none;
+              width: 100%;
+              text-align: left;
+              transition: all 0.2s ease;
+              justify-content: space-between;
+
+              .chevron-icon {
+                margin-left: auto;
+                transition: transform 0.3s ease;
+                color: #9ca3af;
+
+                &.rotated {
+                  transform: rotate(180deg);
+                }
+              }
+
+              &:hover {
+                background: #f9fafb;
+                color: #4b5563;
+
+                i {
+                  color: #3498db;
+                }
+              }
+            }
+          }
+
+          // Subsection for expandable items
+          .user-dropdown-subsection {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+
+            &.expanded {
+              max-height: 400px;
+              opacity: 1;
+            }
+
+            .user-dropdown-item.sub-item {
+              padding-left: 48px;
+              font-size: 0.85rem;
+              color: #6b7280;
+
+              i {
+                font-size: 0.9rem;
+              }
+
+              &:hover {
+                background: #f3f4f6;
+                color: #1f2937;
+
+                i {
+                  color: #3498db;
+                }
+              }
             }
           }
 

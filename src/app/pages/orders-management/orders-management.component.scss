@@ -493,14 +493,198 @@
     border: 1px solid var(--surface-200);
     border-radius: 12px;
     overflow: hidden;
+    position: relative;
+
+    // Mobile responsive table styles with horizontal scrolling
+    @media (max-width: 768px) {
+      border-radius: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+
+      // Custom scrollbar for webkit browsers
+      &::-webkit-scrollbar {
+        height: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: var(--surface-100);
+        border-radius: 0 0 8px 8px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--surface-400);
+        border-radius: 3px;
+
+        &:hover {
+          background: var(--surface-500);
+        }
+      }
+
+      :host ::ng-deep .p-datatable {
+        min-width: 800px; // Ensure table doesn't shrink too much
+        font-size: 0.8rem;
+
+        .p-datatable-wrapper {
+          overflow-x: visible;
+        }
+
+        .p-datatable-thead > tr > th {
+          padding: 0.5rem 0.6rem;
+          font-size: 0.75rem;
+          white-space: nowrap;
+          background: var(--surface-100);
+          position: sticky;
+          top: 0;
+          z-index: 1;
+          min-width: 80px; // Minimum column width for mobile
+
+          // Specific column widths for better layout
+          &:nth-child(1) { min-width: 100px; } // Order number
+          &:nth-child(2) { min-width: 140px; } // Client/Cloth type
+          &:nth-child(3) { min-width: 110px; } // Sales person
+          &:nth-child(4) { min-width: 70px; }  // Quantity
+          &:nth-child(5) { min-width: 90px; }  // Priority
+          &:nth-child(6) { min-width: 100px; } // Status
+          &:nth-child(7) { min-width: 100px; } // Deadline
+          &:nth-child(8) { min-width: 120px; } // Actions
+        }
+
+        .p-datatable-tbody > tr > td {
+          padding: 0.6rem 0.6rem;
+          font-size: 0.75rem;
+          white-space: nowrap;
+          min-width: 80px; // Minimum cell width for mobile
+
+          // Match header column widths
+          &:nth-child(1) { min-width: 100px; }
+          &:nth-child(2) { min-width: 140px; }
+          &:nth-child(3) { min-width: 110px; }
+          &:nth-child(4) { min-width: 70px; }
+          &:nth-child(5) { min-width: 90px; }
+          &:nth-child(6) { min-width: 100px; }
+          &:nth-child(7) { min-width: 100px; }
+          &:nth-child(8) { min-width: 120px; }
+
+          // Compact action buttons
+          .action-group {
+            gap: 0.2rem;
+
+            ::ng-deep .p-button {
+              padding: 0.4rem 0.5rem;
+              font-size: 0.7rem;
+
+              .p-button-icon {
+                font-size: 0.8rem;
+              }
+
+              .p-button-label {
+                display: none; // Hide button labels on mobile
+              }
+            }
+          }
+        }
+
+        // Paginator responsive
+        .p-paginator {
+          padding: 0.5rem;
+          font-size: 0.75rem;
+          flex-wrap: wrap;
+          gap: 0.25rem;
+
+          .p-paginator-current {
+            font-size: 0.7rem;
+            order: -1;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 0.25rem;
+          }
+
+          .p-paginator-pages .p-paginator-page {
+            min-width: 2rem;
+            height: 2rem;
+            font-size: 0.75rem;
+          }
+
+          .p-dropdown {
+            font-size: 0.75rem;
+          }
+        }
+      }
+    }
+
+    // Extra small devices
+    @media (max-width: 480px) {
+      :host ::ng-deep .p-datatable {
+        min-width: 600px; // Smaller minimum width for very small screens
+        font-size: 0.75rem;
+
+        .p-datatable-thead > tr > th {
+          padding: 0.4rem 0.5rem;
+          font-size: 0.7rem;
+          min-width: 70px; // Slightly smaller for extra small devices
+
+          // Adjusted column widths for very small screens
+          &:nth-child(1) { min-width: 90px; }  // Order number
+          &:nth-child(2) { min-width: 130px; } // Client/Cloth type
+          &:nth-child(3) { min-width: 100px; } // Sales person
+          &:nth-child(4) { min-width: 60px; }  // Quantity
+          &:nth-child(5) { min-width: 80px; }  // Priority
+          &:nth-child(6) { min-width: 90px; }  // Status
+          &:nth-child(7) { min-width: 90px; }  // Deadline
+          &:nth-child(8) { min-width: 110px; } // Actions
+        }
+
+        .p-datatable-tbody > tr > td {
+          padding: 0.5rem 0.5rem;
+          font-size: 0.7rem;
+          min-width: 70px;
+
+          // Match header widths
+          &:nth-child(1) { min-width: 90px; }
+          &:nth-child(2) { min-width: 130px; }
+          &:nth-child(3) { min-width: 100px; }
+          &:nth-child(4) { min-width: 60px; }
+          &:nth-child(5) { min-width: 80px; }
+          &:nth-child(6) { min-width: 90px; }
+          &:nth-child(7) { min-width: 90px; }
+          &:nth-child(8) { min-width: 110px; }
+        }
+      }
+    }
 
     .client-cell {
-      .client-name { font-weight: 500; color: var(--text-color); display: block; }
-      .cloth-type  { font-size: 0.78rem; color: var(--text-color-secondary); }
+      .client-name {
+        font-weight: 500;
+        color: var(--text-color);
+        display: block;
+        font-size: 0.85rem;
+
+        @media (max-width: 768px) {
+          font-size: 0.75rem;
+        }
+      }
+      .cloth-type  {
+        font-size: 0.78rem;
+        color: var(--text-color-secondary);
+
+        @media (max-width: 768px) {
+          font-size: 0.7rem;
+        }
+      }
     }
 
     .deadline-urgent { color: #dc2626; font-weight: 600; }
-    .action-group { display: flex; gap: 0.25rem; align-items: center; }
+    .action-group {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+
+      @media (max-width: 768px) {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
 
     .table-empty {
       display: flex;
@@ -509,9 +693,35 @@
       padding: 3rem;
       text-align: center;
       color: var(--text-color-secondary);
-      i  { font-size: 2.5rem; opacity: 0.3; margin-bottom: 0.75rem; }
-      h3 { margin: 0 0 0.4rem; color: var(--text-color); }
-      p  { margin: 0; }
+
+      @media (max-width: 768px) {
+        padding: 2rem 1rem;
+      }
+
+      i  {
+        font-size: 2.5rem;
+        opacity: 0.3;
+        margin-bottom: 0.75rem;
+
+        @media (max-width: 768px) {
+          font-size: 2rem;
+        }
+      }
+      h3 {
+        margin: 0 0 0.4rem;
+        color: var(--text-color);
+
+        @media (max-width: 768px) {
+          font-size: 1.1rem;
+        }
+      }
+      p  {
+        margin: 0;
+
+        @media (max-width: 768px) {
+          font-size: 0.85rem;
+        }
+      }
     }
   }
 

@@ -47,33 +47,9 @@
             </a>
           </li>
           <li class="nav-item">
-            <a routerLink="/users" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-users"></i>
-              <span>Users</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/companies" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-building"></i>
-              <span>Companies</span>
-            </a>
-          </li>
-          <li class="nav-item">
             <a routerLink="/crm-dashboard" class="nav-link" routerLinkActive="active">
               <i class="pi pi-sitemap"></i>
               <span>CRM Dashboard</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/product-management" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-box"></i>
-              <span>Products</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/retail-sales" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-shopping-bag"></i>
-              <span>Retail Sales</span>
             </a>
           </li>
         </ul>
@@ -176,6 +152,37 @@
             <i class="pi pi-home"></i>
             Dashboard
           </button>
+
+          <!-- Other Section (Admin only) -->
+          <ng-container *ngIf="isAdmin() && isSalesSection()">
+            <div class="user-dropdown-divider"></div>
+            <div class="user-dropdown-section">
+              <button class="user-dropdown-section-title dropdown-toggle" (click)="toggleOtherSection($event)">
+                <i class="pi pi-th-large"></i>
+                Other
+                <i class="pi pi-chevron-down chevron-icon" [class.rotated]="showOtherSection"></i>
+              </button>
+              <div class="user-dropdown-subsection" [class.expanded]="showOtherSection">
+                <button class="user-dropdown-item sub-item" routerLink="/product-management" (click)="showUserMenu = false">
+                  <i class="pi pi-box"></i>
+                  Products
+                </button>
+                <button class="user-dropdown-item sub-item" routerLink="/retail-sales" (click)="showUserMenu = false">
+                  <i class="pi pi-shopping-bag"></i>
+                  Retail Sales
+                </button>
+                <button class="user-dropdown-item sub-item" routerLink="/users" (click)="showUserMenu = false">
+                  <i class="pi pi-users"></i>
+                  Users
+                </button>
+                <button class="user-dropdown-item sub-item" routerLink="/companies" (click)="showUserMenu = false">
+                  <i class="pi pi-building"></i>
+                  Companies
+                </button>
+              </div>
+            </div>
+          </ng-container>
+
           <div class="user-dropdown-divider"></div>
           <div class="user-dropdown-section">
             <span class="user-dropdown-section-title">
