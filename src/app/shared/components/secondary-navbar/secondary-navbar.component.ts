@@ -42,6 +42,7 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   orderStats: OrderStats | null = null;
   userOrderStats: UserOrderStats | null = null;
   showUserMenu = false;
+  showOtherSection = false;
 
   UserRole = UserRole;
 
@@ -149,6 +150,12 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   toggleUserMenu(event: Event): void {
     event.stopPropagation();
     this.showUserMenu = !this.showUserMenu;
+  }
+
+  toggleOtherSection(event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.showOtherSection = !this.showOtherSection;
   }
 
   logout(): void {
