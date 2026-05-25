@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
@@ -15,6 +15,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { AccordionModule } from 'primeng/accordion';
 import { TextareaModule } from 'primeng/textarea';
+import { ToggleSwitch } from 'primeng/toggleswitch';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Tooltip } from 'primeng/tooltip';
 import { AuthService, User } from '../../services/auth.service';
@@ -22,6 +23,7 @@ import { ProductDetailsService } from '../../services/product-details.service';
 import { UsersService, User as ListUser } from '../../services/users.service';
 import { OrderStatus, UserRole, ProductDetails } from '../../models/dashboard.models';
 import { PriorityBadgeComponent } from '../../shared/components/priority-badge/priority-badge.component';
+import { OrderPrintTemplateComponent } from '../../shared/components/order-print-template/order-print-template.component';
 import { NotificationService } from '../../services/notification.service';
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
@@ -82,7 +84,9 @@ const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     ToastModule,
     AccordionModule,
     TextareaModule,
+    ToggleSwitch,
     PriorityBadgeComponent,
+    OrderPrintTemplateComponent,
     Tooltip,
   ],
   providers: [ConfirmationService, MessageService],
@@ -115,9 +119,12 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   totalSteps = 4;
   addOrderForm!: FormGroup;
 
-  // Size quantities (separate from reactive form for easy binding)
-  sizeQuantities: { [size: string]: number } = {};
+  // Size quantities (kept for backward compatibility, but products use nested structure)
+  sizeQuantities: { [size: string]: number} = {};
   sizes = SIZES;
+
+  // Size breakdown mode: 'uni' (default) or 'split' (men/women/uni)
+  sizeBreakdownMode: 'uni' | 'split' = 'uni';
 
   // ─── Status change ─────────────────────────────────────────────────────────
   orderToUpdate: ProductDetails | null = null;
@@ -126,6 +133,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // ─── Search & filter ───────────────────────────────────────────────────────
   searchTerm = '';
   selectedStatusFilter = '';
+  selectedUserIds: Set<string> = new Set();
+  maxVisibleUsers = 5;
 
   // ─── Jira Modal — Edit mode ─────────────────────────────────────────────────
   isEditMode = false;
@@ -229,6 +238,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.loadUsers();
     this.setupRealtimeActivityListener();
     this.handleNavigationFromNotification();
+    this.handleCreateOrderFromCustomer();
   }
 
   // Handle navigation from notification
@@ -236,8 +246,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const orderId = params['order'];
       if (orderId) {
-        console.log('📌 Navigating to order from notification:', orderId);
-
         // Wait for orders to load, then open the specific order
         // Use a retry mechanism to handle timing issues
         let attempts = 0;
@@ -245,18 +253,15 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
         const tryOpenOrder = () => {
           attempts++;
-          console.log(`🔄 Attempt ${attempts} to open order:`, orderId);
 
           if (this.allOrders.length > 0) {
             // Orders are loaded, try to open
             this.openOrderById(orderId);
           } else if (attempts < maxAttempts) {
             // Orders not loaded yet, retry after delay
-            console.log('⏳ Orders not loaded yet, retrying...');
             setTimeout(tryOpenOrder, 500);
           } else {
             // Max attempts reached, try to fetch the specific order
-            console.log('⚠️ Orders still not loaded, fetching specific order');
             this.fetchAndOpenOrder(orderId);
           }
         };
@@ -269,14 +274,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // Open order by ID (from notification)
   openOrderById(orderId: string): void {
-    console.log('🔍 Looking for order with ID:', orderId);
-    console.log('📦 Total orders loaded:', this.allOrders.length);
-
     // Check if this order is already open
     if (this.selectedOrder) {
       const currentOrderId = (this.selectedOrder as any)._id || this.selectedOrder.id;
       if (currentOrderId === orderId) {
-        console.log('ℹ️ Order is already open');
         return;
       }
     }
@@ -287,25 +288,52 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     });
 
     if (order) {
-      console.log('✅ Found order:', order.orderNumber);
       this.viewOrderDetails(order);
     } else {
-      console.warn('⚠️ Order not found with ID:', orderId);
-      console.log('Available order IDs:', this.allOrders.map(o => (o as any)._id || o.id));
       // Try to fetch the specific order if not in current list
       this.fetchAndOpenOrder(orderId);
     }
   }
 
+  // Handle creating order from customer profile page
+  handleCreateOrderFromCustomer(): void {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const createOrder = params['createOrder'];
+      const companyName = params['companyName'];
+      const clientName = params['clientName'];
+      const customerId = params['customerId'];
+
+      if (createOrder === 'true') {
+        // Wait a bit for form to be initialized
+        setTimeout(() => {
+          this.openAddOrderDialog();
+
+          // Pre-fill customer data
+          if (companyName || clientName) {
+            this.addOrderForm.patchValue({
+              companyName: companyName || '',
+              clientName: clientName || '',
+            });
+          }
+
+          // Clear the query params to avoid reopening on refresh
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            replaceUrl: true
+          });
+        }, 300);
+      }
+    });
+  }
+
   // Fetch and open a specific order by ID
   fetchAndOpenOrder(orderId: string): void {
-    console.log('📥 Fetching order from API:', orderId);
     this.productDetailsService.getProductDetailsById(orderId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           if (response.data) {
-            console.log('✅ Order fetched successfully:', response.data.orderNumber);
             this.viewOrderDetails(response.data);
           }
         },
@@ -328,7 +356,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         next: (data) => {
           // Only update if we're viewing this order
           if (this.selectedOrder && ((this.selectedOrder as any)._id || this.selectedOrder.id) === data.orderId) {
-            console.log('📬 Adding real-time activity to current order');
             // Add the activity to the bottom of the feed (new messages appear at bottom)
             this.orderActivity.push({
               type: data.activity.type,
@@ -367,7 +394,12 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   loadUsers(): void {
     this.usersService.getAllUsers().pipe(takeUntil(this.destroy$)).subscribe({
-      next: (users) => { this.allUsers = users; },
+      next: (users) => {
+        // Filter for admin and manager roles only
+        this.allUsers = users.filter(u =>
+          (u.role === 'manager' || u.role === 'admin') && u.isActive
+        );
+      },
       error: () => {} // fail silently
     });
   }
@@ -376,34 +408,232 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   initForm(): void {
     this.addOrderForm = this.fb.group({
-      orderNumber:        ['', Validators.required],
-      clientName:         ['', Validators.required],
-      salesPerson:        ['', Validators.required],
-      priority:           ['normal', Validators.required],
-      status:             [OrderStatus.PENDING, Validators.required],
-      clothType:          ['', Validators.required],
-      textileType:        ['', Validators.required],
-      designMethod:       ['', Validators.required],
-      logoPosition:       [''],
-      logoSize:           [''],
-      customColorDetails: [''],
-      startDate:          [''],
-      deadline:           ['', Validators.required],
-      specialInstructions:[''],
-      shippingAddress:    [''],
+      orderNumber:         ['', Validators.required],
+      companyName:         [''],
+      clientName:          ['', Validators.required],
+      salesPerson:         ['', Validators.required],
+      priority:            ['normal', Validators.required],
+      status:              [OrderStatus.PENDING, Validators.required],
+      startDate:           [''],
+      deadline:            ['', Validators.required],
+      specialInstructions: [''],
+      packagingRequirements: [''],
+      shippingAddress:     [''],
+      products:            this.fb.array([this.createProductGroup()])
     });
+  }
+
+  // Create a product group with all necessary fields
+  createProductGroup(): FormGroup {
+    return this.fb.group({
+      clothType:           ['', Validators.required],
+      textileType:         ['', Validators.required],
+      designMethod:        ['', Validators.required],
+      colors:              [''],
+      customColorDetails:  [''],
+      logoPosition:        [''],
+      logoSize:            [''],
+      comments:            [''],
+      costPricePerUnit:    [null],
+      sellingPricePerUnit: [null],
+      sizes:               this.fb.group({
+        xs:    this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s:     this.fb.group({ men: [0], women: [0], uni: [0] }),
+        m:     this.fb.group({ men: [0], women: [0], uni: [0] }),
+        l:     this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xl:    this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xxl:   this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xxxl:  this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xxxxl: this.fb.group({ men: [0], women: [0], uni: [0] })
+      })
+    });
+  }
+
+  // Get products FormArray
+  get products(): FormArray {
+    return this.addOrderForm.get('products') as FormArray;
+  }
+
+  // Add a new product to the array
+  addProduct(): void {
+    this.products.push(this.createProductGroup());
+  }
+
+  // Remove a product from the array
+  removeProduct(index: number): void {
+    if (this.products.length > 1) {
+      this.products.removeAt(index);
+    }
+  }
+
+  // Get sizes for a specific product
+  getProductSizes(productIndex: number): FormGroup {
+    return this.products.at(productIndex).get('sizes') as FormGroup;
+  }
+
+  // Calculate total for a specific gender across all sizes for a product
+  calculateProductTotal(gender: 'men' | 'women' | 'uni', productIndex: number): number {
+    const product = this.products.at(productIndex);
+    const sizes = product.get('sizes') as FormGroup;
+    if (!sizes) return 0;
+
+    const sizeKeys = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
+    let total = 0;
+
+    sizeKeys.forEach(sizeKey => {
+      const sizeGroup = sizes.get(sizeKey) as FormGroup;
+      if (sizeGroup) {
+        const value = sizeGroup.get(gender)?.value || 0;
+        total += Number(value);
+      }
+    });
+
+    return total;
+  }
+
+  // Calculate total quantity for a specific product
+  calculateSingleProductTotal(productIndex: number): number {
+    return this.calculateProductTotal('men', productIndex) +
+           this.calculateProductTotal('women', productIndex) +
+           this.calculateProductTotal('uni', productIndex);
+  }
+
+  // Calculate grand total across all products
+  calculateGrandTotal(): number {
+    let total = 0;
+    for (let i = 0; i < this.products.length; i++) {
+      total += this.calculateSingleProductTotal(i);
+    }
+    return total;
+  }
+
+  // ─── Product Display Helpers ──────────────────────────────────────────────
+
+  /**
+   * Get total quantity for a product (sum of all sizes across all genders)
+   */
+  getProductTotalQuantity(product: any): number {
+    if (!product || !product.sizes) return 0;
+
+    let total = 0;
+    const sizes = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
+
+    sizes.forEach(size => {
+      if (product.sizes[size]) {
+        total += (product.sizes[size].men || 0) +
+                 (product.sizes[size].women || 0) +
+                 (product.sizes[size].uni || 0);
+      }
+    });
+
+    return total;
+  }
+
+  /**
+   * Get total for a specific size across all genders
+   */
+  getSizeTotal(sizeObj: any): number {
+    if (!sizeObj) return 0;
+    return (sizeObj.men || 0) + (sizeObj.women || 0) + (sizeObj.uni || 0);
+  }
+
+  /**
+   * Get size value safely
+   */
+  getSizeValue(sizeObj: any, gender: 'men' | 'women' | 'uni'): number | undefined {
+    return sizeObj?.[gender];
+  }
+
+  // ─── Keyboard Navigation ──────────────────────────────────────────────────
+
+  /**
+   * Handle Enter key press to move to next size input
+   * @param event - Keyboard event
+   * @param currentSize - Current size (xs, s, m, l, xl, xxl, xxxl, xxxxl)
+   * @param currentGender - Current gender field (men, women, uni)
+   * @param productIndex - Index of the current product
+   */
+  onSizeInputKeydown(event: KeyboardEvent, currentSize: string, currentGender: string, productIndex: number): void {
+    if (event.key !== 'Enter') return;
+
+    event.preventDefault();
+
+    const sizes = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
+    const genders = this.sizeBreakdownMode === 'uni' ? ['uni'] : ['men', 'women', 'uni'];
+
+    const currentSizeIndex = sizes.indexOf(currentSize);
+    const currentGenderIndex = genders.indexOf(currentGender);
+
+    let nextSize = currentSize;
+    let nextGender = currentGender;
+
+    // Move to next gender in the same size row
+    if (currentGenderIndex < genders.length - 1) {
+      nextGender = genders[currentGenderIndex + 1];
+    }
+    // Move to first gender of next size row
+    else if (currentSizeIndex < sizes.length - 1) {
+      nextSize = sizes[currentSizeIndex + 1];
+      nextGender = genders[0];
+    }
+    // We're at the last input, focus on next product or step
+    else {
+      // Try to focus on the next product's first size input
+      if (productIndex < this.products.length - 1) {
+        // Focus on first size of next product
+        setTimeout(() => {
+          const nextInput = document.querySelector(
+            `[data-product="${productIndex + 1}"][data-size="${sizes[0]}"][data-gender="${genders[0]}"]`
+          ) as HTMLInputElement;
+          if (nextInput) nextInput.focus();
+        }, 50);
+      }
+      return;
+    }
+
+    // Focus on the next input
+    setTimeout(() => {
+      const nextInput = document.querySelector(
+        `[data-product="${productIndex}"][data-size="${nextSize}"][data-gender="${nextGender}"]`
+      ) as HTMLInputElement;
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select(); // Select the content for easy overwriting
+      }
+    }, 50);
+  }
+
+  // ─── Financial Calculations ───────────────────────────────────────────────
+
+  // Check if a product has selling price
+  hasSellingPrice(productIndex: number): boolean {
+    const product = this.products.at(productIndex);
+    const sellingPrice = product.get('sellingPricePerUnit')?.value;
+    return sellingPrice !== null && sellingPrice !== undefined && sellingPrice > 0;
+  }
+
+  // Calculate total revenue for a product
+  calculateProductRevenue(productIndex: number): number {
+    const product = this.products.at(productIndex);
+    const sellingPrice = product.get('sellingPricePerUnit')?.value || 0;
+    const quantity = this.calculateSingleProductTotal(productIndex);
+    return sellingPrice * quantity;
   }
 
   // ─── Add Order dialog ──────────────────────────────────────────────────────
 
   openAddOrderDialog(): void {
     this.currentStep = 1;
-    this.sizeQuantities = {};
-    this.sizes.forEach(s => this.sizeQuantities[s] = 0);
 
     const salesPersonName = this.currentUser
       ? `${this.currentUser.firstName} ${this.currentUser.lastName}`.trim()
       : '';
+
+    // Clear products array and add one product
+    while (this.products.length > 0) {
+      this.products.removeAt(0);
+    }
+    this.products.push(this.createProductGroup());
 
     this.addOrderForm.reset({ priority: 'normal', status: OrderStatus.PENDING });
     this.addOrderForm.patchValue({
@@ -416,7 +646,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   closeAddOrderDialog(): void {
     this.showAddOrderDialog = false;
     this.addOrderForm.reset();
-    this.sizeQuantities = {};
+    // Clear products array
+    while (this.products.length > 0) {
+      this.products.removeAt(0);
+    }
     this.addOrderPendingFiles = [];
   }
 
@@ -444,21 +677,49 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   isCurrentStepValid(): boolean {
     switch (this.currentStep) {
       case 1: return this.step1Fields.every(f => this.addOrderForm.get(f)?.valid);
-      case 2: return this.step2Fields.every(f => this.addOrderForm.get(f)?.valid);
-      case 3: return this.step3Fields.every(f => this.addOrderForm.get(f)?.valid);
+      case 2: {
+        // Check if all products have required fields filled
+        const productsArray = this.addOrderForm.get('products') as FormArray;
+        if (!productsArray || productsArray.length === 0) return false;
+
+        return productsArray.controls.every(productGroup => {
+          const product = productGroup as FormGroup;
+          return product.get('clothType')?.valid &&
+                 product.get('textileType')?.valid &&
+                 product.get('designMethod')?.valid;
+        });
+      }
+      case 3: return true; // File upload is optional
       case 4: return this.step4Fields.every(f => this.addOrderForm.get(f)?.valid);
       default: return true;
     }
   }
 
   private markCurrentStepTouched(): void {
-    const fields = [this.step1Fields, this.step2Fields, this.step3Fields, this.step4Fields][this.currentStep - 1];
-    fields.forEach(f => this.addOrderForm.get(f)?.markAsTouched());
+    switch (this.currentStep) {
+      case 1:
+        this.step1Fields.forEach(f => this.addOrderForm.get(f)?.markAsTouched());
+        break;
+      case 2:
+        // Mark all product fields as touched
+        const productsArray = this.addOrderForm.get('products') as FormArray;
+        productsArray.controls.forEach((productGroup, index) => {
+          const product = productGroup as FormGroup;
+          product.get('clothType')?.markAsTouched();
+          product.get('textileType')?.markAsTouched();
+          product.get('designMethod')?.markAsTouched();
+        });
+        break;
+      case 3:
+        // No required fields in step 3
+        break;
+      case 4:
+        this.step4Fields.forEach(f => this.addOrderForm.get(f)?.markAsTouched());
+        break;
+    }
   }
 
   private step1Fields = ['orderNumber','clientName','salesPerson','priority','status'];
-  private step2Fields = ['clothType','textileType'];
-  private step3Fields = ['designMethod'];
   private step4Fields = ['deadline'];
 
   isStepDone(step: number): boolean { return step < this.currentStep; }
@@ -466,6 +727,41 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   isFieldInvalid(field: string): boolean {
     const ctrl = this.addOrderForm.get(field);
     return !!(ctrl?.invalid && ctrl?.touched);
+  }
+
+  // Check if a product field is invalid
+  isProductFieldInvalid(productIndex: number, fieldName: string): boolean {
+    const product = this.products.at(productIndex);
+    const field = product.get(fieldName);
+    return !!(field?.invalid && field?.touched);
+  }
+
+  // Get error message for a product field
+  getProductFieldError(productIndex: number, fieldName: string): string | null {
+    const product = this.products.at(productIndex);
+    const field = product.get(fieldName);
+
+    if (!field || !field.errors || !field.touched) return null;
+
+    if (field.errors['required']) {
+      return `${this.getFieldLabel(fieldName)} is required`;
+    }
+    return null;
+  }
+
+  // Get user-friendly field label
+  private getFieldLabel(fieldName: string): string {
+    const labels: { [key: string]: string } = {
+      clothType: 'Cloth Type',
+      textileType: 'Textile Type',
+      designMethod: 'Design Method',
+      colors: 'Colors',
+      logoPosition: 'Logo Position',
+      logoSize: 'Logo Size',
+      customColorDetails: 'Custom Color Details',
+      comments: 'Comments'
+    };
+    return labels[fieldName] || fieldName;
   }
 
   get totalQuantity(): number {
@@ -523,14 +819,19 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   private createOrderWithFiles(fileUrls: string[]): void {
     const v = this.addOrderForm.value;
     const payload: any = {
-      orderNumber: v.orderNumber, clientName: v.clientName, salesPerson: v.salesPerson,
-      priority: v.priority, status: v.status, clothType: v.clothType, textileType: v.textileType,
-      designMethod: v.designMethod, logoPosition: v.logoPosition || undefined,
-      logoSize: v.logoSize || undefined, customColorDetails: v.customColorDetails || undefined,
-      startDate: v.startDate || undefined, deadline: v.deadline,
+      orderNumber: v.orderNumber,
+      companyName: v.companyName || undefined,
+      clientName: v.clientName,
+      salesPerson: v.salesPerson,
+      priority: v.priority,
+      status: v.status,
+      startDate: v.startDate || undefined,
+      deadline: v.deadline,
       specialInstructions: v.specialInstructions || undefined,
+      packagingRequirements: v.packagingRequirements || undefined,
       shippingAddress: v.shippingAddress || undefined,
-      sizeQuantities: this.sizeQuantities, quantity: this.totalQuantity || 0,
+      products: v.products || [],
+      quantity: this.calculateGrandTotal(),
       referenceImages: fileUrls.length > 0 ? fileUrls : undefined,
     };
 
@@ -568,8 +869,45 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   onSearchChange(): void { this.applyFilters(); }
   onStatusFilterChange(): void { this.applyFilters(); }
 
+  toggleUserFilter(userId: string): void {
+    if (this.selectedUserIds.has(userId)) {
+      this.selectedUserIds.delete(userId);
+    } else {
+      this.selectedUserIds.add(userId);
+    }
+    this.applyFilters();
+  }
+
+  isUserSelected(userId: string): boolean {
+    return this.selectedUserIds.has(userId);
+  }
+
+  getUserInitials(user: ListUser): string {
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || '?';
+  }
+
+  getUserFullName(user: ListUser): string {
+    return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
+  }
+
+  get visibleUsers(): ListUser[] {
+    return this.allUsers.slice(0, this.maxVisibleUsers);
+  }
+
+  get dropdownUsers(): ListUser[] {
+    return this.allUsers.slice(this.maxVisibleUsers);
+  }
+
+  get hasDropdownUsers(): boolean {
+    return this.allUsers.length > this.maxVisibleUsers;
+  }
+
   applyFilters(): void {
     let filtered = [...this.allOrders];
+
+    // Search filter
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(o =>
@@ -578,9 +916,20 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         o.salesPerson.toLowerCase().includes(term)
       );
     }
+
+    // Status filter
     if (this.selectedStatusFilter) {
       filtered = filtered.filter(o => o.status === this.selectedStatusFilter);
     }
+
+    // User filter
+    if (this.selectedUserIds.size > 0) {
+      filtered = filtered.filter(o => {
+        const createdById = (o as any).createdBy;
+        return createdById && this.selectedUserIds.has(createdById);
+      });
+    }
+
     this.filteredOrders = filtered;
     this.buildKanbanColumns(filtered);
   }
@@ -609,10 +958,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     const baseUrl = window.location.origin;
     const orderLink = `${baseUrl}/orders-management?order=${orderId}`;
 
-    console.log('📋 Copying order link:', orderLink);
-
     navigator.clipboard.writeText(orderLink).then(() => {
-      console.log('✅ Link copied to clipboard');
       this.messageService.add({
         severity: 'success',
         summary: 'Link Copied',
@@ -650,7 +996,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         queryParams: { order: orderId },
         queryParamsHandling: 'merge'
       });
-      console.log('🔗 Updated URL with order ID:', orderId);
     }
   }
 
@@ -676,6 +1021,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       queryParams: {},
       replaceUrl: true
     });
+  }
+
+  printOrder(): void {
+    if (!this.selectedOrder) return;
+
+    // Trigger browser print dialog
+    window.print();
   }
 
   loadOrderActivity(order: ProductDetails): void {
@@ -753,35 +1105,122 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   enableEditMode(): void {
     if (!this.selectedOrder) return;
     const o = this.selectedOrder as any;
-    this.editOrderForm = this.fb.group({
-      clientName:          [o.clientName || '', Validators.required],
-      salesPerson:         [o.salesPerson || ''],
-      priority:            [o.priority || 'normal'],
-      status:              [o.status || OrderStatus.PENDING],
-      startDate:           [o.startDate ? this.formatDateForInput(o.startDate) : ''],
-      deadline:            [o.deadline ? this.formatDateForInput(o.deadline) : '', Validators.required],
-      clothType:           [o.clothType || ''],
-      textileType:         [o.textileType || ''],
-      logoPosition:        [o.logoPosition || ''],
-      logoSize:            [o.logoSize || ''],
-      customColorDetails:  [o.customColorDetails || ''],
-      specialInstructions: [o.specialInstructions || ''],
-      shippingAddress:     [o.shippingAddress || ''],
+
+    // Clear and populate the main order form with existing order data
+    this.addOrderForm.patchValue({
+      orderNumber:          o.orderNumber || '',
+      companyName:          o.companyName || '',
+      clientName:           o.clientName || '',
+      salesPerson:          o.salesPerson || '',
+      deadline:             o.deadline ? this.formatDateForInput(o.deadline) : '',
+      priority:             o.priority || 'normal',
+      specialInstructions:  o.specialInstructions || '',
+      packagingRequirements: o.packagingRequirements || '',
+      shippingAddress:      o.shippingAddress || ''
     });
+
+    // Clear existing products
+    while (this.products.length > 0) {
+      this.products.removeAt(0);
+    }
+
+    // Populate products from the order
+    if (o.products && o.products.length > 0) {
+      o.products.forEach((product: any) => {
+        const productGroup = this.createProductGroup();
+
+        // Set product data
+        productGroup.patchValue({
+          clothType:           product.clothType || '',
+          textileType:         product.textileType || '',
+          designMethod:        product.designMethod || '',
+          colors:              product.colors || '',
+          customColorDetails:  product.customColorDetails || '',
+          logoPosition:        product.logoPosition || '',
+          logoSize:            product.logoSize || '',
+          comments:            product.comments || '',
+          sellingPricePerUnit: product.sellingPricePerUnit || null,
+          costPricePerUnit:    product.costPricePerUnit || null
+        });
+
+        // Set sizes
+        if (product.sizes) {
+          const sizesGroup = productGroup.get('sizes') as FormGroup;
+          ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'].forEach(size => {
+            if (product.sizes[size]) {
+              sizesGroup.get(size)?.patchValue({
+                men:   product.sizes[size].men || 0,
+                women: product.sizes[size].women || 0,
+                uni:   product.sizes[size].uni || 0
+              });
+            }
+          });
+        }
+
+        this.products.push(productGroup);
+      });
+    } else if (o.clothType) {
+      // Legacy single product order - convert to products array format
+      const productGroup = this.createProductGroup();
+      productGroup.patchValue({
+        clothType:           o.clothType || '',
+        textileType:         o.textileType || '',
+        designMethod:        o.designMethod || o.printingMethod || '',
+        colors:              '',
+        customColorDetails:  o.customColorDetails || '',
+        logoPosition:        o.logoPosition || '',
+        logoSize:            o.logoSize || '',
+        comments:            '',
+        sellingPricePerUnit: null,
+        costPricePerUnit:    null
+      });
+      this.products.push(productGroup);
+    }
+
+    // Switch to edit mode and show the add dialog
     this.isEditMode = true;
+    this.showAddOrderDialog = true;
+    this.currentStep = 1;
   }
 
   cancelEdit(): void {
     this.isEditMode = false;
+    this.showAddOrderDialog = false;
+    this.currentStep = 1;
   }
 
   saveEdit(): void {
-    if (!this.editOrderForm.valid || !this.selectedOrder) return;
+    // Validate current step before saving
+    if (!this.isCurrentStepValid()) {
+      this.markCurrentStepTouched();
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Incomplete',
+        detail: 'Please fill all required fields'
+      });
+      return;
+    }
+
+    if (!this.selectedOrder) return;
     const id = (this.selectedOrder as any)._id || this.selectedOrder.id;
     if (!id) return;
 
+    // Build the update payload from the form
+    const formValue = this.addOrderForm.value;
+    const updates: any = {
+      orderNumber:          formValue.orderNumber,
+      companyName:          formValue.companyName,
+      clientName:           formValue.clientName,
+      salesPerson:          formValue.salesPerson,
+      deadline:             formValue.deadline,
+      priority:             formValue.priority,
+      specialInstructions:  formValue.specialInstructions,
+      packagingRequirements: formValue.packagingRequirements,
+      shippingAddress:      formValue.shippingAddress,
+      products:             formValue.products
+    };
+
     this.isEditSaving = true;
-    const updates = this.editOrderForm.value;
 
     this.productDetailsService.updateProductDetails(id, updates).subscribe({
       next: () => {
@@ -789,13 +1228,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         this.productDetailsService.addManufacturingNotes(id, 'Order details were updated', author).subscribe();
         this.isEditSaving = false;
         this.isEditMode = false;
+        this.showAddOrderDialog = false;
+        this.currentStep = 1;
         this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Order updated successfully.' });
         this.loadOrders();
-        this.loadOrderActivityForCurrent();
+        this.closeOrderDetails();
       },
-      error: () => {
+      error: (err) => {
         this.isEditSaving = false;
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save changes.' });
+        console.error('Error updating order:', err);
       },
     });
   }
@@ -830,10 +1272,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // Process @mentions and send notifications
   private processMentions(commentText: string, orderId: string): void {
-    console.log('🔍 Processing mentions in comment:', commentText);
-
     if (!this.currentUser || !this.selectedOrder) {
-      console.warn('⚠️ Cannot process mentions: missing currentUser or selectedOrder');
       return;
     }
 
@@ -841,10 +1280,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     const mentionRegex = /@([\w]+\s+[\w]+|[\w]+)/g;
     const mentions = commentText.match(mentionRegex);
 
-    console.log('📝 Found mentions:', mentions);
-
     if (!mentions || mentions.length === 0) {
-      console.log('ℹ️ No mentions found in comment');
       return;
     }
 
@@ -852,14 +1288,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     const fromUserId = this.currentUser.id || '';
     const orderNumber = this.selectedOrder.orderNumber;
 
-    console.log('👤 From user:', fromUserName, 'ID:', fromUserId);
-    console.log('📦 Order:', orderNumber);
-    console.log('👥 Available users:', this.allUsers.length);
-
     // Process each mention
     mentions.forEach(mention => {
       const userName = mention.substring(1).trim(); // Remove @ symbol
-      console.log('🔎 Looking for user:', userName);
 
       // Find the mentioned user in the users list
       const mentionedUser = this.allUsers.find(u => {
@@ -867,23 +1298,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         return fullName.toLowerCase() === userName.toLowerCase();
       });
 
-      if (!mentionedUser) {
-        console.warn(`⚠️ User not found: ${userName}`);
-        console.log('Available user names:', this.allUsers.map(u => `${u.firstName} ${u.lastName}`));
-        return;
-      }
-
-      if (!mentionedUser._id) {
-        console.warn(`⚠️ User ${userName} has no _id`);
+      if (!mentionedUser || !mentionedUser._id) {
         return;
       }
 
       if (mentionedUser._id === fromUserId) {
-        console.log(`ℹ️ Skipping self-mention for ${userName}`);
         return;
       }
-
-      console.log(`📤 Sending notification to ${mentionedUser.firstName} ${mentionedUser.lastName} (${mentionedUser._id})`);
 
       // Send notification to the mentioned user
       this.notificationService.createMentionNotification(
@@ -894,9 +1315,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         orderId,
         commentText
       ).subscribe({
-        next: (response) => {
-          console.log(`✅ Notification sent successfully to ${mentionedUser.firstName} ${mentionedUser.lastName}`, response);
-        },
+        next: () => {},
         error: (err) => {
           console.error(`❌ Failed to send mention notification to ${mentionedUser.firstName} ${mentionedUser.lastName}:`, err);
         }

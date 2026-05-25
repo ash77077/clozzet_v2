@@ -49,6 +49,11 @@ export const routes: Routes = [
     canActivate: [() => import('./guards/manager.guard').then(g => g.ManagerGuard)]
   },
   {
+    path: 'revenue',
+    loadComponent: () => import('./pages/revenue/revenue.component').then(m => m.RevenueComponent),
+    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+  },
+  {
     path: 'companies',
     loadComponent: () => import('./pages/companies-management/companies-management.component').then(m => m.CompaniesManagementComponent),
     canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]

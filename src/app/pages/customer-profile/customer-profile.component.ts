@@ -348,6 +348,20 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     this.router.navigate(['/crm-dashboard']);
   }
 
+  openCreateOrderDialog(): void {
+    if (!this.customer) return;
+
+    // Navigate to orders management page with customer data as query params
+    this.router.navigate(['/orders'], {
+      queryParams: {
+        createOrder: 'true',
+        companyName: this.customer.companyName,
+        clientName: this.customer.contactPerson,
+        customerId: this.customerId
+      }
+    });
+  }
+
   startEditNotes(): void {
     this.editedNotes = this.customer?.notes || '';
     this.isEditingNotes = true;

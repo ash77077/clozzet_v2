@@ -18,6 +18,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
+import { UsersService, User } from '../../services/users.service';
 import { Customer, CustomerStatus, CreateCustomerDto, UpdateCustomerDto } from '../../models/customer.model';
 import { InteractionType, CreateInteractionDto } from '../../models/interaction.model';
 
@@ -46,6 +47,7 @@ import { InteractionType, CreateInteractionDto } from '../../models/interaction.
 })
 export class CrmDashboardComponent implements OnInit, OnDestroy {
   customers: Customer[] = [];
+  filteredCustomers: Customer[] = [];
   selectedCustomer: Customer | null = null;
   customerForm!: FormGroup;
   followUpForm!: FormGroup;
@@ -61,6 +63,14 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   importResults: any = null;
   CustomerStatus = CustomerStatus;
   private destroy$ = new Subject<void>();
+
+  // User filtering
+  managerUsers: User[] = [];
+  selectedUserIds: Set<string> = new Set();
+  showUnassigned = false;
+  isLoadingUsers = false;
+  unassignedCustomersCount = 0;
+  maxVisibleUsers = 5;
 
   statusOptions = [
     { label: 'Lead', value: CustomerStatus.LEAD },
@@ -82,6 +92,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private customersService: CustomersService,
     private interactionsService: InteractionsService,
+    private usersService: UsersService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router
@@ -90,6 +101,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForm();
     this.initializeFollowUpForm();
+    this.loadManagerUsers();
     this.loadCustomers();
   }
 
@@ -143,6 +155,29 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadManagerUsers(): void {
+    this.isLoadingUsers = true;
+    this.usersService.getAllUsers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (users) => {
+          // Filter for manager and admin roles
+          this.managerUsers = users.filter(u =>
+            (u.role === 'manager' || u.role === 'admin') && u.isActive
+          );
+          this.isLoadingUsers = false;
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load users',
+          });
+          this.isLoadingUsers = false;
+        },
+      });
+  }
+
   loadCustomers(): void {
     this.isLoading = true;
     forkJoin({
@@ -154,7 +189,12 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
         next: (data) => {
           // Sort customers: Today's follow-ups first, then overdue, then future
           this.customers = this.sortCustomersByFollowUp(data.customers);
-          this.calculateStats(data.customers, data.followUps);
+
+          // Count unassigned customers
+          this.unassignedCustomersCount = this.customers.filter(c => !c.createdBy).length;
+
+          this.applyUserFilter();
+          this.calculateStats(this.filteredCustomers, data.followUps);
           this.isLoading = false;
         },
         error: () => {
@@ -536,7 +576,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     // Update customer
     const updateDto: UpdateCustomerDto = {
       status: formValue.status || this.selectedCustomer.status,
-      nextFollowUpAt: formValue.nextFollowUpDate instanceof Date ? formValue.nextFollowUpDate.toISOString() : undefined,
+      nextFollowUpAt: formValue.nextFollowUpDate instanceof Date ? formValue.nextFollowUpDate.toISOString() : null,
     };
 
     // Process both operations
@@ -752,5 +792,104 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       return 'N/A';
     }
     return email;
+  }
+
+  getLinkedInUrl(customer: Customer): string | null {
+    // First check if customer has contacts array with LinkedIn
+    if (customer.contacts && customer.contacts.length > 0) {
+      const firstContactWithLinkedIn = customer.contacts.find(c => c.linkedinPage);
+      if (firstContactWithLinkedIn?.linkedinPage) {
+        return this.ensureHttps(firstContactWithLinkedIn.linkedinPage);
+      }
+    }
+
+    // Fallback to customer's primary LinkedIn field
+    if (customer.linkedinPage) {
+      return this.ensureHttps(customer.linkedinPage);
+    }
+
+    return null;
+  }
+
+  private ensureHttps(url: string): string {
+    if (!url) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return 'https://' + url;
+  }
+
+  // User filtering methods
+  toggleUserFilter(userId: string): void {
+    if (this.selectedUserIds.has(userId)) {
+      this.selectedUserIds.delete(userId);
+    } else {
+      this.selectedUserIds.add(userId);
+    }
+    this.applyUserFilter();
+  }
+
+  toggleUnassignedFilter(): void {
+    this.showUnassigned = !this.showUnassigned;
+    this.applyUserFilter();
+  }
+
+  isUserSelected(userId: string): boolean {
+    return this.selectedUserIds.has(userId);
+  }
+
+  clearAllFilters(): void {
+    this.selectedUserIds.clear();
+    this.showUnassigned = false;
+    this.applyUserFilter();
+  }
+
+  applyUserFilter(): void {
+    if (this.selectedUserIds.size === 0 && !this.showUnassigned) {
+      // No filter selected, show all customers
+      this.filteredCustomers = [...this.customers];
+    } else {
+      // Filter by selected users and/or unassigned
+      this.filteredCustomers = this.customers.filter(customer => {
+        // Check if should show unassigned customers
+        if (this.showUnassigned && !customer.createdBy) {
+          return true;
+        }
+
+        // If no users selected, only show unassigned (already handled above)
+        if (this.selectedUserIds.size === 0) {
+          return false;
+        }
+
+        if (!customer.createdBy) return false;
+
+        // Handle both string ID and object with _id
+        const createdById = typeof customer.createdBy === 'string'
+          ? customer.createdBy
+          : (customer.createdBy as any)?._id;
+
+        return createdById && this.selectedUserIds.has(createdById);
+      });
+    }
+  }
+
+  getUserInitials(user: User): string {
+    return (user.firstName.charAt(0) + user.lastName.charAt(0)).toUpperCase();
+  }
+
+  getUserFullName(user: User): string {
+    return `${user.firstName} ${user.lastName}`;
+  }
+
+  get visibleManagerUsers(): User[] {
+    return this.managerUsers.slice(0, this.maxVisibleUsers);
+  }
+
+  get dropdownManagerUsers(): User[] {
+    return this.managerUsers.slice(this.maxVisibleUsers);
+  }
+
+  get hasDropdownUsers(): boolean {
+    return this.managerUsers.length > this.maxVisibleUsers;
   }
 }

@@ -130,12 +130,10 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
 
   exportData(): void {
     // TODO: Implement data export functionality
-    console.log('Exporting data...');
   }
 
   refreshData(): void {
     // TODO: Implement data refresh functionality
-    console.log('Refreshing data...');
     this.loadOrderStats();
   }
 

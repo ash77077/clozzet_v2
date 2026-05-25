@@ -99,6 +99,51 @@
         placeholder="Search by order number, client, sales person…"
         class="search-input" />
     </div>
+
+    <!-- User Filter Icons -->
+    <div class="user-filter-section" *ngIf="allUsers.length > 0">
+      <div class="user-filter-chips">
+        <!-- First 5 users as icons -->
+        <div
+          *ngFor="let user of visibleUsers"
+          class="user-chip"
+          [class.active]="isUserSelected(user._id!)"
+          (click)="toggleUserFilter(user._id!)"
+          [pTooltip]="getUserFullName(user)"
+          tooltipPosition="top">
+          <div class="user-avatar">
+            {{ getUserInitials(user) }}
+          </div>
+        </div>
+
+        <!-- More users dropdown (if more than 5 users) -->
+        <div class="user-dropdown-wrapper" *ngIf="hasDropdownUsers">
+          <p-select
+            [options]="dropdownUsers"
+            placeholder="More..."
+            optionLabel="firstName"
+            styleClass="user-dropdown"
+            appendTo="body">
+            <ng-template let-user pTemplate="item">
+              <div class="dropdown-user-item" (click)="toggleUserFilter(user._id!); $event.stopPropagation()">
+                <div class="user-avatar-small">
+                  {{ getUserInitials(user) }}
+                </div>
+                <span class="user-name">{{ getUserFullName(user) }}</span>
+                <i class="pi pi-check" *ngIf="isUserSelected(user._id!)"></i>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem">
+              <div class="selected-dropdown">
+                <i class="pi pi-users"></i>
+                <span>+{{ dropdownUsers.length }}</span>
+              </div>
+            </ng-template>
+          </p-select>
+        </div>
+      </div>
+    </div>
+
     <div class="filter-wrap">
       <p-select
         [options]="availableStatuses"
@@ -146,6 +191,11 @@
           <div class="card-client">
             <i class="pi pi-user"></i>
             <span>{{ order.clientName }}</span>
+          </div>
+
+          <div class="card-company" *ngIf="order.companyName">
+            <i class="pi pi-building"></i>
+            <span>{{ order.companyName }}</span>
           </div>
 
           <div class="card-meta">
@@ -218,6 +268,7 @@
           <td>
             <div class="client-cell">
               <span class="client-name">{{ order.clientName }}</span>
+              <span class="company-name" *ngIf="order.companyName">{{ order.companyName }}</span>
               <span class="cloth-type">{{ order.clothType }}</span>
             </div>
           </td>
@@ -293,6 +344,9 @@
           </div>
         </div>
         <div class="jira-header-right">
+          <button class="jira-hdr-btn btn-print" (click)="printOrder()" pTooltip="Print order">
+            <i class="pi pi-print"></i> Print
+          </button>
           <button class="jira-hdr-btn" (click)="copyOrderLink()" pTooltip="Copy link to this order">
             <i class="pi pi-link"></i> Copy Link
           </button>
@@ -362,15 +416,164 @@
                   <span class="dk">Client</span>
                   <span class="dv">{{ selectedOrder.clientName }}</span>
                 </div>
+                <div class="detail-row" *ngIf="selectedOrder.companyName">
+                  <span class="dk">Company</span>
+                  <span class="dv">{{ selectedOrder.companyName }}</span>
+                </div>
                 <div class="detail-row">
                   <span class="dk">Sales Person</span>
                   <span class="dv">{{ selectedOrder.salesPerson }}</span>
                 </div>
-                <div class="detail-row">
+                <div class="detail-row" *ngIf="selectedOrder.specialInstructions">
+                  <span class="dk">Instructions</span>
+                  <span class="dv wrap">{{ selectedOrder.specialInstructions }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.packagingRequirements">
+                  <span class="dk">Packaging</span>
+                  <span class="dv wrap">{{ selectedOrder.packagingRequirements }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedOrder.shippingAddress">
+                  <span class="dk">Shipping</span>
+                  <span class="dv wrap">{{ selectedOrder.shippingAddress }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="jira-section" *ngIf="selectedOrder.products && selectedOrder.products.length > 0">
+              <h4 class="jira-section-label"><i class="pi pi-box"></i> Products ({{ selectedOrder.products.length }})</h4>
+
+              <div class="products-list">
+                <div class="product-card-view" *ngFor="let product of selectedOrder.products; let idx = index">
+                  <div class="product-card-header">
+                    <span class="product-num">Product {{ idx + 1 }}</span>
+                    <span class="product-qty-badge" *ngIf="getProductTotalQuantity(product) > 0">
+                      {{ getProductTotalQuantity(product) }} units
+                    </span>
+                  </div>
+
+                  <div class="product-details-grid">
+                    <div class="product-detail-row">
+                      <span class="pdk">Cloth Type</span>
+                      <span class="pdv">{{ product.clothType }}</span>
+                    </div>
+                    <div class="product-detail-row" *ngIf="product.textileType">
+                      <span class="pdk">Textile</span>
+                      <span class="pdv">{{ product.textileType }}</span>
+                    </div>
+                    <div class="product-detail-row" *ngIf="product.designMethod">
+                      <span class="pdk">Design Method</span>
+                      <span class="pdv">{{ product.designMethod }}</span>
+                    </div>
+                    <div class="product-detail-row" *ngIf="product.colors">
+                      <span class="pdk">Colors</span>
+                      <span class="pdv">{{ product.colors }}</span>
+                    </div>
+                    <div class="product-detail-row" *ngIf="product.logoPosition">
+                      <span class="pdk">Logo Position</span>
+                      <span class="pdv">{{ product.logoPosition }}</span>
+                    </div>
+                    <div class="product-detail-row" *ngIf="product.logoSize">
+                      <span class="pdk">Logo Size</span>
+                      <span class="pdv">{{ product.logoSize }}</span>
+                    </div>
+                    <div class="product-detail-row" *ngIf="product.customColorDetails">
+                      <span class="pdk">Color Details</span>
+                      <span class="pdv">{{ product.customColorDetails }}</span>
+                    </div>
+                    <div class="product-detail-row" *ngIf="product.sellingPricePerUnit">
+                      <span class="pdk">Price per Unit</span>
+                      <span class="pdv">${{ product.sellingPricePerUnit }}</span>
+                    </div>
+                    <div class="product-detail-row full-width" *ngIf="product.comments">
+                      <span class="pdk">Comments</span>
+                      <span class="pdv">{{ product.comments }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Size breakdown for this product -->
+                  <div class="product-sizes" *ngIf="product.sizes">
+                    <div class="sizes-label-small">Size Breakdown</div>
+                    <div class="size-grid-compact">
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xs) > 0">
+                        <span class="size-name">XS</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.xs, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xs, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xs, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xs, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xs, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xs, 'uni') }}</span>
+                        </span>
+                      </div>
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.s) > 0">
+                        <span class="size-name">S</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.s, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.s, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.s, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.s, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.s, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.s, 'uni') }}</span>
+                        </span>
+                      </div>
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.m) > 0">
+                        <span class="size-name">M</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.m, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.m, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.m, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.m, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.m, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.m, 'uni') }}</span>
+                        </span>
+                      </div>
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.l) > 0">
+                        <span class="size-name">L</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.l, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.l, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.l, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.l, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.l, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.l, 'uni') }}</span>
+                        </span>
+                      </div>
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xl) > 0">
+                        <span class="size-name">XL</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.xl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xl, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xl, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xl, 'uni') }}</span>
+                        </span>
+                      </div>
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xxl) > 0">
+                        <span class="size-name">XXL</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.xxl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xxl, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xxl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xxl, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xxl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xxl, 'uni') }}</span>
+                        </span>
+                      </div>
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xxxl) > 0">
+                        <span class="size-name">XXXL</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.xxxl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xxxl, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xxxl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xxxl, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xxxl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xxxl, 'uni') }}</span>
+                        </span>
+                      </div>
+                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xxxxl) > 0">
+                        <span class="size-name">XXXXL</span>
+                        <span class="size-breakdown-details">
+                          <span *ngIf="getSizeValue(product.sizes.xxxxl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xxxxl, 'men') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xxxxl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xxxxl, 'women') }}</span>
+                          <span *ngIf="getSizeValue(product.sizes.xxxxl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xxxxl, 'uni') }}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Legacy order format (for old orders without products array) -->
+            <div class="jira-section" *ngIf="!selectedOrder.products || selectedOrder.products.length === 0">
+              <h4 class="jira-section-label"><i class="pi pi-box"></i> Product Details</h4>
+              <div class="detail-grid">
+                <div class="detail-row" *ngIf="selectedOrder.clothType">
                   <span class="dk">Cloth Type</span>
                   <span class="dv">{{ selectedOrder.clothType }}</span>
                 </div>
-                <div class="detail-row">
+                <div class="detail-row" *ngIf="selectedOrder.textileType">
                   <span class="dk">Textile</span>
                   <span class="dv">{{ selectedOrder.textileType }}</span>
                 </div>
@@ -389,14 +592,6 @@
                 <div class="detail-row" *ngIf="selectedOrder.customColorDetails">
                   <span class="dk">Color Details</span>
                   <span class="dv">{{ selectedOrder.customColorDetails }}</span>
-                </div>
-                <div class="detail-row" *ngIf="selectedOrder.specialInstructions">
-                  <span class="dk">Instructions</span>
-                  <span class="dv wrap">{{ selectedOrder.specialInstructions }}</span>
-                </div>
-                <div class="detail-row" *ngIf="selectedOrder.shippingAddress">
-                  <span class="dk">Shipping</span>
-                  <span class="dv wrap">{{ selectedOrder.shippingAddress }}</span>
                 </div>
               </div>
             </div>
@@ -709,6 +904,9 @@
       <!-- /jira-body -->
     </div>
     <!-- /jira-modal-wrapper -->
+
+    <!-- Print Template (hidden on screen, visible when printing) -->
+    <app-order-print-template [order]="selectedOrder"></app-order-print-template>
   </p-dialog>
 
   <!-- ════════ Status Change Dialog ════════ -->
@@ -774,13 +972,13 @@
        ADD ORDER DIALOG — Multi-step form
        ════════════════════════════════════════════════════ -->
   <p-dialog
-    header="Add New Order"
+    [header]="isEditMode ? 'Edit Order' : 'Add New Order'"
     [(visible)]="showAddOrderDialog"
     [modal]="true"
     [style]="{width: '780px', maxWidth: '95vw'}"
     [draggable]="false"
     [resizable]="false"
-    (onHide)="closeAddOrderDialog()"
+    (onHide)="isEditMode ? cancelEdit() : closeAddOrderDialog()"
     styleClass="add-order-modal">
 
     <div class="add-order-dialog" [formGroup]="addOrderForm">
@@ -821,8 +1019,13 @@
           </div>
 
           <div class="form-field">
+            <label class="field-label">Company Name</label>
+            <input pInputText formControlName="companyName" placeholder="Company name (optional)" class="full-width" />
+          </div>
+
+          <div class="form-field">
             <label class="field-label required">Client Name</label>
-            <input pInputText formControlName="clientName" placeholder="Company or client name" class="full-width" />
+            <input pInputText formControlName="clientName" placeholder="Client contact name" class="full-width" />
             <span class="field-error" *ngIf="isFieldInvalid('clientName')">Client name is required</span>
           </div>
 
@@ -849,78 +1052,194 @@
       </div>
 
       <!-- ══════════════════════════════════════════
-           STEP 2 — Product & Sizes
+           STEP 2 — Products
            ══════════════════════════════════════════ -->
-      <div class="step-content" *ngIf="currentStep === 2">
-        <h3 class="step-title"><i class="pi pi-box"></i> Product & Sizes</h3>
-
-        <div class="form-grid">
-          <div class="form-field">
-            <label class="field-label required">Cloth Type</label>
-            <p-select formControlName="clothType" [options]="clothTypes" placeholder="Select cloth type" styleClass="full-width" appendTo="body"></p-select>
-            <span class="field-error" *ngIf="isFieldInvalid('clothType')">Cloth type is required</span>
-          </div>
-
-          <div class="form-field">
-            <label class="field-label required">Textile Type</label>
-            <p-select formControlName="textileType" [options]="textileTypes" placeholder="Select textile" styleClass="full-width" appendTo="body"></p-select>
-            <span class="field-error" *ngIf="isFieldInvalid('textileType')">Textile type is required</span>
-          </div>
+      <div class="step-content" *ngIf="currentStep === 2" formArrayName="products">
+        <div class="step-header-with-action">
+          <h3 class="step-title"><i class="pi pi-box"></i> Products</h3>
+          <span class="total-qty-badge">Total: <strong>{{ calculateGrandTotal() }}</strong> units</span>
         </div>
 
-        <!-- Size quantity grid -->
-        <div class="size-grid-section">
-          <div class="size-grid-header">
-            <span class="size-grid-title"><i class="pi pi-chart-bar"></i> Size Quantities</span>
-            <span class="total-qty-badge">Total: <strong>{{ totalQuantity }}</strong> units</span>
+        <!-- Products Array -->
+        <div *ngFor="let product of products.controls; let i = index" [formGroupName]="i" class="product-card">
+          <div class="product-card-header">
+            <h4 class="product-title">Product {{ i + 1 }}</h4>
+            <button type="button" class="btn-remove-product" *ngIf="products.length > 1" (click)="removeProduct(i)">
+              <i class="pi pi-trash"></i> Remove
+            </button>
           </div>
-          <div class="size-grid">
-            <div class="size-cell" *ngFor="let size of sizes">
-              <span class="size-name">{{ size }}</span>
-              <input
-                type="number"
-                class="size-input"
-                [(ngModel)]="sizeQuantities[size]"
-                [ngModelOptions]="{standalone: true}"
-                min="0"
-                placeholder="0" />
+
+          <!-- Product Details -->
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="field-label required">Cloth Type</label>
+              <p-select formControlName="clothType" [options]="clothTypes" placeholder="Select cloth type" styleClass="full-width" appendTo="body" [class.ng-invalid]="isProductFieldInvalid(i, 'clothType')"></p-select>
+              <span class="field-error" *ngIf="isProductFieldInvalid(i, 'clothType')">{{ getProductFieldError(i, 'clothType') }}</span>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label required">Textile Type</label>
+              <p-select formControlName="textileType" [options]="textileTypes" placeholder="Select textile" styleClass="full-width" appendTo="body" [class.ng-invalid]="isProductFieldInvalid(i, 'textileType')"></p-select>
+              <span class="field-error" *ngIf="isProductFieldInvalid(i, 'textileType')">{{ getProductFieldError(i, 'textileType') }}</span>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label required">Design Method</label>
+              <p-select formControlName="designMethod" [options]="designMethods" placeholder="Select design method" styleClass="full-width" appendTo="body" [class.ng-invalid]="isProductFieldInvalid(i, 'designMethod')"></p-select>
+              <span class="field-error" *ngIf="isProductFieldInvalid(i, 'designMethod')">{{ getProductFieldError(i, 'designMethod') }}</span>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label">Colors</label>
+              <input pInputText formControlName="colors" placeholder="e.g. Black, White, Navy" class="full-width" />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label">Logo Position</label>
+              <input pInputText formControlName="logoPosition" placeholder="e.g. Left chest" class="full-width" />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label">Logo Size</label>
+              <input pInputText formControlName="logoSize" placeholder="e.g. 10cm x 5cm" class="full-width" />
             </div>
           </div>
+
+          <div class="form-field">
+            <label class="field-label">Custom Color Details</label>
+            <textarea pTextarea formControlName="customColorDetails" rows="2" placeholder="Describe custom colors…" class="full-width"></textarea>
+          </div>
+
+          <!-- Selling Price (Optional) -->
+          <div class="pricing-section">
+            <h5 class="pricing-section-title">
+              <i class="pi pi-dollar"></i> Pricing <span class="optional-badge">Optional</span>
+            </h5>
+            <div class="form-field">
+              <label class="field-label">Selling Price per Unit</label>
+              <input
+                pInputText
+                type="number"
+                formControlName="sellingPricePerUnit"
+                placeholder="Selling price (e.g. 15.00)"
+                class="full-width"
+                min="0"
+                step="0.01" />
+              <small class="field-hint">Price charged to customer per unit</small>
+            </div>
+
+            <!-- Revenue Preview -->
+            <div class="revenue-preview-card" *ngIf="hasSellingPrice(i)">
+              <div class="revenue-item">
+                <span class="revenue-label"><i class="pi pi-shopping-cart"></i> Total Revenue:</span>
+                <span class="revenue-value">${{ calculateProductRevenue(i).toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Size Breakdown for this product -->
+          <div formGroupName="sizes" class="sizes-section">
+            <div class="sizes-header-row">
+              <label class="sizes-label">Size Breakdown</label>
+              <div class="size-mode-toggle">
+                <label class="toggle-label">Split by Gender</label>
+                <p-toggleswitch [(ngModel)]="sizeBreakdownMode" [ngModelOptions]="{standalone: true}"
+                  [trueValue]="'split'" [falseValue]="'uni'"
+                  pTooltip="Toggle between Uni-only mode and Men/Women/Uni split mode"
+                  tooltipPosition="top">
+                </p-toggleswitch>
+              </div>
+            </div>
+
+            <!-- UNI-ONLY MODE -->
+            <div class="sizes-table" *ngIf="sizeBreakdownMode === 'uni'">
+              <div class="sizes-header">
+                <div class="size-col-uni">Size</div>
+                <div class="size-col-uni">Quantity</div>
+              </div>
+              <div class="size-row" *ngFor="let size of ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl']" [formGroupName]="size">
+                <div class="size-col-uni size-label">{{ size.toUpperCase() }}</div>
+                <div class="size-col-uni">
+                  <input type="number" formControlName="uni" min="0" class="size-input"
+                    [attr.data-product]="i"
+                    [attr.data-size]="size"
+                    [attr.data-gender]="'uni'"
+                    (keydown)="onSizeInputKeydown($event, size, 'uni', i)" />
+                </div>
+              </div>
+              <div class="size-row size-total-row">
+                <div class="size-col-uni"><strong>Total</strong></div>
+                <div class="size-col-uni"><strong>{{ calculateProductTotal('uni', i) }}</strong></div>
+              </div>
+            </div>
+
+            <!-- SPLIT MODE (Men/Women/Uni) -->
+            <div class="sizes-table" *ngIf="sizeBreakdownMode === 'split'">
+              <div class="sizes-header">
+                <div class="size-col">Size</div>
+                <div class="size-col">Men</div>
+                <div class="size-col">Women</div>
+                <div class="size-col">Uni</div>
+              </div>
+              <div class="size-row" *ngFor="let size of ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl']" [formGroupName]="size">
+                <div class="size-col size-label">{{ size.toUpperCase() }}</div>
+                <div class="size-col">
+                  <input type="number" formControlName="men" min="0" class="size-input"
+                    [attr.data-product]="i"
+                    [attr.data-size]="size"
+                    [attr.data-gender]="'men'"
+                    (keydown)="onSizeInputKeydown($event, size, 'men', i)" />
+                </div>
+                <div class="size-col">
+                  <input type="number" formControlName="women" min="0" class="size-input"
+                    [attr.data-product]="i"
+                    [attr.data-size]="size"
+                    [attr.data-gender]="'women'"
+                    (keydown)="onSizeInputKeydown($event, size, 'women', i)" />
+                </div>
+                <div class="size-col">
+                  <input type="number" formControlName="uni" min="0" class="size-input"
+                    [attr.data-product]="i"
+                    [attr.data-size]="size"
+                    [attr.data-gender]="'uni'"
+                    (keydown)="onSizeInputKeydown($event, size, 'uni', i)" />
+                </div>
+              </div>
+              <div class="size-row size-total-row">
+                <div class="size-col"><strong>Total</strong></div>
+                <div class="size-col"><strong>{{ calculateProductTotal('men', i) }}</strong></div>
+                <div class="size-col"><strong>{{ calculateProductTotal('women', i) }}</strong></div>
+                <div class="size-col"><strong>{{ calculateProductTotal('uni', i) }}</strong></div>
+              </div>
+            </div>
+
+            <div class="product-total-badge">
+              Product Total: <strong>{{ calculateSingleProductTotal(i) }}</strong> units
+            </div>
+          </div>
+
+          <!-- Product Comments -->
+          <div class="form-field">
+            <label class="field-label">Comments</label>
+            <textarea pTextarea formControlName="comments" rows="2" placeholder="Any specific notes for this product…" class="full-width"></textarea>
+          </div>
         </div>
+
+        <!-- Add Product Button -->
+        <button type="button" class="btn-add-product" (click)="addProduct()">
+          <i class="pi pi-plus"></i> Add Another Product
+        </button>
       </div>
 
       <!-- ══════════════════════════════════════════
-           STEP 3 — Design
+           STEP 3 — Files & Attachments
            ══════════════════════════════════════════ -->
       <div class="step-content" *ngIf="currentStep === 3">
-        <h3 class="step-title"><i class="pi pi-palette"></i> Design</h3>
-
-        <div class="form-grid">
-          <div class="form-field">
-            <label class="field-label required">Design Method</label>
-            <p-select formControlName="designMethod" [options]="designMethods" placeholder="Select design method" styleClass="full-width" appendTo="body"></p-select>
-            <span class="field-error" *ngIf="isFieldInvalid('designMethod')">Design method is required</span>
-          </div>
-
-          <div class="form-field">
-            <label class="field-label">Logo Position</label>
-            <input pInputText formControlName="logoPosition" placeholder="e.g. Left chest, Back center" class="full-width" />
-          </div>
-
-          <div class="form-field">
-            <label class="field-label">Logo Size</label>
-            <input pInputText formControlName="logoSize" placeholder="e.g. 10cm x 5cm" class="full-width" />
-          </div>
-        </div>
-
-        <div class="form-field mt-4">
-          <label class="field-label">Custom Color Details</label>
-          <textarea pTextarea formControlName="customColorDetails" rows="3" placeholder="Describe any custom color specifications…" class="full-width"></textarea>
-        </div>
+        <h3 class="step-title"><i class="pi pi-paperclip"></i> Files & Attachments</h3>
 
         <!-- File Upload Section -->
-        <div class="form-field mt-4">
-          <label class="field-label"><i class="pi pi-paperclip"></i> Attach Files (Optional)</label>
+        <div class="form-field">
+          <label class="field-label">Attach Files (Optional)</label>
           <div class="file-upload-zone">
             <label class="file-upload-trigger">
               <i class="pi pi-cloud-upload"></i>
@@ -936,8 +1255,7 @@
           </div>
 
           <!-- Pending Files List -->
-	        <div class="image-preview-modal">
-           <div class="pending-files-list" *ngIf="addOrderPendingFiles.length > 0">
+          <div class="pending-files-list" *ngIf="addOrderPendingFiles.length > 0">
             <div class="pending-file-item" *ngFor="let file of addOrderPendingFiles; let i = index">
               <div class="pf-icon">
                 <i class="pi" [ngClass]="isImageFile(file.name) ? 'pi-image' : 'pi-file'"></i>
@@ -954,7 +1272,6 @@
               <i class="pi pi-info-circle"></i>
               <span>{{ addOrderPendingFiles.length }} file(s) ready to upload</span>
             </div>
-          </div>
           </div>
         </div>
       </div>
@@ -984,6 +1301,11 @@
         </div>
 
         <div class="form-field mt-3">
+          <label class="field-label">Packaging Requirements</label>
+          <textarea pTextarea formControlName="packagingRequirements" rows="2" placeholder="Packaging or labeling requirements…" class="full-width"></textarea>
+        </div>
+
+        <div class="form-field mt-3">
           <label class="field-label">Shipping Address</label>
           <textarea pTextarea formControlName="shippingAddress" rows="3" placeholder="Delivery address…" class="full-width"></textarea>
         </div>
@@ -993,10 +1315,10 @@
           <h4><i class="pi pi-list"></i> Order Summary</h4>
           <div class="summary-grid">
             <div class="summary-item"><span class="s-label">Order #</span><span class="s-value">{{ f('orderNumber').value || '—' }}</span></div>
+            <div class="summary-item"><span class="s-label">Company</span><span class="s-value">{{ f('companyName').value || '—' }}</span></div>
             <div class="summary-item"><span class="s-label">Client</span><span class="s-value">{{ f('clientName').value || '—' }}</span></div>
-            <div class="summary-item"><span class="s-label">Cloth Type</span><span class="s-value">{{ f('clothType').value || '—' }}</span></div>
-            <div class="summary-item"><span class="s-label">Total Qty</span><span class="s-value">{{ totalQuantity }} units</span></div>
-            <div class="summary-item"><span class="s-label">Design Method</span><span class="s-value">{{ f('designMethod').value || '—' }}</span></div>
+            <div class="summary-item"><span class="s-label">Products</span><span class="s-value">{{ products.length }} product(s)</span></div>
+            <div class="summary-item"><span class="s-label">Total Qty</span><span class="s-value">{{ calculateGrandTotal() }} units</span></div>
             <div class="summary-item"><span class="s-label">Sales Person</span><span class="s-value">{{ f('salesPerson').value || '—' }}</span></div>
             <div class="summary-item"><span class="s-label">Status</span><span class="s-value">{{ getStatusLabel(f('status').value) }}</span></div>
             <div class="summary-item"><span class="s-label">Priority</span><span class="s-value" style="text-transform:capitalize">{{ f('priority').value || '—' }}</span></div>
@@ -1009,7 +1331,7 @@
     <!-- ── Footer navigation ── -->
     <ng-template pTemplate="footer">
       <div class="dialog-footer">
-        <button class="footer-btn btn-cancel" (click)="closeAddOrderDialog()">
+        <button class="footer-btn btn-cancel" (click)="isEditMode ? cancelEdit() : closeAddOrderDialog()">
           <i class="pi pi-times"></i> Cancel
         </button>
         <div class="footer-nav">
@@ -1019,8 +1341,8 @@
           <button class="footer-btn btn-next" (click)="nextStep()" *ngIf="currentStep < totalSteps">
             Next <i class="pi pi-arrow-right"></i>
           </button>
-          <button class="footer-btn btn-submit" (click)="submitOrder()" *ngIf="currentStep === totalSteps" [disabled]="isSaving">
-            <i class="pi pi-check"></i> {{ isSaving ? 'Saving…' : 'Create Order' }}
+          <button class="footer-btn btn-submit" (click)="isEditMode ? saveEdit() : submitOrder()" *ngIf="currentStep === totalSteps" [disabled]="isSaving || isEditSaving">
+            <i class="pi pi-check"></i> {{ (isSaving || isEditSaving) ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Create Order') }}
           </button>
         </div>
       </div>

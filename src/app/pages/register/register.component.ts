@@ -190,7 +190,6 @@ export class RegisterComponent {
     this.authService.register(registrationData).subscribe({
       next: (response) => {
         this.isLoading = false;
-        console.log('Registration successful:', response);
         alert('Registration successful! Welcome to CLOZZET.');
         this.router.navigate(['/']);
       },

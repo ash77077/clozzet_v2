@@ -356,8 +356,6 @@ export class OrderBlankComponent implements OnInit {
         next: (response: any) => {
           this.sending = false;
           this.successMessage = 'Order sent to Telegram successfully!';
-          console.log('Order sent successfully:', response);
-
           // Clear success message after 5 seconds
           setTimeout(() => {
             this.successMessage = null;

@@ -36,13 +36,10 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('🔔 Notification bell initialized');
-
     // Subscribe to notifications
     this.notificationService.notifications$
       .pipe(takeUntil(this.destroy$))
       .subscribe(notifications => {
-        console.log('📬 Notifications updated:', notifications.length, 'notifications');
         this.notifications = notifications;
       });
 
@@ -50,7 +47,6 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     this.notificationService.unreadCount$
       .pipe(takeUntil(this.destroy$))
       .subscribe(count => {
-        console.log('🔢 Unread count updated:', count);
         this.unreadCount = count;
       });
 
@@ -59,7 +55,6 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => {
         if (user?.id) {
-          console.log('👤 Connecting notification socket for user:', user.id);
           this.notificationService.connectSocket(user.id);
         }
       });
@@ -74,14 +69,6 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   togglePanel(event: Event, op: any): void {
     op.toggle(event);
     this.showPanel = !this.showPanel;
-
-    // Debug: Log notifications when opening panel
-    if (this.showPanel) {
-      console.log('📂 Opening notification panel');
-      console.log('📊 Total notifications:', this.notifications.length);
-      console.log('📋 Notification details:', this.notifications);
-      console.log('🔢 Unread count:', this.unreadCount);
-    }
   }
 
   markAsRead(notification: Notification, event?: Event): void {
@@ -110,10 +97,6 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   }
 
   navigateToNotification(notification: Notification, popover?: any): void {
-    console.log('🔗 Navigating to notification:', notification);
-    console.log('📍 Link:', notification.link);
-    console.log('📦 Order ID:', notification.orderId);
-
     // Mark as read
     this.markAsRead(notification);
 
@@ -125,16 +108,11 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
     // Navigate to link if provided
     if (notification.link) {
-      console.log('➡️ Navigating to:', notification.link);
-
-      // Use Router.navigate with query params for better control
-      // Parse the URL to extract route and query parameters
       const urlParts = notification.link.split('?');
       const route = urlParts[0];
       const queryString = urlParts[1];
 
       if (queryString) {
-        // Parse query params
         const queryParams: any = {};
         queryString.split('&').forEach(param => {
           const [key, value] = param.split('=');
@@ -143,34 +121,20 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
           }
         });
 
-        console.log('📍 Navigating to route:', route, 'with query params:', queryParams);
-
-        // Navigate with query params
-        this.router.navigate([route], { queryParams }).then(() => {
-          console.log('✅ Navigation complete');
-        }).catch(err => {
+        this.router.navigate([route], { queryParams }).catch(err => {
           console.error('❌ Navigation failed:', err);
         });
       } else {
-        // No query params, use simple navigation
-        this.router.navigate([route]).then(() => {
-          console.log('✅ Navigation complete');
-        }).catch(err => {
+        this.router.navigate([route]).catch(err => {
           console.error('❌ Navigation failed:', err);
         });
       }
     } else if (notification.orderId) {
-      // Fallback: if no link but orderId is present, construct the navigation
-      console.log('⚠️ No link provided, using orderId:', notification.orderId);
       this.router.navigate(['/orders-management'], {
         queryParams: { order: notification.orderId }
-      }).then(() => {
-        console.log('✅ Navigation complete using orderId');
       }).catch(err => {
         console.error('❌ Navigation failed:', err);
       });
-    } else {
-      console.warn('⚠️ No link or orderId provided in notification');
     }
   }
 

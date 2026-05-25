@@ -40,8 +40,6 @@ export class LoginComponent {
       this.authService.login(this.loginData).subscribe({
         next: (response) => {
           this.isLoading = false;
-          console.log('Login successful:', response);
-          
           // Get return URL from query parameters or default to dashboard
           const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
           this.router.navigate([returnUrl]);

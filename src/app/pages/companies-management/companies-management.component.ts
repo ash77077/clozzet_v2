@@ -222,7 +222,6 @@ export class CompaniesManagementComponent implements OnInit, OnDestroy {
 
   editCompany(company: Company): void {
     // TODO: Implement edit company functionality
-    console.log('Edit company:', company);
     this.messageService.add({severity:'info', summary:'Edit Company', detail:`Edit functionality for ${company.name} will be implemented`});
   }
 
@@ -233,7 +232,6 @@ export class CompaniesManagementComponent implements OnInit, OnDestroy {
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         // TODO: Implement toggle company status functionality
-        console.log('Toggle company status:', company);
         this.messageService.add({severity:'success', summary:'Status Updated', detail:`${company.name} has been ${company.isActive ? 'deactivated' : 'activated'}`});
       }
     });

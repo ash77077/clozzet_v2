@@ -30,6 +30,7 @@ export interface Customer {
   nextFollowUpAt?: Date;
   scheduledMeetingAt?: Date;
   isActive: boolean;
+  createdBy?: string | any; // Can be string ID or populated User object
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -63,7 +64,7 @@ export interface UpdateCustomerDto {
   industry?: string;
   notes?: string;
   source?: string;
-  nextFollowUpAt?: Date | string;
-  lastContactedAt?: Date | string;
-  scheduledMeetingAt?: Date | string;
+  nextFollowUpAt?: Date | string | null;
+  lastContactedAt?: Date | string | null;
+  scheduledMeetingAt?: Date | string | null;
 }

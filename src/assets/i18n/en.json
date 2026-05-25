@@ -75,14 +75,17 @@
     },
     "sections": {
       "basicInfo": "BASIC INFORMATION",
+      "product": "Product",
       "productSpecs": "PRODUCT SPECIFICATIONS",
       "sizeBreakdown": "SIZE BREAKDOWN",
+      "comments": "COMMENTS",
       "designDetails": "DESIGN DETAILS",
       "additionalInfo": "ADDITIONAL INFORMATION"
     },
     "fields": {
       "orderNumber": "Order Number",
       "orderDate": "Order Date",
+      "companyName": "Company Name",
       "clientName": "Client Name",
       "salesPerson": "Sales Person",
       "deadline": "Deadline",
@@ -96,9 +99,15 @@
       "logoPosition": "Logo Position",
       "logoSize": "Logo Size",
       "pantoneColors": "Pantone Colors",
+      "comments": "Comments",
       "specialInstructions": "Special Instructions",
       "packagingRequirements": "Packaging Requirements",
-      "shippingAddress": "Shipping Address"
+      "shippingAddress": "Shipping Address",
+      "productTotal": "Product Total"
+    },
+    "buttons": {
+      "addProduct": "Add Another Product",
+      "removeProduct": "Remove Product"
     },
     "priority": {
       "low": "Low Priority",
@@ -132,6 +141,7 @@
     },
     "placeholders": {
       "enterOrderNumber": "Enter order number",
+      "enterCompanyName": "Enter company name",
       "enterClientName": "Enter client name",
       "enterSalesPerson": "Enter sales person name",
       "selectDate": "Select date",
@@ -145,6 +155,7 @@
       "enterLogoPosition": "e.g., Front Center",
       "enterLogoSize": "e.g., 10x8 cm",
       "enterPantoneColors": "Enter Pantone colors",
+      "enterComments": "Any comments about this product",
       "enterInstructions": "Any special manufacturing instructions",
       "enterPackaging": "Specific packaging or labeling requirements",
       "enterShippingAddress": "Complete shipping address",

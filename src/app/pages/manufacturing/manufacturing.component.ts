@@ -384,7 +384,6 @@ export class ManufacturingComponent implements OnInit, OnDestroy {
 
   viewTimeline(order: ProductDetails): void {
     // TODO: Implement timeline view
-    console.log('View timeline for:', order.orderNumber);
     this.messageService.add({
       severity: 'info',
       summary: 'Timeline',
@@ -394,7 +393,6 @@ export class ManufacturingComponent implements OnInit, OnDestroy {
 
   printWorkOrder(order: ProductDetails): void {
     // TODO: Implement work order printing
-    console.log('Print work order for:', order.orderNumber);
     this.messageService.add({
       severity: 'info',
       summary: 'Work Order',

@@ -183,8 +183,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
 
-            console.log('Found mesh:', mesh.name);
-
             // Ensure the material is a MeshStandardMaterial for proper lighting
             if (mesh.material) {
               // Clone the material to avoid shared references
@@ -236,15 +234,8 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
         // Add the model to the scene
         this.scene.add(this.loadedModel);
 
-        console.log('Model centered at:', finalCenter);
-        console.log('Model size:', size);
-        console.log('Camera positioned at:', this.camera.position);
       },
-      (progress) => {
-        // Loading progress
-        const percentComplete = (progress.loaded / progress.total) * 100;
-        console.log(`Model loading: ${percentComplete.toFixed(2)}%`);
-      },
+      undefined,
       (error) => {
         console.error('Error loading model:', error);
       }
@@ -299,7 +290,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       this.partColors.set(partName, hexColor);
     });
 
-    console.log(`Changed all parts to ${hexColor}`);
   }
 
   /**
@@ -326,7 +316,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     // Store the color
     this.partColors.set(partName, hexColor);
 
-    console.log(`Changed ${partName} to ${hexColor}`);
   }
 
   /**
@@ -443,7 +432,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
               const image = texture.image;
               if (image && image.width && image.height) {
                 this.logoAspectRatio = image.width / image.height;
-                console.log(`Custom logo uploaded: ${image.width}x${image.height}, aspect ratio: ${this.logoAspectRatio.toFixed(2)}`);
               } else {
                 this.logoAspectRatio = 1.0; // Default to square if dimensions unavailable
               }
@@ -485,7 +473,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     this.transformControl.detach();
     this.selectedDecal = null;
 
-    console.log('Logo removed');
   }
 
   /**
@@ -522,7 +509,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       const clickedDecal = decalIntersects[0].object as THREE.Mesh;
       this.selectedDecal = clickedDecal;
       this.transformControl.attach(clickedDecal);
-      console.log('Decal selected for transformation');
       return;
     }
 
@@ -613,7 +599,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     this.selectedDecal = decalMesh;
     this.transformControl.attach(decalMesh);
 
-    console.log('Logo placed at', position);
   }
 
   /**
@@ -622,7 +607,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   setTransformMode(mode: 'translate' | 'rotate' | 'scale'): void {
     this.transformMode = mode;
     this.transformControl.setMode(mode);
-    console.log(`Transform mode set to: ${mode}`);
   }
 
   /**
@@ -649,7 +633,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     this.selectedDecal = null;
     this.transformControl.detach();
 
-    console.log('Placed logo removed');
   }
 
   /**
@@ -676,10 +659,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
 
     // Convert to formatted JSON string
     const jsonString = JSON.stringify(productionData, null, 2);
-
-    // Log to console
-    console.log('=== PRODUCTION DATA EXPORT ===');
-    console.log(jsonString);
 
     // Download as JSON file
     this.downloadJSON(jsonString, `design-export-${Date.now()}.json`);

@@ -44,8 +44,6 @@ export class NotificationService implements OnDestroy {
       return;
     }
 
-    console.log('Connecting to WebSocket for user:', userId);
-
     // Disconnect existing socket if any
     this.disconnectSocket();
 
@@ -59,25 +57,19 @@ export class NotificationService implements OnDestroy {
 
     // Handle connection
     this.socket.on('connect', () => {
-      console.log('✅ WebSocket connected, socket ID:', this.socket?.id);
       // Register user with socket
       if (this.socket) {
-        console.log('Registering user with socket:', userId);
-        this.socket.emit('register', { userId }, (response: any) => {
-          console.log('Registration response:', response);
-        });
+        this.socket.emit('register', { userId });
       }
 
       // Fetch initial notifications
       this.fetchNotifications(userId).subscribe({
-        next: () => console.log('Initial notifications fetched'),
         error: (err) => console.error('Error fetching initial notifications:', err)
       });
     });
 
     // Handle incoming notifications
     this.socket.on('notification', (notification: Notification) => {
-      console.log('🔔 New notification received:', notification);
       const currentNotifications = this.notificationsSubject.value;
       this.notificationsSubject.next([notification, ...currentNotifications]);
       this.updateUnreadCount([notification, ...currentNotifications]);
@@ -85,13 +77,7 @@ export class NotificationService implements OnDestroy {
 
     // Handle unread count updates
     this.socket.on('unreadCountUpdate', (data: { count: number }) => {
-      console.log('📊 Unread count update:', data.count);
       this.unreadCountSubject.next(data.count);
-    });
-
-    // Handle disconnect
-    this.socket.on('disconnect', (reason: string) => {
-      console.log('❌ WebSocket disconnected:', reason);
     });
 
     // Handle errors
@@ -101,7 +87,6 @@ export class NotificationService implements OnDestroy {
 
     // Handle reconnection
     this.socket.on('reconnect', (attemptNumber: number) => {
-      console.log('🔄 WebSocket reconnected after', attemptNumber, 'attempts');
       if (this.socket) {
         this.socket.emit('register', { userId });
       }
@@ -138,12 +123,10 @@ export class NotificationService implements OnDestroy {
 
   // Create a notification
   createNotification(notification: Partial<Notification>): Observable<any> {
-    console.log('📮 Posting notification to API:', notification);
     return new Observable(observer => {
       this.http.post<any>(`${this.apiUrl}/notifications`, notification)
         .subscribe({
           next: (response) => {
-            console.log('✅ Notification API response:', response);
             observer.next(response);
             observer.complete();
           },
@@ -232,8 +215,6 @@ export class NotificationService implements OnDestroy {
     orderId: string,
     commentText: string
   ): Observable<any> {
-    console.log('📢 Creating mention notification for user:', mentionedUserId);
-
     const notification: Partial<Notification> = {
       userId: mentionedUserId,
       type: 'mention',
@@ -245,10 +226,8 @@ export class NotificationService implements OnDestroy {
       fromUser: fromUserName,
       fromUserId: fromUserId,
       read: false
-      // createdAt will be added by backend automatically
     };
 
-    console.log('📤 Sending notification to API:', notification);
     return this.createNotification(notification);
   }
 
@@ -279,10 +258,7 @@ export class NotificationService implements OnDestroy {
       return;
     }
 
-    console.log('📥 Joining order room:', orderId);
-    this.socket.emit('joinOrder', { orderId }, (response: any) => {
-      console.log('Join order response:', response);
-    });
+    this.socket.emit('joinOrder', { orderId });
   }
 
   // Leave order room
@@ -291,10 +267,7 @@ export class NotificationService implements OnDestroy {
       return;
     }
 
-    console.log('📤 Leaving order room:', orderId);
-    this.socket.emit('leaveOrder', { orderId }, (response: any) => {
-      console.log('Leave order response:', response);
-    });
+    this.socket.emit('leaveOrder', { orderId });
   }
 
   // Listen for order activity updates
@@ -306,7 +279,6 @@ export class NotificationService implements OnDestroy {
       }
 
       this.socket.on('orderActivity', (data: { orderId: string; activity: any }) => {
-        console.log('📬 Order activity received:', data);
         observer.next(data);
       });
 
@@ -328,7 +300,6 @@ export class NotificationService implements OnDestroy {
       }
 
       this.socket.on('orderUpdate', (data: { orderId: string; update: any }) => {
-        console.log('📦 Order update received:', data);
         observer.next(data);
       });
 

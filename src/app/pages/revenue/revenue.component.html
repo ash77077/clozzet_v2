@@ -1,0 +1,386 @@
+<div class="revenue-container">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-item">Dashboard</a>
+    <span class="breadcrumb-separator">›</span>
+    <span class="breadcrumb-current">Revenue & Financial Reports</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <i class="pi pi-chart-line"></i>
+        Revenue & Financial Reports
+      </h1>
+      <p class="page-description">Track revenue, costs, and profitability of delivered orders</p>
+    </div>
+    <div class="header-right">
+      <button class="export-btn" (click)="exportToExcel()" pTooltip="Export to Excel">
+        <i class="pi pi-file-excel"></i>
+        Export
+      </button>
+    </div>
+  </header>
+
+  <!-- Statistics Cards -->
+  <div class="stats-row" *ngIf="!isLoading && !error">
+    <div class="stat-card stat-revenue">
+      <div class="stat-icon"><i class="pi pi-dollar"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ formatCurrency(totalRevenue) }}</span>
+        <span class="stat-label">Total Revenue</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-profit">
+      <div class="stat-icon"><i class="pi pi-chart-bar"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ formatCurrency(totalProfit) }}</span>
+        <span class="stat-label">Total Profit</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-cost">
+      <div class="stat-icon"><i class="pi pi-wallet"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ formatCurrency(totalCost) }}</span>
+        <span class="stat-label">Total Cost</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-margin">
+      <div class="stat-icon"><i class="pi pi-percentage"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ averageMargin.toFixed(1) }}%</span>
+        <span class="stat-label">Avg Profit Margin</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-orders">
+      <div class="stat-icon"><i class="pi pi-shopping-bag"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalOrders }}</span>
+        <span class="stat-label">Delivered Orders</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading revenue data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <i class="pi pi-exclamation-circle"></i>
+    <h3>Failed to load revenue data</h3>
+    <p>{{ error }}</p>
+    <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadDeliveredOrders()" severity="secondary"></p-button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar" *ngIf="!isLoading && !error">
+    <div class="search-wrap">
+      <i class="pi pi-search search-icon"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Search by order #, company, client..."
+        class="search-input" />
+    </div>
+
+    <div class="date-filters">
+      <div class="date-filter">
+        <label>From:</label>
+        <p-datePicker
+          [(ngModel)]="dateFilterStart"
+          (onSelect)="applyFilters()"
+          (onClear)="applyFilters()"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          dateFormat="dd/mm/yy"
+          placeholder="Select start date"
+          styleClass="date-picker">
+        </p-datePicker>
+      </div>
+      <div class="date-filter">
+        <label>To:</label>
+        <p-datePicker
+          [(ngModel)]="dateFilterEnd"
+          (onSelect)="applyFilters()"
+          (onClear)="applyFilters()"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          dateFormat="dd/mm/yy"
+          placeholder="Select end date"
+          styleClass="date-picker">
+        </p-datePicker>
+      </div>
+      <button class="clear-filters-btn" (click)="clearFilters()" *ngIf="searchTerm || dateFilterStart || dateFilterEnd">
+        <i class="pi pi-times"></i> Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Revenue Table -->
+  <div class="table-section" *ngIf="!isLoading && !error">
+    <p-table
+      [value]="filteredOrders"
+      [paginator]="true"
+      [rows]="15"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} orders"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-gridlines p-datatable-striped"
+      [scrollable]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="orderNumber" style="min-width:140px">
+            Order # <p-sortIcon field="orderNumber"></p-sortIcon>
+          </th>
+          <th pSortableColumn="companyName" style="min-width:180px">
+            Company / Client <p-sortIcon field="companyName"></p-sortIcon>
+          </th>
+          <th style="min-width:160px">Products</th>
+          <th pSortableColumn="quantity" style="min-width:100px">
+            Units <p-sortIcon field="quantity"></p-sortIcon>
+          </th>
+          <th pSortableColumn="totalRevenue" style="min-width:130px">
+            Revenue <p-sortIcon field="totalRevenue"></p-sortIcon>
+          </th>
+          <th pSortableColumn="totalProfit" style="min-width:130px">
+            Profit <p-sortIcon field="totalProfit"></p-sortIcon>
+          </th>
+          <th pSortableColumn="averageMargin" style="min-width:110px">
+            Margin <p-sortIcon field="averageMargin"></p-sortIcon>
+          </th>
+          <th style="min-width:120px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td><strong>{{ order.orderNumber }}</strong></td>
+          <td>
+            <div class="client-cell">
+              <span class="company-name" *ngIf="order.companyName">{{ order.companyName }}</span>
+              <span class="client-name">{{ order.clientName }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="product-summary">{{ getProductSummary(order) }}</span>
+          </td>
+          <td><strong>{{ order.quantity }}</strong></td>
+          <td>
+            <span class="currency-value" *ngIf="hasFinancialData(order)">
+              {{ formatCurrency(order.totalRevenue) }}
+            </span>
+            <span class="no-data" *ngIf="!hasFinancialData(order)">No data</span>
+          </td>
+          <td>
+            <span class="currency-value profit" *ngIf="hasFinancialData(order)" [class.negative]="order.totalProfit < 0">
+              {{ formatCurrency(order.totalProfit) }}
+            </span>
+            <span class="no-data" *ngIf="!hasFinancialData(order)">—</span>
+          </td>
+          <td>
+            <span class="margin-badge" *ngIf="hasFinancialData(order)" [class.good]="order.averageMargin >= 30" [class.medium]="order.averageMargin >= 15 && order.averageMargin < 30" [class.low]="order.averageMargin < 15">
+              {{ order.averageMargin.toFixed(1) }}%
+            </span>
+            <span class="no-data" *ngIf="!hasFinancialData(order)">—</span>
+          </td>
+          <td>
+            <div class="action-group">
+              <p-button
+                icon="pi pi-eye"
+                (onClick)="viewOrderDetails(order)"
+                severity="info"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="View Details"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">
+            <div class="table-empty">
+              <i class="pi pi-inbox"></i>
+              <h3>No Delivered Orders Found</h3>
+              <p>Orders with status "Delivered" will appear here with financial details.</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Order Details Modal -->
+  <p-dialog
+    [(visible)]="showOrderDetails"
+    [modal]="true"
+    [style]="{width: '90vw', maxWidth: '1000px'}"
+    [draggable]="false"
+    [resizable]="false"
+    header="Order Financial Details"
+    styleClass="order-details-modal"
+    *ngIf="selectedOrder">
+
+    <div class="order-details-content">
+      <!-- Order Header -->
+      <div class="details-header">
+        <div class="header-row">
+          <div class="header-col">
+            <span class="label">Order Number:</span>
+            <span class="value"><strong>{{ selectedOrder.orderNumber }}</strong></span>
+          </div>
+          <div class="header-col">
+            <span class="label">Company:</span>
+            <span class="value">{{ selectedOrder.companyName || '—' }}</span>
+          </div>
+          <div class="header-col">
+            <span class="label">Client:</span>
+            <span class="value">{{ selectedOrder.clientName }}</span>
+          </div>
+          <div class="header-col">
+            <span class="label">Deadline:</span>
+            <span class="value">{{ formatDate(selectedOrder.deadline) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Breakdown -->
+      <div class="products-breakdown">
+        <h4 class="section-title"><i class="pi pi-box"></i> Product-by-Product Breakdown</h4>
+
+        <div class="product-item" *ngFor="let product of selectedOrder.productsFinancial; let i = index">
+          <div class="product-header">
+            <h5>Product {{ i + 1 }}: {{ product.clothType }}</h5>
+          </div>
+
+          <div class="product-details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Cloth Type:</span>
+              <span class="detail-value">{{ product.clothType }}</span>
+            </div>
+            <div class="detail-item" *ngIf="product.textileType">
+              <span class="detail-label">Textile:</span>
+              <span class="detail-value">{{ product.textileType }}</span>
+            </div>
+            <div class="detail-item" *ngIf="product.designMethod">
+              <span class="detail-label">Design Method:</span>
+              <span class="detail-value">{{ product.designMethod }}</span>
+            </div>
+            <div class="detail-item" *ngIf="product.colors">
+              <span class="detail-label">Colors:</span>
+              <span class="detail-value">{{ product.colors }}</span>
+            </div>
+          </div>
+
+          <div class="financial-grid">
+            <div class="financial-item">
+              <span class="fin-label">Quantity:</span>
+              <span class="fin-value">{{ product.quantity }} units</span>
+            </div>
+            <div class="financial-item cost-price-editable">
+              <span class="fin-label">Cost/Unit:</span>
+              <div class="cost-price-container" *ngIf="editingProductIndex !== i">
+                <span class="fin-value">{{ product.costPricePerUnit || 0 }}</span>
+                <button
+                  class="edit-cost-btn"
+                  (click)="startEditingCostPrice(i, product.costPricePerUnit)"
+                  pTooltip="Edit cost price">
+                  <i class="pi pi-pencil"></i>
+                </button>
+              </div>
+              <div class="cost-price-edit-form" *ngIf="editingProductIndex === i">
+                <input
+                  type="number"
+                  [(ngModel)]="editingCostPrice"
+                  class="cost-price-input"
+                  placeholder="Enter cost price"
+                  min="0"
+                  step="50"
+                  [disabled]="isSaving" />
+                <button
+                  class="save-cost-btn"
+                  (click)="saveCostPrice(i)"
+                  [disabled]="isSaving"
+                  pTooltip="Save">
+                  <i class="pi pi-check"></i>
+                </button>
+                <button
+                  class="cancel-cost-btn"
+                  (click)="cancelEditingCostPrice()"
+                  [disabled]="isSaving"
+                  pTooltip="Cancel">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            </div>
+            <div class="financial-item">
+              <span class="fin-label">Selling/Unit:</span>
+              <span class="fin-value">{{ formatCurrency(product.sellingPricePerUnit || 0) }}</span>
+            </div>
+            <div class="financial-item highlight">
+              <span class="fin-label">Total Cost:</span>
+              <span class="fin-value">{{ formatCurrency(product.totalCost) }}</span>
+            </div>
+            <div class="financial-item highlight">
+              <span class="fin-label">Total Revenue:</span>
+              <span class="fin-value">{{ formatCurrency(product.totalRevenue) }}</span>
+            </div>
+            <div class="financial-item highlight profit">
+              <span class="fin-label">Profit:</span>
+              <span class="fin-value">{{ formatCurrency(product.profit) }}</span>
+            </div>
+            <div class="financial-item highlight margin">
+              <span class="fin-label">Margin:</span>
+              <span class="fin-value">{{ product.profitMargin.toFixed(1) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Totals -->
+      <div class="order-totals">
+        <h4 class="section-title"><i class="pi pi-calculator"></i> Order Totals</h4>
+        <div class="totals-grid">
+          <div class="total-item">
+            <span class="total-label">Total Units:</span>
+            <span class="total-value">{{ selectedOrder.quantity }}</span>
+          </div>
+          <div class="total-item">
+            <span class="total-label">Total Cost:</span>
+            <span class="total-value">{{ formatCurrency(selectedOrder.totalCost) }}</span>
+          </div>
+          <div class="total-item">
+            <span class="total-label">Total Revenue:</span>
+            <span class="total-value">{{ formatCurrency(selectedOrder.totalRevenue) }}</span>
+          </div>
+          <div class="total-item highlight">
+            <span class="total-label">Total Profit:</span>
+            <span class="total-value profit">{{ formatCurrency(selectedOrder.totalProfit) }}</span>
+          </div>
+          <div class="total-item highlight">
+            <span class="total-label">Average Margin:</span>
+            <span class="total-value margin">{{ selectedOrder.averageMargin.toFixed(1) }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Close" icon="pi pi-times" (onClick)="closeOrderDetails()" severity="secondary"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast></p-toast>
+</div>
