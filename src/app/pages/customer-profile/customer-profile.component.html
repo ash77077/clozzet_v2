@@ -1,13 +1,22 @@
 <div class="customer-profile">
   <p-toast></p-toast>
 
-  <!-- Back Button -->
-  <div class="mb-4">
+  <!-- Header with Back Button and Create Order -->
+  <div class="mb-4 flex justify-between items-center">
     <p-button
       label="Back to CRM Dashboard"
       icon="pi pi-arrow-left"
       styleClass="p-button-text"
       (onClick)="goBack()">
+    </p-button>
+
+    <p-button
+      label="Create Order"
+      icon="pi pi-plus"
+      severity="primary"
+      (onClick)="openCreateOrderDialog()"
+      pTooltip="Create new order for this customer"
+      tooltipPosition="left">
     </p-button>
   </div>
 
@@ -86,6 +95,12 @@
               <i class="pi pi-globe text-blue-600"></i>
               <a [href]="customer.website | externalLink" target="_blank" class="text-blue-600 hover:underline">
                 {{ customer.website }}
+              </a>
+            </div>
+            <div class="contact-item" *ngIf="customer.linkedinPage">
+              <i class="pi pi-linkedin text-blue-600"></i>
+              <a [href]="customer.linkedinPage | externalLink" target="_blank" class="text-blue-600 hover:underline">
+                LinkedIn
               </a>
             </div>
             <div class="contact-item" *ngIf="customer.industry">

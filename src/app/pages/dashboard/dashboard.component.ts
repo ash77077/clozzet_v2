@@ -494,7 +494,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'AMD'
     }).format(amount);
   }
 

@@ -1,0 +1,312 @@
+.print-template {
+  display: none; // Hidden by default, only shown when printing
+  font-family: 'Segoe UI', 'Arial Unicode MS', Arial, sans-serif;
+  color: #000;
+  background: white;
+}
+
+// Print styles
+@media print {
+  // Hide everything
+  body > * {
+    display: none !important;
+  }
+
+  // Show only print template
+  body .print-template {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 15mm;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  // Make sure all children are visible
+  .print-template * {
+    display: revert !important;
+  }
+
+  // Page break settings - Each product on new page
+  .product-block {
+    page-break-before: always;
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  // First product should not break before (stays with header)
+  .product-block:first-child {
+    page-break-before: auto;
+  }
+
+  .print-section {
+    page-break-inside: avoid;
+  }
+
+  // Ensure proper display for flex/grid elements
+  .print-header,
+  .product-header,
+  .signature-section,
+  .print-footer {
+    display: flex !important;
+  }
+
+  .size-table,
+  .info-table,
+  .product-info-table {
+    display: table !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tbody {
+    display: table-row-group !important;
+  }
+
+  tr {
+    display: table-row !important;
+  }
+
+  th, td {
+    display: table-cell !important;
+  }
+}
+
+// ─── Header ────────────────────────────────────────────────────────────────
+
+.print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 10pt;
+  margin-bottom: 10pt;
+  border-bottom: 2pt solid #000;
+
+  .company-info {
+    .company-name {
+      font-size: 22pt;
+      font-weight: bold;
+      margin: 0;
+      color: #000;
+    }
+
+    .company-tagline {
+      font-size: 9pt;
+      margin: 2pt 0 0 0;
+      color: #666;
+    }
+  }
+
+  .order-number-section {
+    text-align: right;
+
+    .order-number-label {
+      font-size: 9pt;
+      color: #666;
+      margin-bottom: 2pt;
+    }
+
+    .order-number {
+      font-size: 16pt;
+      font-weight: bold;
+      color: #000;
+    }
+  }
+}
+
+// ─── Sections ──────────────────────────────────────────────────────────────
+
+.print-section {
+  margin-bottom: 12pt;
+
+  .section-title {
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 0 0 8pt 0;
+    padding-bottom: 4pt;
+    border-bottom: 1pt solid #ccc;
+    color: #000;
+  }
+}
+
+// ─── Tables ────────────────────────────────────────────────────────────────
+
+.info-table,
+.product-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8pt;
+
+  tr {
+    td {
+      padding: 3pt 6pt;
+      vertical-align: top;
+      font-size: 10.5pt;
+
+      &.label {
+        font-weight: 600;
+        color: #333;
+        width: 25%;
+        white-space: nowrap;
+      }
+
+      &.value {
+        color: #000;
+        width: 25%;
+
+        &.deadline {
+          color: #d32f2f;
+          font-weight: 600;
+        }
+
+        &.priority-low {
+          color: #388e3c;
+        }
+
+        &.priority-normal {
+          color: #1976d2;
+        }
+
+        &.priority-high {
+          color: #f57c00;
+        }
+
+        &.priority-urgent {
+          color: #d32f2f;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+
+// ─── Products ──────────────────────────────────────────────────────────────
+
+.product-block {
+  margin-bottom: 0;
+  padding: 12pt;
+  border: 1.5pt solid #333;
+  background: #f9f9f9;
+
+  .product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8pt;
+    margin-bottom: 10pt;
+    border-bottom: 1.5pt solid #333;
+
+    .product-number {
+      font-size: 16pt;
+      font-weight: bold;
+      color: #000;
+    }
+
+    .product-total {
+      font-size: 16pt;
+      font-weight: 700;
+      color: #000;
+    }
+  }
+}
+
+// ─── Size Table ────────────────────────────────────────────────────────────
+
+.size-section {
+  margin-top: 12pt;
+
+  .size-label {
+    font-size: 13pt;
+    font-weight: 700;
+    margin-bottom: 8pt;
+    color: #000;
+  }
+
+  .size-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1.5pt solid #000;
+
+    thead {
+      background: #e0e0e0;
+
+      th {
+        padding: 8pt 10pt;
+        text-align: center;
+        font-weight: 700;
+        border: 1.5pt solid #000;
+        font-size: 13pt;
+      }
+    }
+
+    tbody {
+      td {
+        padding: 8pt 10pt;
+        text-align: center;
+        border: 1pt solid #999;
+        font-size: 14pt;
+        font-weight: 600;
+
+        &.size-name {
+          font-weight: 700;
+          background: #f5f5f5;
+          font-size: 14pt;
+        }
+      }
+
+      .total-row {
+        background: #e8f5e9;
+        font-weight: 700;
+
+        td {
+          border-top: 2pt solid #000;
+          padding: 10pt;
+          font-size: 15pt;
+
+          &.grand-total {
+            background: #c8e6c9;
+            font-size: 16pt;
+          }
+        }
+      }
+    }
+  }
+}
+
+// ─── Footer ────────────────────────────────────────────────────────────────
+
+.print-footer {
+  margin-top: 15pt;
+  padding-top: 10pt;
+  border-top: 1pt solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  .signature-section {
+    display: flex;
+    gap: 25pt;
+
+    .signature-line {
+      .signature-label {
+        font-size: 8.5pt;
+        color: #666;
+        margin-bottom: 2pt;
+      }
+
+      .signature-box {
+        font-size: 9.5pt;
+        color: #000;
+      }
+    }
+  }
+
+  .print-date {
+    font-size: 8.5pt;
+    color: #666;
+  }
+}

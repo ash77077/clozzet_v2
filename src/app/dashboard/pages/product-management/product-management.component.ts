@@ -239,13 +239,8 @@ export class ProductManagementComponent implements OnInit {
   }
 
   saveProduct(): void {
-    console.log('Save product called');
-    console.log('Form valid:', this.productForm.valid);
-    console.log('Form value:', this.productForm.value);
-
     if (this.productForm.invalid) {
       this.productForm.markAllAsTouched();
-      console.log('Form errors:', this.getFormValidationErrors());
       this.error = 'Please fill in all required fields correctly.';
       return;
     }
@@ -254,15 +249,11 @@ export class ProductManagementComponent implements OnInit {
     this.error = null;
     const productData = this.productForm.value;
 
-    console.log('Submitting product data:', productData);
-
     if (this.isEditing && this.selectedProduct) {
-      console.log('Updating product:', this.selectedProduct.id);
       this.productsService.updateProduct(this.selectedProduct.id, productData)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (response) => {
-            console.log('Product updated successfully:', response);
             this.loading = false;
             this.closeModal();
             this.loadProducts();
@@ -274,12 +265,10 @@ export class ProductManagementComponent implements OnInit {
           }
         });
     } else {
-      console.log('Creating new product');
       this.productsService.createProduct(productData)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (response) => {
-            console.log('Product created successfully:', response);
             this.loading = false;
             this.closeModal();
             this.loadProducts();
@@ -352,7 +341,6 @@ export class ProductManagementComponent implements OnInit {
             this.variants.at(variantIndex).patchValue({
               image: response.data.filename
             });
-            console.log('Variant image uploaded:', response.data.filename);
           },
           error: (err) => {
             this.error = 'Failed to upload variant image: ' + (err.error?.message || err.message);

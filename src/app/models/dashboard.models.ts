@@ -153,6 +153,7 @@ export interface ProductDetails {
   _id?: string;
   id?: string;
   orderNumber: string;
+  companyName?: string;
   clientName: string;
   salesPerson: string;
   deadline: string;
@@ -191,9 +192,34 @@ export interface ProductDetails {
   waistTie?: string;
   pocketDetails?: string;
   specialInstructions?: string;
+  packagingRequirements?: string;
   shippingAddress?: string;
   manufacturingStatus?: string;
   manufacturingNotes?: ManufacturingNote[];
+
+  // Multi-product support
+  products?: Array<{
+    clothType: string;
+    textileType?: string;
+    designMethod?: string;
+    colors?: string;
+    customColorDetails?: string;
+    logoPosition?: string;
+    logoSize?: string;
+    comments?: string;
+    costPricePerUnit?: number;
+    sellingPricePerUnit?: number;
+    sizes?: {
+      xs?: { men?: number; women?: number; uni?: number };
+      s?: { men?: number; women?: number; uni?: number };
+      m?: { men?: number; women?: number; uni?: number };
+      l?: { men?: number; women?: number; uni?: number };
+      xl?: { men?: number; women?: number; uni?: number };
+      xxl?: { men?: number; women?: number; uni?: number };
+      xxxl?: { men?: number; women?: number; uni?: number };
+      xxxxl?: { men?: number; women?: number; uni?: number };
+    };
+  }>;
 
   // Legacy compatibility properties
   status?: OrderStatus;

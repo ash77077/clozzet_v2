@@ -552,11 +552,8 @@ export class ProductDetailsFormComponent {
         referenceImages: this.uploadedFilePaths.referenceImages || []
       };
 
-      console.log('Product Details Form Data:', formData);
-
       this.productDetailsService.submitProductDetails(formData).subscribe({
         next: (response) => {
-          console.log('Product details submitted successfully:', response);
           this.isSubmitting = false;
           this.submitSuccess = true;
 

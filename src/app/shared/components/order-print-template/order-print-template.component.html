@@ -1,0 +1,217 @@
+<div class="print-template" *ngIf="order">
+  <!-- Header -->
+  <div class="print-header">
+    <div class="company-info">
+      <h1 class="company-name">CLOZZET</h1>
+      <p class="company-tagline">Արտադրական ձեռնարկություն</p>
+    </div>
+    <div class="order-number-section">
+      <div class="order-number-label">Պատվեր №</div>
+      <div class="order-number">{{ order.orderNumber }}</div>
+    </div>
+  </div>
+
+  <!-- Order Information Section -->
+  <div class="print-section">
+    <h2 class="section-title">Պատվերի տեղեկություններ</h2>
+    <table class="info-table">
+      <tr>
+        <td class="label">Հաճախորդ՝</td>
+        <td class="value">{{ order.clientName }}</td>
+        <td class="label">Կազմակերպություն՝</td>
+        <td class="value">{{ order.companyName || '—' }}</td>
+      </tr>
+      <tr>
+        <td class="label">Վաճառող՝</td>
+        <td class="value">{{ order.salesPerson }}</td>
+        <td class="label">Կարգավիճակ՝</td>
+        <td class="value">{{ getStatusArmenian(order.status || 'pending') }}</td>
+      </tr>
+      <tr>
+        <td class="label">Առաջնահերթություն՝</td>
+        <td class="value priority-{{ order.priority }}">{{ getPriorityArmenian(order.priority) }}</td>
+        <td class="label">Ընդհանուր քանակ՝</td>
+        <td class="value"><strong>{{ getGrandTotalQuantity() }} հատ</strong></td>
+      </tr>
+      <tr>
+        <td class="label">Սկսելու ամսաթիվ՝</td>
+        <td class="value">{{ formatDate(order.startDate) }}</td>
+        <td class="label">Վերջնաժամկետ՝</td>
+        <td class="value deadline"><strong>{{ formatDate(order.deadline) }}</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Products Section -->
+  <div *ngIf="order.products && order.products.length > 0">
+    <div class="product-block" *ngFor="let product of order.products; let idx = index">
+      <div class="product-header">
+        <span class="product-number">Ապրանք {{ idx + 1 }} / {{ order.products.length }}</span>
+        <span class="product-total">{{ getProductTotalQuantity(product) }} հատ</span>
+      </div>
+
+      <table class="product-info-table">
+        <tr>
+          <td class="label">Հագուստի տեսակ՝</td>
+          <td class="value">{{ product.clothType }}</td>
+          <td class="label">Գործվածք՝</td>
+          <td class="value">{{ product.textileType || '—' }}</td>
+        </tr>
+        <tr>
+          <td class="label">Դիզայնի եղանակ՝</td>
+          <td class="value">{{ product.designMethod || '—' }}</td>
+          <td class="label">Գույներ՝</td>
+          <td class="value">{{ product.colors || '—' }}</td>
+        </tr>
+        <tr *ngIf="product.logoPosition || product.logoSize">
+          <td class="label">Լոգոյի դիրք՝</td>
+          <td class="value">{{ product.logoPosition || '—' }}</td>
+          <td class="label">Լոգոյի չափս՝</td>
+          <td class="value">{{ product.logoSize || '—' }}</td>
+        </tr>
+        <tr *ngIf="product.customColorDetails">
+          <td class="label">Գույների նկարագրություն՝</td>
+          <td class="value" colspan="3">{{ product.customColorDetails }}</td>
+        </tr>
+        <tr *ngIf="product.comments">
+          <td class="label">Մեկնաբանություններ՝</td>
+          <td class="value" colspan="3">{{ product.comments }}</td>
+        </tr>
+      </table>
+
+      <!-- Size Breakdown -->
+      <div class="size-section" *ngIf="product.sizes">
+        <div class="size-label">Չափերի բաշխում՝</div>
+        <table class="size-table">
+          <thead>
+            <tr>
+              <th>Չափս</th>
+              <th>Տղամարդկանց</th>
+              <th>Կանացի</th>
+              <th>Ունիվերսալ</th>
+              <th>Ընդամենը</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="getSizeTotal(product.sizes.xs) > 0">
+              <td class="size-name">XS</td>
+              <td>{{ product.sizes.xs?.men || 0 }}</td>
+              <td>{{ product.sizes.xs?.women || 0 }}</td>
+              <td>{{ product.sizes.xs?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.xs) }}</strong></td>
+            </tr>
+            <tr *ngIf="getSizeTotal(product.sizes.s) > 0">
+              <td class="size-name">S</td>
+              <td>{{ product.sizes.s?.men || 0 }}</td>
+              <td>{{ product.sizes.s?.women || 0 }}</td>
+              <td>{{ product.sizes.s?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.s) }}</strong></td>
+            </tr>
+            <tr *ngIf="getSizeTotal(product.sizes.m) > 0">
+              <td class="size-name">M</td>
+              <td>{{ product.sizes.m?.men || 0 }}</td>
+              <td>{{ product.sizes.m?.women || 0 }}</td>
+              <td>{{ product.sizes.m?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.m) }}</strong></td>
+            </tr>
+            <tr *ngIf="getSizeTotal(product.sizes.l) > 0">
+              <td class="size-name">L</td>
+              <td>{{ product.sizes.l?.men || 0 }}</td>
+              <td>{{ product.sizes.l?.women || 0 }}</td>
+              <td>{{ product.sizes.l?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.l) }}</strong></td>
+            </tr>
+            <tr *ngIf="getSizeTotal(product.sizes.xl) > 0">
+              <td class="size-name">XL</td>
+              <td>{{ product.sizes.xl?.men || 0 }}</td>
+              <td>{{ product.sizes.xl?.women || 0 }}</td>
+              <td>{{ product.sizes.xl?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.xl) }}</strong></td>
+            </tr>
+            <tr *ngIf="getSizeTotal(product.sizes.xxl) > 0">
+              <td class="size-name">XXL</td>
+              <td>{{ product.sizes.xxl?.men || 0 }}</td>
+              <td>{{ product.sizes.xxl?.women || 0 }}</td>
+              <td>{{ product.sizes.xxl?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.xxl) }}</strong></td>
+            </tr>
+            <tr *ngIf="getSizeTotal(product.sizes.xxxl) > 0">
+              <td class="size-name">XXXL</td>
+              <td>{{ product.sizes.xxxl?.men || 0 }}</td>
+              <td>{{ product.sizes.xxxl?.women || 0 }}</td>
+              <td>{{ product.sizes.xxxl?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.xxxl) }}</strong></td>
+            </tr>
+            <tr *ngIf="getSizeTotal(product.sizes.xxxxl) > 0">
+              <td class="size-name">XXXXL</td>
+              <td>{{ product.sizes.xxxxl?.men || 0 }}</td>
+              <td>{{ product.sizes.xxxxl?.women || 0 }}</td>
+              <td>{{ product.sizes.xxxxl?.uni || 0 }}</td>
+              <td><strong>{{ getSizeTotal(product.sizes.xxxxl) }}</strong></td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>Ընդամենը</strong></td>
+              <td><strong>{{ (product.sizes.xs?.men || 0) + (product.sizes.s?.men || 0) + (product.sizes.m?.men || 0) + (product.sizes.l?.men || 0) + (product.sizes.xl?.men || 0) + (product.sizes.xxl?.men || 0) + (product.sizes.xxxl?.men || 0) + (product.sizes.xxxxl?.men || 0) }}</strong></td>
+              <td><strong>{{ (product.sizes.xs?.women || 0) + (product.sizes.s?.women || 0) + (product.sizes.m?.women || 0) + (product.sizes.l?.women || 0) + (product.sizes.xl?.women || 0) + (product.sizes.xxl?.women || 0) + (product.sizes.xxxl?.women || 0) + (product.sizes.xxxxl?.women || 0) }}</strong></td>
+              <td><strong>{{ (product.sizes.xs?.uni || 0) + (product.sizes.s?.uni || 0) + (product.sizes.m?.uni || 0) + (product.sizes.l?.uni || 0) + (product.sizes.xl?.uni || 0) + (product.sizes.xxl?.uni || 0) + (product.sizes.xxxl?.uni || 0) + (product.sizes.xxxxl?.uni || 0) }}</strong></td>
+              <td class="grand-total"><strong>{{ getProductTotalQuantity(product) }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legacy single product display -->
+  <div class="print-section" *ngIf="!order.products || order.products.length === 0">
+    <h2 class="section-title">Ապրանքի տվյալներ</h2>
+    <table class="info-table">
+      <tr *ngIf="order.clothType">
+        <td class="label">Հագուստի տեսակ՝</td>
+        <td class="value">{{ order.clothType }}</td>
+        <td class="label">Գործվածք՝</td>
+        <td class="value">{{ order.textileType || '—' }}</td>
+      </tr>
+      <tr *ngIf="order.designMethod || order.printingMethod">
+        <td class="label">Դիզայնի եղանակ՝</td>
+        <td class="value" colspan="3">{{ order.designMethod || order.printingMethod }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Additional Information -->
+  <div class="print-section" *ngIf="order.specialInstructions || order.packagingRequirements || order.shippingAddress">
+    <h2 class="section-title">Լրացուցիչ տեղեկություններ</h2>
+    <table class="info-table">
+      <tr *ngIf="order.specialInstructions">
+        <td class="label">Հատուկ հրահանգներ՝</td>
+        <td class="value" colspan="3">{{ order.specialInstructions }}</td>
+      </tr>
+      <tr *ngIf="order.packagingRequirements">
+        <td class="label">Փաթեթավորման պահանջներ՝</td>
+        <td class="value" colspan="3">{{ order.packagingRequirements }}</td>
+      </tr>
+      <tr *ngIf="order.shippingAddress">
+        <td class="label">Առաքման հասցե՝</td>
+        <td class="value" colspan="3">{{ order.shippingAddress }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div class="print-footer">
+    <div class="signature-section">
+      <div class="signature-line">
+        <div class="signature-label">Ստորագրություն՝</div>
+        <div class="signature-box">_______________________</div>
+      </div>
+      <div class="signature-line">
+        <div class="signature-label">Ամսաթիվ՝</div>
+        <div class="signature-box">_______________________</div>
+      </div>
+    </div>
+    <div class="print-date">
+      Տպված՝ {{ formatDate(currentDate) }}
+    </div>
+  </div>
+</div>

@@ -255,17 +255,14 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
 
   editUser(user: User): void {
     // TODO: Implement edit user functionality
-    console.log('Edit user:', user);
   }
 
   toggleUserStatus(user: User): void {
     // TODO: Implement toggle user status functionality
-    console.log('Toggle status for user:', user);
   }
 
   deleteUser(user: User): void {
     // TODO: Implement delete user functionality
-    console.log('Delete user:', user);
   }
 
   // Utility methods

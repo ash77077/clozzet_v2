@@ -75,14 +75,17 @@
     },
     "sections": {
       "basicInfo": "ՀԻՄՆԱԿԱՆ ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ",
+      "product": "Ապրանք",
       "productSpecs": "ԱՊՐԱՆՔԻ ԲՆՈՒԹԱԳՐԵՐԸ",
       "sizeBreakdown": "ՉԱՓԵՐԻ ԲԱՇԽՈՒՄ",
+      "comments": "ՄԵԿՆԱԲԱՆՈՒԹՅՈՒՆՆԵՐ",
       "designDetails": "ԴԻԶԱՅՆԻ ՄԱՆՐԱՄԱՍՆԵՐ",
       "additionalInfo": "ԼՐԱՑՈՒՑԻՉ ՏԵՂԵԿՈՒԹՅՈՒՆՆԵՐ"
     },
     "fields": {
       "orderNumber": "Պատվերի համար",
       "orderDate": "Պատվերի ամսաթիվ",
+      "companyName": "Ընկերության անուն",
       "clientName": "Հաճախորդի անուն",
       "salesPerson": "Վաճառող",
       "deadline": "Վերջնաժամկետ",
@@ -96,9 +99,15 @@
       "logoPosition": "Լոգոյի դիրքը",
       "logoSize": "Լոգոյի չափը",
       "pantoneColors": "Pantone գույներ",
+      "comments": "Մեկնաբանություններ",
       "specialInstructions": "Հատուկ հրահանգներ",
       "packagingRequirements": "Փաթեթավորման պահանջներ",
-      "shippingAddress": "Առաքման հասցե"
+      "shippingAddress": "Առաքման հասցե",
+      "productTotal": "Ապրանքի ընդամենը"
+    },
+    "buttons": {
+      "addProduct": "Ավելացնել ապրանք",
+      "removeProduct": "Հեռացնել ապրանքը"
     },
     "priority": {
       "low": "Ցածր առաջնահերթություն",
@@ -132,6 +141,7 @@
     },
     "placeholders": {
       "enterOrderNumber": "Մուտքագրեք պատվերի համարը",
+      "enterCompanyName": "Մուտքագրեք ընկերության անունը",
       "enterClientName": "Մուտքագրեք հաճախորդի անունը",
       "enterSalesPerson": "Մուտքագրեք վաճառողի անունը",
       "selectDate": "Ընտրեք ամսաթիվը",
@@ -145,6 +155,7 @@
       "enterLogoPosition": "Մուտքագրեք լոգոյի դիրքը",
       "enterLogoSize": "Մուտքագրեք լոգոյի չափը",
       "enterPantoneColors": "Մուտքագրեք Pantone գույները",
+      "enterComments": "Մեկնաբանություններ այս ապրանքի մասին",
       "enterInstructions": "Մուտքագրեք հատուկ հրահանգները",
       "enterPackaging": "Մուտքագրեք փաթեթավորման պահանջները",
       "enterShippingAddress": "Մուտքագրեք առաքման հասցեն",
