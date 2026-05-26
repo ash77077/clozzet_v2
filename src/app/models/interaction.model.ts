@@ -26,6 +26,7 @@ export interface Interaction {
   attachments?: string[];
   interactionDate: Date;
   nextFollowUpDate?: Date;
+  contactPerson?: string;
   createdBy?: {
     _id?: string;
     firstName?: string;
@@ -33,6 +34,13 @@ export interface Interaction {
     email?: string;
   };
   createdByName?: string;
+  updatedBy?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  updatedByName?: string;
   isFollowUpCompleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -48,4 +56,5 @@ export interface CreateInteractionDto {
   attachments?: string[];
   interactionDate?: Date | string;
   nextFollowUpDate?: Date | string;
+  contactPerson?: string;
 }

@@ -52,8 +52,11 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   interactions: Interaction[] = [];
   isLoading = false;
   showInteractionDialog = false;
+  showAddContactDialog = false;
   interactionForm!: FormGroup;
+  addContactForm!: FormGroup;
   isSubmitting = false;
+  isSavingContact = false;
   customerId: string = '';
   InteractionType = InteractionType;
   CallOutcome = CallOutcome;
@@ -103,6 +106,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     }
 
     this.initializeForm();
+    this.initializeAddContactForm();
     this.loadCustomerData();
   }
 
@@ -111,9 +115,21 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  get contactPersonOptions(): { label: string; value: string }[] {
+    const contacts = this.customer?.contacts || [];
+    if (contacts.length > 0) {
+      return contacts.map(c => ({ label: c.contactPerson, value: c.contactPerson }));
+    }
+    if (this.customer?.contactPerson) {
+      return [{ label: this.customer.contactPerson, value: this.customer.contactPerson }];
+    }
+    return [];
+  }
+
   private initializeForm(): void {
     this.interactionForm = this.fb.group({
       type: [InteractionType.CALL, [Validators.required]],
+      contactPerson: [null, [Validators.required]],
       subject: [''],
       summary: ['', [Validators.required, Validators.minLength(5)]],
       outcome: [null],
@@ -122,21 +138,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
       nextFollowUpDate: [null],
     });
 
-    // Show/hide call-specific fields
-    this.interactionForm.get('type')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((type) => {
-        if (type === InteractionType.CALL) {
-          this.interactionForm.get('outcome')?.setValidators([Validators.required]);
-          // Duration is now optional for calls
-          this.interactionForm.get('duration')?.clearValidators();
-        } else {
-          this.interactionForm.get('outcome')?.clearValidators();
-          this.interactionForm.get('duration')?.clearValidators();
-        }
-        this.interactionForm.get('outcome')?.updateValueAndValidity();
-        this.interactionForm.get('duration')?.updateValueAndValidity();
-      });
+    // No required validators on call-specific fields — all optional
   }
 
   loadCustomerData(): void {
@@ -166,11 +168,59 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  private initializeAddContactForm(): void {
+    this.addContactForm = this.fb.group({
+      contactPerson: ['', [Validators.required, Validators.minLength(2)]],
+      position: [''],
+      phone: [''],
+      email: ['', [Validators.email]],
+      linkedinPage: [''],
+    });
+  }
+
   openInteractionDialog(type?: InteractionType): void {
     if (type) {
       this.interactionForm.patchValue({ type });
     }
+    // Auto-fill contact person if only one exists
+    const options = this.contactPersonOptions;
+    if (options.length === 1) {
+      this.interactionForm.patchValue({ contactPerson: options[0].value });
+    }
     this.showInteractionDialog = true;
+  }
+
+  openAddContactDialog(): void {
+    this.addContactForm.reset();
+    this.showAddContactDialog = true;
+  }
+
+  closeAddContactDialog(): void {
+    this.showAddContactDialog = false;
+    this.addContactForm.reset();
+  }
+
+  saveContact(): void {
+    if (this.addContactForm.invalid || !this.customer) return;
+    this.isSavingContact = true;
+    const newContact = this.addContactForm.value;
+    const existingContacts = this.customer.contacts || [];
+    const updatedContacts = [...existingContacts, newContact];
+
+    this.customersService.update(this.customerId, { contacts: updatedContacts } as any)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (customer) => {
+          this.customer = customer;
+          this.isSavingContact = false;
+          this.closeAddContactDialog();
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Contact person added' });
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to add contact person' });
+          this.isSavingContact = false;
+        },
+      });
   }
 
   onSubmitInteraction(): void {
@@ -257,6 +307,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     this.editingInteractionId = interaction._id || null;
     this.interactionForm.patchValue({
       type: interaction.type,
+      contactPerson: interaction.contactPerson || null,
       subject: interaction.subject,
       summary: interaction.summary,
       outcome: interaction.outcome,
@@ -273,6 +324,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     this.editingInteractionId = null;
     this.interactionForm.reset({
       type: InteractionType.CALL,
+      contactPerson: null,
       interactionDate: new Date(),
     });
   }

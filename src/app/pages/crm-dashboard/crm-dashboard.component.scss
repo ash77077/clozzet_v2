@@ -1145,3 +1145,278 @@
     font-size: 0.875rem;
   }
 }
+
+// Company autocomplete suggestion item
+.company-suggestion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.1rem 0;
+
+  .company-suggestion-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .company-eye-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s;
+
+    &:hover {
+      background: #f0f9ff;
+      color: #f97316;
+    }
+
+    i { font-size: 0.85rem; }
+  }
+}
+
+// Quick view dialog
+.qv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+
+  .qv-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .qv-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .qv-company-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .qv-industry {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+}
+
+.qv-body {
+  padding: 0.25rem 0;
+}
+
+.qv-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  padding: 0.875rem;
+  background: #f9fafb;
+  border-radius: 8px;
+
+  .qv-info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+
+    i {
+      color: #9ca3af;
+      font-size: 0.8rem;
+      width: 14px;
+      flex-shrink: 0;
+
+      &.overdue-icon { color: #ef4444; }
+    }
+
+    a { color: #3b82f6; text-decoration: none; &:hover { text-decoration: underline; } }
+
+    .overdue-text { color: #ef4444; font-weight: 600; }
+  }
+}
+
+.qv-section {
+  margin-bottom: 1.25rem;
+
+  .qv-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    i { font-size: 0.75rem; }
+  }
+}
+
+.qv-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .qv-contact-card {
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+
+    .qv-contact-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #1f2937;
+    }
+
+    .qv-contact-meta {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .qv-contact-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.4rem;
+    }
+
+    .qv-link {
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: color 0.15s;
+
+      &:hover { color: #f97316; }
+      i { font-size: 0.75rem; }
+    }
+  }
+}
+
+.qv-notes {
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.6;
+  padding: 0.625rem 0.875rem;
+  background: #fffbeb;
+  border-left: 3px solid #fbbf24;
+  border-radius: 0 6px 6px 0;
+}
+
+.qv-loading {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  padding: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  i { color: #f97316; }
+}
+
+.qv-empty {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  padding: 0.5rem 0;
+}
+
+.qv-interactions {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  .qv-interaction-item {
+    display: flex;
+    gap: 0.75rem;
+    padding-bottom: 0.875rem;
+    position: relative;
+
+    &:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 14px;
+      bottom: 0;
+      width: 2px;
+      background: #e5e7eb;
+    }
+
+    .qv-interaction-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #f97316;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .qv-interaction-content {
+      flex: 1;
+
+      .qv-interaction-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.2rem;
+
+        .qv-interaction-type {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #f97316;
+          background: #fff7ed;
+          padding: 1px 7px;
+          border-radius: 10px;
+        }
+
+        .qv-interaction-date {
+          font-size: 0.75rem;
+          color: #9ca3af;
+        }
+      }
+
+      .qv-interaction-summary {
+        font-size: 0.85rem;
+        color: #374151;
+        line-height: 1.4;
+      }
+
+      .qv-interaction-by {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 0.2rem;
+
+        .qv-interaction-edited {
+          color: #d1d5db;
+        }
+      }
+    }
+  }
+}

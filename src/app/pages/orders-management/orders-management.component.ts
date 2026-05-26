@@ -16,6 +16,7 @@ import { ToastModule } from 'primeng/toast';
 import { AccordionModule } from 'primeng/accordion';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitch } from 'primeng/toggleswitch';
+import { DatePicker } from 'primeng/datepicker';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Tooltip } from 'primeng/tooltip';
 import { AuthService, User } from '../../services/auth.service';
@@ -85,6 +86,7 @@ const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     AccordionModule,
     TextareaModule,
     ToggleSwitch,
+    DatePicker,
     PriorityBadgeComponent,
     OrderPrintTemplateComponent,
     Tooltip,
@@ -301,7 +303,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       const createOrder = params['createOrder'];
       const companyName = params['companyName'];
       const clientName = params['clientName'];
-      const customerId = params['customerId'];
 
       if (createOrder === 'true') {
         // Wait a bit for form to be initialized
@@ -414,8 +415,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       salesPerson:         ['', Validators.required],
       priority:            ['normal', Validators.required],
       status:              [OrderStatus.PENDING, Validators.required],
-      startDate:           [''],
-      deadline:            ['', Validators.required],
+      startDate:           [null],
+      deadline:            [null, Validators.required],
       specialInstructions: [''],
       packagingRequirements: [''],
       shippingAddress:     [''],
@@ -825,8 +826,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       salesPerson: v.salesPerson,
       priority: v.priority,
       status: v.status,
-      startDate: v.startDate || undefined,
-      deadline: v.deadline,
+      startDate: v.startDate instanceof Date ? v.startDate.toISOString() : (v.startDate || undefined),
+      deadline: v.deadline instanceof Date ? v.deadline.toISOString() : v.deadline,
       specialInstructions: v.specialInstructions || undefined,
       packagingRequirements: v.packagingRequirements || undefined,
       shippingAddress: v.shippingAddress || undefined,
@@ -1112,7 +1113,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       companyName:          o.companyName || '',
       clientName:           o.clientName || '',
       salesPerson:          o.salesPerson || '',
-      deadline:             o.deadline ? this.formatDateForInput(o.deadline) : '',
+      startDate:            o.startDate ? new Date(o.startDate as string) : null,
+      deadline:             o.deadline ? new Date(o.deadline as string) : null,
       priority:             o.priority || 'normal',
       specialInstructions:  o.specialInstructions || '',
       packagingRequirements: o.packagingRequirements || '',
@@ -1212,7 +1214,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       companyName:          formValue.companyName,
       clientName:           formValue.clientName,
       salesPerson:          formValue.salesPerson,
-      deadline:             formValue.deadline,
+      startDate:            formValue.startDate instanceof Date ? formValue.startDate.toISOString() : (formValue.startDate || undefined),
+      deadline:             formValue.deadline instanceof Date ? formValue.deadline.toISOString() : formValue.deadline,
       priority:             formValue.priority,
       specialInstructions:  formValue.specialInstructions,
       packagingRequirements: formValue.packagingRequirements,

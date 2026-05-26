@@ -30,7 +30,7 @@ export interface Customer {
   nextFollowUpAt?: Date;
   scheduledMeetingAt?: Date;
   isActive: boolean;
-  createdBy?: string | any; // Can be string ID or populated User object
+  createdBy?: { _id?: string; firstName?: string; lastName?: string } | string;
   createdAt?: Date;
   updatedAt?: Date;
 }

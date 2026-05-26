@@ -10,6 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
+import { AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -20,7 +21,7 @@ import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
 import { UsersService, User } from '../../services/users.service';
 import { Customer, CustomerStatus, CreateCustomerDto, UpdateCustomerDto } from '../../models/customer.model';
-import { InteractionType, CreateInteractionDto } from '../../models/interaction.model';
+import { Interaction, InteractionType, CreateInteractionDto } from '../../models/interaction.model';
 
 @Component({
   selector: 'app-crm-dashboard',
@@ -35,6 +36,7 @@ import { InteractionType, CreateInteractionDto } from '../../models/interaction.
     TextareaModule,
     Select,
     DatePicker,
+    AutoCompleteModule,
     TagModule,
     ToastModule,
     ConfirmDialogModule,
@@ -72,6 +74,11 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   unassignedCustomersCount = 0;
   maxVisibleUsers = 5;
   private followUpsCache: Customer[] = [];
+  companySuggestions: string[] = [];
+  showQuickViewDialog = false;
+  quickViewCustomer: Customer | null = null;
+  quickViewInteractions: Interaction[] = [];
+  isLoadingQuickView = false;
 
   statusOptions = [
     { label: 'Lead', value: CustomerStatus.LEAD },
@@ -371,6 +378,22 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     } else {
       // Remove the field entirely if it's not a valid date
       delete formValue.nextFollowUpAt;
+    }
+
+    // Block creating a new customer with an existing company name
+    if (!this.isEditMode) {
+      const duplicate = this.customers.find(
+        c => c.companyName.toLowerCase().trim() === formValue.companyName.toLowerCase().trim()
+      );
+      if (duplicate) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Company Already Exists',
+          detail: `A customer with company name "${duplicate.companyName}" already exists. Use the search to edit it.`,
+        });
+        this.isSubmitting = false;
+        return;
+      }
     }
 
     if (this.isEditMode && this.selectedCustomer) {
@@ -872,6 +895,93 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     const filteredIds = new Set(this.filteredCustomers.map(c => c._id));
     const filteredFollowUps = this.followUpsCache.filter(c => filteredIds.has(c._id));
     this.calculateStats(this.filteredCustomers, filteredFollowUps);
+  }
+
+  openQuickView(companyName: string, event: Event): void {
+    event.stopPropagation();
+    const customer = this.customers.find(c => c.companyName === companyName);
+    if (!customer) return;
+    this.quickViewCustomer = customer;
+    this.quickViewInteractions = [];
+    this.showQuickViewDialog = true;
+    this.isLoadingQuickView = true;
+    this.interactionsService.getByCustomer(customer._id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (interactions) => {
+          this.quickViewInteractions = interactions
+            .sort((a, b) => new Date(b.interactionDate).getTime() - new Date(a.interactionDate).getTime())
+            .slice(0, 5);
+          this.isLoadingQuickView = false;
+        },
+        error: () => { this.isLoadingQuickView = false; }
+      });
+  }
+
+  filterCompanies(event: { query: string }): void {
+    const query = event.query.toLowerCase();
+    const uniqueNames = [...new Set(this.customers.map(c => c.companyName))];
+    this.companySuggestions = uniqueNames.filter(name =>
+      name.toLowerCase().includes(query)
+    );
+  }
+
+  onCompanySelected(event: AutoCompleteSelectEvent): void {
+    const companyName = event.value as string;
+    const match = this.customers.find(c => c.companyName === companyName);
+    if (!match) return;
+
+    // Switch to edit mode and fill all fields
+    this.isEditMode = true;
+    this.selectedCustomer = match;
+
+    this.contacts.clear();
+
+    if (match.contacts && match.contacts.length > 0) {
+      match.contacts.forEach((contact, index) => {
+        const linkedinPage = index === 0
+          ? (contact.linkedinPage || match.linkedinPage || '')
+          : (contact.linkedinPage || '');
+        this.contacts.push(this.fb.group({
+          contactPerson: [contact.contactPerson || ''],
+          position: [contact.position || ''],
+          phone: [contact.phone || ''],
+          email: [contact.email || ''],
+          linkedinPage: [linkedinPage],
+        }));
+      });
+    } else {
+      this.contacts.push(this.fb.group({
+        contactPerson: [match.contactPerson || ''],
+        position: [''],
+        phone: [match.phone || ''],
+        email: [match.email || ''],
+        linkedinPage: [match.linkedinPage || ''],
+      }));
+    }
+
+    this.customerForm.patchValue({
+      companyName: match.companyName,
+      industry: match.industry,
+      status: match.status,
+      address: match.address,
+      website: match.website,
+      notes: match.notes,
+      nextFollowUpAt: match.nextFollowUpAt ? new Date(match.nextFollowUpAt) : null,
+    });
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Existing Company',
+      detail: `"${match.companyName}" already exists. You can edit it here.`,
+    });
+  }
+
+  getCreatedByName(createdBy: any): string | null {
+    if (!createdBy) return null;
+    if (typeof createdBy === 'string') return null;
+    if (createdBy.firstName) return `${createdBy.firstName} ${createdBy.lastName || ''}`.trim();
+    return null;
   }
 
   getUserInitials(user: User): string {

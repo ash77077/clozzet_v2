@@ -643,11 +643,25 @@
                 </div>
                 <div class="edit-field">
                   <label>Start Date</label>
-                  <input type="date" formControlName="startDate" class="date-input full-width" />
+                  <p-datepicker
+                    formControlName="startDate"
+                    [showIcon]="true"
+                    dateFormat="yy-mm-dd"
+                    placeholder="Select start date"
+                    appendTo="body"
+                    styleClass="full-width">
+                  </p-datepicker>
                 </div>
                 <div class="edit-field">
                   <label>Deadline <span class="req">*</span></label>
-                  <input type="date" formControlName="deadline" class="date-input full-width" />
+                  <p-datepicker
+                    formControlName="deadline"
+                    [showIcon]="true"
+                    dateFormat="yy-mm-dd"
+                    placeholder="Select deadline"
+                    appendTo="body"
+                    styleClass="full-width">
+                  </p-datepicker>
                 </div>
                 <div class="edit-field">
                   <label>Logo Position</label>
@@ -1285,12 +1299,27 @@
         <div class="form-grid">
           <div class="form-field">
             <label class="field-label">Start Date</label>
-            <input type="date" formControlName="startDate" class="date-input full-width" />
+            <p-datepicker
+              formControlName="startDate"
+              [showIcon]="true"
+              dateFormat="yy-mm-dd"
+              placeholder="Select start date"
+              appendTo="body"
+              styleClass="full-width">
+            </p-datepicker>
           </div>
 
           <div class="form-field">
             <label class="field-label required">Deadline</label>
-            <input type="date" formControlName="deadline" class="date-input full-width" [class.input-error]="isFieldInvalid('deadline')" />
+            <p-datepicker
+              formControlName="deadline"
+              [showIcon]="true"
+              dateFormat="yy-mm-dd"
+              placeholder="Select deadline"
+              appendTo="body"
+              styleClass="full-width"
+              [class.input-error]="isFieldInvalid('deadline')">
+            </p-datepicker>
             <span class="field-error" *ngIf="isFieldInvalid('deadline')">Deadline is required</span>
           </div>
         </div>
