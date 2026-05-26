@@ -71,7 +71,6 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 1rem;
     }
 
     .contacts-grid {
@@ -101,6 +100,7 @@
       .contact-card-header {
         display: flex;
         align-items: center;
+        gap: 12px;
         padding-bottom: 0.75rem;
         margin-bottom: 0.75rem;
         border-bottom: 2px solid #e9ecef;
@@ -620,6 +620,10 @@
       color: #6c757d;
       font-style: italic;
       white-space: nowrap;
+
+      &.updated-by {
+        color: #adb5bd;
+      }
     }
   }
 }
@@ -911,6 +915,10 @@
 
       .logged-by {
         font-size: 0.75rem;
+
+        &.updated-by {
+          color: #adb5bd;
+        }
       }
     }
   }
@@ -970,4 +978,51 @@
 
 .ml-4 {
   margin-left: 4px;
+}
+
+.contacts-section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 0.75rem;
+
+  h3 { margin: 0; }
+}
+
+.add-contact-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f97316;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #ffedd5;
+    border-color: #f97316;
+  }
+
+  i { font-size: 0.75rem; }
+}
+
+.interaction-contact-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f97316;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin-bottom: 0.5rem;
+
+  i { font-size: 0.75rem; }
 }

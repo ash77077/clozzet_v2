@@ -344,12 +344,27 @@
 				<!-- Company Name -->
 				<div class="form-field">
 					<label for="companyName" class="required">Company Name</label>
-					<input
-							pInputText
+					<p-autoComplete
+							inputId="companyName"
 							id="companyName"
 							formControlName="companyName"
-							placeholder="Enter company name"
-							class="w-full"/>
+							[suggestions]="companySuggestions"
+							(completeMethod)="filterCompanies($event)"
+							(onSelect)="onCompanySelected($event)"
+							placeholder="Enter or search company name"
+							[forceSelection]="false"
+							[dropdown]="false"
+							styleClass="w-full"
+							inputStyleClass="w-full">
+						<ng-template let-company pTemplate="item">
+							<div class="company-suggestion-item">
+								<span class="company-suggestion-name">{{ company }}</span>
+								<button type="button" class="company-eye-btn" (click)="openQuickView(company, $event)" pTooltip="Quick view">
+									<i class="pi pi-eye"></i>
+								</button>
+							</div>
+						</ng-template>
+					</p-autoComplete>
 					<small
 							class="p-error"
 							*ngIf="customerForm.get('companyName')?.invalid && customerForm.get('companyName')?.touched">
@@ -760,5 +775,139 @@
 				</div>
 			</form>
 		</div>
+	</p-dialog>
+
+	<!-- Quick View Dialog -->
+	<p-dialog
+			[(visible)]="showQuickViewDialog"
+			[modal]="true"
+			[style]="{width: '560px'}"
+			[draggable]="false"
+			[resizable]="false"
+			[closable]="true"
+			styleClass="quick-view-dialog">
+
+		<ng-template pTemplate="header">
+			<div class="qv-header" *ngIf="quickViewCustomer">
+				<div class="qv-header-left">
+					<div class="qv-avatar">{{ quickViewCustomer.companyName.charAt(0) }}</div>
+					<div>
+						<div class="qv-company-name">{{ quickViewCustomer.companyName }}</div>
+						<div class="qv-industry" *ngIf="quickViewCustomer.industry">{{ quickViewCustomer.industry }}</div>
+					</div>
+				</div>
+				<p-tag
+					[value]="quickViewCustomer!.status"
+					[severity]="getStatusSeverity(quickViewCustomer!.status)">
+				</p-tag>
+			</div>
+		</ng-template>
+
+		<div class="qv-body" *ngIf="quickViewCustomer">
+
+			<!-- Key Info Row -->
+			<div class="qv-info-grid">
+				<div class="qv-info-item" *ngIf="quickViewCustomer.address">
+					<i class="pi pi-map-marker"></i>
+					<span>{{ quickViewCustomer.address }}</span>
+				</div>
+				<div class="qv-info-item" *ngIf="quickViewCustomer!.website">
+					<i class="pi pi-globe"></i>
+					<a [href]="quickViewCustomer!.website" target="_blank">{{ quickViewCustomer!.website }}</a>
+				</div>
+				<div class="qv-info-item" *ngIf="quickViewCustomer!.nextFollowUpAt">
+					<i class="pi pi-calendar" [class.overdue-icon]="isFollowUpOverdue(quickViewCustomer!.nextFollowUpAt)"></i>
+					<span [class.overdue-text]="isFollowUpOverdue(quickViewCustomer!.nextFollowUpAt)">
+						Next follow-up: {{ formatDate(quickViewCustomer!.nextFollowUpAt) }}
+					</span>
+				</div>
+				<div class="qv-info-item" *ngIf="getCreatedByName(quickViewCustomer!.createdBy)">
+					<i class="pi pi-user"></i>
+					<span>Sales person: <strong>{{ getCreatedByName(quickViewCustomer!.createdBy) }}</strong></span>
+				</div>
+			</div>
+
+			<!-- Contacts -->
+			<div class="qv-section">
+				<div class="qv-section-title"><i class="pi pi-users"></i> Contacts</div>
+				<div class="qv-contacts">
+					<ng-container *ngIf="quickViewCustomer!.contacts && quickViewCustomer!.contacts.length > 0; else singleContact">
+						<div class="qv-contact-card" *ngFor="let contact of quickViewCustomer!.contacts">
+							<div class="qv-contact-name">{{ contact.contactPerson }}</div>
+							<div class="qv-contact-meta" *ngIf="contact.position">{{ contact.position }}</div>
+							<div class="qv-contact-links">
+								<a *ngIf="contact.phone" [href]="'tel:' + contact.phone" class="qv-link">
+									<i class="pi pi-phone"></i> {{ contact.phone }}
+								</a>
+								<a *ngIf="contact.email" [href]="'mailto:' + contact.email" class="qv-link">
+									<i class="pi pi-envelope"></i> {{ contact.email }}
+								</a>
+								<a *ngIf="contact.linkedinPage" [href]="contact.linkedinPage" target="_blank" class="qv-link">
+									<i class="pi pi-linkedin"></i> LinkedIn
+								</a>
+							</div>
+						</div>
+					</ng-container>
+					<ng-template #singleContact>
+						<div class="qv-contact-card">
+							<div class="qv-contact-name">{{ quickViewCustomer!.contactPerson }}</div>
+							<div class="qv-contact-links">
+								<a *ngIf="quickViewCustomer!.phone" [href]="'tel:' + quickViewCustomer!.phone" class="qv-link">
+									<i class="pi pi-phone"></i> {{ quickViewCustomer!.phone }}
+								</a>
+								<a *ngIf="quickViewCustomer!.email" [href]="'mailto:' + quickViewCustomer!.email" class="qv-link">
+									<i class="pi pi-envelope"></i> {{ quickViewCustomer!.email }}
+								</a>
+							</div>
+						</div>
+					</ng-template>
+				</div>
+			</div>
+
+			<!-- Notes -->
+			<div class="qv-section" *ngIf="quickViewCustomer!.notes">
+				<div class="qv-section-title"><i class="pi pi-file-edit"></i> Notes</div>
+				<div class="qv-notes">{{ quickViewCustomer!.notes }}</div>
+			</div>
+
+			<!-- Interaction History -->
+			<div class="qv-section">
+				<div class="qv-section-title"><i class="pi pi-history"></i> Recent Interactions</div>
+				<div *ngIf="isLoadingQuickView" class="qv-loading">
+					<i class="pi pi-spin pi-spinner"></i> Loading...
+				</div>
+				<div *ngIf="!isLoadingQuickView && quickViewInteractions.length === 0" class="qv-empty">
+					No interactions recorded yet.
+				</div>
+				<div class="qv-interactions" *ngIf="!isLoadingQuickView && quickViewInteractions.length > 0">
+					<div class="qv-interaction-item" *ngFor="let interaction of quickViewInteractions">
+						<div class="qv-interaction-dot"></div>
+						<div class="qv-interaction-content">
+							<div class="qv-interaction-header">
+								<span class="qv-interaction-type">{{ interaction.type }}</span>
+								<span class="qv-interaction-date">{{ formatDate(interaction.interactionDate) }}</span>
+							</div>
+							<div class="qv-interaction-summary">{{ interaction.summary }}</div>
+							<div class="qv-interaction-by" *ngIf="interaction.createdByName || interaction.createdBy?.firstName">
+								by {{ interaction.createdByName || (interaction.createdBy!.firstName + ' ' + interaction.createdBy!.lastName) }}
+								<span *ngIf="interaction.updatedBy || interaction.updatedByName" class="qv-interaction-edited">
+									· edited by {{ interaction.updatedByName || (interaction.updatedBy!.firstName + ' ' + interaction.updatedBy!.lastName) }}
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+		<ng-template pTemplate="footer">
+			<p-button
+				label="Open Full Profile"
+				icon="pi pi-external-link"
+				(onClick)="viewCustomerProfile(quickViewCustomer!); showQuickViewDialog = false"
+				styleClass="p-button-outlined p-button-sm">
+			</p-button>
+		</ng-template>
 	</p-dialog>
 </div>
