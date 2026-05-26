@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -18,6 +18,7 @@ export interface User {
   createdAt?: Date;
   lastLogin?: Date;
   isActive?: boolean;
+  mustChangePassword?: boolean;
 }
 
 export interface AuthResponse {
@@ -58,6 +59,8 @@ export class AuthService {
   private readonly API_URL = environment.apiUrl || 'http://localhost:3000';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private authReadySubject = new ReplaySubject<boolean>(1);
+  public authReady$ = this.authReadySubject.asObservable();
 
   constructor(private http: HttpClient) {
     this.loadStoredUser();
@@ -82,6 +85,19 @@ export class AuthService {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
+  }
+
+  changePassword(newPassword: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/change-password`, { newPassword }).pipe(
+      tap(() => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          const updated = { ...user, mustChangePassword: false };
+          localStorage.setItem('currentUser', JSON.stringify(updated));
+          this.currentUserSubject.next(updated);
+        }
+      })
+    );
   }
 
   refreshToken(): Observable<{ accessToken: string; refreshToken: string }> {
@@ -119,7 +135,7 @@ export class AuthService {
   private loadStoredUser(): void {
     const storedUser = localStorage.getItem('currentUser');
     const accessToken = localStorage.getItem('accessToken');
-    
+
     if (storedUser && accessToken) {
       try {
         const user = JSON.parse(storedUser);
@@ -128,5 +144,6 @@ export class AuthService {
         this.logout();
       }
     }
+    this.authReadySubject.next(true);
   }
 }

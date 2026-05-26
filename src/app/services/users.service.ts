@@ -71,8 +71,17 @@ export class UsersService {
     return this.http.get<User>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
+  generateTemporaryPassword(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    return Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
   createUser(userData: CreateUserDto): Observable<User> {
     return this.http.post<User>(this.apiUrl, userData, { headers: this.getHeaders() });
+  }
+
+  sendResetPasswordEmail(email: string, firstName: string, temporaryPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/send-reset-email`, { email, firstName, temporaryPassword }, { headers: this.getHeaders() });
   }
 
   updateUser(id: string, userData: UpdateUserDto): Observable<User> {

@@ -1,4 +1,7 @@
 import { Routes } from '@angular/router';
+import { AuthGuard } from './guards/auth.guard';
+import { AdminGuard } from './guards/admin.guard';
+import { ManagerGuard } from './guards/manager.guard';
 
 export const routes: Routes = [
   {
@@ -8,7 +11,7 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [() => import('./guards/manager.guard').then(g => g.ManagerGuard)]
+    canActivate: [ManagerGuard]
   },
   {
     path: 'about',
@@ -39,65 +42,70 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/register/register.component').then(m => m.RegisterComponent)
   },
   {
+    path: 'reset-password',
+    loadComponent: () => import('./pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'users',
     loadComponent: () => import('./dashboard/pages/user-management/user-management.component').then(m => m.UserManagementComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   {
     path: 'orders',
     loadComponent: () => import('./pages/orders-management/orders-management.component').then(m => m.OrdersManagementComponent),
-    canActivate: [() => import('./guards/manager.guard').then(g => g.ManagerGuard)]
+    canActivate: [ManagerGuard]
   },
   {
     path: 'revenue',
     loadComponent: () => import('./pages/revenue/revenue.component').then(m => m.RevenueComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   {
     path: 'companies',
     loadComponent: () => import('./pages/companies-management/companies-management.component').then(m => m.CompaniesManagementComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   {
     path: 'product-order',
     loadComponent: () => import('./pages/product-order/product-order.component').then(m => m.ProductOrderComponent),
-    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
+    canActivate: [AuthGuard]
   },
   {
     path: 'manufacturing',
     loadComponent: () => import('./pages/manufacturing/manufacturing.component').then(m => m.ManufacturingComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   {
     path: 'product-management',
     loadComponent: () => import('./dashboard/pages/product-management/product-management.component').then(m => m.ProductManagementComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   {
     path: 'user-management',
     loadComponent: () => import('./dashboard/pages/user-management/user-management.component').then(m => m.UserManagementComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   {
     path: 'retail-sales',
     loadComponent: () => import('./dashboard/pages/retail-sales/retail-sales.component').then(m => m.RetailSalesComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   {
     path: 'sales-history',
     loadComponent: () => import('./dashboard/pages/sales-history/sales-history.component').then(m => m.SalesHistoryComponent),
-    canActivate: [() => import('./guards/admin.guard').then(g => g.AdminGuard)]
+    canActivate: [AdminGuard]
   },
   // CRM routes
   {
     path: 'crm-dashboard',
     loadComponent: () => import('./pages/crm-dashboard/crm-dashboard.component').then(m => m.CrmDashboardComponent),
-    canActivate: [() => import('./guards/manager.guard').then(g => g.ManagerGuard)]
+    canActivate: [ManagerGuard]
   },
   {
     path: 'customer-profile/:id',
     loadComponent: () => import('./pages/customer-profile/customer-profile.component').then(m => m.CustomerProfileComponent),
-    canActivate: [() => import('./guards/manager.guard').then(g => g.ManagerGuard)]
+    canActivate: [ManagerGuard]
   },
   // Order Blank routes
   {
@@ -138,7 +146,7 @@ export const routes: Routes = [
   {
     path: 'my-orders',
     loadComponent: () => import('./pages/my-orders/my-orders.component').then(m => m.MyOrdersComponent),
-    canActivate: [() => import('./guards/auth.guard').then(g => g.AuthGuard)]
+    canActivate: [AuthGuard]
   },
   // 3D Preview - Clothing Model Viewer (Testing Route)
   {

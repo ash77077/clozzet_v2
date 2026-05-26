@@ -274,18 +274,17 @@ export class NotificationService implements OnDestroy {
   onOrderActivity(): Observable<{ orderId: string; activity: any }> {
     return new Observable(observer => {
       if (!this.socket) {
-        observer.error('Socket not connected');
+        // Socket not ready yet — complete silently, caller will retry via takeUntil
+        observer.complete();
         return;
       }
 
-      this.socket.on('orderActivity', (data: { orderId: string; activity: any }) => {
-        observer.next(data);
-      });
+      const handler = (data: { orderId: string; activity: any }) => observer.next(data);
+      this.socket.on('orderActivity', handler);
 
-      // Cleanup
       return () => {
         if (this.socket) {
-          this.socket.off('orderActivity');
+          this.socket.off('orderActivity', handler);
         }
       };
     });
@@ -295,18 +294,16 @@ export class NotificationService implements OnDestroy {
   onOrderUpdate(): Observable<{ orderId: string; update: any }> {
     return new Observable(observer => {
       if (!this.socket) {
-        observer.error('Socket not connected');
+        observer.complete();
         return;
       }
 
-      this.socket.on('orderUpdate', (data: { orderId: string; update: any }) => {
-        observer.next(data);
-      });
+      const handler = (data: { orderId: string; update: any }) => observer.next(data);
+      this.socket.on('orderUpdate', handler);
 
-      // Cleanup
       return () => {
         if (this.socket) {
-          this.socket.off('orderUpdate');
+          this.socket.off('orderUpdate', handler);
         }
       };
     });

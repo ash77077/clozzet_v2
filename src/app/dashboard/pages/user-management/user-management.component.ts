@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UsersService, User, CreateUserDto, UpdateUserDto } from '../../../services/users.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ToastModule],
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
 })
@@ -24,6 +25,15 @@ export class UserManagementComponent implements OnInit {
   searchTerm: string = '';
   roleFilter: string = 'all';
 
+  // Temp password dialog
+  showPasswordDialog: boolean = false;
+  passwordDialogTitle: string = 'User Created Successfully';
+  createdUserName: string = '';
+  createdUserEmail: string = '';
+  temporaryPassword: string = '';
+  passwordCopied: boolean = false;
+  resettingUserId: string | null = null;
+
   roles = [
     { value: 'admin', label: 'Admin' },
     { value: 'manager', label: 'Manager' },
@@ -34,7 +44,7 @@ export class UserManagementComponent implements OnInit {
 
   constructor(
     private usersService: UsersService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
   ) {
     this.userForm = this.createUserForm();
   }
@@ -46,7 +56,6 @@ export class UserManagementComponent implements OnInit {
   createUserForm(): FormGroup {
     return this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       phone: ['', Validators.required],
@@ -166,13 +175,22 @@ export class UserManagementComponent implements OnInit {
           }
         });
     } else {
-      this.usersService.createUser(userData as CreateUserDto)
+      const tempPassword = this.usersService.generateTemporaryPassword();
+      const createDto: CreateUserDto = { ...userData, password: tempPassword };
+
+      this.usersService.createUser(createDto)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
             this.loading = false;
             this.closeModal();
             this.loadUsers();
+            this.passwordDialogTitle = 'User Created Successfully';
+            this.createdUserName = `${userData.firstName} ${userData.lastName}`;
+            this.createdUserEmail = userData.email;
+            this.temporaryPassword = tempPassword;
+            this.passwordCopied = false;
+            this.showPasswordDialog = true;
           },
           error: (err) => {
             this.error = 'Failed to create user: ' + (err.error?.message || err.message);
@@ -181,6 +199,45 @@ export class UserManagementComponent implements OnInit {
           }
         });
     }
+  }
+
+  resetUserPassword(user: User): void {
+    this.resettingUserId = user._id!;
+    const tempPassword = this.usersService.generateTemporaryPassword();
+
+    this.usersService.updateUser(user._id!, { password: tempPassword } as UpdateUserDto)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.usersService.sendResetPasswordEmail(user.email, user.firstName, tempPassword)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ error: () => {} }); // email failure is non-fatal
+
+          this.resettingUserId = null;
+          this.passwordDialogTitle = 'Password Reset Successfully';
+          this.createdUserName = `${user.firstName} ${user.lastName}`;
+          this.createdUserEmail = user.email;
+          this.temporaryPassword = tempPassword;
+          this.passwordCopied = false;
+          this.showPasswordDialog = true;
+        },
+        error: (err) => {
+          this.resettingUserId = null;
+          this.error = 'Failed to reset password: ' + (err.error?.message || err.message);
+        },
+      });
+  }
+
+  closePasswordDialog(): void {
+    this.showPasswordDialog = false;
+    this.temporaryPassword = '';
+  }
+
+  copyPassword(): void {
+    navigator.clipboard.writeText(this.temporaryPassword).then(() => {
+      this.passwordCopied = true;
+      setTimeout(() => this.passwordCopied = false, 2000);
+    });
   }
 
   toggleUserActive(user: User): void {
