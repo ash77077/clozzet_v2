@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { map, switchMap, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({
@@ -18,21 +18,16 @@ export class ManagerGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> | Promise<boolean> | boolean {
-
-    return this.authService.currentUser$.pipe(
+    return this.authService.authReady$.pipe(
       take(1),
+      switchMap(() => this.authService.currentUser$.pipe(take(1))),
       map(user => {
-        // Check if user is authenticated and has admin or manager role
         if (user && this.authService.isAuthenticated() && (user.role === 'admin' || user.role === 'manager')) {
           return true;
         } else if (user && this.authService.isAuthenticated()) {
-          // User is logged in but not admin or manager
-          this.router.navigate(['/dashboard'], {
-            queryParams: { error: 'unauthorized' }
-          });
+          this.router.navigate(['/']);
           return false;
         } else {
-          // User is not logged in
           this.router.navigate(['/login'], {
             queryParams: { returnUrl: state.url }
           });

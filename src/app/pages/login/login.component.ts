@@ -40,9 +40,12 @@ export class LoginComponent {
       this.authService.login(this.loginData).subscribe({
         next: (response) => {
           this.isLoading = false;
-          // Get return URL from query parameters or default to dashboard
-          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-          this.router.navigate([returnUrl]);
+          if (response.user.mustChangePassword) {
+            this.router.navigate(['/reset-password']);
+          } else {
+            const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+            this.router.navigate([returnUrl]);
+          }
         },
         error: (error) => {
           this.isLoading = false;

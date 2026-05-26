@@ -8,7 +8,9 @@ export const AuthInterceptor: HttpInterceptorFn = (request, next) => {
 
   // List of public endpoints that don't require authentication
   const publicEndpoints = [
-    '/auth/',
+    '/auth/login',
+    '/auth/register',
+    '/auth/refresh',
     '/products', // Public product list
     '/quotes', // Public quote submission
   ];

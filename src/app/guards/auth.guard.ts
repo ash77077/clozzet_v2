@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { map, switchMap, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({
@@ -18,15 +18,14 @@ export class AuthGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> | Promise<boolean> | boolean {
-    
-    return this.authService.currentUser$.pipe(
+    return this.authService.authReady$.pipe(
       take(1),
+      switchMap(() => this.authService.currentUser$.pipe(take(1))),
       map(user => {
         if (user && this.authService.isAuthenticated()) {
           return true;
         } else {
-          // Store the attempted URL for redirecting after login
-          this.router.navigate(['/login'], { 
+          this.router.navigate(['/login'], {
             queryParams: { returnUrl: state.url }
           });
           return false;

@@ -71,6 +71,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   isLoadingUsers = false;
   unassignedCustomersCount = 0;
   maxVisibleUsers = 5;
+  private followUpsCache: Customer[] = [];
 
   statusOptions = [
     { label: 'Lead', value: CustomerStatus.LEAD },
@@ -189,12 +190,12 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
         next: (data) => {
           // Sort customers: Today's follow-ups first, then overdue, then future
           this.customers = this.sortCustomersByFollowUp(data.customers);
+          this.followUpsCache = data.followUps;
 
           // Count unassigned customers
           this.unassignedCustomersCount = this.customers.filter(c => !c.createdBy).length;
 
           this.applyUserFilter();
-          this.calculateStats(this.filteredCustomers, data.followUps);
           this.isLoading = false;
         },
         error: () => {
@@ -846,24 +847,19 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
 
   applyUserFilter(): void {
     if (this.selectedUserIds.size === 0 && !this.showUnassigned) {
-      // No filter selected, show all customers
       this.filteredCustomers = [...this.customers];
     } else {
-      // Filter by selected users and/or unassigned
       this.filteredCustomers = this.customers.filter(customer => {
-        // Check if should show unassigned customers
         if (this.showUnassigned && !customer.createdBy) {
           return true;
         }
 
-        // If no users selected, only show unassigned (already handled above)
         if (this.selectedUserIds.size === 0) {
           return false;
         }
 
         if (!customer.createdBy) return false;
 
-        // Handle both string ID and object with _id
         const createdById = typeof customer.createdBy === 'string'
           ? customer.createdBy
           : (customer.createdBy as any)?._id;
@@ -871,6 +867,11 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
         return createdById && this.selectedUserIds.has(createdById);
       });
     }
+
+    // Recalculate stats for the currently visible (filtered) customers
+    const filteredIds = new Set(this.filteredCustomers.map(c => c._id));
+    const filteredFollowUps = this.followUpsCache.filter(c => filteredIds.has(c._id));
+    this.calculateStats(this.filteredCustomers, filteredFollowUps);
   }
 
   getUserInitials(user: User): string {

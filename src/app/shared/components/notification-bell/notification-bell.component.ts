@@ -50,12 +50,14 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
         this.unreadCount = count;
       });
 
-    // Connect to WebSocket for current user
+    // Connect to WebSocket for current user — disconnect first to avoid duplicate sockets on re-login
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => {
         if (user?.id) {
           this.notificationService.connectSocket(user.id);
+        } else {
+          this.notificationService.disconnectSocket();
         }
       });
   }

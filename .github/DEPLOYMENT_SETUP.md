@@ -1,111 +1,76 @@
-# GitHub Actions Deployment Setup
+# CI/CD Deployment Setup
 
-This document explains how to configure automatic deployment to your VPS server.
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically deploys the full stack whenever you merge `develop` into `main`.
 
-## Overview
+## What it does
 
-The GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically deploys your Angular application to your VPS server whenever you push or merge to the `main` branch.
+1. **Frontend job** — builds Angular with production config, SCPs the `dist/` output to the VPS, replaces `/var/www/html/`
+2. **Backend job** — SSHs into `/root/clozzet_v2_api`, runs `git pull origin main`, `npm ci`, `npm run build`, then `pm2 restart clozzet_v`
 
 ## Required GitHub Secrets
 
-You need to add the following secrets to your GitHub repository:
+Go to **Settings → Secrets and variables → Actions → New repository secret** and add:
 
-### How to Add Secrets:
-1. Go to your GitHub repository
-2. Click on **Settings**
-3. In the left sidebar, click on **Secrets and variables** → **Actions**
-4. Click **New repository secret**
-5. Add each secret below
+| Secret | Value |
+|--------|-------|
+| `SSH_HOST` | Your VPS IP or domain |
+| `SSH_USERNAME` | SSH user (e.g. `root`) |
+| `SSH_PRIVATE_KEY` | Full private key content including header/footer lines |
+| `SSH_PORT` | SSH port — optional, defaults to `22` |
 
-### Required Secrets:
-
-| Secret Name | Description | Example |
-|------------|-------------|---------|
-| `SSH_HOST` | Your VPS server IP address or domain | `192.168.1.100` or `yourdomain.com` |
-| `SSH_USERNAME` | SSH username for your server | `root` or `ubuntu` |
-| `SSH_PRIVATE_KEY` | Your SSH private key (see below) | (multi-line key content) |
-| `SSH_PORT` | SSH port (optional, defaults to 22) | `22` |
-
-## How to Get Your SSH Private Key
-
-### Option 1: Use Existing SSH Key
-If you already have an SSH key pair for your server:
-
-```bash
-# On your local machine, display your private key
-cat ~/.ssh/id_rsa
-```
-
-Copy the entire output (including `-----BEGIN OPENSSH PRIVATE KEY-----` and `-----END OPENSSH PRIVATE KEY-----`)
-
-### Option 2: Create a New SSH Key (Recommended)
-Create a dedicated key for GitHub Actions:
+## Generating a dedicated SSH key (recommended)
 
 ```bash
 # On your local machine
-ssh-keygen -t rsa -b 4096 -C "github-actions" -f ~/.ssh/github_actions_key
+ssh-keygen -t ed25519 -C "github-actions-clozzet" -f ~/.ssh/github_actions_key
 
-# Display the private key
+# Print the private key — paste this as SSH_PRIVATE_KEY secret
 cat ~/.ssh/github_actions_key
 
-# Display the public key (you'll need to add this to your server)
+# Print the public key — add this to your VPS
 cat ~/.ssh/github_actions_key.pub
 ```
 
-Then add the **public key** to your server:
-
+On your VPS:
 ```bash
-# On your VPS server
-echo "YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
+echo "YOUR_PUBLIC_KEY" >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 ```
 
-## Workflow Behavior
+## VPS requirements
 
-The deployment workflow will:
+- Nginx serving `/var/www/html/` (frontend)
+- Backend at `/root/clozzet_v2_api` — must be a git repo with `origin` pointing to your backend GitHub repo
+- PM2 running the backend with app name `clozzet_v`
+- SSH user must have passwordless sudo for the `cp`/`chown` commands, or run as root
 
-1. ✅ Trigger automatically on push/merge to `main` branch
-2. ✅ Install dependencies using `npm ci`
-3. ✅ Build the Angular app with production configuration
-4. ✅ Transfer built files to your VPS server
-5. ✅ Deploy files to `/var/www/html/`
-6. ✅ Set proper permissions (www-data:www-data)
+### Allow passwordless sudo for www-data commands (if not root)
 
-## Testing the Setup
+```bash
+sudo visudo
+# Add:
+yourusername ALL=(ALL) NOPASSWD: /bin/rm, /bin/cp, /bin/chown, /bin/chmod
+```
 
-After adding all secrets:
+## Triggering a deployment
 
-1. Commit and push a change to the `main` branch
-2. Go to your repository → **Actions** tab
-3. You should see the workflow running
-4. Check the logs to verify successful deployment
+Merge `develop` into `main`:
+
+```bash
+git checkout main
+git merge develop
+git push origin main
+```
+
+The Actions workflow starts automatically. Monitor it at:
+**GitHub repo → Actions tab**
 
 ## Troubleshooting
 
-### Permission Denied
-- Make sure your SSH user has sudo access without password prompt
-- Run: `sudo visudo` and add: `yourusername ALL=(ALL) NOPASSWD: ALL`
+**Build fails** — check the Actions log. Run `npm run build -- --configuration=production` locally to reproduce.
 
-### Connection Failed
-- Verify `SSH_HOST` is correct
-- Check if `SSH_PORT` is correct (default is 22)
-- Ensure your VPS firewall allows SSH connections from GitHub Actions
+**SSH connection refused** — verify `SSH_HOST`, `SSH_PORT`, and that the public key is in `~/.ssh/authorized_keys` on the VPS.
 
-### Build Fails
-- Check the Actions logs for specific errors
-- Ensure your Angular app builds locally with: `npm run build -- --configuration=production`
+**PM2 process not found** — run `pm2 list` on the VPS to confirm the exact app name. Update the workflow if it differs from `clozzet_v`.
 
-## Manual Deployment
-
-If you need to deploy manually, you can still use the deployment script:
-
-```bash
-./scripts/deploy-frontend.sh
-```
-
-## Security Notes
-
-- Never commit your private keys to the repository
-- Use repository secrets for all sensitive information
-- Consider using a dedicated SSH key for GitHub Actions
-- Regularly rotate your SSH keys
+**Backend git pull fails** — make sure `/root/clozzet_v2_api` has the correct `origin` remote pointing to your backend repo and the SSH user has read access.
