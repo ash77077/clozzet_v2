@@ -1,12 +1,12 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
 export interface Notification {
   _id?: string;
   userId: string;
-  type: 'mention' | 'status_change' | 'order_created' | 'order_updated' | 'file_uploaded' | 'comment' | 'order_request';
+  type: 'mention' | 'status_change' | 'order_created' | 'order_updated' | 'file_uploaded' | 'comment' | 'order_request' | 'follow_up_reminder';
   title: string;
   message: string;
   link?: string;
@@ -27,6 +27,7 @@ export class NotificationService implements OnDestroy {
   private socket: Socket | null = null;
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
   private unreadCountSubject = new BehaviorSubject<number>(0);
+  private socketReady$ = new Subject<void>();
 
   public notifications$ = this.notificationsSubject.asObservable();
   public unreadCount$ = this.unreadCountSubject.asObservable();
@@ -35,6 +36,7 @@ export class NotificationService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.disconnectSocket();
+    this.socketReady$.complete();
   }
 
   // Connect to WebSocket for real-time notifications
@@ -61,6 +63,9 @@ export class NotificationService implements OnDestroy {
       if (this.socket) {
         this.socket.emit('register', { userId });
       }
+
+      // Notify any pending observers that the socket is ready
+      this.socketReady$.next();
 
       // Fetch initial notifications
       this.fetchNotifications(userId).subscribe({
@@ -220,7 +225,7 @@ export class NotificationService implements OnDestroy {
       type: 'mention',
       title: `${fromUserName} mentioned you`,
       message: `${fromUserName} mentioned you in order ${orderNumber}: "${commentText.substring(0, 100)}${commentText.length > 100 ? '...' : ''}"`,
-      link: `/orders-management?order=${orderId}`,
+      link: `/orders?order=${orderId}`,
       orderId: orderId,
       orderNumber: orderNumber,
       fromUser: fromUserName,
@@ -273,39 +278,45 @@ export class NotificationService implements OnDestroy {
   // Listen for order activity updates
   onOrderActivity(): Observable<{ orderId: string; activity: any }> {
     return new Observable(observer => {
-      if (!this.socket) {
-        // Socket not ready yet — complete silently, caller will retry via takeUntil
-        observer.complete();
-        return;
+      const subscribe = () => {
+        if (!this.socket) return;
+        const handler = (data: { orderId: string; activity: any }) => observer.next(data);
+        this.socket.on('orderActivity', handler);
+        return () => { if (this.socket) this.socket.off('orderActivity', handler); };
+      };
+
+      if (this.socket) {
+        return subscribe();
       }
 
-      const handler = (data: { orderId: string; activity: any }) => observer.next(data);
-      this.socket.on('orderActivity', handler);
-
-      return () => {
-        if (this.socket) {
-          this.socket.off('orderActivity', handler);
-        }
-      };
+      // Wait for socket to be ready then attach
+      const readySub = this.socketReady$.subscribe(() => {
+        readySub.unsubscribe();
+        subscribe();
+      });
+      return () => readySub.unsubscribe();
     });
   }
 
   // Listen for order updates
   onOrderUpdate(): Observable<{ orderId: string; update: any }> {
     return new Observable(observer => {
-      if (!this.socket) {
-        observer.complete();
-        return;
+      const subscribe = () => {
+        if (!this.socket) return;
+        const handler = (data: { orderId: string; update: any }) => observer.next(data);
+        this.socket.on('orderUpdate', handler);
+        return () => { if (this.socket) this.socket.off('orderUpdate', handler); };
+      };
+
+      if (this.socket) {
+        return subscribe();
       }
 
-      const handler = (data: { orderId: string; update: any }) => observer.next(data);
-      this.socket.on('orderUpdate', handler);
-
-      return () => {
-        if (this.socket) {
-          this.socket.off('orderUpdate', handler);
-        }
-      };
+      const readySub = this.socketReady$.subscribe(() => {
+        readySub.unsubscribe();
+        subscribe();
+      });
+      return () => readySub.unsubscribe();
     });
   }
 }

@@ -243,6 +243,11 @@
       color: var(--pink-600);
     }
 
+    &.icon-followup {
+      background: var(--yellow-100);
+      color: var(--yellow-700);
+    }
+
     &.icon-default {
       background: var(--surface-200);
       color: var(--text-color-secondary);

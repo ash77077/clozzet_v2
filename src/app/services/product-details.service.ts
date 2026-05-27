@@ -195,4 +195,9 @@ export class ProductDetailsService {
       { headers }
     );
   }
+
+  triggerDeadlineReminder(): Observable<any> {
+    const headers = this.getHeaders();
+    return this.http.post<any>(`${this.apiUrl}/test-deadline-reminder`, {}, { headers });
+  }
 }

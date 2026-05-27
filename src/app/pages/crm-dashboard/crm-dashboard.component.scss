@@ -510,6 +510,31 @@
       flex-direction: column;
       gap: 1rem;
     }
+
+    .header-buttons {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+
+      ::ng-deep .p-button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  .stat-card {
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      font-size: 1.25rem;
+    }
+
+    .stat-content .stat-value {
+      font-size: 1.5rem;
+
+      &.urgent-value { font-size: 1.75rem; }
+    }
   }
 
   .form-grid {
@@ -533,12 +558,28 @@
 
   ::ng-deep {
     .p-datatable {
+      table-layout: auto !important;
       font-size: 0.875rem;
 
-      .p-datatable-thead > tr > th,
-      .p-datatable-tbody > tr > td {
-        padding: 0.5rem;
+      .p-datatable-thead > tr > th {
+        width: auto !important;
+        min-width: 80px;
+        white-space: nowrap;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.4rem;
       }
+
+      .p-datatable-tbody > tr > td {
+        white-space: nowrap;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.4rem;
+      }
+    }
+
+    .p-card .p-card-body {
+      padding: 0.75rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 }
@@ -549,7 +590,15 @@
   }
 
   .stat-card {
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem;
+
+    .stat-content .stat-value {
+      font-size: 1.35rem;
+    }
+  }
+
+  ::ng-deep .p-dialog .p-dialog-content {
+    padding: 0.75rem !important;
   }
 }
 

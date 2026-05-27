@@ -17,6 +17,10 @@
       <p class="page-description">Track and manage all orders across every stage</p>
     </div>
     <div class="header-right">
+      <button class="test-reminder-btn" (click)="testDeadlineReminder()" *ngIf="isAdmin()" pTooltip="Send Telegram deadline reminder now">
+        <i class="pi pi-send"></i>
+        Test Reminder
+      </button>
       <button class="add-order-btn" (click)="openAddOrderDialog()" *ngIf="isAdminOrManager()">
         <i class="pi pi-plus"></i>
         Add Order

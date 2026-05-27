@@ -44,7 +44,7 @@ export class LoginComponent {
             this.router.navigate(['/reset-password']);
           } else {
             const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-            this.router.navigate([returnUrl]);
+            this.router.navigateByUrl(returnUrl);
           }
         },
         error: (error) => {

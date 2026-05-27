@@ -111,7 +111,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     // Navigate to link if provided
     if (notification.link) {
       const urlParts = notification.link.split('?');
-      const route = urlParts[0];
+      const route = urlParts[0].replace('/orders-management', '/orders');
       const queryString = urlParts[1];
 
       if (queryString) {
@@ -132,7 +132,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
         });
       }
     } else if (notification.orderId) {
-      this.router.navigate(['/orders-management'], {
+      this.router.navigate(['/orders'], {
         queryParams: { order: notification.orderId }
       }).catch(err => {
         console.error('❌ Navigation failed:', err);
@@ -165,6 +165,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       case 'order_request': return 'pi-shopping-cart';
       case 'file_uploaded': return 'pi-paperclip';
       case 'comment': return 'pi-comment';
+      case 'follow_up_reminder': return 'pi-calendar-clock';
       default: return 'pi-bell';
     }
   }
@@ -178,6 +179,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       case 'order_request': return 'created';
       case 'file_uploaded': return 'file';
       case 'comment': return 'comment';
+      case 'follow_up_reminder': return 'followup';
       default: return 'default';
     }
   }
