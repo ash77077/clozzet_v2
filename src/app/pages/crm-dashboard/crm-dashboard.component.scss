@@ -126,6 +126,96 @@
   font-size: 2.5rem;
 }
 
+// Clickable stat cards
+.quick-filter-active {
+  box-shadow: 0 0 0 3px #6366f1 !important;
+  transform: translateY(-2px);
+  transition: all 0.2s;
+
+  .quick-filter-indicator {
+    color: #6366f1;
+    font-size: 0.9rem;
+    margin-left: auto;
+    align-self: flex-start;
+  }
+}
+
+// Active filter banner
+.active-filter-banner {
+  margin-bottom: 0.75rem;
+
+  .filter-banner-inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: #eff6ff;
+    border: 1px solid #3b82f6;
+    font-size: 0.875rem;
+    color: #1e40af;
+
+    > i {
+      font-size: 1rem;
+      color: #3b82f6;
+      flex-shrink: 0;
+    }
+
+    > span {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .filter-steps {
+      width: 100%;
+
+      .step-hint {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #475569;
+        font-size: 0.8rem;
+
+        i { color: #6366f1; }
+
+        &.all-done {
+          color: #16a34a;
+          i { color: #16a34a; }
+        }
+      }
+    }
+
+    .clear-filter-btn {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid #3b82f6;
+      border-radius: 6px;
+      background: white;
+      color: #1e40af;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      &:hover { background: #dbeafe; }
+    }
+  }
+
+  // Overdue variant
+  &.overdue-banner {
+    .filter-banner-inner {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #991b1b;
+      > i { color: #ef4444; }
+      .clear-filter-btn { border-color: #ef4444; color: #991b1b; &:hover { background: #fee2e2; } }
+    }
+  }
+}
+
 @keyframes pulse-scale {
   0%, 100% {
     transform: scale(1);

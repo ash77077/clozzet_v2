@@ -699,6 +699,36 @@
       }
     }
   },
+  "AI": {
+    "TOGGLE_LABEL": "AI Assistant",
+    "TOGGLE_ON": "Active",
+    "TOGGLE_OFF": "Inactive",
+    "ANALYZE_BTN": "AI Suggestion",
+    "REFRESH_BTN": "Refresh Analysis",
+    "ANALYZING": "Analyzing...",
+    "LAST_ANALYZED": "Last analyzed",
+    "NEVER_ANALYZED": "Not yet analyzed",
+    "STALE_WARNING": "Analysis may be outdated",
+    "STATUS_LABEL": "Customer Status",
+    "URGENCY_LABEL": "Urgency",
+    "SENTIMENT_LABEL": "Sentiment",
+    "SUMMARY_LABEL": "Summary",
+    "TAGS_LABEL": "Tags",
+    "NEXT_ACTION_LABEL": "Recommended Action",
+    "CHAT_TITLE": "CRM Assistant",
+    "CHAT_PLACEHOLDER": "Ask anything about your customers...",
+    "CHIP_SUMMARIZE": "Summarize this customer",
+    "CHIP_CALL_TIME": "Best time to call?",
+    "CHIP_DRAFT_FOLLOWUP": "Draft a follow-up message",
+    "CHIP_WHO_TO_CALL": "Who should I call today?",
+    "CHIP_AT_RISK": "Any customers at risk?",
+    "CHIP_SEASONAL": "Show seasonal opportunities",
+    "ANALYZE_ALL": "Analyze All",
+    "ANALYZE_ALL_PROGRESS": "Analyzing {{current}} of {{total}}...",
+    "AI_BADGE": "AI",
+    "ERROR_GENERIC": "Analysis failed. Please try again.",
+    "ERROR_RETRY": "Retry"
+  },
   "portfolio": {
     "hero": {
       "title": "Our <strong>Portfolio</strong>",

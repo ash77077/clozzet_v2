@@ -4,14 +4,16 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { SecondaryNavbarComponent } from './shared/components/secondary-navbar/secondary-navbar.component';
+import { AiChatWidgetComponent } from './shared/components/ai-chat-widget/ai-chat-widget.component';
 import { AuthService } from './services/auth.service';
+import { AiService } from './services/ai.service';
 import { Observable } from 'rxjs';
 import { map, filter, startWith } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, NavbarComponent, FooterComponent, SecondaryNavbarComponent],
+  imports: [CommonModule, RouterOutlet, NavbarComponent, FooterComponent, SecondaryNavbarComponent, AiChatWidgetComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -19,10 +21,12 @@ export class AppComponent implements OnInit {
   title = 'clozzet_v2';
   isAuthenticated$: Observable<boolean>;
   hideNavbars: boolean = false;
+  get aiEnabled$() { return this.aiService.aiEnabled$; }
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private aiService: AiService
   ) {
     this.isAuthenticated$ = this.authService.currentUser$.pipe(
       map(user => !!user)

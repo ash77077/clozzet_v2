@@ -175,7 +175,7 @@
         <!-- Quick Actions -->
         <div class="quick-actions">
           <h3 class="text-lg font-semibold mb-3">Quick Actions</h3>
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
             <p-button
               label="Log Call"
               icon="pi pi-phone"
@@ -200,10 +200,114 @@
               styleClass="p-button-warning"
               (onClick)="openInteractionDialog(InteractionType.IN_PERSON)">
             </p-button>
+            <p-button
+              *ngIf="aiEnabled$ | async"
+              [label]="'AI.ANALYZE_BTN' | translate"
+              icon="pi pi-sparkles"
+              severity="secondary"
+              [loading]="isAnalyzing"
+              (onClick)="triggerAiAnalysis()">
+            </p-button>
           </div>
         </div>
       </div>
     </p-card>
+
+    <!-- AI Suggestion Panel -->
+    <ng-container *ngIf="aiEnabled$ | async">
+      <!-- Skeleton while analyzing -->
+      <div *ngIf="isAnalyzing" class="ai-panel mb-6">
+        <div class="ai-panel-header">
+          <i class="pi pi-sparkles" style="color:#8b5cf6"></i>
+          <span class="font-semibold text-gray-700">AI Suggestion</span>
+        </div>
+        <p-skeleton height="1.5rem" styleClass="mb-2"></p-skeleton>
+        <p-skeleton height="1rem" width="60%" styleClass="mb-2"></p-skeleton>
+        <p-skeleton height="4rem" styleClass="mb-2"></p-skeleton>
+        <p-skeleton height="1rem" width="80%"></p-skeleton>
+      </div>
+
+      <!-- Error state -->
+      <div *ngIf="!isAnalyzing && aiError" class="mb-6">
+        <p-message severity="error" [text]="'AI.ERROR_GENERIC' | translate"></p-message>
+        <p-button
+          class="mt-2"
+          [label]="'AI.ERROR_RETRY' | translate"
+          icon="pi pi-refresh"
+          severity="secondary"
+          size="small"
+          (onClick)="triggerAiAnalysis()">
+        </p-button>
+      </div>
+
+      <!-- Result panel -->
+      <div *ngIf="!isAnalyzing && aiResult && !aiError" class="ai-panel mb-6" [@slideDown]>
+        <!-- Header -->
+        <div class="ai-panel-header">
+          <i class="pi pi-sparkles" style="color:#8b5cf6"></i>
+          <span class="font-semibold text-gray-700">AI Suggestion</span>
+          <span class="ai-badge">{{ 'AI.AI_BADGE' | translate }}</span>
+          <span class="text-xs text-gray-400 ml-2">
+            {{ 'AI.LAST_ANALYZED' | translate }}: {{ aiResult.analyzed_at | date:'short' }}
+          </span>
+          <p-button
+            class="ml-auto"
+            [label]="'AI.REFRESH_BTN' | translate"
+            icon="pi pi-refresh"
+            severity="secondary"
+            size="small"
+            [loading]="isAnalyzing"
+            (onClick)="triggerAiAnalysis()">
+          </p-button>
+        </div>
+
+        <!-- Status + Urgency -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <div class="text-xs font-semibold text-gray-500 mb-1">{{ 'AI.STATUS_LABEL' | translate }}</div>
+            <p-tag [value]="aiResult.status" [severity]="getAiStatusSeverity(aiResult.status)"></p-tag>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 mb-1">
+              {{ 'AI.URGENCY_LABEL' | translate }}
+              <span [class]="getUrgencyTextColor(aiResult.urgency)" class="ml-1 font-bold">{{ aiResult.urgency }}/10</span>
+            </div>
+            <div class="urgency-bar-bg">
+              <div class="urgency-bar" [class]="getUrgencyColor(aiResult.urgency)" [style.width.%]="aiResult.urgency * 10"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sentiment -->
+        <div class="mb-4">
+          <div class="text-xs font-semibold text-gray-500 mb-1">{{ 'AI.SENTIMENT_LABEL' | translate }}</div>
+          <p-chip [label]="aiResult.sentiment" [icon]="getSentimentIcon(aiResult.sentiment)"></p-chip>
+        </div>
+
+        <!-- Summary -->
+        <div class="mb-4">
+          <div class="text-xs font-semibold text-gray-500 mb-1">{{ 'AI.SUMMARY_LABEL' | translate }}</div>
+          <div class="ai-summary-text">{{ aiResult.summary }}</div>
+        </div>
+
+        <!-- Tags -->
+        <div *ngIf="aiResult.tags?.length" class="mb-4">
+          <div class="text-xs font-semibold text-gray-500 mb-1">{{ 'AI.TAGS_LABEL' | translate }}</div>
+          <div class="flex flex-wrap gap-2">
+            <p-chip *ngFor="let tag of aiResult.tags" [label]="tag"></p-chip>
+          </div>
+        </div>
+
+        <!-- Next Action -->
+        <div class="ai-action-box" [style.border-left-color]="getActionBorderColor(aiResult.action_type)">
+          <div class="text-xs font-semibold text-gray-500 mb-1">{{ 'AI.NEXT_ACTION_LABEL' | translate }}</div>
+          <div class="flex items-start gap-2">
+            <i [class]="getActionIcon(aiResult.action_type)" [style.color]="getActionBorderColor(aiResult.action_type)"></i>
+            <span class="text-gray-700">{{ aiResult.next_action }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
 
     <!-- Interaction Timeline -->
     <p-card>
