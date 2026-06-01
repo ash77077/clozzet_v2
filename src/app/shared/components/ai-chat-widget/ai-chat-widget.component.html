@@ -1,0 +1,77 @@
+<!-- Chat Panel -->
+<div *ngIf="isOpen" class="chat-panel" [@slideUp]>
+  <div class="chat-header">
+    <i class="pi pi-sparkles" style="color:#8b5cf6"></i>
+    <span class="chat-title">{{ 'AI.CHAT_TITLE' | translate }}</span>
+    <button class="close-btn" (click)="togglePanel()">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <!-- Customer selector -->
+  <div class="chat-context">
+    <p-select
+      [options]="customers"
+      [(ngModel)]="selectedCustomer"
+      optionLabel="companyName"
+      [placeholder]="'Select customer (optional)'"
+      [showClear]="true"
+      (onChange)="onCustomerChange($event.value)"
+      styleClass="w-full">
+    </p-select>
+  </div>
+
+  <!-- Messages -->
+  <div class="chat-messages">
+    <div *ngFor="let msg of messages" [@fadeIn]>
+      <div *ngIf="msg.role === 'user'" class="msg-user">
+        {{ msg.content }}
+      </div>
+      <div *ngIf="msg.role === 'assistant'" class="msg-assistant">
+        <i class="pi pi-sparkles msg-icon"></i>
+        <span>{{ msg.content }}</span>
+      </div>
+    </div>
+
+    <!-- Typing indicator -->
+    <div *ngIf="isTyping" class="msg-assistant" [@fadeIn]>
+      <i class="pi pi-sparkles msg-icon"></i>
+      <div class="typing-indicator">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div #messagesEnd></div>
+  </div>
+
+  <!-- Quick chips -->
+  <div *ngIf="chipsVisible && activeChips.length" class="chat-chips">
+    <p-chip
+      *ngFor="let chip of activeChips"
+      [label]="chip | translate"
+      styleClass="chip-clickable"
+      (click)="sendChip(chip)">
+    </p-chip>
+  </div>
+
+  <!-- Input -->
+  <div class="chat-input-row">
+    <input
+      pInputText
+      [(ngModel)]="inputText"
+      [placeholder]="'AI.CHAT_PLACEHOLDER' | translate"
+      (keydown)="onEnter($event)"
+      class="chat-input" />
+    <p-button
+      icon="pi pi-send"
+      [disabled]="!inputText.trim() || isTyping"
+      (onClick)="sendMessage(inputText)"
+      styleClass="send-btn">
+    </p-button>
+  </div>
+</div>
+
+<!-- Floating button -->
+<button class="chat-fab" (click)="togglePanel()" [class.open]="isOpen" pTooltip="AI Assistant" tooltipPosition="left">
+  <i [class]="isOpen ? 'pi pi-times' : 'pi pi-comments'"></i>
+</button>

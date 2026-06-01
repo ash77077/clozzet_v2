@@ -10,7 +10,11 @@
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
       "Bash(ng generate:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(node *)",
+      "Bash(npx ng *)",
+      "Bash(xargs grep -l \"mongoose\\\\|nestjs\\\\|express\")",
+      "Bash(xargs grep -l \"customers\\\\|interactions\")"
     ],
     "deny": []
   }
