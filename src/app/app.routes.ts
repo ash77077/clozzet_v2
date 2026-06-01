@@ -142,6 +142,16 @@ export const routes: Routes = [
     path: 'financial-production',
     loadChildren: () => import('./financial-production/financial-production-routing.module').then(m => m.FinancialProductionRoutingModule)
   },
+  {
+    path: 'cost-configurator',
+    loadComponent: () => import('./pages/cost-configurator/cost-configurator.component').then(m => m.CostConfiguratorComponent),
+    canActivate: [AdminGuard]
+  },
+  {
+    path: 'expo-sales',
+    loadComponent: () => import('./pages/expo-sales/expo-sales.component').then(m => m.ExpoSalesComponent),
+    canActivate: [AdminGuard]
+  },
   // My Orders — client dashboard
   {
     path: 'my-orders',

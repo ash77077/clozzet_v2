@@ -1,0 +1,252 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="cost-configurator">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1><i class="pi pi-calculator"></i> Cost Configurator</h1>
+      <p class="subtitle">Calculate and save production cost scenarios</p>
+    </div>
+    <button pButton icon="pi pi-plus" label="New Scenario" class="p-button-outlined" (click)="newScenario()"></button>
+  </div>
+
+  <div class="configurator-layout">
+
+    <!-- LEFT: Saved scenarios list -->
+    <div class="scenarios-sidebar">
+      <h3 class="sidebar-title">Saved Scenarios</h3>
+      <div *ngIf="scenarios().length === 0" class="empty-scenarios">
+        <i class="pi pi-folder-open"></i>
+        <span>No scenarios yet</span>
+      </div>
+      <div
+        *ngFor="let s of scenarios()"
+        class="scenario-card"
+        [class.active]="activeScenarioId() === s.id"
+        (click)="loadScenario(s)">
+        <div class="scenario-info">
+          <span class="scenario-name">{{ s.name }}</span>
+          <span class="scenario-type">{{ s.productType }}</span>
+        </div>
+        <button
+          pButton
+          icon="pi pi-trash"
+          class="p-button-text p-button-danger p-button-sm delete-btn"
+          (click)="$event.stopPropagation(); confirmDelete(s)"
+          pTooltip="Delete">
+        </button>
+      </div>
+    </div>
+
+    <!-- CENTER: Input form -->
+    <div class="inputs-panel">
+
+      <!-- Scenario identity -->
+      <div class="input-section">
+        <h4 class="section-title"><i class="pi pi-tag"></i> Scenario</h4>
+        <div class="field-row">
+          <div class="field">
+            <label>Scenario Name</label>
+            <input pInputText [(ngModel)]="form.name" placeholder="e.g. Basic T-Shirt Summer" />
+          </div>
+          <div class="field">
+            <label>Product Type</label>
+            <input pInputText [(ngModel)]="form.productType" placeholder="e.g. T-Shirt, Hoodie" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Daily Output (units/day)</label>
+            <p-inputNumber [(ngModel)]="form.dailyOutput" [min]="1" [showButtons]="true" buttonLayout="horizontal"
+              decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary"
+              incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label>Working Days / Month</label>
+            <p-inputNumber [(ngModel)]="form.workingDaysPerMonth" [min]="1" [max]="31" [showButtons]="true"
+              buttonLayout="horizontal" decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary"
+              incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus"></p-inputNumber>
+          </div>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Fabric -->
+      <div class="input-section">
+        <h4 class="section-title"><i class="pi pi-box"></i> Fabric</h4>
+        <div class="field-row">
+          <div class="field">
+            <label>Fabric Price (֏ / kg)</label>
+            <p-inputNumber [(ngModel)]="form.fabricPricePerKg" [min]="0" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" suffix=" ֏"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label>Fabric Used (grams / unit)</label>
+            <p-inputNumber [(ngModel)]="form.fabricGramsUsed" [min]="0" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="1" suffix=" g"></p-inputNumber>
+          </div>
+        </div>
+        <div class="live-hint">
+          <i class="pi pi-arrow-right"></i>
+          Fabric cost per unit: <strong>{{ fmtAMD(calc.fabricCostPerUnit) }}</strong>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Accessories & Labour -->
+      <div class="input-section">
+        <h4 class="section-title"><i class="pi pi-wrench"></i> Accessories & Labour</h4>
+        <div class="field-row">
+          <div class="field">
+            <label>Accessories Cost (֏ / unit)</label>
+            <p-inputNumber [(ngModel)]="form.accessoriesCostPerUnit" [min]="0" suffix=" ֏"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label>Piecework Labour (֏ / unit)</label>
+            <p-inputNumber [(ngModel)]="form.pieceworkLabor" [min]="0" suffix=" ֏"></p-inputNumber>
+          </div>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Monthly fixed costs -->
+      <div class="input-section">
+        <h4 class="section-title"><i class="pi pi-building"></i> Monthly Fixed Costs</h4>
+        <div class="field-row">
+          <div class="field">
+            <label>Rent (֏)</label>
+            <p-inputNumber [(ngModel)]="form.monthlyRent" [min]="0" suffix=" ֏"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label>Utilities (֏)</label>
+            <p-inputNumber [(ngModel)]="form.monthlyUtilities" [min]="0" suffix=" ֏"></p-inputNumber>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Fixed Salaries (֏)</label>
+            <p-inputNumber [(ngModel)]="form.monthlyFixedSalaries" [min]="0" suffix=" ֏"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label>Other (֏)</label>
+            <p-inputNumber [(ngModel)]="form.monthlyOther" [min]="0" suffix=" ֏"></p-inputNumber>
+          </div>
+        </div>
+        <div class="live-hint">
+          <i class="pi pi-arrow-right"></i>
+          Total monthly fixed: <strong>{{ fmtAMD(calc.totalMonthlyFixed) }}</strong>
+          &nbsp;|&nbsp; Monthly capacity: <strong>{{ fmt(calc.monthlyCapacity) }} units</strong>
+          &nbsp;|&nbsp; Overhead / unit: <strong>{{ fmtAMD(calc.overheadPerUnit) }}</strong>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Selling price -->
+      <div class="input-section">
+        <h4 class="section-title"><i class="pi pi-shopping-cart"></i> Selling Price (optional)</h4>
+        <div class="field-row">
+          <div class="field">
+            <label>Selling Price (֏ / unit)</label>
+            <p-inputNumber [(ngModel)]="form.sellingPrice" [min]="0" suffix=" ֏"></p-inputNumber>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save -->
+      <div class="save-row">
+        <button pButton icon="pi pi-save" [label]="form.id ? 'Update Scenario' : 'Save Scenario'"
+          [loading]="saving" (click)="saveScenario()">
+        </button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Live results -->
+    <div class="results-panel">
+      <h3 class="results-title"><i class="pi pi-chart-bar"></i> Live Results</h3>
+
+      <!-- Cost Breakdown -->
+      <div class="result-section">
+        <h4>Cost per Unit</h4>
+        <div class="result-row">
+          <span>Fabric</span>
+          <span class="value">{{ fmtAMD(calc.fabricCostPerUnit) }}</span>
+        </div>
+        <div class="result-row">
+          <span>Accessories</span>
+          <span class="value">{{ fmtAMD(calc.accessoriesCostPerUnit) }}</span>
+        </div>
+        <div class="result-row">
+          <span>Piecework Labour</span>
+          <span class="value">{{ fmtAMD(calc.pieceworkLabor) }}</span>
+        </div>
+        <div class="result-row">
+          <span>Overhead (fixed ÷ capacity)</span>
+          <span class="value">{{ fmtAMD(calc.overheadPerUnit) }}</span>
+        </div>
+        <div class="result-row total">
+          <span>Total Unit Cost</span>
+          <span class="value">{{ fmtAMD(calc.totalUnitCost) }}</span>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Margin -->
+      <div class="result-section" *ngIf="form.sellingPrice > 0">
+        <h4>Margin</h4>
+        <div class="result-row">
+          <span>Selling Price</span>
+          <span class="value">{{ fmtAMD(form.sellingPrice) }}</span>
+        </div>
+        <div class="result-row">
+          <span>Profit / Unit</span>
+          <span class="value" [class.positive]="calc.profitPerUnit >= 0" [class.negative]="calc.profitPerUnit < 0">
+            {{ fmtAMD(calc.profitPerUnit) }}
+          </span>
+        </div>
+        <div class="result-row">
+          <span>Margin %</span>
+          <p-tag [value]="fmtPct(calc.profitMarginPct)" [severity]="profitSeverity()"></p-tag>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Monthly projections -->
+      <div class="result-section">
+        <h4>Monthly Projections</h4>
+        <div class="result-row">
+          <span>Capacity</span>
+          <span class="value">{{ fmt(calc.monthlyCapacity) }} units</span>
+        </div>
+        <div class="result-row" *ngIf="form.sellingPrice > 0">
+          <span>Revenue</span>
+          <span class="value">{{ fmtAMD(calc.monthlyRevenue) }}</span>
+        </div>
+        <div class="result-row" *ngIf="form.sellingPrice > 0">
+          <span>Gross Profit</span>
+          <span class="value" [class.positive]="calc.monthlyGrossProfit >= 0" [class.negative]="calc.monthlyGrossProfit < 0">
+            {{ fmtAMD(calc.monthlyGrossProfit) }}
+          </span>
+        </div>
+        <div class="result-row" *ngIf="form.sellingPrice > 0">
+          <span>Net Profit</span>
+          <span class="value bold" [class.positive]="calc.monthlyNetProfit >= 0" [class.negative]="calc.monthlyNetProfit < 0">
+            {{ fmtAMD(calc.monthlyNetProfit) }}
+          </span>
+        </div>
+        <div class="result-row total">
+          <span>Total Fixed Costs</span>
+          <span class="value">{{ fmtAMD(calc.totalMonthlyFixed) }}</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -1,13 +1,16 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService, User } from '../../../services/auth.service';
 import { UserRole } from '../../../models/dashboard.models';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
+import { AiService } from '../../../services/ai.service';
 
 interface OrderStats {
   pending: number;
@@ -26,8 +29,10 @@ interface UserOrderStats {
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ButtonModule,
     TooltipModule,
+    ToggleSwitchModule,
     TranslateModule,
     NotificationBellComponent
   ],
@@ -36,7 +41,7 @@ interface UserOrderStats {
 })
 export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   currentUser: User | null = null;
   isAuthenticated = false;
   orderStats: OrderStats | null = null;
@@ -45,6 +50,9 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   showOtherSection = false;
 
   UserRole = UserRole;
+
+  get aiEnabled$() { return this.aiService.aiEnabled$; }
+  aiEnabledValue = false;
 
   // Section toggle (Sales vs Manufacturing)
   currentSection: 'sales' | 'manufacturing' = 'sales';
@@ -59,7 +67,8 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private aiService: AiService
   ) {
     // Initialize current language
     this.currentLanguage = this.translate.currentLang || 'en';
@@ -74,6 +83,9 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadCurrentUser();
     this.loadOrderStats();
+    this.aiService.aiEnabled$.pipe(takeUntil(this.destroy$)).subscribe(v => {
+      this.aiEnabledValue = v;
+    });
   }
 
   ngOnDestroy(): void {
@@ -166,6 +178,10 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     this.currentLanguage = langCode;
     this.translate.use(langCode);
     localStorage.setItem('selectedLanguage', langCode);
+  }
+
+  onAiToggle(enabled: boolean): void {
+    this.aiService.toggleAI(enabled);
   }
 
   switchSection(section: 'sales' | 'manufacturing'): void {

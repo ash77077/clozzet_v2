@@ -11,8 +11,12 @@ import { ToastModule } from 'primeng/toast';
 import { DatePicker } from 'primeng/datepicker';
 import { MessageService } from 'primeng/api';
 import { Tooltip } from 'primeng/tooltip';
+import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ProductDetailsService } from '../../services/product-details.service';
+import { FinancialProductionService } from '../../services/financial-production.service';
 import { OrderStatus, ProductDetails } from '../../models/dashboard.models';
+import { CostScenario } from '../../models/financial-production.model';
 
 interface ProductFinancial {
   clothType: string;
@@ -49,7 +53,9 @@ interface OrderFinancial extends ProductDetails {
     TagModule,
     ToastModule,
     DatePicker,
-    Tooltip
+    Tooltip,
+    SelectModule,
+    InputNumberModule,
   ],
   providers: [MessageService],
   templateUrl: './revenue.component.html',
@@ -70,7 +76,19 @@ export class RevenueComponent implements OnInit, OnDestroy {
   selectedOrder: OrderFinancial | null = null;
   editingProductIndex: number | null = null;
   editingCostPrice: number | null = null;
+  selectedScenario: CostScenario | null = null;
   isSaving = false;
+
+  get costScenarios() { return this.financialService.costScenarios$(); }
+  get scenarioOptions() {
+    return [
+      { label: '— Enter manually —', value: null },
+      ...this.costScenarios.map(s => ({
+        label: `${s.name} (${s.productType}) — ${Math.round(this.financialService.calculateCost(s).totalUnitCost)} ֏`,
+        value: s
+      }))
+    ];
+  }
 
   // Filters
   searchTerm = '';
@@ -86,6 +104,7 @@ export class RevenueComponent implements OnInit, OnDestroy {
 
   constructor(
     private productDetailsService: ProductDetailsService,
+    private financialService: FinancialProductionService,
     private messageService: MessageService
   ) {}
 
@@ -294,11 +313,20 @@ export class RevenueComponent implements OnInit, OnDestroy {
   startEditingCostPrice(productIndex: number, currentCostPrice: number | undefined): void {
     this.editingProductIndex = productIndex;
     this.editingCostPrice = currentCostPrice || null;
+    this.selectedScenario = null;
   }
 
   cancelEditingCostPrice(): void {
     this.editingProductIndex = null;
     this.editingCostPrice = null;
+    this.selectedScenario = null;
+  }
+
+  onScenarioSelect(scenario: CostScenario | null): void {
+    this.selectedScenario = scenario;
+    if (scenario) {
+      this.editingCostPrice = Math.round(this.financialService.calculateCost(scenario).totalUnitCost);
+    }
   }
 
   saveCostPrice(productIndex: number): void {

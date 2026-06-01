@@ -2,7 +2,10 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000/api',
   features: {
-    christmasTheme: false // Set to false to disable Christmas theme
+    christmasTheme: false
   },
-  googleAnalyticsId: 'G-YWQSG1RE1R'
+  googleAnalyticsId: 'G-XXXXXXXXXX',
+  aiEnabled: false,
+  anthropicApiKey: '',
+  aiApiBase: 'http://localhost:3000/api/ai'
 };

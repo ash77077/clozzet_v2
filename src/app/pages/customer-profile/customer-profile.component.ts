@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, BehaviorSubject } from 'rxjs';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { TimelineModule } from 'primeng/timeline';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -14,13 +15,19 @@ import { DatePicker } from 'primeng/datepicker';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { ChipModule } from 'primeng/chip';
+import { SkeletonModule } from 'primeng/skeleton';
+import { MessageModule } from 'primeng/message';
 import { MessageService } from 'primeng/api';
 import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
+import { AiService } from '../../services/ai.service';
 import { Customer, CustomerStatus } from '../../models/customer.model';
 import { Interaction, InteractionType, CallOutcome, CreateInteractionDto } from '../../models/interaction.model';
+import { CustomerAiPayload, CustomerAiResult } from '../../models/ai.models';
 import { ExternalLinkPipe } from '../../pipes/external-link.pipe';
-import {Tooltip} from "primeng/tooltip";
+import { TranslateModule } from '@ngx-translate/core';
+import { Tooltip } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-customer-profile',
@@ -40,12 +47,24 @@ import {Tooltip} from "primeng/tooltip";
     InputNumberModule,
     TagModule,
     ToastModule,
+    ChipModule,
+    SkeletonModule,
+    MessageModule,
     ExternalLinkPipe,
+    TranslateModule,
     Tooltip,
   ],
   providers: [MessageService],
   templateUrl: './customer-profile.component.html',
   styleUrl: './customer-profile.component.scss',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-12px)' }),
+        animate('220ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ])
+  ]
 })
 export class CustomerProfileComponent implements OnInit, OnDestroy {
   customer: Customer | null = null;
@@ -66,6 +85,11 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   isEditMode = false;
   editingInteractionId: string | null = null;
   private destroy$ = new Subject<void>();
+
+  get aiEnabled$() { return this.aiService.aiEnabled$; }
+  isAnalyzing = false;
+  aiResult: CustomerAiResult | null = null;
+  aiError = false;
 
   interactionTypeOptions = [
     { label: 'Phone Call', value: InteractionType.CALL, icon: 'pi pi-phone' },
@@ -90,7 +114,8 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     private router: Router,
     private customersService: CustomersService,
     private interactionsService: InteractionsService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private aiService: AiService
   ) {}
 
   ngOnInit(): void {
@@ -108,6 +133,8 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     this.initializeForm();
     this.initializeAddContactForm();
     this.loadCustomerData();
+    const cached = this.aiService.getCachedAnalysis(this.customerId);
+    if (cached) this.aiResult = cached;
   }
 
   ngOnDestroy(): void {
@@ -394,6 +421,92 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
       return `${hours}h ${mins}m`;
     }
     return `${mins} minutes`;
+  }
+
+  triggerAiAnalysis(): void {
+    if (!this.customer) return;
+    this.isAnalyzing = true;
+    this.aiError = false;
+    const payload = this.buildAiPayload();
+    this.aiService.analyzeCustomer(payload).subscribe({
+      next: (result) => {
+        this.aiResult = result;
+        this.aiService.setCachedAnalysis(this.customerId, result);
+        this.isAnalyzing = false;
+      },
+      error: () => {
+        this.aiError = true;
+        this.isAnalyzing = false;
+        this.messageService.add({ severity: 'error', summary: 'AI Error', detail: 'Analysis failed. Please try again.' });
+      }
+    });
+  }
+
+  private buildAiPayload(): CustomerAiPayload {
+    const c = this.customer!;
+    return {
+      id: c._id || '',
+      name: c.companyName,
+      notes: c.notes || '',
+      last_contact_date: c.lastContactedAt ? new Date(c.lastContactedAt).toISOString() : null,
+      order_history: [],
+      tags: [],
+      reply_language: 'English',
+    };
+  }
+
+  getAiStatusSeverity(status: string): string {
+    const map: Record<string, string> = {
+      'hot lead': 'danger',
+      'warm lead': 'warning',
+      'cold lead': 'info',
+      'loyal customer': 'success',
+      'new contact': 'secondary',
+      'at risk': 'danger',
+    };
+    return map[status] || 'info';
+  }
+
+  getUrgencyColor(urgency: number): string {
+    if (urgency >= 8) return 'bg-red-500';
+    if (urgency >= 5) return 'bg-yellow-500';
+    return 'bg-blue-500';
+  }
+
+  getUrgencyTextColor(urgency: number): string {
+    if (urgency >= 8) return 'text-red-600';
+    if (urgency >= 5) return 'text-yellow-600';
+    return 'text-blue-600';
+  }
+
+  getSentimentIcon(sentiment: string): string {
+    const map: Record<string, string> = {
+      positive: 'pi pi-heart',
+      neutral: 'pi pi-minus',
+      hesitant: 'pi pi-question',
+      negative: 'pi pi-times',
+    };
+    return map[sentiment] || 'pi pi-minus';
+  }
+
+  getActionBorderColor(actionType: string): string {
+    const map: Record<string, string> = {
+      call: '#f97316',
+      nurture: '#3b82f6',
+      close: '#22c55e',
+      alert: '#ef4444',
+    };
+    return map[actionType] || '#6b7280';
+  }
+
+  getActionIcon(actionType: string): string {
+    const map: Record<string, string> = {
+      call: 'pi pi-phone',
+      nurture: 'pi pi-send',
+      close: 'pi pi-check-circle',
+      alert: 'pi pi-exclamation-triangle',
+    };
+    return map[actionType] || 'pi pi-info-circle';
   }
 
   goBack(): void {

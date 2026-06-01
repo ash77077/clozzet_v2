@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -17,11 +17,15 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CardModule } from 'primeng/card';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
+import { TranslateModule } from '@ngx-translate/core';
 import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
 import { UsersService, User } from '../../services/users.service';
+import { AiService } from '../../services/ai.service';
 import { Customer, CustomerStatus, CreateCustomerDto, UpdateCustomerDto } from '../../models/customer.model';
 import { Interaction, InteractionType, CreateInteractionDto } from '../../models/interaction.model';
+import { CustomerAiPayload } from '../../models/ai.models';
+import { AiStatusCellComponent } from '../../shared/components/ai-status-cell/ai-status-cell.component';
 
 @Component({
   selector: 'app-crm-dashboard',
@@ -42,6 +46,8 @@ import { Interaction, InteractionType, CreateInteractionDto } from '../../models
     ConfirmDialogModule,
     CardModule,
     TooltipModule,
+    TranslateModule,
+    AiStatusCellComponent,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './crm-dashboard.component.html',
@@ -74,6 +80,13 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   unassignedCustomersCount = 0;
   maxVisibleUsers = 5;
   private followUpsCache: Customer[] = [];
+
+  // Follow-up quick filter
+  activeQuickFilter: 'today' | 'overdue' | null = null;
+
+  get aiEnabled$() { return this.aiService.aiEnabled$; }
+  isAnalyzingAll = false;
+  analyzeAllProgress: string | null = null;
   companySuggestions: string[] = [];
   showQuickViewDialog = false;
   quickViewCustomer: Customer | null = null;
@@ -103,7 +116,8 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     private usersService: UsersService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private router: Router
+    private router: Router,
+    private aiService: AiService
   ) {}
 
   ngOnInit(): void {
@@ -195,8 +209,10 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          // Sort customers: Today's follow-ups first, then overdue, then future
-          this.customers = this.sortCustomersByFollowUp(data.customers);
+          // Sort newest first by default
+          this.customers = data.customers.slice().sort((a, b) =>
+            new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+          );
           this.followUpsCache = data.followUps;
 
           // Count unassigned customers
@@ -865,28 +881,51 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   clearAllFilters(): void {
     this.selectedUserIds.clear();
     this.showUnassigned = false;
+    this.activeQuickFilter = null;
+    this.applyUserFilter();
+  }
+
+  toggleQuickFilter(filter: 'today' | 'overdue'): void {
+    this.activeQuickFilter = this.activeQuickFilter === filter ? null : filter;
     this.applyUserFilter();
   }
 
   applyUserFilter(): void {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let base = this.customers;
+
+    // Apply quick filter first
+    if (this.activeQuickFilter === 'today') {
+      base = base.filter(c => {
+        if (!c.nextFollowUpAt) return false;
+        const d = new Date(c.nextFollowUpAt);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() === today.getTime();
+      });
+    } else if (this.activeQuickFilter === 'overdue') {
+      base = base.filter(c => {
+        if (!c.nextFollowUpAt) return false;
+        const d = new Date(c.nextFollowUpAt);
+        d.setHours(0, 0, 0, 0);
+        return d < today;
+      });
+    }
+
+    // Then apply user filter on top
     if (this.selectedUserIds.size === 0 && !this.showUnassigned) {
-      this.filteredCustomers = [...this.customers];
+      this.filteredCustomers = base;
     } else {
-      this.filteredCustomers = this.customers.filter(customer => {
+      this.filteredCustomers = base.filter(customer => {
         if (this.showUnassigned && !customer.createdBy) {
           return true;
         }
-
-        if (this.selectedUserIds.size === 0) {
-          return false;
-        }
-
+        if (this.selectedUserIds.size === 0) return false;
         if (!customer.createdBy) return false;
-
         const createdById = typeof customer.createdBy === 'string'
           ? customer.createdBy
           : (customer.createdBy as any)?._id;
-
         return createdById && this.selectedUserIds.has(createdById);
       });
     }
@@ -975,6 +1014,48 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       summary: 'Existing Company',
       detail: `"${match.companyName}" already exists. You can edit it here.`,
     });
+  }
+
+  analyzeOne(customer: Customer): void {
+    if (!customer._id) return;
+    const payload = this.buildPayload(customer);
+    this.aiService.analyzeCustomer(payload).subscribe({
+      next: (result) => {
+        this.aiService.setCachedAnalysis(customer._id!, result);
+        (customer as any).ai_status = result.status;
+        this.messageService.add({ severity: 'success', summary: 'AI Analysis', detail: `${customer.companyName}: ${result.status}` });
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'AI Error', detail: 'Analysis failed' });
+      }
+    });
+  }
+
+  async analyzeAll(): Promise<void> {
+    this.isAnalyzingAll = true;
+    const customers = this.filteredCustomers;
+    for (let i = 0; i < customers.length; i++) {
+      this.analyzeAllProgress = `${i + 1} / ${customers.length}`;
+      await firstValueFrom(this.aiService.analyzeCustomer(this.buildPayload(customers[i]))).then(result => {
+        this.aiService.setCachedAnalysis(customers[i]._id!, result);
+        (customers[i] as any).ai_status = result.status;
+      }).catch(() => {});
+      await new Promise(r => setTimeout(r, 300));
+    }
+    this.isAnalyzingAll = false;
+    this.analyzeAllProgress = null;
+  }
+
+  private buildPayload(customer: Customer): CustomerAiPayload {
+    return {
+      id: customer._id || '',
+      name: customer.companyName,
+      notes: customer.notes || '',
+      last_contact_date: customer.lastContactedAt ? new Date(customer.lastContactedAt).toISOString() : null,
+      order_history: [],
+      tags: [],
+      reply_language: 'English',
+    };
   }
 
   getCreatedByName(createdBy: any): string | null {
