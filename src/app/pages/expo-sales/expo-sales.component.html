@@ -1,0 +1,451 @@
+﻿<p-toast position="top-right"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="expo-container">
+
+  <!-- ── BREADCRUMB ─────────────────────────────────────────────────── -->
+  <nav class="breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-item">Dashboard</a>
+    <span class="breadcrumb-separator">›</span>
+    <span *ngIf="view === 'list'" class="breadcrumb-current">Expo Sales</span>
+    <ng-container *ngIf="view !== 'list'">
+      <a class="breadcrumb-item" (click)="backToList()" style="cursor:pointer">Expo Sales</a>
+      <span class="breadcrumb-separator">›</span>
+      <span *ngIf="view === 'stock'" class="breadcrumb-current">{{ activeExpo?.name }}</span>
+      <ng-container *ngIf="view === 'sell'">
+        <a class="breadcrumb-item" (click)="backToStock()" style="cursor:pointer">{{ activeExpo?.name }}</a>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-current">Sell</span>
+      </ng-container>
+    </ng-container>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- LIST VIEW                                                        -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="view === 'list'">
+
+    <header class="page-header">
+      <div class="header-left">
+        <h1 class="page-title"><i class="pi pi-shopping-bag"></i> Expo Sales</h1>
+        <p class="page-description">Manage stock and sales for each expo event</p>
+      </div>
+      <div class="header-right">
+        <button pButton label="New Expo" icon="pi pi-plus" (click)="showCreateDialog = true"></button>
+      </div>
+    </header>
+
+    <div *ngIf="isLoading" class="loading-state">
+      <i class="pi pi-spin pi-spinner" style="font-size:2rem"></i>
+      <p>Loading expos…</p>
+    </div>
+
+    <div *ngIf="!isLoading && expos.length === 0" class="empty-state">
+      <i class="pi pi-inbox" style="font-size:3rem;color:#94a3b8"></i>
+      <h3>No expos yet</h3>
+      <p>Create your first expo to get started.</p>
+      <button pButton label="Create Expo" icon="pi pi-plus" (click)="showCreateDialog = true"></button>
+    </div>
+
+    <div class="expo-grid" *ngIf="!isLoading && expos.length > 0">
+      <div class="expo-card" *ngFor="let expo of expos" (click)="openExpo(expo)">
+        <div class="expo-card-header">
+          <span class="expo-name">{{ expo.name }}</span>
+          <p-tag [value]="expo.status" [severity]="getExpoStatusSeverity(expo.status)"></p-tag>
+        </div>
+        <p class="expo-desc" *ngIf="expo.description">{{ expo.description }}</p>
+        <div class="expo-card-footer">
+          <span class="expo-meta">{{ expo.items.length }} item types</span>
+          <span class="expo-meta">{{ expo.createdAt | date:'dd MMM yyyy' }}</span>
+          <button pButton icon="pi pi-trash" severity="danger" [text]="true" size="small"
+            (click)="$event.stopPropagation(); deleteExpo(expo)"
+            pTooltip="Delete expo" tooltipPosition="top"></button>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- STOCK VIEW                                                       -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="view === 'stock' && activeExpo">
+
+    <header class="page-header">
+      <div class="header-left">
+        <div class="back-row">
+          <button pButton icon="pi pi-arrow-left" [text]="true" severity="secondary" (click)="backToList()"></button>
+          <h1 class="page-title">{{ activeExpo.name }}</h1>
+          <p-tag [value]="activeExpo.status" [severity]="getExpoStatusSeverity(activeExpo.status)"></p-tag>
+        </div>
+        <p class="page-description" *ngIf="activeExpo.description">{{ activeExpo.description }}</p>
+      </div>
+      <div class="header-right header-actions">
+        <button pButton label="Add Items" icon="pi pi-plus" (click)="openAddItemsDialog()"
+          *ngIf="activeExpo.status === 'active'"></button>
+        <button pButton label="Import Stock" icon="pi pi-download" severity="secondary"
+          (click)="openImportDialog()" *ngIf="activeExpo.status === 'active'"></button>
+        <button pButton label="Sell" icon="pi pi-shopping-cart" severity="success"
+          (click)="goToSell()" *ngIf="activeExpo.status === 'active'"></button>
+        <button pButton label="Close Expo" icon="pi pi-lock" severity="warn"
+          (click)="showCloseDialog = true" *ngIf="activeExpo.status === 'active'"></button>
+        <button pButton label="Reopen" icon="pi pi-unlock" severity="info"
+          (click)="reopenExpo()" *ngIf="activeExpo.status === 'closed'"></button>
+      </div>
+    </header>
+
+    <!-- Summary cards -->
+    <div class="summary-row" *ngIf="summary">
+      <div class="sum-card">
+        <span class="sum-value">{{ summary.totalStock }}</span>
+        <span class="sum-label">Total Stock</span>
+      </div>
+      <div class="sum-card sold">
+        <span class="sum-value">{{ summary.totalSold }}</span>
+        <span class="sum-label">Sold</span>
+      </div>
+      <div class="sum-card remaining">
+        <span class="sum-value">{{ summary.totalRemaining }}</span>
+        <span class="sum-label">Remaining</span>
+      </div>
+      <div class="sum-card revenue" *ngIf="isAdmin">
+        <span class="sum-value">{{ fmtAMD(summary.revenue) }}</span>
+        <span class="sum-label">Revenue</span>
+      </div>
+      <div class="sum-card profit" *ngIf="isAdmin">
+        <span class="sum-value">{{ fmtAMD(summary.profit) }}</span>
+        <span class="sum-label">Profit</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row">
+      <p-select [(ngModel)]="filterType" [options]="stockTypes" placeholder="All Types"
+        [showClear]="true" styleClass="filter-select" appendTo="body"></p-select>
+      <p-select [(ngModel)]="filterColor" [options]="stockColors" placeholder="All Colors"
+        [showClear]="true" styleClass="filter-select" appendTo="body"></p-select>
+    </div>
+
+    <!-- Stock table -->
+    <div class="stock-table-wrap">
+      <table class="stock-table" *ngIf="filteredItems.length > 0">
+        <thead>
+          <tr>
+            <th>Type</th><th>Color</th><th>Size</th>
+            <th>Qty</th><th>Sold</th><th>Remaining</th>
+            <th *ngIf="isAdmin">Cost</th><th *ngIf="isAdmin">Sell Price</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let row of filteredItems">
+            <!-- Normal row -->
+            <tr *ngIf="editingItemIndex !== row.idx">
+              <td>{{ row.item.type }}</td>
+              <td>{{ row.item.color }}</td>
+              <td>{{ row.item.size }}</td>
+              <td>{{ row.item.quantity }}</td>
+              <td>{{ row.item.soldQuantity }}</td>
+              <td [class.low-stock]="row.item.quantity - row.item.soldQuantity <= 2">
+                {{ row.item.quantity - row.item.soldQuantity }}
+              </td>
+              <td *ngIf="isAdmin">{{ fmtAMD(row.item.costPrice) }}</td>
+              <td *ngIf="isAdmin">{{ fmtAMD(row.item.sellPrice) }}</td>
+              <td class="row-actions">
+                <button pButton icon="pi pi-pencil" [text]="true" size="small"
+                  (click)="startEditItem(row.idx)"
+                  *ngIf="activeExpo.status === 'active'"></button>
+                <button pButton icon="pi pi-trash" [text]="true" severity="danger" size="small"
+                  (click)="deleteItem(row.idx)"
+                  *ngIf="activeExpo.status === 'active'"></button>
+              </td>
+            </tr>
+            <!-- Edit row -->
+            <tr *ngIf="editingItemIndex === row.idx" class="editing-row">
+              <td>
+                <p-select [(ngModel)]="editingItem.type" [options]="types" styleClass="cell-select" size="small" appendTo="body"></p-select>
+              </td>
+              <td>
+                <p-select [(ngModel)]="editingItem.color" [options]="colors" styleClass="cell-select" size="small" appendTo="body"></p-select>
+              </td>
+              <td>
+                <p-select [(ngModel)]="editingItem.size" [options]="SIZES" styleClass="cell-select" size="small" appendTo="body"></p-select>
+              </td>
+              <td>
+                <p-inputNumber [(ngModel)]="editingItem.quantity" [min]="0" inputStyleClass="cell-input" [style]="{'width':'60px'}"></p-inputNumber>
+              </td>
+              <td>{{ row.item.soldQuantity }}</td>
+              <td>-</td>
+              <td *ngIf="isAdmin">
+                <p-inputNumber [(ngModel)]="editingItem.costPrice" [min]="0" inputStyleClass="cell-input" [style]="{'width':'80px'}"></p-inputNumber>
+              </td>
+              <td *ngIf="isAdmin">
+                <p-inputNumber [(ngModel)]="editingItem.sellPrice" [min]="0" inputStyleClass="cell-input" [style]="{'width':'80px'}"></p-inputNumber>
+              </td>
+              <td class="row-actions">
+                <button pButton icon="pi pi-check" [text]="true" severity="success" size="small"
+                  (click)="saveEditItem()"></button>
+                <button pButton icon="pi pi-times" [text]="true" severity="secondary" size="small"
+                  (click)="editingItemIndex = null"></button>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+      <div class="empty-state" *ngIf="filteredItems.length === 0 && activeExpo.items.length > 0">
+        No items match the current filter.
+      </div>
+      <div class="empty-state" *ngIf="activeExpo.items.length === 0">
+        <i class="pi pi-box" style="font-size:2rem;color:#94a3b8"></i>
+        <p>No stock added yet. Click "Add Items" to start.</p>
+      </div>
+    </div>
+
+    <!-- Sales Log -->
+    <div class="sales-log-section">
+      <div class="section-header" (click)="showSalesLogDialog = !showSalesLogDialog" style="cursor:pointer">
+        <h3>Sales Log <span class="log-count">({{ activeSales().length }})</span></h3>
+        <i [class]="showSalesLogDialog ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+      </div>
+      <div class="sales-log" *ngIf="showSalesLogDialog && activeSales().length > 0">
+        <table class="stock-table">
+          <thead>
+            <tr><th>Type</th><th>Color</th><th>Size</th><th>Qty</th><th *ngIf="isAdmin">Price/unit</th><th *ngIf="isAdmin">Total</th><th>Date</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sale of activeSales()">
+              <td>{{ sale.type }}</td>
+              <td>{{ sale.color }}</td>
+              <td>{{ sale.size }}</td>
+              <td>{{ sale.quantity }}</td>
+              <td *ngIf="isAdmin">{{ fmtAMD(sale.soldPrice) }}</td>
+              <td *ngIf="isAdmin">{{ fmtAMD(sale.soldPrice * sale.quantity) }}</td>
+              <td>{{ sale.soldAt | date:'dd MMM HH:mm' }}</td>
+              <td>
+                <button pButton icon="pi pi-undo" [text]="true" severity="warn" size="small"
+                  pTooltip="Return sale" (click)="returnSale(sale)"
+                  *ngIf="activeExpo.status === 'active'"></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </ng-container>
+
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- SELL VIEW                                                        -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="view === 'sell' && activeExpo">
+
+    <header class="page-header">
+      <div class="header-left back-row">
+        <button pButton icon="pi pi-arrow-left" [text]="true" severity="secondary" (click)="backToStock()"></button>
+        <h1 class="page-title">Sell — {{ activeExpo.name }}</h1>
+      </div>
+    </header>
+
+    <div class="sell-layout">
+
+      <!-- Items grid (left) -->
+      <div class="items-panel">
+        <div class="sell-filter-row">
+          <p-select [(ngModel)]="filterType" [options]="stockTypes" placeholder="All Types"
+            [showClear]="true" styleClass="filter-select" appendTo="body"></p-select>
+          <p-select [(ngModel)]="filterColor" [options]="stockColors" placeholder="All Colors"
+            [showClear]="true" styleClass="filter-select" appendTo="body"></p-select>
+        </div>
+
+        <div class="item-cards">
+          <div class="item-card"
+            *ngFor="let row of filteredItems"
+            [class.out-of-stock]="available(row.item) - inCart(row.item) <= 0"
+            (click)="addToCart(row.item, row.idx)">
+            <div class="item-card-type">{{ row.item.type }}</div>
+            <div class="item-card-details">
+              <span class="item-color">{{ row.item.color }}</span>
+              <span class="item-size">{{ row.item.size }}</span>
+            </div>
+            <div class="item-card-bottom">
+              <span class="item-price">{{ fmtAMD(row.item.sellPrice) }}</span>
+              <span class="item-avail">
+                {{ available(row.item) - inCart(row.item) }} left
+              </span>
+            </div>
+            <div class="in-cart-badge" *ngIf="inCart(row.item) > 0">
+              {{ inCart(row.item) }} in cart
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cart (right) -->
+      <div class="cart-panel">
+        <div class="cart-header">
+          <h2>Cart <span class="cart-count">{{ cartCount }}</span></h2>
+        </div>
+
+        <div class="cart-empty" *ngIf="cart.length === 0">
+          <i class="pi pi-shopping-cart" style="font-size:2rem;color:#94a3b8"></i>
+          <p>No items yet. Click an item to add.</p>
+        </div>
+
+        <div class="cart-lines" *ngIf="cart.length > 0">
+          <div class="cart-line" *ngFor="let line of cart; let i = index">
+            <div class="cart-line-main">
+              <span class="cart-line-name">{{ line.item.type }} · {{ line.item.color }} · {{ line.item.size }}</span>
+              <p-inputNumber [(ngModel)]="line.unitPrice" [min]="0" [style]="{'width':'110px'}"
+                styleClass="price-input"></p-inputNumber>
+            </div>
+            <div class="cart-line-controls">
+              <button pButton icon="pi pi-minus" [text]="true" size="small"
+                (click)="line.quantity > 1 ? line.quantity = line.quantity - 1 : removeFromCart(i)"></button>
+              <span class="cart-qty">{{ line.quantity }}</span>
+              <button pButton icon="pi pi-plus" [text]="true" size="small"
+                (click)="addToCart(line.item, line.itemIndex)"></button>
+              <button pButton icon="pi pi-trash" [text]="true" severity="danger" size="small"
+                (click)="removeFromCart(i)"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cart-footer" *ngIf="cart.length > 0">
+          <p-divider></p-divider>
+          <div class="cart-total-row">
+            <span>Total</span>
+            <strong>{{ fmtAMD(cartTotal) }}</strong>
+          </div>
+          <button pButton label="Confirm Sale" icon="pi pi-check" severity="success"
+            [loading]="isProcessingSale" (click)="confirmSale()" class="confirm-btn"></button>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- DIALOGS                                                              -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+
+<!-- Create Expo -->
+<p-dialog header="New Expo" [(visible)]="showCreateDialog" [modal]="true" [style]="{'width':'420px'}" [closable]="true">
+  <div class="dialog-form">
+    <label class="form-label">Name *</label>
+    <input pInputText [(ngModel)]="newExpoName" placeholder="e.g. Yerevan Expo May 2025" class="w-full" />
+    <label class="form-label mt">Description</label>
+    <textarea pTextarea [(ngModel)]="newExpoDescription" rows="3" placeholder="Optional notes…" class="w-full"></textarea>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" severity="secondary" [text]="true" (click)="showCreateDialog = false"></button>
+    <button pButton label="Create" icon="pi pi-check" (click)="createExpo()"></button>
+  </ng-template>
+</p-dialog>
+
+
+<!-- Add Items -->
+<p-dialog header="Add Stock Items" [(visible)]="showAddItemsDialog" [modal]="true"
+  [style]="{'width':'900px','maxWidth':'98vw'}"
+  [contentStyle]="{'min-height':'480px','max-height':'70vh','overflow-y':'auto','overflow-x':'visible'}"
+  [closable]="true">
+  <div class="add-items-dialog">
+
+    <!-- Custom type/color row -->
+    <div class="custom-row">
+      <div class="custom-input-group">
+        <input pInputText [(ngModel)]="customType" placeholder="New type…" class="custom-in" />
+        <button pButton label="Add Type" size="small" [text]="true" (click)="addCustomType()"></button>
+      </div>
+      <div class="custom-input-group">
+        <input pInputText [(ngModel)]="customColor" placeholder="New color…" class="custom-in" />
+        <button pButton label="Add Color" size="small" [text]="true" (click)="addCustomColor()"></button>
+      </div>
+    </div>
+
+    <div class="items-grid-header">
+      <span>Type</span><span>Color</span><span>Size</span><span>Qty</span><span>Cost ֏</span><span>Sell ֏</span><span></span>
+    </div>
+
+    <div class="items-grid-row" *ngFor="let row of newItems; let i = index">
+      <p-select [(ngModel)]="row.type" [options]="types" placeholder="Type" [filter]="true" appendTo="body"></p-select>
+      <p-select [(ngModel)]="row.color" [options]="colors" placeholder="Color" [filter]="true" appendTo="body"></p-select>
+      <p-select [(ngModel)]="row.size" [options]="SIZES" placeholder="Size" appendTo="body"></p-select>
+      <p-inputNumber [(ngModel)]="row.quantity" [min]="1" [style]="{'width':'80px'}"></p-inputNumber>
+      <p-inputNumber [(ngModel)]="row.costPrice" [min]="0" [style]="{'width':'100px'}"></p-inputNumber>
+      <p-inputNumber [(ngModel)]="row.sellPrice" [min]="0" [style]="{'width':'100px'}"></p-inputNumber>
+	    @if (newItems.length > 1) {
+		    <button pButton icon="pi pi-times" [text]="true" severity="danger" size="small"
+		            (click)="removeNewItemRow(i)"></button>
+	    }
+    </div>
+
+    <button pButton label="Add Row" icon="pi pi-plus" [text]="true" (click)="addNewItemRow()" class="mt-2"></button>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" severity="secondary" [text]="true" (click)="showAddItemsDialog = false"></button>
+    <button pButton label="Save Items" icon="pi pi-check" (click)="submitAddItems()"></button>
+  </ng-template>
+</p-dialog>
+
+
+<!-- Import from Expo -->
+<p-dialog header="Import Stock from Another Expo" [(visible)]="showImportDialog" [modal]="true" [style]="{'width':'420px'}" [closable]="true">
+  <div class="dialog-form" *ngIf="otherExpos().length > 0">
+    <label class="form-label">Select source expo</label>
+    <p-select [(ngModel)]="importSourceId" [options]="otherExpos()"
+      optionLabel="name" optionValue="id" placeholder="Choose expo…" class="w-full"></p-select>
+    <p class="import-hint">Remaining (unsold) stock from the selected expo will be copied here.</p>
+  </div>
+  <div class="empty-state" *ngIf="otherExpos().length === 0">
+    <p>No other expos available to import from.</p>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" severity="secondary" [text]="true" (click)="showImportDialog = false"></button>
+    <button pButton label="Import" icon="pi pi-download" (click)="submitImport()"
+      [disabled]="!importSourceId"></button>
+  </ng-template>
+</p-dialog>
+
+
+<!-- Return Sale -->
+<p-dialog header="Return Sale" [(visible)]="showReturnDialog" [modal]="true" [style]="{'width':'400px'}" [closable]="true">
+  <div class="dialog-form" *ngIf="returnTargetSale">
+    <p>
+      Return <strong>{{ returnTargetSale.type }} · {{ returnTargetSale.color }} · {{ returnTargetSale.size }}</strong>
+    </p>
+    <p style="color:#64748b;font-size:13px">Originally sold: {{ returnTargetSale.quantity }} unit(s)</p>
+    <label class="form-label mt">Quantity to return</label>
+    <p-inputNumber [(ngModel)]="returnQty" [min]="1" [max]="returnTargetSale.quantity" [showButtons]="true"
+      class="w-full" [style]="{'width':'100%'}"></p-inputNumber>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" severity="secondary" [text]="true" (click)="showReturnDialog = false"></button>
+    <button pButton label="Confirm Return" icon="pi pi-undo" severity="warn" (click)="confirmReturn()"></button>
+  </ng-template>
+</p-dialog>
+
+
+<!-- Close Expo -->
+<p-dialog header="Close Expo" [(visible)]="showCloseDialog" [modal]="true" [style]="{'width':'420px'}" [closable]="true">
+  <div class="dialog-form">
+    <p>Are you sure you want to close <strong>{{ activeExpo?.name }}</strong>?</p>
+    <p>Closed expos can be reopened later.</p>
+    <div class="toggle-row">
+      <p-toggleswitch [(ngModel)]="returnUnsoldOnClose" inputId="returnSwitch"></p-toggleswitch>
+      <label for="returnSwitch">Return unsold stock to retail inventory</label>
+    </div>
+    <p class="close-hint" *ngIf="returnUnsoldOnClose">
+      Remaining items will be pushed back to the retail stock.
+    </p>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancel" severity="secondary" [text]="true" (click)="showCloseDialog = false"></button>
+    <button pButton label="Close Expo" icon="pi pi-lock" severity="warn" (click)="submitCloseExpo()"></button>
+  </ng-template>
+</p-dialog>

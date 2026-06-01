@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, ReplaySubject, takeUntil } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -97,6 +97,7 @@ const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 })
 export class OrdersManagementComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private ordersLoaded$ = new ReplaySubject<void>(1);
 
   @ViewChild('commentTextarea') commentTextareaRef!: ElementRef;
   @ViewChild('activityFeed') activityFeedRef!: ElementRef;
@@ -248,28 +249,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const orderId = params['order'];
       if (orderId) {
-        // Wait for orders to load, then open the specific order
-        // Use a retry mechanism to handle timing issues
-        let attempts = 0;
-        const maxAttempts = 5;
-
-        const tryOpenOrder = () => {
-          attempts++;
-
-          if (this.allOrders.length > 0) {
-            // Orders are loaded, try to open
-            this.openOrderById(orderId);
-          } else if (attempts < maxAttempts) {
-            // Orders not loaded yet, retry after delay
-            setTimeout(tryOpenOrder, 500);
-          } else {
-            // Max attempts reached, try to fetch the specific order
-            this.fetchAndOpenOrder(orderId);
-          }
-        };
-
-        // Start with a small delay to allow initial load
-        setTimeout(tryOpenOrder, 500);
+        this.ordersLoaded$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+          this.openOrderById(orderId);
+        });
       }
     });
   }
@@ -859,10 +841,12 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         this.allOrders = response.data || [];
         this.applyFilters();
         this.isLoading = false;
+        this.ordersLoaded$.next();
       },
       error: () => {
         this.error = 'Failed to load orders';
         this.isLoading = false;
+        this.ordersLoaded$.next();
       },
     });
   }
@@ -957,7 +941,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
     const orderId = (this.selectedOrder as any)._id || this.selectedOrder.id;
     const baseUrl = window.location.origin;
-    const orderLink = `${baseUrl}/orders-management?order=${orderId}`;
+    const orderLink = `${baseUrl}/orders?order=${orderId}`;
 
     navigator.clipboard.writeText(orderLink).then(() => {
       this.messageService.add({
@@ -1116,6 +1100,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       startDate:            o.startDate ? new Date(o.startDate as string) : null,
       deadline:             o.deadline ? new Date(o.deadline as string) : null,
       priority:             o.priority || 'normal',
+      status:               o.status || OrderStatus.PENDING,
       specialInstructions:  o.specialInstructions || '',
       packagingRequirements: o.packagingRequirements || '',
       shippingAddress:      o.shippingAddress || ''
@@ -1512,6 +1497,29 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   isAdminOrManager(): boolean {
     return this.currentUser?.role === UserRole.ADMIN || this.currentUser?.role === UserRole.MANAGER;
+  }
+
+  isAdmin(): boolean {
+    return this.currentUser?.role === UserRole.ADMIN;
+  }
+
+  testDeadlineReminder(): void {
+    this.productDetailsService.triggerDeadlineReminder().subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Telegram Sent',
+          detail: 'Deadline reminder check triggered — check your Telegram.',
+        });
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to trigger deadline reminder.',
+        });
+      },
+    });
   }
 
   getStatusLabel(status: OrderStatus | string): string {

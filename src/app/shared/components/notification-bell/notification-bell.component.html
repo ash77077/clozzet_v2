@@ -25,21 +25,14 @@
             Mark all read
           </button>
         </div>
-        <!-- Debug Info -->
-        <div style="padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc; font-size: 11px;">
-          <strong>Debug:</strong> {{ notifications.length }} notification(s) loaded
-        </div>
-
         <!-- Notifications List -->
         <div class="notifications-list" *ngIf="notifications.length > 0">
           <div
-            class="notification-item"
             *ngFor="let notification of notifications; let i = index"
-            [class.unread]="!notification.read"
-            [class]="'type-' + getNotificationColor(notification.type)"
+            [ngClass]="['notification-item', 'type-' + getNotificationColor(notification.type), !notification.read ? 'unread' : '']"
             (click)="navigateToNotification(notification, op)">
 
-            <div class="notification-icon" [class]="'icon-' + getNotificationColor(notification.type)">
+            <div [ngClass]="['notification-icon', 'icon-' + getNotificationColor(notification.type)]">
               <i class="pi" [ngClass]="getNotificationIcon(notification.type)"></i>
             </div>
 
