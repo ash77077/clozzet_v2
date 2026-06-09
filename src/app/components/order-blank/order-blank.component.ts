@@ -32,6 +32,28 @@ export class OrderBlankComponent implements OnInit {
   currentUser: any = null;
   showPrintPreview: boolean = false;
 
+  // Size mode toggle
+  isChildSizes = false;
+
+  readonly ADULT_SIZES = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
+  readonly CHILD_SIZES = ['s1_2', 's3_4', 's5_6', 's7_8', 's9_10', 's11_12', 's13_14', 's15_16'];
+  readonly CHILD_SIZE_LABELS: Record<string, string> = {
+    s1_2: '1-2', s3_4: '3-4', s5_6: '5-6', s7_8: '7-8',
+    s9_10: '9-10', s11_12: '11-12', s13_14: '13-14', s15_16: '15-16',
+  };
+
+  toggleSizeMode(): void {
+    this.isChildSizes = !this.isChildSizes;
+  }
+
+  get activeSizeKeys(): string[] {
+    return this.isChildSizes ? this.CHILD_SIZES : this.ADULT_SIZES;
+  }
+
+  getSizeLabel(key: string): string {
+    return this.CHILD_SIZE_LABELS[key] ?? key.toUpperCase();
+  }
+
   // Sales person autocomplete properties
   salesPersons: SalesPerson[] = [];
   filteredSalesPersons: string[] = [];
@@ -75,7 +97,15 @@ export class OrderBlankComponent implements OnInit {
         xl: this.fb.group({ men: [''], women: [''], uni: [''] }),
         xxl: this.fb.group({ men: [''], women: [''], uni: [''] }),
         xxxl: this.fb.group({ men: [''], women: [''], uni: [''] }),
-        xxxxl: this.fb.group({ men: [''], women: [''], uni: [''] })
+        xxxxl: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s1_2: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s3_4: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s5_6: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s7_8: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s9_10: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s11_12: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s13_14: this.fb.group({ men: [''], women: [''], uni: [''] }),
+        s15_16: this.fb.group({ men: [''], women: [''], uni: [''] }),
       })
     });
   }
@@ -177,14 +207,11 @@ export class OrderBlankComponent implements OnInit {
     const sizes = this.orderForm.get('sizes') as FormGroup;
     if (!sizes) return 0;
 
-    const sizeKeys = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
     let total = 0;
-
-    sizeKeys.forEach(sizeKey => {
+    this.activeSizeKeys.forEach(sizeKey => {
       const sizeGroup = sizes.get(sizeKey) as FormGroup;
       if (sizeGroup) {
-        const value = sizeGroup.get(gender)?.value || 0;
-        total += Number(value);
+        total += Number(sizeGroup.get(gender)?.value || 0);
       }
     });
 

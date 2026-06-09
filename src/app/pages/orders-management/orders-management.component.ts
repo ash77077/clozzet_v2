@@ -129,6 +129,23 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // Size breakdown mode: 'uni' (default) or 'split' (men/women/uni)
   sizeBreakdownMode: 'uni' | 'split' = 'uni';
 
+  // Size category toggle
+  isChildSizes = false;
+  readonly ADULT_SIZE_KEYS = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
+  readonly CHILD_SIZE_KEYS = ['s1_2', 's3_4', 's5_6', 's7_8', 's9_10', 's11_12', 's13_14', 's15_16'];
+  readonly CHILD_SIZE_LABELS: Record<string, string> = {
+    s1_2: '1-2', s3_4: '3-4', s5_6: '5-6', s7_8: '7-8',
+    s9_10: '9-10', s11_12: '11-12', s13_14: '13-14', s15_16: '15-16',
+  };
+
+  get activeSizeKeys(): string[] {
+    return this.isChildSizes ? this.CHILD_SIZE_KEYS : this.ADULT_SIZE_KEYS;
+  }
+
+  getSizeLabelForKey(key: string): string {
+    return this.CHILD_SIZE_LABELS[key] ?? key.toUpperCase();
+  }
+
   // ─── Status change ─────────────────────────────────────────────────────────
   orderToUpdate: ProductDetails | null = null;
   newStatus: OrderStatus = OrderStatus.PENDING;
@@ -420,14 +437,22 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       costPricePerUnit:    [null],
       sellingPricePerUnit: [null],
       sizes:               this.fb.group({
-        xs:    this.fb.group({ men: [0], women: [0], uni: [0] }),
-        s:     this.fb.group({ men: [0], women: [0], uni: [0] }),
-        m:     this.fb.group({ men: [0], women: [0], uni: [0] }),
-        l:     this.fb.group({ men: [0], women: [0], uni: [0] }),
-        xl:    this.fb.group({ men: [0], women: [0], uni: [0] }),
-        xxl:   this.fb.group({ men: [0], women: [0], uni: [0] }),
-        xxxl:  this.fb.group({ men: [0], women: [0], uni: [0] }),
-        xxxxl: this.fb.group({ men: [0], women: [0], uni: [0] })
+        xs:     this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s:      this.fb.group({ men: [0], women: [0], uni: [0] }),
+        m:      this.fb.group({ men: [0], women: [0], uni: [0] }),
+        l:      this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xl:     this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xxl:    this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xxxl:   this.fb.group({ men: [0], women: [0], uni: [0] }),
+        xxxxl:  this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s1_2:   this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s3_4:   this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s5_6:   this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s7_8:   this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s9_10:  this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s11_12: this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s13_14: this.fb.group({ men: [0], women: [0], uni: [0] }),
+        s15_16: this.fb.group({ men: [0], women: [0], uni: [0] }),
       })
     });
   }
@@ -460,10 +485,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     const sizes = product.get('sizes') as FormGroup;
     if (!sizes) return 0;
 
-    const sizeKeys = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
     let total = 0;
 
-    sizeKeys.forEach(sizeKey => {
+    this.activeSizeKeys.forEach(sizeKey => {
       const sizeGroup = sizes.get(sizeKey) as FormGroup;
       if (sizeGroup) {
         const value = sizeGroup.get(gender)?.value || 0;
@@ -527,6 +551,22 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     return sizeObj?.[gender];
   }
 
+  /**
+   * Returns all size entries (adult + child) from a sizes object for the view modal,
+   * preserving a consistent display order.
+   */
+  getAllSizeEntries(sizes: any): { label: string; value: any }[] {
+    const ALL_SIZES: { key: string; label: string }[] = [
+      { key: 'xs', label: 'XS' }, { key: 's', label: 'S' }, { key: 'm', label: 'M' },
+      { key: 'l', label: 'L' }, { key: 'xl', label: 'XL' }, { key: 'xxl', label: 'XXL' },
+      { key: 'xxxl', label: 'XXXL' }, { key: 'xxxxl', label: 'XXXXL' },
+      { key: 's1_2', label: '1-2' }, { key: 's3_4', label: '3-4' }, { key: 's5_6', label: '5-6' },
+      { key: 's7_8', label: '7-8' }, { key: 's9_10', label: '9-10' }, { key: 's11_12', label: '11-12' },
+      { key: 's13_14', label: '13-14' }, { key: 's15_16', label: '15-16' },
+    ];
+    return ALL_SIZES.map(({ key, label }) => ({ label, value: sizes[key] }));
+  }
+
   // ─── Keyboard Navigation ──────────────────────────────────────────────────
 
   /**
@@ -541,7 +581,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
     event.preventDefault();
 
-    const sizes = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
+    const sizes = this.activeSizeKeys;
     const genders = this.sizeBreakdownMode === 'uni' ? ['uni'] : ['men', 'women', 'uni'];
 
     const currentSizeIndex = sizes.indexOf(currentSize);

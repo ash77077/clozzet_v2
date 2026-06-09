@@ -499,70 +499,16 @@
                   <div class="product-sizes" *ngIf="product.sizes">
                     <div class="sizes-label-small">Size Breakdown</div>
                     <div class="size-grid-compact">
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xs) > 0">
-                        <span class="size-name">XS</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.xs, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xs, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xs, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xs, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xs, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xs, 'uni') }}</span>
-                        </span>
-                      </div>
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.s) > 0">
-                        <span class="size-name">S</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.s, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.s, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.s, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.s, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.s, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.s, 'uni') }}</span>
-                        </span>
-                      </div>
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.m) > 0">
-                        <span class="size-name">M</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.m, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.m, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.m, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.m, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.m, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.m, 'uni') }}</span>
-                        </span>
-                      </div>
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.l) > 0">
-                        <span class="size-name">L</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.l, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.l, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.l, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.l, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.l, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.l, 'uni') }}</span>
-                        </span>
-                      </div>
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xl) > 0">
-                        <span class="size-name">XL</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.xl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xl, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xl, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xl, 'uni') }}</span>
-                        </span>
-                      </div>
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xxl) > 0">
-                        <span class="size-name">XXL</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.xxl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xxl, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xxl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xxl, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xxl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xxl, 'uni') }}</span>
-                        </span>
-                      </div>
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xxxl) > 0">
-                        <span class="size-name">XXXL</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.xxxl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xxxl, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xxxl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xxxl, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xxxl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xxxl, 'uni') }}</span>
-                        </span>
-                      </div>
-                      <div class="size-chip-compact" *ngIf="getSizeTotal(product.sizes.xxxxl) > 0">
-                        <span class="size-name">XXXXL</span>
-                        <span class="size-breakdown-details">
-                          <span *ngIf="getSizeValue(product.sizes.xxxxl, 'men')" class="size-qty">M:{{ getSizeValue(product.sizes.xxxxl, 'men') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xxxxl, 'women')" class="size-qty">W:{{ getSizeValue(product.sizes.xxxxl, 'women') }}</span>
-                          <span *ngIf="getSizeValue(product.sizes.xxxxl, 'uni')" class="size-qty">U:{{ getSizeValue(product.sizes.xxxxl, 'uni') }}</span>
-                        </span>
-                      </div>
+                      <ng-container *ngFor="let entry of getAllSizeEntries(product.sizes)">
+                        <div class="size-chip-compact" *ngIf="getSizeTotal(entry.value) > 0">
+                          <span class="size-name">{{ entry.label }}</span>
+                          <span class="size-breakdown-details">
+                            <span *ngIf="getSizeValue(entry.value, 'men')" class="size-qty">M:{{ getSizeValue(entry.value, 'men') }}</span>
+                            <span *ngIf="getSizeValue(entry.value, 'women')" class="size-qty">W:{{ getSizeValue(entry.value, 'women') }}</span>
+                            <span *ngIf="getSizeValue(entry.value, 'uni')" class="size-qty">U:{{ getSizeValue(entry.value, 'uni') }}</span>
+                          </span>
+                        </div>
+                      </ng-container>
                     </div>
                   </div>
                 </div>
@@ -1159,13 +1105,19 @@
           <div formGroupName="sizes" class="sizes-section">
             <div class="sizes-header-row">
               <label class="sizes-label">Size Breakdown</label>
-              <div class="size-mode-toggle">
-                <label class="toggle-label">Split by Gender</label>
-                <p-toggleswitch [(ngModel)]="sizeBreakdownMode" [ngModelOptions]="{standalone: true}"
-                  [trueValue]="'split'" [falseValue]="'uni'"
-                  pTooltip="Toggle between Uni-only mode and Men/Women/Uni split mode"
-                  tooltipPosition="top">
-                </p-toggleswitch>
+              <div class="sizes-toggles">
+                <div class="size-category-toggle">
+                  <button type="button" class="size-cat-btn" [class.active]="!isChildSizes" (click)="isChildSizes = false">Adult</button>
+                  <button type="button" class="size-cat-btn" [class.active]="isChildSizes" (click)="isChildSizes = true">Children</button>
+                </div>
+                <div class="size-mode-toggle">
+                  <label class="toggle-label">Split by Gender</label>
+                  <p-toggleswitch [(ngModel)]="sizeBreakdownMode" [ngModelOptions]="{standalone: true}"
+                    [trueValue]="'split'" [falseValue]="'uni'"
+                    pTooltip="Toggle between Uni-only mode and Men/Women/Uni split mode"
+                    tooltipPosition="top">
+                  </p-toggleswitch>
+                </div>
               </div>
             </div>
 
@@ -1175,8 +1127,8 @@
                 <div class="size-col-uni">Size</div>
                 <div class="size-col-uni">Quantity</div>
               </div>
-              <div class="size-row" *ngFor="let size of ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl']" [formGroupName]="size">
-                <div class="size-col-uni size-label">{{ size.toUpperCase() }}</div>
+              <div class="size-row" *ngFor="let size of activeSizeKeys" [formGroupName]="size">
+                <div class="size-col-uni size-label">{{ getSizeLabelForKey(size) }}</div>
                 <div class="size-col-uni">
                   <input type="number" formControlName="uni" min="0" class="size-input"
                     [attr.data-product]="i"
@@ -1199,8 +1151,8 @@
                 <div class="size-col">Women</div>
                 <div class="size-col">Uni</div>
               </div>
-              <div class="size-row" *ngFor="let size of ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl']" [formGroupName]="size">
-                <div class="size-col size-label">{{ size.toUpperCase() }}</div>
+              <div class="size-row" *ngFor="let size of activeSizeKeys" [formGroupName]="size">
+                <div class="size-col size-label">{{ getSizeLabelForKey(size) }}</div>
                 <div class="size-col">
                   <input type="number" formControlName="men" min="0" class="size-input"
                     [attr.data-product]="i"
