@@ -289,7 +289,7 @@
               <span class="fin-label">Quantity:</span>
               <span class="fin-value">{{ product.quantity }} units</span>
             </div>
-            <div class="financial-item cost-price-editable">
+            <div class="financial-item cost-price-editable" [class.is-editing]="editingProductIndex === i">
               <span class="fin-label">Cost/Unit:</span>
               <div class="cost-price-container" *ngIf="editingProductIndex !== i">
                 <span class="fin-value">{{ product.costPricePerUnit || 0 }}</span>
@@ -301,28 +301,40 @@
                 </button>
               </div>
               <div class="cost-price-edit-form" *ngIf="editingProductIndex === i">
-                <input
-                  type="number"
-                  [(ngModel)]="editingCostPrice"
-                  class="cost-price-input"
-                  placeholder="Enter cost price"
-                  min="0"
-                  step="50"
-                  [disabled]="isSaving" />
-                <button
-                  class="save-cost-btn"
-                  (click)="saveCostPrice(i)"
+                <p-select
+                  [options]="scenarioOptions"
+                  [(ngModel)]="selectedScenario"
+                  (onChange)="onScenarioSelect($event.value)"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Select from Cost Configurator..."
                   [disabled]="isSaving"
-                  pTooltip="Save">
-                  <i class="pi pi-check"></i>
-                </button>
-                <button
-                  class="cancel-cost-btn"
-                  (click)="cancelEditingCostPrice()"
-                  [disabled]="isSaving"
-                  pTooltip="Cancel">
-                  <i class="pi pi-times"></i>
-                </button>
+                  styleClass="cost-scenario-select">
+                </p-select>
+                <div class="cost-edit-actions">
+                  <p-inputNumber
+                    [(ngModel)]="editingCostPrice"
+                    [min]="0"
+                    [disabled]="isSaving"
+                    placeholder="Cost price"
+                    suffix=" ֏"
+                    styleClass="cost-price-input-num">
+                  </p-inputNumber>
+                  <button
+                    class="save-cost-btn"
+                    (click)="saveCostPrice(i)"
+                    [disabled]="isSaving"
+                    pTooltip="Save">
+                    <i class="pi pi-check"></i>
+                  </button>
+                  <button
+                    class="cancel-cost-btn"
+                    (click)="cancelEditingCostPrice()"
+                    [disabled]="isSaving"
+                    pTooltip="Cancel">
+                    <i class="pi pi-times"></i>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="financial-item">

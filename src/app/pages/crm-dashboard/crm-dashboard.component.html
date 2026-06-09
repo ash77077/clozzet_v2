@@ -58,7 +58,13 @@
 				</div>
 			</p-card>
 
-			<p-card [class.urgent-card]="stats.followUpToday > 0">
+			<p-card
+				[class.urgent-card]="stats.followUpToday > 0"
+				[class.quick-filter-active]="activeQuickFilter === 'today'"
+				[style.cursor]="'pointer'"
+				(click)="toggleQuickFilter('today')"
+				pTooltip="Click to show only today's follow-ups"
+				tooltipPosition="bottom">
 				<div class="stat-card">
 					<div class="stat-icon bg-orange-100 text-orange-600" [class.pulse-icon]="stats.followUpToday > 0">
 						<i class="pi pi-bell"></i>
@@ -72,10 +78,17 @@
 							{{ stats.needingFollowUp }} total follow-ups
 						</p>
 					</div>
+					<i *ngIf="activeQuickFilter === 'today'" class="pi pi-filter-fill quick-filter-indicator"></i>
 				</div>
 			</p-card>
 
-			<p-card [class.overdue-card]="stats.followUpOverdue > 0">
+			<p-card
+				[class.overdue-card]="stats.followUpOverdue > 0"
+				[class.quick-filter-active]="activeQuickFilter === 'overdue'"
+				[style.cursor]="'pointer'"
+				(click)="toggleQuickFilter('overdue')"
+				pTooltip="Click to show only overdue follow-ups"
+				tooltipPosition="bottom">
 				<div class="stat-card">
 					<div class="stat-icon bg-red-100 text-red-600" [class.pulse-icon]="stats.followUpOverdue > 0">
 						<i class="pi pi-exclamation-triangle"></i>
@@ -87,8 +100,32 @@
 						</p>
 						<p class="stat-sublabel">Past due follow-ups</p>
 					</div>
+					<i *ngIf="activeQuickFilter === 'overdue'" class="pi pi-filter-fill quick-filter-indicator"></i>
 				</div>
 			</p-card>
+		</div>
+	</div>
+
+	<!-- Active filter banner -->
+	<div class="active-filter-banner" *ngIf="activeQuickFilter" [class.overdue-banner]="activeQuickFilter === 'overdue'">
+		<div class="filter-banner-inner">
+			<ng-container *ngIf="activeQuickFilter === 'today'">
+				<i class="pi pi-bell"></i>
+				<span>Showing <strong>{{ filteredCustomers.length }}</strong> follow-up{{ filteredCustomers.length !== 1 ? 's' : '' }} due <strong>today</strong></span>
+			</ng-container>
+			<ng-container *ngIf="activeQuickFilter === 'overdue'">
+				<i class="pi pi-exclamation-triangle"></i>
+				<span>Showing <strong>{{ filteredCustomers.length }}</strong> <strong>overdue</strong> follow-up{{ filteredCustomers.length !== 1 ? 's' : '' }}</span>
+			</ng-container>
+			<div class="filter-steps" *ngIf="filteredCustomers.length > 0">
+				<span class="step-hint"><i class="pi pi-arrow-right"></i> Open a customer to log the interaction and set the next follow-up date</span>
+			</div>
+			<div class="filter-steps" *ngIf="filteredCustomers.length === 0">
+				<span class="step-hint all-done"><i class="pi pi-check-circle"></i> All caught up! No customers match this filter.</span>
+			</div>
+			<button class="clear-filter-btn" (click)="toggleQuickFilter(activeQuickFilter)">
+				<i class="pi pi-times"></i> Clear filter
+			</button>
 		</div>
 	</div>
 
@@ -174,14 +211,26 @@
 								</div>
 							</div>
 						</div>
-						<span class="p-input-icon-left">
-              <input
-		              pInputText
-		              type="text"
-		              placeholder="Search customers..."
-		              (input)="customersTable.filterGlobal($any($event.target).value, 'contains')"
-		              class="w-full"/>
-            </span>
+						<div class="flex gap-2 items-center">
+							<p-button
+								*ngIf="aiEnabled$ | async"
+								[label]="analyzeAllProgress || ('AI.ANALYZE_ALL' | translate)"
+								icon="pi pi-sparkles"
+								severity="secondary"
+								size="small"
+								[loading]="isAnalyzingAll"
+								[disabled]="isAnalyzingAll"
+								(onClick)="analyzeAll()">
+							</p-button>
+							<span class="p-input-icon-left">
+                <input
+		                pInputText
+		                type="text"
+		                placeholder="Search customers..."
+		                (input)="customersTable.filterGlobal($any($event.target).value, 'contains')"
+		                class="w-full"/>
+              </span>
+						</div>
 					</div>
 
 				</div>
@@ -212,6 +261,7 @@
 						Follow-up
 						<p-sortIcon field="nextFollowUpAt"></p-sortIcon>
 					</th>
+					<th *ngIf="aiEnabled$ | async">{{ 'AI.STATUS_LABEL' | translate }}</th>
 					<th>Actions</th>
 				</tr>
 			</ng-template>
@@ -291,6 +341,9 @@
 								OVERDUE
 							</div>
 						</div>
+					</td>
+					<td *ngIf="aiEnabled$ | async" (click)="$event.stopPropagation()">
+						<app-ai-status-cell [customer]="customer" (analyzeClicked)="analyzeOne($event)"></app-ai-status-cell>
 					</td>
 					<td (click)="$event.stopPropagation()">
 						<div class="flex">

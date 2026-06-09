@@ -11,17 +11,20 @@ import {
   DashboardSummary,
   InventoryFabric,
   FabricInventoryHistory,
-  ProductionStatus
+  ProductionStatus,
+  CostScenario,
+  CostCalculation
 } from '../models/financial-production.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FinancialProductionService {
-  private apiUrl = `${environment.apiUrl}/api/financial-production`;
+  private apiUrl = `${environment.apiUrl}/financial-production`;
 
   // State Signals
   private monthlyExpenseReports = signal<MonthlyExpenseReport[]>([]);
+  private costScenarios = signal<CostScenario[]>([]);
   private accessoryItems = signal<AccessoryItem[]>([]);
   private productDefinitions = signal<ProductDefinition[]>([]);
   private productionRuns = signal<ProductionRun[]>([]);
@@ -30,6 +33,7 @@ export class FinancialProductionService {
 
   // Computed Signals
   readonly monthlyExpenseReports$ = this.monthlyExpenseReports.asReadonly();
+  readonly costScenarios$ = this.costScenarios.asReadonly();
   readonly accessoryItems$ = this.accessoryItems.asReadonly();
   readonly productDefinitions$ = this.productDefinitions.asReadonly();
   readonly productionRuns$ = this.productionRuns.asReadonly();
@@ -57,6 +61,7 @@ export class FinancialProductionService {
         this.loadProductionRuns(),
         this.loadFabrics(),
         this.loadFabricHistory(),
+        this.loadCostScenarios(),
       ]);
     } catch (error) {
       console.error('Error loading financial production data:', error);
@@ -536,5 +541,77 @@ export class FinancialProductionService {
     return this.monthlyExpenseReports().find(
       e => e.month === month && e.year === year
     );
+  }
+
+  // ==================== COST SCENARIOS ====================
+
+  private async loadCostScenarios(): Promise<void> {
+    try {
+      const response: any = await firstValueFrom(
+        this.http.get(`${this.apiUrl}/cost-scenarios`)
+      );
+      if (response.success) {
+        this.costScenarios.set(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading cost scenarios:', error);
+    }
+  }
+
+  async saveCostScenario(scenario: CostScenario): Promise<void> {
+    try {
+      if (scenario.id) {
+        const { id, createdAt, updatedAt, ...data } = scenario;
+        const response: any = await firstValueFrom(
+          this.http.put(`${this.apiUrl}/cost-scenarios/${id}`, data)
+        );
+        if (response.success) await this.loadCostScenarios();
+      } else {
+        const response: any = await firstValueFrom(
+          this.http.post(`${this.apiUrl}/cost-scenarios`, scenario)
+        );
+        if (response.success) await this.loadCostScenarios();
+      }
+    } catch (error) {
+      console.error('Error saving cost scenario:', error);
+      throw error;
+    }
+  }
+
+  async deleteCostScenario(id: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/cost-scenarios/${id}`));
+      await this.loadCostScenarios();
+    } catch (error) {
+      console.error('Error deleting cost scenario:', error);
+      throw error;
+    }
+  }
+
+  calculateCost(s: CostScenario): CostCalculation {
+    const fabricCostPerUnit = (s.fabricPricePerKg / 1000) * s.fabricGramsUsed;
+    const totalMonthlyFixed = s.monthlyRent + s.monthlyUtilities + s.monthlyFixedSalaries + s.monthlyOther;
+    const monthlyCapacity = s.dailyOutput * s.workingDaysPerMonth;
+    const overheadPerUnit = monthlyCapacity > 0 ? totalMonthlyFixed / monthlyCapacity : 0;
+    const totalUnitCost = fabricCostPerUnit + s.accessoriesCostPerUnit + s.pieceworkLabor + overheadPerUnit;
+    const profitPerUnit = (s.sellingPrice || 0) - totalUnitCost;
+    const profitMarginPct = s.sellingPrice > 0 ? (profitPerUnit / s.sellingPrice) * 100 : 0;
+    const monthlyRevenue = (s.sellingPrice || 0) * monthlyCapacity;
+    const monthlyGrossProfit = profitPerUnit * monthlyCapacity;
+    const monthlyNetProfit = monthlyGrossProfit - totalMonthlyFixed;
+    return {
+      fabricCostPerUnit,
+      accessoriesCostPerUnit: s.accessoriesCostPerUnit,
+      pieceworkLabor: s.pieceworkLabor,
+      totalMonthlyFixed,
+      monthlyCapacity,
+      overheadPerUnit,
+      totalUnitCost,
+      profitPerUnit,
+      profitMarginPct,
+      monthlyRevenue,
+      monthlyGrossProfit,
+      monthlyNetProfit,
+    };
   }
 }

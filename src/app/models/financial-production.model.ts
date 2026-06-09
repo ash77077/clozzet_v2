@@ -126,6 +126,42 @@ export interface InventoryFabric {
   updatedAt?: Date;
 }
 
+// Cost Configurator Scenario
+export interface CostScenario {
+  id?: string;
+  name: string;
+  productType: string;
+  dailyOutput: number;
+  workingDaysPerMonth: number;
+  fabricPricePerKg: number;
+  fabricGramsUsed: number;
+  accessoriesCostPerUnit: number;
+  pieceworkLabor: number;
+  monthlyRent: number;
+  monthlyUtilities: number;
+  monthlyFixedSalaries: number;
+  monthlyOther: number;
+  sellingPrice: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Cost Configurator live-calculated results
+export interface CostCalculation {
+  fabricCostPerUnit: number;
+  accessoriesCostPerUnit: number;
+  pieceworkLabor: number;
+  totalMonthlyFixed: number;
+  monthlyCapacity: number;
+  overheadPerUnit: number;
+  totalUnitCost: number;
+  profitPerUnit: number;
+  profitMarginPct: number;
+  monthlyRevenue: number;
+  monthlyGrossProfit: number;
+  monthlyNetProfit: number;
+}
+
 // Fabric Inventory History (Track all changes to inventory)
 export type InventoryChangeType = 'initial_stock' | 'restock' | 'waste' | 'waste_return' | 'production_use' | 'adjustment' | 'update' | 'delete';
 

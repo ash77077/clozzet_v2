@@ -572,6 +572,11 @@
             background: #fef9c3;
             border: 1px solid #eab308;
 
+            &.is-editing {
+              grid-column: 1 / -1;
+              background: #fefce8;
+            }
+
             .cost-price-container {
               display: flex;
               align-items: center;
@@ -587,75 +592,59 @@
                 font-size: 0.75rem;
                 transition: all 0.2s;
 
-                &:hover {
-                  background: #ca8a04;
-                }
+                &:hover { background: #ca8a04; }
 
-                i {
-                  font-size: 0.7rem;
-                }
+                i { font-size: 0.7rem; }
               }
             }
 
             .cost-price-edit-form {
               display: flex;
-              gap: 0.4rem;
-              align-items: center;
+              flex-direction: column;
+              gap: 0.5rem;
+              margin-top: 0.25rem;
 
-              .cost-price-input {
-                flex: 1;
-                padding: 0.4rem 0.5rem;
-                border: 1px solid #ca8a04;
-                border-radius: 4px;
-                font-size: 0.85rem;
-                outline: none;
-                width: 70px;
-
-                &:focus {
-                  border-color: #a16207;
-                  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
-                }
-
-                &:disabled {
-                  opacity: 0.6;
-                  cursor: not-allowed;
-                }
+              .cost-scenario-select {
+                width: 100%;
               }
 
-              .save-cost-btn,
-              .cancel-cost-btn {
-                padding: 0.35rem 0.5rem;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.75rem;
-                transition: all 0.2s;
+              .cost-edit-actions {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
 
-                &:disabled {
-                  opacity: 0.6;
-                  cursor: not-allowed;
+                .cost-price-input-num {
+                  flex: 1;
+                  min-width: 0;
                 }
 
-                i {
-                  font-size: 0.75rem;
+                .save-cost-btn,
+                .cancel-cost-btn {
+                  flex-shrink: 0;
+                  width: 2rem;
+                  height: 2rem;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  transition: all 0.2s;
+
+                  &:disabled { opacity: 0.6; cursor: not-allowed; }
+                  i { font-size: 0.75rem; }
                 }
-              }
 
-              .save-cost-btn {
-                background: #10b981;
-                color: white;
-
-                &:hover:not(:disabled) {
-                  background: #059669;
+                .save-cost-btn {
+                  background: #10b981;
+                  color: white;
+                  &:hover:not(:disabled) { background: #059669; }
                 }
-              }
 
-              .cancel-cost-btn {
-                background: #ef4444;
-                color: white;
-
-                &:hover:not(:disabled) {
-                  background: #dc2626;
+                .cancel-cost-btn {
+                  background: #ef4444;
+                  color: white;
+                  &:hover:not(:disabled) { background: #dc2626; }
                 }
               }
             }

@@ -70,6 +70,18 @@
               <span>CRM Dashboard</span>
             </a>
           </li>
+          <li class="nav-item">
+            <a routerLink="/retail-sales" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-shopping-bag"></i>
+              <span>Retail Sales</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/expo-sales" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-shop"></i>
+              <span>Expo Sales</span>
+            </a>
+          </li>
         </ul>
 
         <!-- Manufacturing Section Links -->
@@ -78,6 +90,12 @@
             <a routerLink="/financial-production" class="nav-link" routerLinkActive="active">
               <i class="pi pi-chart-bar"></i>
               <span>Financial Production</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/cost-configurator" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-calculator"></i>
+              <span>Cost Configurator</span>
             </a>
           </li>
           <li class="nav-item">
@@ -149,8 +167,11 @@
       <app-notification-bell></app-notification-bell>
 
       <div class="user-dropdown-container" *ngIf="currentUser">
-        <button class="user-icon-btn" (click)="toggleUserMenu($event)" pTooltip="User menu">
+        <button class="user-icon-btn" (click)="toggleUserMenu($event)" pTooltip="User menu" style="position:relative">
           <i class="pi pi-user"></i>
+          <span *ngIf="aiEnabled$ | async"
+                style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:#4ade80;border-radius:50%;border:2px solid white;">
+          </span>
         </button>
 
         <!-- User Dropdown Menu -->
@@ -189,6 +210,10 @@
                   <i class="pi pi-shopping-bag"></i>
                   Retail Sales
                 </button>
+                <button class="user-dropdown-item sub-item" routerLink="/expo-sales" (click)="showUserMenu = false">
+                  <i class="pi pi-shop"></i>
+                  Expo Sales
+                </button>
                 <button class="user-dropdown-item sub-item" routerLink="/users" (click)="showUserMenu = false">
                   <i class="pi pi-users"></i>
                   Users
@@ -201,6 +226,18 @@
             </div>
           </ng-container>
 
+          <div class="user-dropdown-divider"></div>
+          <!-- AI Toggle -->
+          <div class="user-dropdown-section" (click)="$event.stopPropagation()">
+            <div class="ai-toggle-row">
+              <i class="pi pi-sparkles" style="color:#8b5cf6"></i>
+              <span class="ai-toggle-label">{{ 'AI.TOGGLE_LABEL' | translate }}</span>
+              <p-toggleswitch
+                [(ngModel)]="aiEnabledValue"
+                (onChange)="onAiToggle($event.checked)">
+              </p-toggleswitch>
+            </div>
+          </div>
           <div class="user-dropdown-divider"></div>
           <div class="user-dropdown-section">
             <span class="user-dropdown-section-title">
