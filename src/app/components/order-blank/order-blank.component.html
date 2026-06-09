@@ -197,6 +197,18 @@
 
 		<!-- Size Breakdown Section -->
 		<div formGroupName="sizes">
+			<!-- Toggle button (hidden in view mode) -->
+			<div *ngIf="!isViewMode" class="size-mode-toggle no-print">
+				<button type="button" class="btn btn-toggle-size"
+					[class.active]="!isChildSizes" (click)="isChildSizes = false">
+					Adult
+				</button>
+				<button type="button" class="btn btn-toggle-size"
+					[class.active]="isChildSizes" (click)="isChildSizes = true">
+					Children
+				</button>
+			</div>
+
 			<table class="size-table">
 				<thead>
 				<tr>
@@ -207,174 +219,26 @@
 				</tr>
 				</thead>
 				<tbody>
-				<tr formGroupName="xs" *ngIf="!isViewMode || hasSizeValues('xs')">
-					<td class="size-label">{{ 'orderBlank.sizes.xs' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xs.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xs.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xs.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
-				<tr formGroupName="s" *ngIf="!isViewMode || hasSizeValues('s')">
-					<td class="size-label">{{ 'orderBlank.sizes.s' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.s.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.s.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.s.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
-				<tr formGroupName="m" *ngIf="!isViewMode || hasSizeValues('m')">
-					<td class="size-label">{{ 'orderBlank.sizes.m' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.m.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.m.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.m.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
-				<tr formGroupName="l" *ngIf="!isViewMode || hasSizeValues('l')">
-					<td class="size-label">{{ 'orderBlank.sizes.l' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.l.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.l.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.l.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
-				<tr formGroupName="xl" *ngIf="!isViewMode || hasSizeValues('xl')">
-					<td class="size-label">{{ 'orderBlank.sizes.xl' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xl.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xl.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xl.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
-				<tr formGroupName="xxl" *ngIf="!isViewMode || hasSizeValues('xxl')">
-					<td class="size-label">{{ 'orderBlank.sizes.xxl' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxl.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxl.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxl.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
-				<tr formGroupName="xxxl" *ngIf="!isViewMode || hasSizeValues('xxxl')">
-					<td class="size-label">{{ 'orderBlank.sizes.xxxl' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxl.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxl.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxl.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
-				<tr formGroupName="xxxxl" *ngIf="!isViewMode || hasSizeValues('xxxxl')">
-					<td class="size-label">{{ 'orderBlank.sizes.xxxxl' | translate }}</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="men" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxxl.men')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="women" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxxl.women')?.value || 0 }}</span>
-					</td>
-					<td>
-						<input
-								*ngIf="!isViewMode" type="number" formControlName="uni" class="editable-input size-input"
-								placeholder="0" min="0">
-						<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.xxxxl.uni')?.value || 0 }}</span>
-					</td>
-				</tr>
+				<ng-container *ngFor="let sizeKey of activeSizeKeys">
+					<tr [formGroupName]="sizeKey" *ngIf="!isViewMode || hasSizeValues(sizeKey)">
+						<td class="size-label">{{ getSizeLabel(sizeKey) }}</td>
+						<td>
+							<input *ngIf="!isViewMode" type="number" formControlName="men"
+								class="editable-input size-input" placeholder="0" min="0">
+							<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.' + sizeKey + '.men')?.value || 0 }}</span>
+						</td>
+						<td>
+							<input *ngIf="!isViewMode" type="number" formControlName="women"
+								class="editable-input size-input" placeholder="0" min="0">
+							<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.' + sizeKey + '.women')?.value || 0 }}</span>
+						</td>
+						<td>
+							<input *ngIf="!isViewMode" type="number" formControlName="uni"
+								class="editable-input size-input" placeholder="0" min="0">
+							<span *ngIf="isViewMode" class="value-display">{{ orderForm.get('sizes.' + sizeKey + '.uni')?.value || 0 }}</span>
+						</td>
+					</tr>
+				</ng-container>
 				<tr class="total-row">
 					<td><strong>{{ 'orderBlank.sizes.total' | translate }}</strong></td>
 					<td><strong>{{ calculateTotal('men') }}</strong></td>
