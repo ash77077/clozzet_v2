@@ -561,81 +561,6 @@
 
           </ng-container>
 
-          <!-- ──── EDIT MODE ──── -->
-          <ng-container *ngIf="isEditMode && editOrderForm">
-            <div class="jira-section edit-mode-form" [formGroup]="editOrderForm">
-              <h4 class="jira-section-label"><i class="pi pi-pencil"></i> Edit Order</h4>
-
-              <div class="edit-grid">
-                <div class="edit-field">
-                  <label>Client Name <span class="req">*</span></label>
-                  <input pInputText formControlName="clientName" class="full-width" placeholder="Client name" />
-                </div>
-                <div class="edit-field">
-                  <label>Sales Person</label>
-                  <input pInputText formControlName="salesPerson" class="full-width" placeholder="Sales representative" />
-                </div>
-                <div class="edit-field">
-                  <label>Priority</label>
-                  <p-select formControlName="priority" [options]="priorityOptions" optionLabel="label" optionValue="value" styleClass="full-width" appendTo="body"></p-select>
-                </div>
-                <div class="edit-field">
-                  <label>Status</label>
-                  <p-select formControlName="status" [options]="statusOptions" optionLabel="label" optionValue="value" styleClass="full-width" appendTo="body"></p-select>
-                </div>
-                <div class="edit-field">
-                  <label>Cloth Type</label>
-                  <p-select formControlName="clothType" [options]="clothTypes" styleClass="full-width" appendTo="body" placeholder="Select cloth type"></p-select>
-                </div>
-                <div class="edit-field">
-                  <label>Textile Type</label>
-                  <p-select formControlName="textileType" [options]="textileTypes" styleClass="full-width" appendTo="body" placeholder="Select textile"></p-select>
-                </div>
-                <div class="edit-field">
-                  <label>Start Date</label>
-                  <p-datepicker
-                    formControlName="startDate"
-                    [showIcon]="true"
-                    dateFormat="yy-mm-dd"
-                    placeholder="Select start date"
-                    appendTo="body"
-                    styleClass="full-width">
-                  </p-datepicker>
-                </div>
-                <div class="edit-field">
-                  <label>Deadline <span class="req">*</span></label>
-                  <p-datepicker
-                    formControlName="deadline"
-                    [showIcon]="true"
-                    dateFormat="yy-mm-dd"
-                    placeholder="Select deadline"
-                    appendTo="body"
-                    styleClass="full-width">
-                  </p-datepicker>
-                </div>
-                <div class="edit-field">
-                  <label>Logo Position</label>
-                  <input pInputText formControlName="logoPosition" class="full-width" placeholder="e.g. Left chest" />
-                </div>
-                <div class="edit-field">
-                  <label>Logo Size</label>
-                  <input pInputText formControlName="logoSize" class="full-width" placeholder="e.g. 10cm × 5cm" />
-                </div>
-                <div class="edit-field full-span">
-                  <label>Color Details</label>
-                  <textarea pTextarea formControlName="customColorDetails" rows="2" class="full-width" placeholder="Custom color specs…"></textarea>
-                </div>
-                <div class="edit-field full-span">
-                  <label>Special Instructions</label>
-                  <textarea pTextarea formControlName="specialInstructions" rows="3" class="full-width" placeholder="Production instructions…"></textarea>
-                </div>
-                <div class="edit-field full-span">
-                  <label>Shipping Address</label>
-                  <textarea pTextarea formControlName="shippingAddress" rows="2" class="full-width" placeholder="Delivery address…"></textarea>
-                </div>
-              </div>
-            </div>
-          </ng-container>
 
           <!-- ──── Attachments ──── -->
           <div class="jira-section attachments-section">
@@ -869,8 +794,6 @@
     </div>
     <!-- /jira-modal-wrapper -->
 
-    <!-- Print Template (hidden on screen, visible when printing) -->
-    <app-order-print-template [order]="selectedOrder"></app-order-print-template>
   </p-dialog>
 
   <!-- ════════ Status Change Dialog ════════ -->
@@ -939,7 +862,7 @@
     [header]="isEditMode ? 'Edit Order' : 'Add New Order'"
     [(visible)]="showAddOrderDialog"
     [modal]="true"
-    [style]="{width: '780px', maxWidth: '95vw'}"
+    [style]="{width: '860px', maxWidth: '96vw'}"
     [draggable]="false"
     [resizable]="false"
     (onHide)="isEditMode ? cancelEdit() : closeAddOrderDialog()"
@@ -1183,6 +1106,67 @@
               </div>
             </div>
 
+            <!-- Custom / Extra Sizes -->
+            <div class="custom-sizes-section" *ngIf="getCustomSizeKeys(i).length > 0 || showAddCustomSize[i]">
+              <div class="custom-sizes-divider">
+                <span>Extra Sizes</span>
+              </div>
+
+              <!-- UNI MODE custom rows -->
+              <div class="sizes-table" *ngIf="sizeBreakdownMode === 'uni'">
+                <div class="size-row" *ngFor="let cs of getCustomSizeKeys(i)" [formGroupName]="cs.key">
+                  <div class="size-col-uni size-label custom-size-label">
+                    {{ cs.label }}
+                    <button type="button" class="remove-custom-size-btn" (click)="removeCustomSize(i, cs.key)">
+                      <i class="pi pi-times"></i>
+                    </button>
+                  </div>
+                  <div class="size-col-uni">
+                    <input type="number" formControlName="uni" min="0" class="size-input" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- SPLIT MODE custom rows -->
+              <div class="sizes-table" *ngIf="sizeBreakdownMode === 'split'">
+                <div class="size-row" *ngFor="let cs of getCustomSizeKeys(i)" [formGroupName]="cs.key">
+                  <div class="size-col size-label custom-size-label">
+                    {{ cs.label }}
+                    <button type="button" class="remove-custom-size-btn" (click)="removeCustomSize(i, cs.key)">
+                      <i class="pi pi-times"></i>
+                    </button>
+                  </div>
+                  <div class="size-col"><input type="number" formControlName="men" min="0" class="size-input" /></div>
+                  <div class="size-col"><input type="number" formControlName="women" min="0" class="size-input" /></div>
+                  <div class="size-col"><input type="number" formControlName="uni" min="0" class="size-input" /></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inline add-custom-size form -->
+            <div class="add-custom-size-form" *ngIf="showAddCustomSize[i]">
+              <input
+                type="text"
+                class="custom-size-name-input"
+                [(ngModel)]="newCustomSizeLabel[i]"
+                [ngModelOptions]="{standalone: true}"
+                placeholder="Size name (e.g. 5XL)"
+                (keydown.enter)="confirmAddCustomSize(i)"
+                (keydown.escape)="showAddCustomSize[i] = false"
+                autofocus />
+              <button type="button" class="btn-confirm-size" (click)="confirmAddCustomSize(i)" [disabled]="!newCustomSizeLabel[i]?.trim()">
+                <i class="pi pi-check"></i> Add
+              </button>
+              <button type="button" class="btn-cancel-size" (click)="showAddCustomSize[i] = false">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+
+            <!-- Add Size button -->
+            <button type="button" class="btn-add-custom-size" (click)="toggleAddCustomSize(i)" *ngIf="!showAddCustomSize[i]">
+              <i class="pi pi-plus"></i> Add Size
+            </button>
+
             <div class="product-total-badge">
               Product Total: <strong>{{ calculateSingleProductTotal(i) }}</strong> units
             </div>
@@ -1295,6 +1279,29 @@
           <textarea pTextarea formControlName="shippingAddress" rows="3" placeholder="Delivery address…" class="full-width"></textarea>
         </div>
 
+        <!-- Payment -->
+        <div class="form-section-divider">Payment</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="field-label">Payment Status</label>
+            <p-select formControlName="paymentStatus" [options]="paymentStatusOptions"
+              optionLabel="label" optionValue="value" styleClass="full-width" appendTo="body">
+            </p-select>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Expected Revenue (֏)</label>
+            <p-inputNumber formControlName="expectedRevenue" [min]="0" [useGrouping]="true"
+              placeholder="Total order value" styleClass="full-width" suffix=" ֏" appendTo="body">
+            </p-inputNumber>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Amount Already Paid (֏)</label>
+            <p-inputNumber formControlName="paidAmount" [min]="0" [useGrouping]="true"
+              placeholder="0" styleClass="full-width" suffix=" ֏" appendTo="body">
+            </p-inputNumber>
+          </div>
+        </div>
+
         <!-- Order summary -->
         <div class="order-summary-box">
           <h4><i class="pi pi-list"></i> Order Summary</h4>
@@ -1333,5 +1340,10 @@
       </div>
     </ng-template>
   </p-dialog>
+
+  <!-- Print template — lives outside all dialogs so window.print() only sees this -->
+  <div #printContainer style="display:none">
+    <app-order-print-template *ngIf="selectedOrder" [order]="selectedOrder!"></app-order-print-template>
+  </div>
 
 </div>

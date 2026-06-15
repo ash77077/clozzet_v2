@@ -4,7 +4,7 @@
   <nav class="breadcrumb">
     <a routerLink="/dashboard" class="breadcrumb-item">Dashboard</a>
     <span class="breadcrumb-separator">›</span>
-    <span class="breadcrumb-current">Revenue & Financial Reports</span>
+    <span class="breadcrumb-current">Revenue</span>
   </nav>
 
   <!-- Header -->
@@ -12,57 +12,53 @@
     <div class="header-left">
       <h1 class="page-title">
         <i class="pi pi-chart-line"></i>
-        Revenue & Financial Reports
+        Revenue
       </h1>
-      <p class="page-description">Track revenue, costs, and profitability of delivered orders</p>
-    </div>
-    <div class="header-right">
-      <button class="export-btn" (click)="exportToExcel()" pTooltip="Export to Excel">
-        <i class="pi pi-file-excel"></i>
-        Export
-      </button>
     </div>
   </header>
 
-  <!-- Statistics Cards -->
+  <!-- Month Navigation -->
+  <div class="month-nav">
+    <button class="month-btn" (click)="prevMonth()">
+      <i class="pi pi-chevron-left"></i>
+    </button>
+    <span class="month-label">{{ selectedMonthLabel }}</span>
+    <button class="month-btn" (click)="nextMonth()">
+      <i class="pi pi-chevron-right"></i>
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
   <div class="stats-row" *ngIf="!isLoading && !error">
+    <div class="stat-card stat-expected">
+      <div class="stat-icon"><i class="pi pi-file-edit"></i></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ formatCurrency(cardExpected) }}</span>
+        <span class="stat-label">Expected Amount</span>
+      </div>
+    </div>
+
     <div class="stat-card stat-revenue">
       <div class="stat-icon"><i class="pi pi-dollar"></i></div>
       <div class="stat-info">
-        <span class="stat-value">{{ formatCurrency(totalRevenue) }}</span>
-        <span class="stat-label">Total Revenue</span>
+        <span class="stat-value">{{ formatCurrency(cardTotal) }}</span>
+        <span class="stat-label">Calculated Revenue</span>
       </div>
     </div>
 
-    <div class="stat-card stat-profit">
-      <div class="stat-icon"><i class="pi pi-chart-bar"></i></div>
+    <div class="stat-card stat-paid">
+      <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
       <div class="stat-info">
-        <span class="stat-value">{{ formatCurrency(totalProfit) }}</span>
-        <span class="stat-label">Total Profit</span>
+        <span class="stat-value">{{ formatCurrency(cardPaid) }}</span>
+        <span class="stat-label">Amount Paid</span>
       </div>
     </div>
 
-    <div class="stat-card stat-cost">
-      <div class="stat-icon"><i class="pi pi-wallet"></i></div>
+    <div class="stat-card stat-unpaid">
+      <div class="stat-icon"><i class="pi pi-clock"></i></div>
       <div class="stat-info">
-        <span class="stat-value">{{ formatCurrency(totalCost) }}</span>
-        <span class="stat-label">Total Cost</span>
-      </div>
-    </div>
-
-    <div class="stat-card stat-margin">
-      <div class="stat-icon"><i class="pi pi-percentage"></i></div>
-      <div class="stat-info">
-        <span class="stat-value">{{ averageMargin.toFixed(1) }}%</span>
-        <span class="stat-label">Avg Profit Margin</span>
-      </div>
-    </div>
-
-    <div class="stat-card stat-orders">
-      <div class="stat-icon"><i class="pi pi-shopping-bag"></i></div>
-      <div class="stat-info">
-        <span class="stat-value">{{ totalOrders }}</span>
-        <span class="stat-label">Delivered Orders</span>
+        <span class="stat-value">{{ formatCurrency(cardUnpaid) }}</span>
+        <span class="stat-label">Remaining</span>
       </div>
     </div>
   </div>
@@ -78,7 +74,7 @@
     <i class="pi pi-exclamation-circle"></i>
     <h3>Failed to load revenue data</h3>
     <p>{{ error }}</p>
-    <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadDeliveredOrders()" severity="secondary"></p-button>
+    <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadOrders()" severity="secondary"></p-button>
   </div>
 
   <!-- Filters -->
@@ -92,38 +88,6 @@
         placeholder="Search by order #, company, client..."
         class="search-input" />
     </div>
-
-    <div class="date-filters">
-      <div class="date-filter">
-        <label>From:</label>
-        <p-datePicker
-          [(ngModel)]="dateFilterStart"
-          (onSelect)="applyFilters()"
-          (onClear)="applyFilters()"
-          [showIcon]="true"
-          [showButtonBar]="true"
-          dateFormat="dd/mm/yy"
-          placeholder="Select start date"
-          styleClass="date-picker">
-        </p-datePicker>
-      </div>
-      <div class="date-filter">
-        <label>To:</label>
-        <p-datePicker
-          [(ngModel)]="dateFilterEnd"
-          (onSelect)="applyFilters()"
-          (onClear)="applyFilters()"
-          [showIcon]="true"
-          [showButtonBar]="true"
-          dateFormat="dd/mm/yy"
-          placeholder="Select end date"
-          styleClass="date-picker">
-        </p-datePicker>
-      </div>
-      <button class="clear-filters-btn" (click)="clearFilters()" *ngIf="searchTerm || dateFilterStart || dateFilterEnd">
-        <i class="pi pi-times"></i> Clear
-      </button>
-    </div>
   </div>
 
   <!-- Revenue Table -->
@@ -131,78 +95,141 @@
     <p-table
       [value]="filteredOrders"
       [paginator]="true"
-      [rows]="15"
+      [rows]="20"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} orders"
       responsiveLayout="scroll"
-      styleClass="p-datatable-gridlines p-datatable-striped"
+      styleClass="p-datatable-gridlines"
       [scrollable]="true">
 
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="orderNumber" style="min-width:140px">
-            Order # <p-sortIcon field="orderNumber"></p-sortIcon>
-          </th>
-          <th pSortableColumn="companyName" style="min-width:180px">
-            Company / Client <p-sortIcon field="companyName"></p-sortIcon>
-          </th>
-          <th style="min-width:160px">Products</th>
-          <th pSortableColumn="quantity" style="min-width:100px">
-            Units <p-sortIcon field="quantity"></p-sortIcon>
-          </th>
-          <th pSortableColumn="totalRevenue" style="min-width:130px">
-            Revenue <p-sortIcon field="totalRevenue"></p-sortIcon>
-          </th>
-          <th pSortableColumn="totalProfit" style="min-width:130px">
-            Profit <p-sortIcon field="totalProfit"></p-sortIcon>
-          </th>
-          <th pSortableColumn="averageMargin" style="min-width:110px">
-            Margin <p-sortIcon field="averageMargin"></p-sortIcon>
-          </th>
-          <th style="min-width:120px">Actions</th>
+          <th style="min-width:130px">Order #</th>
+          <th style="min-width:180px">Company / Client</th>
+          <th style="min-width:140px">Products</th>
+          <th style="min-width:90px">Units</th>
+          <th style="min-width:140px">Expected</th>
+          <th style="min-width:140px">Calculated</th>
+          <th style="min-width:140px">Paid</th>
+          <th style="min-width:160px">Payment Status</th>
+          <th style="min-width:100px">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-order>
         <tr>
+          <!-- Order # -->
           <td><strong>{{ order.orderNumber }}</strong></td>
+
+          <!-- Company / Client -->
           <td>
             <div class="client-cell">
               <span class="company-name" *ngIf="order.companyName">{{ order.companyName }}</span>
               <span class="client-name">{{ order.clientName }}</span>
             </div>
           </td>
-          <td>
-            <span class="product-summary">{{ getProductSummary(order) }}</span>
-          </td>
+
+          <!-- Products -->
+          <td><span class="product-summary">{{ getProductSummary(order) }}</span></td>
+
+          <!-- Units -->
           <td><strong>{{ order.quantity }}</strong></td>
+
+          <!-- Expected -->
           <td>
-            <span class="currency-value" *ngIf="hasFinancialData(order)">
-              {{ formatCurrency(order.totalRevenue) }}
+            <span class="currency-value" *ngIf="editingPaymentOrderId !== (order._id || order.id)">
+              {{ formatCurrency(order.expectedRevenue || order.totalRevenue || 0) }}
             </span>
-            <span class="no-data" *ngIf="!hasFinancialData(order)">No data</span>
+            <p-inputNumber
+              *ngIf="editingPaymentOrderId === (order._id || order.id)"
+              [(ngModel)]="editingExpectedRevenue"
+              [min]="0"
+              suffix=" ֏"
+              styleClass="inline-num"
+              [disabled]="isSavingPayment">
+            </p-inputNumber>
           </td>
+
+          <!-- Calculated -->
           <td>
-            <span class="currency-value profit" *ngIf="hasFinancialData(order)" [class.negative]="order.totalProfit < 0">
-              {{ formatCurrency(order.totalProfit) }}
-            </span>
-            <span class="no-data" *ngIf="!hasFinancialData(order)">—</span>
+            <span class="currency-value" *ngIf="order.totalRevenue > 0">{{ formatCurrency(order.totalRevenue) }}</span>
+            <span class="no-data" *ngIf="order.totalRevenue === 0">—</span>
           </td>
+
+          <!-- Paid -->
           <td>
-            <span class="margin-badge" *ngIf="hasFinancialData(order)" [class.good]="order.averageMargin >= 30" [class.medium]="order.averageMargin >= 15 && order.averageMargin < 30" [class.low]="order.averageMargin < 15">
-              {{ order.averageMargin.toFixed(1) }}%
-            </span>
-            <span class="no-data" *ngIf="!hasFinancialData(order)">—</span>
+            <div class="paid-cell" *ngIf="editingPaymentOrderId !== (order._id || order.id)">
+              <span class="currency-value">{{ formatCurrency(order.paidAmount || 0) }}</span>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" [style.width.%]="paidPercent(order)"></div>
+              </div>
+              <span class="paid-pct">{{ paidPercent(order) }}%</span>
+            </div>
+            <p-inputNumber
+              *ngIf="editingPaymentOrderId === (order._id || order.id)"
+              [(ngModel)]="editingPaidAmount"
+              [min]="0"
+              suffix=" ֏"
+              styleClass="inline-num"
+              [disabled]="isSavingPayment">
+            </p-inputNumber>
           </td>
+
+          <!-- Payment Status -->
+          <td>
+            <p-tag
+              *ngIf="editingPaymentOrderId !== (order._id || order.id)"
+              [value]="getPaymentStatusLabel(order.paymentStatus)"
+              [severity]="getPaymentStatusSeverity(order.paymentStatus)">
+            </p-tag>
+            <p-select
+              *ngIf="editingPaymentOrderId === (order._id || order.id)"
+              [(ngModel)]="editingPaymentStatus"
+              [options]="paymentStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              [disabled]="isSavingPayment"
+              styleClass="inline-select">
+            </p-select>
+          </td>
+
+          <!-- Actions -->
           <td>
             <div class="action-group">
-              <p-button
-                icon="pi pi-eye"
-                (onClick)="viewOrderDetails(order)"
-                severity="info"
-                [text]="true"
-                [rounded]="true"
-                pTooltip="View Details"></p-button>
+              <ng-container *ngIf="editingPaymentOrderId !== (order._id || order.id)">
+                <p-button
+                  icon="pi pi-eye"
+                  (onClick)="viewOrderDetails(order)"
+                  severity="info"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="View Details"></p-button>
+                <p-button
+                  icon="pi pi-pencil"
+                  (onClick)="startEditingPayment(order)"
+                  severity="warn"
+                  [text]="true"
+                  [rounded]="true"
+                  pTooltip="Edit Payment"></p-button>
+              </ng-container>
+              <ng-container *ngIf="editingPaymentOrderId === (order._id || order.id)">
+                <p-button
+                  icon="pi pi-check"
+                  (onClick)="savePayment(order)"
+                  severity="success"
+                  [text]="true"
+                  [rounded]="true"
+                  [loading]="isSavingPayment"
+                  pTooltip="Save"></p-button>
+                <p-button
+                  icon="pi pi-times"
+                  (onClick)="cancelEditingPayment()"
+                  severity="danger"
+                  [text]="true"
+                  [rounded]="true"
+                  [disabled]="isSavingPayment"
+                  pTooltip="Cancel"></p-button>
+              </ng-container>
             </div>
           </td>
         </tr>
@@ -210,11 +237,11 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="8">
+          <td colspan="9">
             <div class="table-empty">
               <i class="pi pi-inbox"></i>
-              <h3>No Delivered Orders Found</h3>
-              <p>Orders with status "Delivered" will appear here with financial details.</p>
+              <h3>No Orders Found</h3>
+              <p>Orders with pricing data for {{ selectedMonthLabel }} will appear here.</p>
             </div>
           </td>
         </tr>
@@ -253,12 +280,25 @@
             <span class="label">Deadline:</span>
             <span class="value">{{ formatDate(selectedOrder.deadline) }}</span>
           </div>
+          <div class="header-col">
+            <span class="label">Payment:</span>
+            <span class="value">
+              <p-tag
+                [value]="getPaymentStatusLabel(selectedOrder.paymentStatus)"
+                [severity]="getPaymentStatusSeverity(selectedOrder.paymentStatus)">
+              </p-tag>
+            </span>
+          </div>
+          <div class="header-col">
+            <span class="label">Paid:</span>
+            <span class="value">{{ formatCurrency(selectedOrder.paidAmount || 0) }}</span>
+          </div>
         </div>
       </div>
 
       <!-- Products Breakdown -->
       <div class="products-breakdown">
-        <h4 class="section-title"><i class="pi pi-box"></i> Product-by-Product Breakdown</h4>
+        <h4 class="section-title"><i class="pi pi-box"></i> Product Breakdown</h4>
 
         <div class="product-item" *ngFor="let product of selectedOrder.productsFinancial; let i = index">
           <div class="product-header">
@@ -266,10 +306,6 @@
           </div>
 
           <div class="product-details-grid">
-            <div class="detail-item">
-              <span class="detail-label">Cloth Type:</span>
-              <span class="detail-value">{{ product.clothType }}</span>
-            </div>
             <div class="detail-item" *ngIf="product.textileType">
               <span class="detail-label">Textile:</span>
               <span class="detail-value">{{ product.textileType }}</span>
@@ -292,7 +328,7 @@
             <div class="financial-item cost-price-editable" [class.is-editing]="editingProductIndex === i">
               <span class="fin-label">Cost/Unit:</span>
               <div class="cost-price-container" *ngIf="editingProductIndex !== i">
-                <span class="fin-value">{{ product.costPricePerUnit || 0 }}</span>
+                <span class="fin-value">{{ product.costPricePerUnit || 0 }} ֏</span>
                 <button
                   class="edit-cost-btn"
                   (click)="startEditingCostPrice(i, product.costPricePerUnit)"
@@ -370,6 +406,10 @@
             <span class="total-value">{{ selectedOrder.quantity }}</span>
           </div>
           <div class="total-item">
+            <span class="total-label">Expected Revenue:</span>
+            <span class="total-value">{{ formatCurrency(selectedOrder.expectedRevenue || selectedOrder.totalRevenue || 0) }}</span>
+          </div>
+          <div class="total-item">
             <span class="total-label">Total Cost:</span>
             <span class="total-value">{{ formatCurrency(selectedOrder.totalCost) }}</span>
           </div>
@@ -382,7 +422,7 @@
             <span class="total-value profit">{{ formatCurrency(selectedOrder.totalProfit) }}</span>
           </div>
           <div class="total-item highlight">
-            <span class="total-label">Average Margin:</span>
+            <span class="total-label">Avg Margin:</span>
             <span class="total-value margin">{{ selectedOrder.averageMargin.toFixed(1) }}%</span>
           </div>
         </div>
