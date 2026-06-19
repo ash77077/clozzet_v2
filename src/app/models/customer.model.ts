@@ -31,6 +31,8 @@ export interface Customer {
   scheduledMeetingAt?: Date;
   isActive: boolean;
   createdBy?: { _id?: string; firstName?: string; lastName?: string } | string;
+  deletedBy?: { _id?: string; firstName?: string; lastName?: string } | string;
+  deleteReason?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

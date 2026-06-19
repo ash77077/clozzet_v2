@@ -8,14 +8,13 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { DatePicker } from 'primeng/datepicker';
 import { MessageService } from 'primeng/api';
 import { Tooltip } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ProductDetailsService } from '../../services/product-details.service';
 import { FinancialProductionService } from '../../services/financial-production.service';
-import { OrderStatus, ProductDetails } from '../../models/dashboard.models';
+import { ProductDetails } from '../../models/dashboard.models';
 import { CostScenario } from '../../models/financial-production.model';
 
 interface ProductFinancial {
@@ -59,7 +58,6 @@ const PAYMENT_STATUS_LABELS: Record<string, string> = {
     DialogModule,
     TagModule,
     ToastModule,
-    DatePicker,
     Tooltip,
     SelectModule,
     InputNumberModule,
