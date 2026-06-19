@@ -1,11 +1,43 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
+
+// ─── Logo state ────────────────────────────────────────────────────────────────
+interface LogoState {
+  mesh: THREE.Mesh;
+  // Anchor: the point on the shirt surface where the logo was placed
+  anchorPoint: THREE.Vector3;
+  anchorNormal: THREE.Vector3;
+  // Offsets from anchor in tangent/bitangent space (for move)
+  offsetX: number;
+  offsetY: number;
+  // Rotation around surface normal (radians)
+  rotation: number;
+  // Uniform scale
+  scale: number;
+}
+
+// ─── Overlay handle ────────────────────────────────────────────────────────────
+type HandleType = 'move' | 'rotate' | 'scale-tl' | 'scale-tr' | 'scale-bl' | 'scale-br';
+
+interface OverlayHandle {
+  type: HandleType;
+  x: number; // canvas-local px
+  y: number;
+  cursor: string;
+}
+
+// ─── Part label map ────────────────────────────────────────────────────────────
+const PART_LABELS: Record<string, string> = {
+  Object_14: 'Front Body',
+  Object_20: 'Back Body',
+  Object_18: 'Left Sleeve',
+  Object_10: 'Right Sleeve',
+  Object_8:  'Collar',
+};
 
 @Component({
   selector: 'app-configurator',
@@ -15,813 +47,695 @@ import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
   styleUrl: './configurator.component.scss',
 })
 export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
-  // ViewChild to bind the canvas container
   @ViewChild('canvasContainer', { static: false }) canvasContainer!: ElementRef<HTMLDivElement>;
 
-  // Three.js core components
+  // ─── Three.js ────────────────────────────────────────────────────────────────
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private controls!: OrbitControls;
-  private transformControl!: TransformControls;
-  private loader: GLTFLoader = new GLTFLoader();
+  private loader = new GLTFLoader();
+  private texLoader = new THREE.TextureLoader();
+  private rafId = 0;
 
-  // Store the loaded model for manipulation
-  private loadedModel: THREE.Group | null = null;
+  // ─── Model ───────────────────────────────────────────────────────────────────
+  private model: THREE.Group | null = null;
+  private modelRadius = 2;
 
-  // Animation frame ID for cleanup
-  private animationFrameId: number = 0;
-
-  // Available mesh parts (assuming the 3D artist named them)
+  // ─── Colors ──────────────────────────────────────────────────────────────────
   meshParts = ['Object_14', 'Object_20', 'Object_18', 'Object_10', 'Object_8'];
+  private partColors = new Map<string, string>();
+  selectedPart = '';
+  globalClothColor = '#ffffff';
 
-  // Track part colors (store as hex values)
-  private partColors: Map<string, string> = new Map();
+  // ─── Logo ────────────────────────────────────────────────────────────────────
+  logoTexture: THREE.Texture | null = null;
+  private logoAspect = 1;
+  private logo: LogoState | null = null;
 
-  // Currently selected part for color change
-  selectedPart: string = '';
+  get hasLogo() { return !!this.logo; }
 
-  // ===== LOGO PLACEMENT WITH TRANSFORMCONTROLS =====
+  // ─── Overlay (2D HTML handles over the 3D canvas) ────────────────────────────
+  // logoBox is updated every frame via projectLogo(); used for hit-testing always
+  logoBox = { cx: 0, cy: 0, hw: 0, hh: 0 }; // canvas-local px
+  logoSelected = false;
+  overlayHandles: OverlayHandle[] = [];
+  overlayBoxStyle: Record<string, string> = { display: 'none' };
+  rotateHandlePos = { x: 0, y: 0 };
+  canvasCursor = 'default';
 
-  // Raycaster for detecting mouse clicks on the mesh
-  private raycaster: THREE.Raycaster = new THREE.Raycaster();
-  private mouse: THREE.Vector2 = new THREE.Vector2();
+  // ─── Drag state ──────────────────────────────────────────────────────────────
+  private activeHandle: HandleType | null = null;
+  // Stored at drag-start (client coords)
+  private dragStart = { x: 0, y: 0 };
+  // Logo state at drag-start
+  private dragOrigin = { offsetX: 0, offsetY: 0, rotation: 0, scale: 1 };
 
-  // Texture loader and logo texture
-  private textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
-  logoTexture: THREE.Texture | null = null; // Public so template can check if logo is loaded
-  private logoAspectRatio: number = 1.0; // Store logo aspect ratio (width / height)
+  // ─── UI ──────────────────────────────────────────────────────────────────────
+  activeStep: 'color' | 'logo' | 'export' = 'color';
 
-  // Store all placed decals (LIMITED TO ONE)
-  decals: THREE.Mesh[] = [];
+  colorSwatches = [
+    { name: 'White',      hex: '#ffffff' },
+    { name: 'Light Gray', hex: '#e8edf2' },
+    { name: 'Slate',      hex: '#64748b' },
+    { name: 'Black',      hex: '#1e293b' },
+    { name: 'Navy',       hex: '#1e3a8a' },
+    { name: 'Sky Blue',   hex: '#38bdf8' },
+    { name: 'Indigo',     hex: '#6366f1' },
+    { name: 'Emerald',    hex: '#10b981' },
+    { name: 'Red',        hex: '#ef4444' },
+    { name: 'Orange',     hex: '#f97316' },
+    { name: 'Yellow',     hex: '#facc15' },
+    { name: 'Pink',       hex: '#ec4899' },
+  ];
 
-  // TransformControls mode ('translate', 'rotate', 'scale')
-  transformMode: 'translate' | 'rotate' | 'scale' = 'translate';
+  // ─── Bound handlers (stored for removeEventListener) ────────────────────────
+  private _onPointerDown!: (e: PointerEvent) => void;
+  private _onPointerMove!: (e: PointerEvent) => void;
+  private _onPointerUp!:   (e: PointerEvent) => void;
+  private _onResize!:      () => void;
 
-  // Currently selected decal for transformation
-  private selectedDecal: THREE.Mesh | null = null;
+  constructor(private ngZone: NgZone) {}
 
-  // Global cloth color for changing all parts at once
-  globalClothColor: string = '#ffffff';
-
-  // Computed property: check if logo is placed
-  get hasLogo(): boolean {
-    return this.decals.length > 0;
-  }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Lifecycle
+  // ═══════════════════════════════════════════════════════════════════════════
 
   ngAfterViewInit(): void {
-    this.initThreeJS();
-    this.loadModel();
-    this.setupClickListener();
-    this.animate();
-    this.setupResizeListener();
+    this.ngZone.runOutsideAngular(() => {
+      this.initScene();
+      this.loadModel();
+
+      this._onPointerDown = this.onPointerDown.bind(this);
+      this._onPointerMove = this.onPointerMove.bind(this);
+      this._onPointerUp   = this.onPointerUp.bind(this);
+      this._onResize      = this.onResize.bind(this);
+
+      this.renderer.domElement.addEventListener('pointerdown', this._onPointerDown);
+      window.addEventListener('pointermove', this._onPointerMove);
+      window.addEventListener('pointerup',   this._onPointerUp);
+      window.addEventListener('resize',      this._onResize);
+
+      this.loop();
+    });
   }
 
-  /**
-   * Initialize Three.js Scene, Camera, Renderer, Controls, and Lighting
-   */
-  private initThreeJS(): void {
-    const container = this.canvasContainer.nativeElement;
+  ngOnDestroy(): void {
+    cancelAnimationFrame(this.rafId);
+    this.renderer?.domElement.removeEventListener('pointerdown', this._onPointerDown);
+    window.removeEventListener('pointermove', this._onPointerMove);
+    window.removeEventListener('pointerup',   this._onPointerUp);
+    window.removeEventListener('resize',      this._onResize);
+    this.controls?.dispose();
+    this.destroyLogo();
+    this.logoTexture?.dispose();
+    this.renderer?.dispose();
+  }
 
-    // Create Scene
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Scene init
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private initScene(): void {
+    const el = this.canvasContainer.nativeElement;
+
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xf0f4f8);
 
-    // Create PerspectiveCamera
-    this.camera = new THREE.PerspectiveCamera(
-      45, // Field of view
-      container.clientWidth / container.clientHeight, // Aspect ratio
-      0.1, // Near clipping plane
-      1000 // Far clipping plane
-    );
-    this.camera.position.set(0, 3, 1); // Position camera to view the model
+    this.camera = new THREE.PerspectiveCamera(40, el.clientWidth / el.clientHeight, 0.01, 500);
+    this.camera.position.set(0, 0, 6);
 
-    // Create WebGLRenderer with antialiasing
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true
-    });
-    this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setSize(el.clientWidth, el.clientHeight);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    el.appendChild(this.renderer.domElement);
 
-    // Append renderer canvas to the container
-    container.appendChild(this.renderer.domElement);
-
-    // Add OrbitControls for user interaction
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = false; // Smooth camera movement
-    this.controls.dampingFactor = 0.05;
-    this.controls.minDistance = 2;
-    this.controls.maxDistance = 10;
-    this.controls.target.set(0, 0.5, 0); // Look at the center of the model
-
-    // Lock vertical rotation - only allow horizontal spinning
-    this.controls.minPolarAngle = 1;
-    this.controls.maxPolarAngle = 1;
-
-    // Disable panning to keep model centered
-    this.controls.enablePan = false;
-
-    // Initialize TransformControls
-    this.transformControl = new TransformControls(this.camera, this.renderer.domElement);
-    this.transformControl.setMode(this.transformMode);
-    this.scene.add(this.transformControl as any);
-
-    // Listen to TransformControls dragging events to disable OrbitControls
-    this.transformControl.addEventListener('dragging-changed', (event: any) => {
-      this.controls.enabled = !event.value;
-    });
-
-    // Add Lighting for realistic fabric materials
-
-    // Ambient Light - provides overall scene illumination
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    this.scene.add(ambientLight);
-
-    // Directional Light - simulates sunlight
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 7.5);
-    directionalLight.castShadow = false;
-    this.scene.add(directionalLight);
-
-    // Additional fill light from the opposite side
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-    fillLight.position.set(-5, 5, -5);
-    this.scene.add(fillLight);
-
-    // Optional: Add a ground plane for better visualization
-    const planeGeometry = new THREE.PlaneGeometry(20, 20);
-    const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = -Math.PI / 2;
-    plane.position.y = 0;
-    plane.receiveShadow = true;
-    this.scene.add(plane);
-  }
-
-  /**
-   * Load the 3D Model using GLTFLoader
-   */
-  loadModel(): void {
-    // Replace with your actual model path
-    const modelPath = './assets/glb/t_shirt.glb';
-
-    this.loader.load(
-      modelPath,
-      (gltf) => {
-        this.loadedModel = gltf.scene;
-
-        // Traverse the model to inspect meshes
-        this.loadedModel.traverse((child) => {
-          // Check if the child is a mesh
-          if ((child as THREE.Mesh).isMesh) {
-            const mesh = child as THREE.Mesh;
-
-            // Enable shadow casting and receiving
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-
-            // Ensure the material is a MeshStandardMaterial for proper lighting
-            if (mesh.material) {
-              // Clone the material to avoid shared references
-              if (Array.isArray(mesh.material)) {
-                mesh.material = mesh.material.map(mat => mat.clone());
-              } else {
-                mesh.material = (mesh.material as THREE.Material).clone();
-              }
-            }
-
-            // Initialize part color tracking
-            if (mesh.name && this.meshParts.includes(mesh.name)) {
-              const currentColor = this.getMeshCurrentColor(mesh);
-              this.partColors.set(mesh.name, currentColor);
-            }
-          }
-        });
-
-        // Center the model using bounding box calculation
-        const box = new THREE.Box3().setFromObject(this.loadedModel);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
-
-        // Move model so its center is at origin
-        this.loadedModel.position.sub(center);
-
-        // Position model at a comfortable height
-        this.loadedModel.position.y = 0.5;
-
-        // Calculate the actual center position after repositioning
-        const finalCenter = new THREE.Vector3(0, 1, 0);
-
-        // Update OrbitControls target to the exact center of the model
-        this.controls.target.copy(finalCenter);
-
-        // Position camera to look at the center
-        // Adjust camera distance based on model size
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const cameraDistance = maxDim * 5; // Adjust multiplier as needed
-        this.camera.position.set(
-          0,
-          finalCenter.y,
-          cameraDistance
-        );
-
-        // Update controls to apply the new target
-        this.controls.update();
-
-        // Add the model to the scene
-        this.scene.add(this.loadedModel);
-
-      },
-      undefined,
-      (error) => {
-        console.error('Error loading model:', error);
-      }
-    );
-  }
-
-  /**
-   * Get the current color of a mesh (for initialization)
-   */
-  private getMeshCurrentColor(mesh: THREE.Mesh): string {
-    if (mesh.material) {
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      const firstMaterial = materials[0];
-
-      if (firstMaterial instanceof THREE.MeshStandardMaterial ||
-          firstMaterial instanceof THREE.MeshPhongMaterial ||
-          firstMaterial instanceof THREE.MeshBasicMaterial) {
-        return '#' + firstMaterial.color.getHexString();
-      }
-    }
-    return '#ffffff'; // Default to white
-  }
-
-  /**
-   * Get the current color of a part (for display)
-   */
-  getPartColor(partName: string): string {
-    return this.partColors.get(partName) || '#ffffff';
-  }
-
-  /**
-   * Open the global color picker
-   */
-  openGlobalColorPicker(): void {
-    const colorPicker = document.getElementById('globalColorPicker') as HTMLInputElement;
-    if (colorPicker) {
-      colorPicker.click();
-    }
-  }
-
-  /**
-   * Handle global color change - changes all parts
-   */
-  onGlobalColorChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const hexColor = input.value;
-    this.globalClothColor = hexColor;
-
-    // Update all parts with the same color
-    this.meshParts.forEach(partName => {
-      this.changePartColor(partName, hexColor);
-      this.partColors.set(partName, hexColor);
-    });
-
-  }
-
-  /**
-   * Open the native color picker for a specific part
-   */
-  openColorPicker(index: number, partName: string): void {
-    this.selectedPart = partName;
-    const colorPicker = document.getElementById(`colorPicker-${index}`) as HTMLInputElement;
-    if (colorPicker) {
-      colorPicker.click();
-    }
-  }
-
-  /**
-   * Handle color change from native color picker
-   */
-  onColorChange(event: Event, partName: string): void {
-    const input = event.target as HTMLInputElement;
-    const hexColor = input.value;
-
-    // Update the part color
-    this.changePartColor(partName, hexColor);
-
-    // Store the color
-    this.partColors.set(partName, hexColor);
-
-  }
-
-  /**
-   * Change the color of a specific mesh part by name
-   */
-  changePartColor(meshName: string, hexColor: string): void {
-    if (!this.loadedModel) {
-      console.warn('Model not loaded yet');
-      return;
-    }
-
-    // Find the mesh by name in the scene
-    const mesh = this.loadedModel.getObjectByName(meshName) as THREE.Mesh;
-
-    if (mesh && mesh.isMesh) {
-      // Ensure the material exists
-      if (mesh.material) {
-        // Handle both single material and material arrays
-        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-
-        materials.forEach((material) => {
-          if (material instanceof THREE.MeshStandardMaterial ||
-              material instanceof THREE.MeshPhongMaterial ||
-              material instanceof THREE.MeshBasicMaterial) {
-            // Update the material color
-            material.color.set(hexColor);
-            material.needsUpdate = true;
-          }
-        });
-      }
-    } else {
-      console.warn(`Mesh with name "${meshName}" not found`);
-    }
-  }
-
-  /**
-   * Animation loop
-   */
-  private animate(): void {
-    this.animationFrameId = requestAnimationFrame(() => this.animate());
-
-    // Update controls for damping effect
+    this.controls.enableDamping  = true;
+    this.controls.dampingFactor  = 0.07;
+    this.controls.enablePan      = false;
+    this.controls.minDistance    = 2;
+    this.controls.maxDistance    = 14;
+    this.controls.target.set(0, 0, 0);
     this.controls.update();
 
-    // Render the scene
-    this.renderer.render(this.scene, this.camera);
+    // Lighting
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const key = new THREE.DirectionalLight(0xffffff, 1.2);
+    key.position.set(4, 6, 5);
+    this.scene.add(key);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.4);
+    fill.position.set(-4, 2, -3);
+    this.scene.add(fill);
   }
 
-  /**
-   * Setup window resize listener to keep the scene responsive
-   */
-  private setupResizeListener(): void {
-    window.addEventListener('resize', this.onWindowResize.bind(this));
-  }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Model loading
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  /**
-   * Handle window resize events
-   */
-  private onWindowResize(): void {
-    const container = this.canvasContainer.nativeElement;
+  loadModel(): void {
+    this.loader.load('./assets/glb/t_shirt.glb', (gltf) => {
+      this.model = gltf.scene;
 
-    // Update camera aspect ratio
-    this.camera.aspect = container.clientWidth / container.clientHeight;
-    this.camera.updateProjectionMatrix();
-
-    // Update renderer size
-    this.renderer.setSize(container.clientWidth, container.clientHeight);
-  }
-
-  // ===== LOGO PLACEMENT WITH TRANSFORMCONTROLS =====
-
-  /**
-   * Handle logo file upload from user
-   */
-  handleLogoUpload(event: Event): void {
-    const input = event.target as HTMLInputElement;
-
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please upload a valid image file (PNG, JPG, JPEG)');
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-      if (file.size > maxSize) {
-        alert('File size too large. Please upload an image smaller than 5MB.');
-        return;
-      }
-
-      // Create FileReader to read the uploaded file
-      const reader = new FileReader();
-
-      reader.onload = (e: ProgressEvent<FileReader>) => {
-        if (e.target?.result) {
-          const imageUrl = e.target.result as string;
-
-          // Load the image as a THREE.js texture
-          this.textureLoader.load(
-            imageUrl,
-            (texture) => {
-              // Dispose old texture if exists
-              if (this.logoTexture) {
-                this.logoTexture.dispose();
-              }
-
-              // Set the new texture
-              this.logoTexture = texture;
-
-              // Calculate and store aspect ratio (width / height)
-              const image = texture.image;
-              if (image && image.width && image.height) {
-                this.logoAspectRatio = image.width / image.height;
-              } else {
-                this.logoAspectRatio = 1.0; // Default to square if dimensions unavailable
-              }
-            },
-            undefined,
-            (error) => {
-              console.error('Error loading uploaded logo:', error);
-              alert('Failed to load the logo. Please try another image.');
-            }
-          );
+      // Clone materials & collect colors
+      this.model.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        mesh.castShadow = mesh.receiveShadow = true;
+        if (mesh.material) {
+          mesh.material = Array.isArray(mesh.material)
+            ? mesh.material.map((m: THREE.Material) => m.clone())
+            : (mesh.material as THREE.Material).clone();
         }
-      };
-
-      reader.onerror = () => {
-        alert('Failed to read the file. Please try again.');
-      };
-
-      // Read the file as a data URL
-      reader.readAsDataURL(file);
-    }
-  }
-
-  /**
-   * Remove uploaded logo and reset
-   */
-  removeUploadedLogo(): void {
-    if (this.logoTexture) {
-      this.logoTexture.dispose();
-      this.logoTexture = null;
-    }
-
-    // Reset aspect ratio
-    this.logoAspectRatio = 1.0;
-
-    // Clear all existing decals
-    this.clearAllDecals();
-
-    // Detach transform control
-    this.transformControl.detach();
-    this.selectedDecal = null;
-
-  }
-
-  /**
-   * Setup click listener for decal placement
-   */
-  private setupClickListener(): void {
-    const canvas = this.renderer.domElement;
-    canvas.addEventListener('click', this.onCanvasClick.bind(this));
-  }
-
-  /**
-   * Handle canvas click events for decal placement and selection
-   */
-  private onCanvasClick(event: MouseEvent): void {
-    // If transform control is being used, don't place new decals
-    if (this.transformControl.dragging) {
-      return;
-    }
-
-    // Calculate mouse position in normalized device coordinates (-1 to +1)
-    const canvas = this.renderer.domElement;
-    const rect = canvas.getBoundingClientRect();
-    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-    // Update raycaster with camera and mouse position
-    this.raycaster.setFromCamera(this.mouse, this.camera);
-
-    // First, check if clicking on an existing decal
-    const decalIntersects = this.raycaster.intersectObjects(this.decals, false);
-
-    if (decalIntersects.length > 0) {
-      // Clicked on a decal - attach TransformControls to it
-      const clickedDecal = decalIntersects[0].object as THREE.Mesh;
-      this.selectedDecal = clickedDecal;
-      this.transformControl.attach(clickedDecal);
-      return;
-    }
-
-    // If no decal clicked and logo is loaded, place a new decal
-    if (!this.logoTexture || !this.loadedModel) {
-      return;
-    }
-
-    // Find intersections with the loaded model meshes
-    const intersects = this.raycaster.intersectObject(this.loadedModel, true);
-
-    if (intersects.length > 0) {
-      const intersection = intersects[0];
-
-      // Ensure we hit a mesh
-      if (intersection.object instanceof THREE.Mesh && intersection.face) {
-        const position = intersection.point;
-        const normal = intersection.face.normal.clone();
-
-        // Transform the normal to world space
-        const mesh = intersection.object;
-        normal.transformDirection(mesh.matrixWorld);
-
-        // Add decal at the intersection point
-        this.addDecal(position, normal, mesh);
-      }
-    }
-  }
-
-  /**
-   * Add a decal to the mesh at the specified position and orientation
-   * ONLY ONE LOGO ALLOWED - removes existing logo before placing new one
-   */
-  private addDecal(position: THREE.Vector3, normal: THREE.Vector3, targetMesh: THREE.Mesh): void {
-    if (!this.logoTexture) {
-      console.warn('Logo texture not loaded yet');
-      return;
-    }
-
-    // IMPORTANT: Remove existing logo if present (only one logo allowed)
-    if (this.decals.length > 0) {
-      this.removePlacedLogo();
-    }
-
-    // Calculate decal size with aspect ratio
-    const baseSize = 0.5;
-    const size = new THREE.Vector3(
-      baseSize * this.logoAspectRatio, // Width: adjusted by aspect ratio
-      baseSize,                         // Height: base size
-      baseSize                          // Depth
-    );
-
-    // Create a helper object to calculate the correct orientation
-    const orientation = new THREE.Euler();
-    const dummy = new THREE.Object3D();
-
-    // Orient the dummy object to face along the normal
-    dummy.position.copy(position);
-    dummy.lookAt(position.clone().add(normal));
-
-    // Get the rotation from the dummy object
-    orientation.copy(dummy.rotation);
-
-    // Create DecalGeometry
-    const decalGeometry = new DecalGeometry(targetMesh, position, orientation, size);
-
-    // Create material for the decal with proper settings to prevent z-fighting
-    const decalMaterial = new THREE.MeshPhongMaterial({
-      map: this.logoTexture,
-      transparent: true,
-      depthTest: true,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -50,
-      polygonOffsetUnits: -20,
-    });
-
-    // Create the decal mesh
-    const decalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
-
-    // Add to scene
-    this.scene.add(decalMesh);
-
-    // Add to decals array
-    this.decals.push(decalMesh);
-
-    // Automatically select and attach transform control to the new decal
-    this.selectedDecal = decalMesh;
-    this.transformControl.attach(decalMesh);
-
-  }
-
-  /**
-   * Set the TransformControls mode
-   */
-  setTransformMode(mode: 'translate' | 'rotate' | 'scale'): void {
-    this.transformMode = mode;
-    this.transformControl.setMode(mode);
-  }
-
-  /**
-   * Remove the placed logo (but keep the uploaded texture)
-   */
-  removePlacedLogo(): void {
-    if (this.decals.length === 0) {
-      return;
-    }
-
-    // Remove from scene and dispose
-    this.decals.forEach((decal) => {
-      this.scene.remove(decal);
-      if (decal.geometry) {
-        decal.geometry.dispose();
-      }
-      if (decal.material) {
-        const materials = Array.isArray(decal.material) ? decal.material : [decal.material];
-        materials.forEach(mat => mat.dispose());
-      }
-    });
-
-    this.decals = [];
-    this.selectedDecal = null;
-    this.transformControl.detach();
-
-  }
-
-  /**
-   * Clear all placed decals from the scene (same as removePlacedLogo since we only have one)
-   */
-  clearAllDecals(): void {
-    this.removePlacedLogo();
-  }
-
-  // ===== EXPORT PRODUCTION DATA =====
-
-  /**
-   * Export the current design configuration as JSON for the manufacturing team
-   */
-  exportProductionData(): void {
-    const productionData: any = {
-      timestamp: new Date().toISOString(),
-      version: 'v2.0',
-      garment: {
-        colors: this.extractGarmentColors()
-      },
-      logos: this.extractLogoData()
-    };
-
-    // Convert to formatted JSON string
-    const jsonString = JSON.stringify(productionData, null, 2);
-
-    // Download as JSON file
-    this.downloadJSON(jsonString, `design-export-${Date.now()}.json`);
-
-    // Show success message
-    alert('Design exported successfully! Check console and downloads folder.');
-  }
-
-  /**
-   * Extract garment color information
-   */
-  private extractGarmentColors(): any {
-    const colors: any = {};
-
-    // Use the stored part colors
-    this.partColors.forEach((color, partName) => {
-      colors[partName] = {
-        hex: color,
-        rgb: this.hexToRgb(color)
-      };
-    });
-
-    return colors;
-  }
-
-  /**
-   * Convert hex color to RGB object
-   */
-  private hexToRgb(hex: string): { r: number, g: number, b: number } {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
-  }
-
-  /**
-   * Extract logo/decal placement data
-   */
-  private extractLogoData(): any[] {
-    const logoData: any[] = [];
-
-    this.decals.forEach((decal, index) => {
-      const logoEntry: any = {
-        id: `logo_${index + 1}`,
-        position: {
-          x: parseFloat(decal.position.x.toFixed(4)),
-          y: parseFloat(decal.position.y.toFixed(4)),
-          z: parseFloat(decal.position.z.toFixed(4))
-        },
-        rotation: {
-          x: parseFloat(decal.rotation.x.toFixed(4)),
-          y: parseFloat(decal.rotation.y.toFixed(4)),
-          z: parseFloat(decal.rotation.z.toFixed(4))
-        },
-        scale: {
-          x: parseFloat(decal.scale.x.toFixed(4)),
-          y: parseFloat(decal.scale.y.toFixed(4)),
-          z: parseFloat(decal.scale.z.toFixed(4))
-        },
-        logoTexture: 'custom_uploaded_logo.png'
-      };
-
-      logoData.push(logoEntry);
-    });
-
-    return logoData;
-  }
-
-  /**
-   * Download JSON data as a file
-   */
-  private downloadJSON(jsonString: string, filename: string): void {
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  }
-
-  /**
-   * Cleanup on component destroy to prevent memory leaks
-   */
-  ngOnDestroy(): void {
-    // Remove resize listener
-    window.removeEventListener('resize', this.onWindowResize.bind(this));
-
-    // Remove click listener
-    if (this.renderer && this.renderer.domElement) {
-      this.renderer.domElement.removeEventListener('click', this.onCanvasClick.bind(this));
-    }
-
-    // Cancel animation frame
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
-
-    // Dispose of controls
-    if (this.controls) {
-      this.controls.dispose();
-    }
-
-    // Dispose of transform control
-    if (this.transformControl) {
-      this.transformControl.dispose();
-    }
-
-    // Dispose of all decals
-    this.clearAllDecals();
-
-    // Dispose of logo texture
-    if (this.logoTexture) {
-      this.logoTexture.dispose();
-    }
-
-    // Dispose of renderer
-    if (this.renderer) {
-      this.renderer.dispose();
-    }
-
-    // Dispose of all geometries and materials in the scene
-    if (this.scene) {
-      this.scene.traverse((object) => {
-        if ((object as THREE.Mesh).isMesh) {
-          const mesh = object as THREE.Mesh;
-
-          // Dispose geometry
-          if (mesh.geometry) {
-            mesh.geometry.dispose();
-          }
-
-          // Dispose materials
-          if (mesh.material) {
-            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-            materials.forEach((material) => {
-              // Dispose any textures
-              const mat = material as any;
-              if (mat.map) mat.map.dispose();
-              if (mat.normalMap) mat.normalMap.dispose();
-              if (mat.roughnessMap) mat.roughnessMap.dispose();
-              if (mat.metalnessMap) mat.metalnessMap.dispose();
-              if (mat.emissiveMap) mat.emissiveMap.dispose();
-              if (mat.bumpMap) mat.bumpMap.dispose();
-              if (mat.displacementMap) mat.displacementMap.dispose();
-
-              // Dispose material
-              material.dispose();
-            });
-          }
+        if (this.meshParts.includes(mesh.name)) {
+          this.partColors.set(mesh.name, this.getMeshColor(mesh));
         }
       });
+
+      // ── Fix orientation: if model is flat (lying down), rotate upright ──
+      const rawBox  = new THREE.Box3().setFromObject(this.model);
+      const rawSize = rawBox.getSize(new THREE.Vector3());
+      if (rawSize.y < rawSize.x * 0.8) {
+        this.model.rotation.x = -Math.PI / 2;
+      }
+
+      // ── Scale to fixed height ──
+      const box1  = new THREE.Box3().setFromObject(this.model);
+      const size1 = box1.getSize(new THREE.Vector3());
+      const scale = 2.4 / size1.y;
+      this.model.scale.multiplyScalar(scale);
+
+      // ── Center precisely (must recompute after scale) ──
+      const box2   = new THREE.Box3().setFromObject(this.model);
+      const center = box2.getCenter(new THREE.Vector3());
+      this.model.position.sub(center);
+
+      // ── Bounding sphere for camera/zoom math ──
+      const sphere = box2.getBoundingSphere(new THREE.Sphere());
+      this.modelRadius = sphere.radius;
+
+      // ── Fit camera ──
+      const fovRad = (this.camera.fov * Math.PI) / 180;
+      const dist   = (this.modelRadius / Math.sin(fovRad / 2)) * 1.15;
+      this.camera.position.set(0, 0, dist);
+      this.camera.lookAt(0, 0, 0);
+      this.controls.target.set(0, 0, 0);
+      this.controls.minDistance = dist * 0.3;
+      this.controls.maxDistance = dist * 3.5;
+
+      // ── Lock to horizontal orbit only ──
+      this.controls.minPolarAngle = Math.PI / 2;
+      this.controls.maxPolarAngle = Math.PI / 2;
+      this.controls.update();
+
+      this.scene.add(this.model);
+    }, undefined, (err) => console.error('GLB load error:', err));
+  }
+
+  private getMeshColor(mesh: THREE.Mesh): string {
+    const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as any;
+    return mat?.color ? '#' + mat.color.getHexString() : '#ffffff';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Colors
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  getPartLabel(p: string) { return PART_LABELS[p] || p; }
+  getPartColor(p: string) { return this.partColors.get(p) || '#ffffff'; }
+
+  applyGlobalColor(hex: string): void {
+    this.globalClothColor = hex;
+    this.meshParts.forEach(p => { this.setMeshColor(p, hex); this.partColors.set(p, hex); });
+  }
+
+  onGlobalColorChange(e: Event): void {
+    this.applyGlobalColor((e.target as HTMLInputElement).value);
+  }
+
+  openGlobalColorPicker(): void {
+    (document.getElementById('globalColorPicker') as HTMLInputElement)?.click();
+  }
+
+  openColorPicker(i: number, part: string): void {
+    this.selectedPart = part;
+    (document.getElementById(`colorPicker-${i}`) as HTMLInputElement)?.click();
+  }
+
+  onColorChange(e: Event, part: string): void {
+    const hex = (e.target as HTMLInputElement).value;
+    this.setMeshColor(part, hex);
+    this.partColors.set(part, hex);
+  }
+
+  private setMeshColor(name: string, hex: string): void {
+    const mesh = this.model?.getObjectByName(name) as THREE.Mesh;
+    if (!mesh?.isMesh) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    mats.forEach((m: any) => { if (m?.color) { m.color.set(hex); m.needsUpdate = true; } });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Camera controls
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  zoomIn(): void {
+    const dir = new THREE.Vector3().subVectors(this.controls.target, this.camera.position).normalize();
+    this.camera.position.addScaledVector(dir, this.modelRadius * 0.3);
+    this.controls.update();
+  }
+
+  zoomOut(): void {
+    const dir = new THREE.Vector3().subVectors(this.camera.position, this.controls.target).normalize();
+    this.camera.position.addScaledVector(dir, this.modelRadius * 0.3);
+    this.controls.update();
+  }
+
+  resetCamera(): void {
+    const fovRad = (this.camera.fov * Math.PI) / 180;
+    const dist   = (this.modelRadius / Math.sin(fovRad / 2)) * 1.15;
+    this.camera.position.set(0, 0, dist);
+    this.camera.lookAt(0, 0, 0);
+    this.controls.target.set(0, 0, 0);
+    this.controls.minPolarAngle = Math.PI / 2;
+    this.controls.maxPolarAngle = Math.PI / 2;
+    this.controls.update();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Logo upload / remove
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  handleLogoUpload(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('Please upload an image.'); return; }
+    if (file.size > 5 * 1024 * 1024)    { alert('Max file size is 5 MB.');  return; }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      this.texLoader.load(ev.target!.result as string, (tex) => {
+        this.logoTexture?.dispose();
+        this.logoTexture = tex;
+        this.logoAspect  = tex.image?.width && tex.image?.height
+          ? tex.image.width / tex.image.height : 1;
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeUploadedLogo(): void {
+    this.destroyLogo();
+    this.logoTexture?.dispose();
+    this.logoTexture = null;
+    this.logoAspect  = 1;
+  }
+
+  removePlacedLogo(): void {
+    this.destroyLogo();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Logo 3D mesh  (PlaneGeometry hugging the shirt surface)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private buildLogoMesh(): THREE.Mesh {
+    const h    = this.modelRadius * 0.28;
+    const w    = h * this.logoAspect;
+    const geom = new THREE.PlaneGeometry(w, h);
+    const mat  = new THREE.MeshBasicMaterial({
+      map:         this.logoTexture!,
+      transparent: true,
+      depthWrite:  false,
+      side:        THREE.DoubleSide,
+      alphaTest:   0.01,
+    });
+    const mesh       = new THREE.Mesh(geom, mat);
+    mesh.renderOrder = 999;
+    return mesh;
+  }
+
+  // Recomputes position/rotation/scale of logo.mesh from logo state
+  private applyLogoTransform(): void {
+    if (!this.logo) return;
+    const { anchorPoint, anchorNormal, offsetX, offsetY, rotation, scale, mesh } = this.logo;
+
+    // Build tangent frame from surface normal
+    const n   = anchorNormal.clone().normalize();
+    const up  = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    const tan = new THREE.Vector3().crossVectors(up, n).normalize();
+    const bit = new THREE.Vector3().crossVectors(n, tan).normalize();
+
+    // World position: anchor + offset along tangent/bitangent + small nudge outward
+    const nudge = this.modelRadius * 0.015;
+    const pos   = anchorPoint.clone()
+      .addScaledVector(tan, offsetX)
+      .addScaledVector(bit, offsetY)
+      .addScaledVector(n,   nudge);
+
+    mesh.position.copy(pos);
+
+    // Orientation: face outward along normal, then rotate around normal
+    const baseQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
+    const rotQ  = new THREE.Quaternion().setFromAxisAngle(n, rotation);
+    mesh.quaternion.copy(rotQ).multiply(baseQ);
+
+    mesh.scale.setScalar(scale);
+  }
+
+  private placeLogo(hitPoint: THREE.Vector3, hitNormal: THREE.Vector3): void {
+    if (!this.logoTexture) return;
+    this.destroyLogo();
+
+    const mesh = this.buildLogoMesh();
+    this.scene.add(mesh);
+
+    this.logo = {
+      mesh,
+      anchorPoint:  hitPoint.clone(),
+      anchorNormal: hitNormal.clone(),
+      offsetX:  0,
+      offsetY:  0,
+      rotation: 0,
+      scale:    1,
+    };
+    this.applyLogoTransform();
+
+    // Select immediately after placing
+    this.logoSelected      = true;
+    this.controls.enabled  = false;
+  }
+
+  private destroyLogo(): void {
+    if (!this.logo) return;
+    this.scene.remove(this.logo.mesh);
+    this.logo.mesh.geometry.dispose();
+    const mats = Array.isArray(this.logo.mesh.material)
+      ? this.logo.mesh.material : [this.logo.mesh.material];
+    mats.forEach((m: any) => m?.dispose());
+    this.logo         = null;
+    this.logoSelected = false;
+    this.activeHandle = null;
+    this.controls.enabled = true;
+    this.overlayHandles   = [];
+    this.overlayBoxStyle  = { display: 'none' };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 2-D overlay: project logo center to screen, compute handle positions
+  // Called every frame from the render loop (outside Angular zone).
+  // Only touches plain object fields — Angular will pick up changes on next tick
+  // via zone re-entry when pointer events fire, or via markForCheck in CD.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private projectLogo(): void {
+    if (!this.logo) {
+      this.logoBox.cx = this.logoBox.cy = 0;
+      this.logoBox.hw = this.logoBox.hh = 0;
+      return;
     }
 
-    // Clear the scene
-    if (this.scene) {
-      while (this.scene.children.length > 0) {
-        this.scene.remove(this.scene.children[0]);
+    const { anchorPoint, anchorNormal, offsetX, offsetY, scale } = this.logo;
+    const n   = anchorNormal.clone().normalize();
+    const up  = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+    const tan = new THREE.Vector3().crossVectors(up, n).normalize();
+    const bit = new THREE.Vector3().crossVectors(n, tan).normalize();
+    const nudge = this.modelRadius * 0.015;
+
+    const center3D = anchorPoint.clone()
+      .addScaledVector(tan, offsetX)
+      .addScaledVector(bit, offsetY)
+      .addScaledVector(n,   nudge);
+
+    const cs = this.toScreen(center3D);
+    this.logoBox.cx = cs.x;
+    this.logoBox.cy = cs.y;
+
+    // Project edge midpoints to estimate screen extents
+    const hw3D = this.modelRadius * 0.28 * this.logoAspect * scale / 2;
+    const hh3D = this.modelRadius * 0.28 * scale / 2;
+    const rEdge = this.toScreen(center3D.clone().addScaledVector(tan, hw3D));
+    const tEdge = this.toScreen(center3D.clone().addScaledVector(bit, hh3D));
+    this.logoBox.hw = Math.max(16, Math.abs(rEdge.x - cs.x));
+    this.logoBox.hh = Math.max(16, Math.abs(tEdge.y - cs.y));
+  }
+
+  private toScreen(v: THREE.Vector3): { x: number; y: number } {
+    const p  = v.clone().project(this.camera);
+    const el = this.canvasContainer.nativeElement;
+    return {
+      x: (p.x + 1) / 2 * el.clientWidth,
+      y: (-p.y + 1) / 2 * el.clientHeight,
+    };
+  }
+
+  // Sync the visible overlay divs — called from Angular zone after state changes
+  private syncOverlay(): void {
+    if (!this.logo || !this.logoSelected) {
+      this.overlayBoxStyle  = { display: 'none' };
+      this.overlayHandles   = [];
+      return;
+    }
+    const { cx, cy, hw, hh } = this.logoBox;
+    this.overlayBoxStyle = {
+      display: 'block',
+      left:   `${cx - hw}px`,
+      top:    `${cy - hh}px`,
+      width:  `${hw * 2}px`,
+      height: `${hh * 2}px`,
+    };
+    this.rotateHandlePos = { x: cx, y: cy - hh - 36 };
+    this.overlayHandles = [
+      { type: 'scale-tl', x: cx - hw, y: cy - hh, cursor: 'nwse-resize' },
+      { type: 'scale-tr', x: cx + hw, y: cy - hh, cursor: 'nesw-resize' },
+      { type: 'scale-bl', x: cx - hw, y: cy + hh, cursor: 'nesw-resize' },
+      { type: 'scale-br', x: cx + hw, y: cy + hh, cursor: 'nwse-resize' },
+    ];
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Hit testing (canvas-local px)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private hitRotate(sx: number, sy: number): boolean {
+    return Math.hypot(sx - this.rotateHandlePos.x, sy - this.rotateHandlePos.y) < 20;
+  }
+
+  private hitScale(sx: number, sy: number): OverlayHandle | null {
+    return this.overlayHandles.find(h => Math.hypot(h.x - sx, h.y - sy) < 18) ?? null;
+  }
+
+  private hitBody(sx: number, sy: number): boolean {
+    const { cx, cy, hw, hh } = this.logoBox;
+    return Math.abs(sx - cx) <= hw && Math.abs(sy - cy) <= hh;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Pointer events
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private onPointerDown(e: PointerEvent): void {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const sx   = e.clientX - rect.left;
+    const sy   = e.clientY - rect.top;
+
+    if (this.logo) {
+      // ── Logo selected: check handles first ──
+      if (this.logoSelected) {
+        if (this.hitRotate(sx, sy)) {
+          this.beginDrag('rotate', e);
+          e.stopPropagation();
+          return;
+        }
+        const sh = this.hitScale(sx, sy);
+        if (sh) {
+          this.beginDrag(sh.type, e);
+          e.stopPropagation();
+          return;
+        }
+      }
+
+      // ── Click inside logo body: select + start move ──
+      if (this.hitBody(sx, sy)) {
+        this.ngZone.run(() => {
+          this.logoSelected     = true;
+          this.controls.enabled = false;
+          this.syncOverlay();
+        });
+        this.beginDrag('move', e);
+        e.stopPropagation();
+        return;
+      }
+
+      // ── Click outside logo: deselect, let orbit run ──
+      if (this.logoSelected) {
+        this.ngZone.run(() => {
+          this.logoSelected     = false;
+          this.controls.enabled = true;
+          this.syncOverlay();
+        });
+      }
+      return;
+    }
+
+    // ── No logo yet: place on shirt ──
+    if (this.logoTexture && this.model) {
+      const ndcX = (sx / rect.width)  *  2 - 1;
+      const ndcY = (sy / rect.height) * -2 + 1;
+      const ray  = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), this.camera);
+      const hits = ray.intersectObject(this.model, true);
+      if (hits.length && hits[0].face) {
+        const hit    = hits[0];
+        const normal = hit.face!.normal.clone()
+          .transformDirection((hit.object as THREE.Mesh).matrixWorld)
+          .normalize();
+        this.ngZone.run(() => {
+          this.placeLogo(hit.point, normal);
+          this.syncOverlay();
+        });
+        e.stopPropagation();
       }
     }
+  }
+
+  private beginDrag(type: HandleType, e: PointerEvent): void {
+    this.activeHandle = type;
+    this.dragStart    = { x: e.clientX, y: e.clientY };
+    this.dragOrigin   = {
+      offsetX:  this.logo!.offsetX,
+      offsetY:  this.logo!.offsetY,
+      rotation: this.logo!.rotation,
+      scale:    this.logo!.scale,
+    };
+    this.controls.enabled = false;
+  }
+
+  private onPointerMove(e: PointerEvent): void {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const sx   = e.clientX - rect.left;
+    const sy   = e.clientY - rect.top;
+
+    // ── Cursor updates (no drag active) ──
+    if (!this.activeHandle) {
+      this.updateCursor(sx, sy);
+      return;
+    }
+
+    if (!this.logo) return;
+
+    const el     = this.canvasContainer.nativeElement;
+    // world units per screen pixel (approximate)
+    const wpp    = (this.modelRadius * 2.4) / el.clientHeight;
+    // canvas-local delta from drag start
+    const dsx    = e.clientX - this.dragStart.x;
+    const dsy    = e.clientY - this.dragStart.y;
+    // current canvas-local mouse pos
+    const curSx  = sx;
+    const curSy  = sy;
+    // drag-start in canvas-local
+    const startSx = this.dragStart.x - rect.left;
+    const startSy = this.dragStart.y - rect.top;
+
+    if (this.activeHandle === 'move') {
+      this.logo.offsetX = this.dragOrigin.offsetX + dsx * wpp;
+      this.logo.offsetY = this.dragOrigin.offsetY - dsy * wpp;
+      this.applyLogoTransform();
+
+    } else if (this.activeHandle === 'rotate') {
+      const cx = this.logoBox.cx;
+      const cy = this.logoBox.cy;
+      const a0 = Math.atan2(startSy - cy, startSx - cx);
+      const a1 = Math.atan2(curSy  - cy, curSx  - cx);
+      this.logo.rotation = this.dragOrigin.rotation + (a1 - a0);
+      this.applyLogoTransform();
+
+    } else if (this.activeHandle?.startsWith('scale')) {
+      const cx  = this.logoBox.cx;
+      const cy  = this.logoBox.cy;
+      const d0  = Math.hypot(startSx - cx, startSy - cy);
+      const d1  = Math.hypot(curSx   - cx, curSy   - cy);
+      const ratio = d0 > 1 ? d1 / d0 : 1;
+      this.logo.scale = Math.max(0.05, this.dragOrigin.scale * ratio);
+      this.applyLogoTransform();
+    }
+  }
+
+  private onPointerUp(_e: PointerEvent): void {
+    if (!this.activeHandle) return;
+    this.activeHandle = null;
+    // Keep orbit disabled while logo is selected
+    this.controls.enabled = !this.logoSelected;
+  }
+
+  private updateCursor(sx: number, sy: number): void {
+    if (!this.logo) {
+      this.canvasCursor = this.logoTexture ? 'crosshair' : 'default';
+      return;
+    }
+    if (this.logoSelected) {
+      if (this.hitRotate(sx, sy))           { this.canvasCursor = 'grab';       return; }
+      const sh = this.hitScale(sx, sy);
+      if (sh)                               { this.canvasCursor = sh.cursor;    return; }
+    }
+    if (this.hitBody(sx, sy))              { this.canvasCursor = 'move';       return; }
+    this.canvasCursor = 'default';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Render loop
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private loop(): void {
+    this.rafId = requestAnimationFrame(() => this.loop());
+    this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+    // Always project logo so hit-testing is accurate even when deselected
+    if (this.logo) {
+      this.projectLogo();
+      if (this.logoSelected) {
+        // Sync overlay every frame while selected so it tracks the model as it rotates
+        this.ngZone.run(() => this.syncOverlay());
+      }
+    }
+  }
+
+  private onResize(): void {
+    const el = this.canvasContainer.nativeElement;
+    this.camera.aspect = el.clientWidth / el.clientHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(el.clientWidth, el.clientHeight);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Export
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  exportProductionData(): void {
+    const colors: any = {};
+    this.partColors.forEach((hex, name) => {
+      const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      colors[name] = {
+        label: this.getPartLabel(name), hex,
+        rgb: r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : null,
+      };
+    });
+    const logo = this.logo ? {
+      offsetX:  this.logo.offsetX,
+      offsetY:  this.logo.offsetY,
+      rotation: this.logo.rotation,
+      scale:    this.logo.scale,
+    } : null;
+    const json = JSON.stringify(
+      { timestamp: new Date().toISOString(), version: 'v5.0', garment: { colors }, logo },
+      null, 2,
+    );
+    const a = Object.assign(document.createElement('a'), {
+      href:     URL.createObjectURL(new Blob([json], { type: 'application/json' })),
+      download: `design-${Date.now()}.json`,
+    });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 }

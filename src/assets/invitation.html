@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Wedding Invitation | Save The Date</title>
+
+	<!-- Premium Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Great+Vibes&family=Montserrat:wght@200;400;500&display=swap" rel="stylesheet">
+
+	<!-- Leaflet.js CSS for the Multi-Location Map -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+	<style>
+    /* Core Styling Tokens */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-color: #fbf9f6;
+      --primary-color: #8c7662;
+      --text-dark: #3a3a3a;
+      --text-muted: #7a746d;
+      --accent-soft: #e3dcd2;
+      --font-serif: 'Cormorant Garamond', serif;
+      --font-script: 'Great Vibes', cursive;
+      --font-sans: 'Montserrat', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+      font-family: var(--font-serif);
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    /* Hero Wrapper */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(rgba(251, 249, 246, 0.4), rgba(251, 249, 246, 0.2)),
+      url('https://images.unsplash.com/photo-1546842931-886c185b4c8c?auto=format&fit=crop&q=80&w=1200') no-repeat center center/cover;
+      padding: 20px;
+    }
+    .hero-title {
+      font-family: var(--font-script);
+      font-size: 5rem;
+      color: var(--primary-color);
+      line-height: 1.2;
+      margin-bottom: 15px;
+    }
+    .hero-subtitle {
+      font-family: var(--font-sans);
+      font-weight: 200;
+      font-size: 0.9rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .section {
+      padding: 80px 24px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .section-title {
+      font-family: var(--font-script);
+      font-size: 3.8rem;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+    }
+
+    /* Countdown Grid */
+    .countdown-container {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 40px 0;
+    }
+    .timer-block {
+      background: #fff;
+      padding: 20px 15px;
+      border-radius: 4px;
+      box-shadow: 0 10px 30px rgba(140, 118, 98, 0.06);
+      min-width: 75px;
+      border: 1px solid rgba(140, 118, 98, 0.1);
+    }
+    .timer-num { display: block; font-size: 2rem; color: var(--primary-color); }
+    .timer-label { font-family: var(--font-sans); font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); }
+
+    /* Multi-Location Address Cards */
+    .location-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      margin-top: 40px;
+    }
+    .location-card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 4px;
+      border: 1px solid rgba(140, 118, 98, 0.12);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+      text-align: center;
+    }
+    .location-type {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      color: var(--primary-color);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .location-name {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      font-weight: 400;
+    }
+    .address-text {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      font-style: italic;
+      margin-bottom: 15px;
+    }
+
+    /* Map Element Styling */
+    #multi-location-map {
+      height: 380px;
+      width: 100%;
+      margin-top: 40px;
+      border-radius: 4px;
+      border: 1px solid rgba(140, 118, 98, 0.2);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+      z-index: 1; /* Keep leaflet controls clean */
+    }
+
+    /* RSVP Form Structure */
+    .form-card {
+      background: #fff;
+      padding: 40px 30px;
+      border: 1px solid rgba(140, 118, 98, 0.1);
+      text-align: left;
+    }
+    .input-group { margin-bottom: 25px; }
+    .input-group label {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .input-group input[type="text"], .input-group select {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e3e0da;
+      background-color: #faf9f6;
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      outline: none;
+    }
+    .radio-options { display: flex; gap: 20px; margin-top: 10px; }
+    .radio-options label { font-family: var(--font-serif); font-size: 1.1rem; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
+    .submit-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 16px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+
+    @media (min-width: 600px) {
+      .location-grid { flex-direction: row; }
+      .location-card { flex: 1; }
+    }
+	</style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<header class="hero">
+	<h1 class="hero-title">Julian & Elena</h1>
+	<p class="hero-subtitle">Save Our Date • 10.24.2026</p>
+</header>
+
+<!-- Timing & Countdown -->
+<section class="section">
+	<h2 class="section-title">The Countdown</h2>
+	<p style="font-size: 1.3rem; color: var(--text-muted); font-style: italic;">We can't wait to celebrate this moment with you.</p>
+	<div class="countdown-container">
+		<div class="timer-block"><span class="timer-num" id="d">00</span><div class="timer-label">Days</div></div>
+		<div class="timer-block"><span class="timer-num" id="h">00</span><div class="timer-label">Hours</div></div>
+		<div class="timer-block"><span class="timer-num" id="m">00</span><div class="timer-label">Mins</div></div>
+		<div class="timer-block"><span class="timer-num" id="s">00</span><div class="timer-label">Secs</div></div>
+	</div>
+</section>
+
+<!-- Locations & Route Details -->
+<section class="section" style="background-color: #f6f3ee; max-width: 100%;">
+	<div style="max-width: 800px; margin: 0 auto;">
+		<h2 class="section-title">Locations & Route</h2>
+		<p style="font-size: 1.2rem; color: var(--text-muted);">The ceremony and celebration will be held across two beautiful venues:</p>
+
+		<div class="location-grid">
+			<!-- Location 1: The Church -->
+			<div class="location-card">
+				<div class="location-type">The Ceremony</div>
+				<h3 class="location-name">St. Grace Church</h3>
+				<p class="address-text">456 Chapel Hill Road, Grace Valley</p>
+				<p style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--primary-color);">TIME: 1:00 PM</p>
+			</div>
+
+			<!-- Location 2: The Reception Hall -->
+			<div class="location-card">
+				<div class="location-type">The Celebration</div>
+				<h3 class="location-name">The Rosewood Hall</h3>
+				<p class="address-text">789 Grand Avenue, Banquet District</p>
+				<p style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--primary-color);">TIME: 4:00 PM</p>
+			</div>
+		</div>
+
+		<!-- Map Anchor Container -->
+		<div id="multi-location-map"></div>
+	</div>
+</section>
+
+<!-- RSVP Section with Guest Count -->
+<section class="section">
+	<h2 class="section-title">RSVP</h2>
+	<p style="margin-bottom: 30px; color: var(--text-muted);">Kindly reply by September 15, 2026</p>
+
+	<div class="form-card">
+		<form id="inviteRsvp">
+			<div class="input-group">
+				<label for="guestName">Your Name</label>
+				<input type="text" id="guestName" required placeholder="E.g., Alexander Smith">
+			</div>
+
+			<div class="input-group">
+				<label>Will you attend?</label>
+				<div class="radio-options">
+					<label><input type="radio" name="reply" value="attending" checked> Joyfully Accept</label>
+					<label><input type="radio" name="reply" value="declined"> Regretfully Decline</label>
+				</div>
+			</div>
+
+			<!-- Added Guest Count Feature -->
+			<div class="input-group">
+				<label for="guestCount">Total Accompanying Guests</label>
+				<select id="guestCount">
+					<option value="1">Bringing 0 guests (Just me)</option>
+					<option value="2">Bringing 1 guest (+1)</option>
+					<option value="3">Bringing 2 guests</option>
+					<option value="4">Bringing 3 guests</option>
+				</select>
+			</div>
+
+			<div class="input-group">
+				<label for="diet">Dietary Selection</label>
+				<select id="diet">
+					<option value="none">Standard Menu</option>
+					<option value="vegetarian">Vegetarian</option>
+					<option value="vegan">Vegan / Allergen Friendly</option>
+				</select>
+			</div>
+
+			<button type="submit" class="submit-btn">Submit My Response</button>
+		</form>
+	</div>
+</section>
+
+<!-- Leaflet JS Library Mapping Engine -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+  // 1. Live Countdown Mechanism
+  const eventTimeline = new Date("October 24, 2026 13:00:00").getTime();
+  setInterval(() => {
+    const currentTimestamp = new Date().getTime();
+    const remainder = eventTimeline - currentTimestamp;
+    document.getElementById("d").innerText = Math.floor(remainder / (1000 * 60 * 60 * 24));
+    document.getElementById("h").innerText = Math.floor((remainder % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    document.getElementById("m").innerText = Math.floor((remainder % (1000 * 60 * 60)) / (1000 * 60));
+    document.getElementById("s").innerText = Math.floor((remainder % (1000 * 60)) / 1000);
+  }, 1000);
+
+  // 2. Multi-Marker Open-Street Map Logic
+  // Note: Replace these sample coordinates [Latitude, Longitude] with your exact real-world destinations!
+  const churchCoordinates = [40.7588, -73.9851]; // Point A Sample (e.g. Times Square region)
+  const hallCoordinates = [40.7484, -73.9857];   // Point B Sample (e.g. Empire State region)
+
+  // Initialize map centered between both venues
+  const map = L.map('multi-location-map').setView([40.7536, -73.9854], 14);
+
+  // Set up the beautiful minimal tile layout layer
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+  }).addTo(map);
+
+  // Add Church Location Pin
+  L.marker(churchCoordinates).addTo(map)
+    .bindPopup('<b>St. Grace Church</b><br>Ceremony Starts at 1:00 PM')
+    .openPopup();
+
+  // Add Reception Hall Location Pin
+  L.marker(hallCoordinates).addTo(map)
+    .bindPopup('<b>The Rosewood Hall</b><br>Grand Party at 4:00 PM');
+
+  // Draw an elegant dotted route path line connecting the locations
+  const routeLine = L.polyline([churchCoordinates, hallCoordinates], {
+    color: '#8c7662',
+    weight: 3,
+    dashArray: '6, 8',
+    opacity: 0.7
+  }).addTo(map);
+
+  // Auto-scale zoom view window so both pins comfortably fit inside mobile frames
+  map.fitBounds(L.featureGroup([L.marker(churchCoordinates), L.marker(hallCoordinates)]).getBounds(), {
+    padding: [40, 40]
+  });
+
+  // 3. Form Output Handling
+  document.getElementById("inviteRsvp").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const count = document.getElementById("guestCount").value;
+    alert(`Thank you! Your submission for ${count} person(s) was tracked successfully.`);
+  });
+</script>
+</body>
+</html>

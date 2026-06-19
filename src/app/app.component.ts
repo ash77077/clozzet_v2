@@ -8,7 +8,7 @@ import { AiChatWidgetComponent } from './shared/components/ai-chat-widget/ai-cha
 import { AuthService } from './services/auth.service';
 import { AiService } from './services/ai.service';
 import { Observable } from 'rxjs';
-import { map, filter, startWith } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -35,16 +35,16 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.checkRoute(window.location.pathname);
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd),
-      startWith(null)
-    ).subscribe(() => {
-      this.checkRoute(this.router.url);
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event) => {
+      this.checkRoute((event as NavigationEnd).urlAfterRedirects);
     });
   }
 
   private checkRoute(url: string) {
-    const noNavbarRoutes = [/^\/order-blank\/[^\/]+$/, /^\/login$/, /^\/register$/, /^\/reset-password$/];
+    const noNavbarRoutes = [/^\/order-blank\/[^\/]+$/, /^\/login$/, /^\/register$/, /^\/reset-password$/, /^\/invitation$/];
     this.hideNavbars = noNavbarRoutes.some(pattern => pattern.test(url.split('?')[0]));
   }
 }

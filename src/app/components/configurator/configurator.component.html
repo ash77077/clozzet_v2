@@ -1,173 +1,257 @@
-<div class="configurator-container">
-  <!-- Left Side: 3D Canvas (70% width, fixed) -->
-  <div class="canvas-wrapper" #canvasContainer>
-    <!-- Three.js renderer will be appended here -->
-  </div>
+<div class="cfg-shell">
 
-  <!-- Right Side: Sidebar (30% width, scrollable) -->
-  <div class="sidebar">
-    <!-- Sidebar Header -->
-    <div class="sidebar-header">
-      <h2>Clothing Configurator</h2>
-      <p>Design your custom garment</p>
+  <!-- ═══ LEFT: 3D CANVAS ═══ -->
+  <div class="cfg-canvas" #canvasContainer>
+
+    <!-- Top-left brand badge -->
+    <div class="cfg-brand">
+      <i class="pi pi-box"></i>
+      <span>3D Configurator</span>
     </div>
 
-    <!-- Global Cloth Color Picker -->
-    <div class="global-color-section">
-      <h3>Overall Garment Color</h3>
-      <p class="info-text">Change the entire garment color at once</p>
+    <!-- Camera hint -->
+    <div class="cfg-hint">
+      <i class="pi pi-refresh"></i> Drag to spin &nbsp;·&nbsp;
+      <i class="pi pi-search"></i> Scroll to zoom
+    </div>
 
-      <div class="global-color-picker-wrapper">
-        <button class="global-color-btn" (click)="openGlobalColorPicker()">
-          <div class="color-preview" [style.background-color]="globalClothColor"></div>
-          <span>Change All Parts Color</span>
-        </button>
-        <input
-          type="color"
-          id="globalColorPicker"
-          class="native-color-picker"
-          [(ngModel)]="globalClothColor"
-          (change)="onGlobalColorChange($event)">
+    <!-- Zoom controls -->
+    <div class="cfg-zoom">
+      <button class="zoom-btn" (click)="zoomIn()"     title="Zoom in"><i class="pi pi-plus"></i></button>
+      <button class="zoom-btn" (click)="zoomOut()"    title="Zoom out"><i class="pi pi-minus"></i></button>
+      <button class="zoom-btn" (click)="resetCamera()" title="Reset view"><i class="pi pi-expand"></i></button>
+    </div>
+
+    <!-- Invisible layer that carries the cursor style (pointer-events:none so Three.js still gets events) -->
+    <div class="cfg-cursor-layer" [style.cursor]="canvasCursor"></div>
+
+    <!-- "Click shirt to place" hint -->
+    <div class="cfg-place-hint" *ngIf="logoTexture && !hasLogo">
+      <i class="pi pi-hand-pointer"></i> Click on the shirt to place your logo
+    </div>
+
+    <!-- Remove placed logo button -->
+    <button class="cfg-remove-btn" *ngIf="hasLogo" (click)="removePlacedLogo()" title="Remove logo">
+      <i class="pi pi-trash"></i>
+    </button>
+
+    <!-- ── 2-D overlay: bounding box + handles ── -->
+    <div class="logo-overlay" *ngIf="hasLogo && logoSelected">
+
+      <!-- Dashed bounding box (positioned via overlayBoxStyle) -->
+      <div class="logo-bbox" [ngStyle]="overlayBoxStyle"></div>
+
+      <!-- SVG connector: line from rotate handle down to top-center of box -->
+      <svg class="logo-connector">
+        <line
+          [attr.x1]="rotateHandlePos.x"
+          [attr.y1]="rotateHandlePos.y"
+          [attr.x2]="logoBox.cx"
+          [attr.y2]="logoBox.cy - logoBox.hh"
+          stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-dasharray="4,3"/>
+      </svg>
+
+      <!-- Rotate handle -->
+      <div class="logo-handle rotate-handle"
+           [style.left.px]="rotateHandlePos.x"
+           [style.top.px]="rotateHandlePos.y"
+           title="Rotate">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <path d="M4,11 A7,7 0 1,1 11,18" stroke="white" stroke-width="2.2"
+                fill="none" stroke-linecap="round"/>
+          <polygon points="2,7 6,13 -2,13" fill="white"/>
+        </svg>
+      </div>
+
+      <!-- Scale corner handles -->
+      <div *ngFor="let h of overlayHandles"
+           class="logo-handle scale-handle"
+           [style.left.px]="h.x"
+           [style.top.px]="h.y"
+           [style.cursor]="h.cursor">
       </div>
     </div>
 
-    <!-- Garment Part Selection with Native Color Picker -->
-    <div class="part-section">
-      <h3>Individual Part Colors</h3>
-      <p class="info-text">Click any part to change its color independently</p>
+  </div><!-- /cfg-canvas -->
 
-      <div class="part-grid">
-        <div
-          *ngFor="let part of meshParts; let i = index"
-          class="part-card"
-          [class.active]="selectedPart === part"
-          (click)="openColorPicker(i, part)">
-          <div class="part-name">{{ part }}</div>
-          <div class="part-color-indicator" [style.background-color]="getPartColor(part)"></div>
+  <!-- ═══ RIGHT: SIDEBAR ═══ -->
+  <div class="cfg-sidebar">
+
+    <div class="cfg-sidebar-header">
+      <h2>Design Studio</h2>
+      <p>Customize your garment in real time</p>
+    </div>
+
+    <!-- Step tabs -->
+    <div class="cfg-steps">
+      <button class="step-tab" [class.active]="activeStep==='color'" (click)="activeStep='color'">
+        <span class="step-num">1</span><span class="step-label">Color</span>
+      </button>
+      <div class="step-div"></div>
+      <button class="step-tab" [class.active]="activeStep==='logo'" (click)="activeStep='logo'">
+        <span class="step-num">2</span><span class="step-label">Logo</span>
+      </button>
+      <div class="step-div"></div>
+      <button class="step-tab" [class.active]="activeStep==='export'" (click)="activeStep='export'">
+        <span class="step-num">3</span><span class="step-label">Export</span>
+      </button>
+    </div>
+
+    <!-- ─── STEP 1: COLOR ─── -->
+    <div class="cfg-panel" *ngIf="activeStep==='color'">
+
+      <div class="panel-section">
+        <div class="section-label"><i class="pi pi-palette"></i> Shirt Color</div>
+        <p class="section-sub">Change the entire shirt at once</p>
+        <div class="swatch-row">
+          <button *ngFor="let s of colorSwatches"
+                  class="swatch"
+                  [style.background]="s.hex"
+                  [class.active]="globalClothColor === s.hex"
+                  [title]="s.name"
+                  (click)="applyGlobalColor(s.hex)">
+          </button>
+          <div class="custom-wrap">
+            <button class="custom-btn" (click)="openGlobalColorPicker()" [style.background]="globalClothColor">
+              <i class="pi pi-plus" style="color:white;mix-blend-mode:difference"></i>
+            </button>
+            <span class="custom-lbl">Custom</span>
+          </div>
         </div>
+        <input type="color" id="globalColorPicker" class="hidden-input"
+               [(ngModel)]="globalClothColor" (change)="onGlobalColorChange($event)">
       </div>
 
-      <!-- Hidden native color pickers for each part -->
-      <input
-        *ngFor="let part of meshParts; let i = index"
-        type="color"
-        class="native-color-picker"
-        [id]="'colorPicker-' + i"
-        (change)="onColorChange($event, part)"
-        [value]="getPartColor(part)">
+      <div class="panel-section">
+        <div class="section-label"><i class="pi pi-sliders-h"></i> Individual Parts</div>
+        <p class="section-sub">Fine-tune each part independently</p>
+        <div class="parts-list">
+          <div *ngFor="let part of meshParts; let i = index"
+               class="part-row" (click)="openColorPicker(i, part)">
+            <div class="part-swatch" [style.background]="getPartColor(part)"></div>
+            <span class="part-name">{{ getPartLabel(part) }}</span>
+            <i class="pi pi-chevron-right"></i>
+          </div>
+        </div>
+        <input *ngFor="let part of meshParts; let i = index"
+               type="color" class="hidden-input"
+               [id]="'colorPicker-' + i"
+               [value]="getPartColor(part)"
+               (change)="onColorChange($event, part)">
+      </div>
 
-      <!-- Fabric Disclaimer -->
-      <p class="fabric-disclaimer">
-        Note: Actual fabric shades in production may vary slightly from this digital representation.
+      <p class="disclaimer">
+        <i class="pi pi-info-circle"></i>
+        Actual fabric shades may vary slightly in production.
       </p>
+
+      <button class="next-btn" (click)="activeStep='logo'">
+        Next: Logo Placement <i class="pi pi-arrow-right"></i>
+      </button>
     </div>
 
-    <!-- Logo Placement with TransformControls -->
-    <div class="logo-section">
-      <h3>Logo Placement</h3>
-      <p class="info-text">Upload and place one logo on your garment</p>
+    <!-- ─── STEP 2: LOGO ─── -->
+    <div class="cfg-panel" *ngIf="activeStep==='logo'">
 
-      <!-- Logo Upload -->
-      <div class="logo-upload">
-        <label for="logoUpload" class="upload-label">
-          <span class="upload-icon">📁</span>
-          <span class="upload-text">{{ logoTexture ? 'Logo Loaded' : 'Upload Logo' }}</span>
+      <div class="panel-section">
+        <div class="section-label"><i class="pi pi-image"></i> Upload Logo</div>
+        <p class="section-sub">PNG with transparent background works best</p>
+
+        <label for="logoUpload" class="upload-zone" [class.loaded]="!!logoTexture">
+          <ng-container *ngIf="!logoTexture">
+            <i class="pi pi-cloud-upload upload-icon"></i>
+            <span class="upload-main">Click to upload</span>
+            <span class="upload-hint">PNG, JPG · Max 5 MB</span>
+          </ng-container>
+          <ng-container *ngIf="logoTexture">
+            <i class="pi pi-check-circle upload-icon success"></i>
+            <span class="upload-main">Logo ready</span>
+            <span class="upload-hint">Click to replace</span>
+          </ng-container>
         </label>
-        <input
-          type="file"
-          id="logoUpload"
-          accept="image/png,image/jpeg,image/jpg"
-          (change)="handleLogoUpload($event)"
-          class="file-input"
-          #fileInput>
-        <button
-          *ngIf="logoTexture"
-          class="remove-logo-btn"
-          (click)="removeUploadedLogo(); fileInput.value = ''">
-          ✕
+
+        <input type="file" id="logoUpload" class="hidden-input"
+               accept="image/png,image/jpeg,image/jpg"
+               (change)="handleLogoUpload($event)" #fileInput>
+
+        <button *ngIf="logoTexture" class="remove-btn"
+                (click)="removeUploadedLogo(); fileInput.value=''">
+          <i class="pi pi-times"></i> Remove logo
         </button>
       </div>
 
-      <div class="logo-instructions">
-        <div *ngIf="!logoTexture" class="instruction-item warning">
-          <span class="icon">⚠️</span>
-          <span>Upload a logo first</span>
+      <div class="panel-section" *ngIf="logoTexture">
+        <div class="section-label"><i class="pi pi-map-marker"></i> Placement</div>
+        <div class="status-card" [class.success]="hasLogo" [class.info]="!hasLogo">
+          <i class="pi" [class.pi-check-circle]="hasLogo" [class.pi-hand-pointer]="!hasLogo"></i>
+          <span *ngIf="!hasLogo">Click on the shirt to place your logo</span>
+          <span *ngIf="hasLogo">Logo placed! Click it to select &amp; drag to move, corners to resize, top handle to rotate</span>
         </div>
-        <div *ngIf="logoTexture && !hasLogo" class="instruction-item info">
-          <span class="icon">👆</span>
-          <span>Click on the model to place your logo</span>
-        </div>
-        <div *ngIf="hasLogo" class="instruction-item success">
-          <span class="icon">✓</span>
-          <span>Logo placed! Click it to transform</span>
+
+        <div class="how-to" *ngIf="!hasLogo">
+          <div class="ht"><span class="ht-n">1</span> Click on the shirt surface</div>
+          <div class="ht"><span class="ht-n">2</span> Click logo to select it</div>
+          <div class="ht"><span class="ht-n">3</span> Drag body · corners · top handle</div>
         </div>
       </div>
 
-      <!-- TransformControls Mode Buttons -->
-      <div class="transform-controls" *ngIf="hasLogo">
-        <span class="mode-label">Transform Mode:</span>
-        <div class="mode-buttons">
-          <button
-            class="mode-btn"
-            [class.active]="transformMode === 'translate'"
-            (click)="setTransformMode('translate')">
-            <span class="mode-icon">↔️</span>
-            <span>Move</span>
-          </button>
-          <button
-            class="mode-btn"
-            [class.active]="transformMode === 'rotate'"
-            (click)="setTransformMode('rotate')">
-            <span class="mode-icon">🔄</span>
-            <span>Rotate</span>
-          </button>
-          <button
-            class="mode-btn"
-            [class.active]="transformMode === 'scale'"
-            (click)="setTransformMode('scale')">
-            <span class="mode-icon">⚖️</span>
-            <span>Scale</span>
-          </button>
+      <div class="step-nav">
+        <button class="back-btn"  (click)="activeStep='color'"><i class="pi pi-arrow-left"></i> Back</button>
+        <button class="next-btn"  (click)="activeStep='export'">Next: Export <i class="pi pi-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <!-- ─── STEP 3: EXPORT ─── -->
+    <div class="cfg-panel" *ngIf="activeStep==='export'">
+
+      <div class="panel-section">
+        <div class="section-label"><i class="pi pi-list"></i> Design Summary</div>
+        <div class="summary-grid">
+          <div class="si">
+            <span class="si-label">Shirt color</span>
+            <div class="si-val">
+              <div class="si-sw" [style.background]="globalClothColor"></div>
+              <span>{{ globalClothColor }}</span>
+            </div>
+          </div>
+          <div class="si">
+            <span class="si-label">Logo</span>
+            <div class="si-val">
+              <i class="pi" [class.pi-check]="hasLogo" [class.pi-times]="!hasLogo"
+                 [style.color]="hasLogo ? '#10b981' : '#ef4444'"></i>
+              <span>{{ hasLogo ? 'Placed' : 'Not placed' }}</span>
+            </div>
+          </div>
+          <div class="si">
+            <span class="si-label">Parts</span>
+            <div class="si-val"><span>{{ meshParts.length }} parts</span></div>
+          </div>
         </div>
-        <p class="mode-hint">Click the logo on the model to select it, then use the handles to transform</p>
       </div>
 
-      <!-- Remove Logo Button -->
-      <button class="remove-placed-logo-btn" *ngIf="hasLogo" (click)="removePlacedLogo()">
-        Remove Placed Logo
+      <div class="panel-section">
+        <div class="section-label"><i class="pi pi-download"></i> Export Design</div>
+        <p class="section-sub">Download a JSON spec for your manufacturing team</p>
+        <button class="export-btn" (click)="exportProductionData()">
+          <i class="pi pi-file-export"></i> Download Design Spec
+        </button>
+        <div class="ec-list">
+          <div class="ec"><i class="pi pi-check"></i> All part colors (HEX + RGB)</div>
+          <div class="ec"><i class="pi pi-check"></i> Logo position, rotation &amp; scale</div>
+          <div class="ec"><i class="pi pi-check"></i> Timestamp &amp; version info</div>
+        </div>
+      </div>
+
+      <button class="back-btn" (click)="activeStep='logo'">
+        <i class="pi pi-arrow-left"></i> Back
       </button>
     </div>
 
-    <!-- Production Export Section -->
-    <div class="export-section">
-      <h3>Production Export</h3>
-      <p class="info-text">Export your design for manufacturing</p>
-
-      <button class="export-btn" (click)="exportProductionData()">
-        <span class="export-icon">💾</span>
-        <span>Save & Export Design</span>
-      </button>
-
-      <div class="export-info">
-        <p class="export-note">Exports:</p>
-        <ul>
-          <li>✓ Garment colors (all parts)</li>
-          <li>✓ Logo position, rotation & scale</li>
-          <li>✓ Complete manufacturing specs</li>
-        </ul>
-      </div>
+    <!-- Footer hint -->
+    <div class="cfg-footer-hint">
+      <span><i class="pi pi-refresh"></i> Drag — spin</span>
+      <span><i class="pi pi-search"></i> Scroll — zoom</span>
     </div>
 
-    <!-- Instructions Section -->
-    <div class="instructions">
-      <h4>Controls</h4>
-      <ul>
-        <li><strong>Rotate View:</strong> Left click + drag</li>
-        <li><strong>Zoom:</strong> Mouse scroll wheel</li>
-        <li><strong>Place Logo:</strong> Upload, then click model</li>
-        <li><strong>Transform Logo:</strong> Click logo, use handles</li>
-        <li><strong>Switch Mode:</strong> Use Move/Rotate/Scale buttons</li>
-      </ul>
-    </div>
-  </div>
+  </div><!-- /cfg-sidebar -->
 </div>

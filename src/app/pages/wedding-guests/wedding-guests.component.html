@@ -1,0 +1,63 @@
+<div class="wg-page">
+  <div class="wg-header">
+    <h1 class="wg-title">Wedding Guests</h1>
+    <span class="wg-date">31 July 2026 — Platinium Hall, Mughni</span>
+  </div>
+
+  <!-- Stats cards -->
+  <div class="wg-stats" *ngIf="stats">
+    <div class="stat-card stat-total">
+      <div class="stat-value">{{ stats.total }}</div>
+      <div class="stat-label">Total Responses</div>
+    </div>
+    <div class="stat-card stat-attending">
+      <div class="stat-value">{{ stats.attending }}</div>
+      <div class="stat-label">Attending</div>
+    </div>
+    <div class="stat-card stat-not">
+      <div class="stat-value">{{ stats.notAttending }}</div>
+      <div class="stat-label">Not Attending</div>
+    </div>
+    <div class="stat-card stat-pending">
+      <div class="stat-value">{{ stats.pending }}</div>
+      <div class="stat-label">No Answer</div>
+    </div>
+  </div>
+
+  <!-- Loading / Error -->
+  <div class="wg-loading" *ngIf="loading">Loading...</div>
+  <div class="wg-error" *ngIf="error">{{ error }}</div>
+
+  <!-- Guests table -->
+  <div class="wg-table-wrap" *ngIf="!loading && !error">
+    <table class="wg-table" *ngIf="guests.length; else empty">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Attending</th>
+          <th>Drinks</th>
+          <th>Music</th>
+          <th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let g of guests; let i = index" [class.attending]="g.attending === 'Обязательно приду'">
+          <td>{{ i + 1 }}</td>
+          <td class="td-name">{{ g.name }}</td>
+          <td>
+            <span class="badge" [class.badge-yes]="g.attending === 'Обязательно приду'" [class.badge-no]="g.attending !== 'Обязательно приду' && g.attending">
+              {{ g.attending || '—' }}
+            </span>
+          </td>
+          <td>{{ g.drinks || '—' }}</td>
+          <td>{{ g.music || '—' }}</td>
+          <td class="td-date">{{ g.createdAt | date:'dd MMM yyyy, HH:mm' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #empty>
+      <div class="wg-empty">No responses yet.</div>
+    </ng-template>
+  </div>
+</div>
