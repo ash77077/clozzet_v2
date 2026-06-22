@@ -1,5 +1,5 @@
 /* Global Styles for CLOZZET B2B Landing Page */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
 
 /* Tailwind CSS */
 @tailwind base;
@@ -12,9 +12,9 @@
 
 :root {
   // Professional B2B Color Palette
-  --primary-orange: #f97316;
-  --primary-orange-light: #fb923c;
-  --primary-orange-dark: #ea580c;
+  --primary-orange: #c10707;
+  --primary-orange-light: #c10707;
+  --primary-orange-dark: #c10707;
 
   --secondary-gray: #1f2937;
   --secondary-gray-light: #374151;

@@ -1,100 +1,88 @@
-<div class="about-page page-wrapper">
-  <!-- Hero Section -->
+<div class="about-page">
+
+  <!-- Hero -->
   <section class="about-hero">
     <div class="container">
-      <div class="hero-content">
-        <h1 class="hero-title">{{ 'about.hero.title' | translate }}</h1>
-        <p class="hero-subtitle">
-          {{ 'about.hero.subtitle' | translate }}
-        </p>
-        <div class="hero-image">
-          <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="CLOZZET team at work" />
+      <div class="hero-inner">
+        <div class="hero-text">
+          <span class="eyebrow">{{ 'about.hero.title' | translate }}</span>
+          <h1>Crafting brands<br><span class="accent">one stitch at a time</span></h1>
+          <p class="hero-sub">{{ 'about.hero.subtitle' | translate }}</p>
+        </div>
+        <div class="hero-mosaic">
+          <div class="mosaic-cell">
+            <img src="assets/landing-pics/IMG_4403.JPG" alt="Our work" />
+          </div>
+          <div class="mosaic-cell">
+            <img src="assets/landing-pics/IMG_4410.JPG" alt="Our work" />
+          </div>
+          <div class="mosaic-cell">
+            <img src="assets/landing-pics/IMG_4427.JPG" alt="Our work" />
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Our Story -->
+  <!-- Stats bar -->
+  <section class="stats-bar">
+    <div class="container">
+      <div class="stats-row">
+        <div *ngFor="let stat of companyStats" class="stat-pill">
+          <span class="stat-num">{{ stat.number }}</span>
+          <span class="stat-lbl">{{ stat.labelKey | translate }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Story -->
   <section class="our-story">
     <div class="container">
-      <div class="story-content">
-        <div class="story-text">
-          <h2 class="section-title">{{ 'about.story.title' | translate }}</h2>
-          <p class="story-paragraph">
-            {{ 'about.story.paragraph1' | translate }}
-          </p>
-          <p class="story-paragraph">
-            {{ 'about.story.paragraph2' | translate }}
-          </p>
-          <p class="story-paragraph">
-            {{ 'about.story.paragraph3' | translate }}
-          </p>
+      <div class="story-grid">
+        <div class="story-label">
+          <span class="section-tag">{{ 'about.story.title' | translate }}</span>
         </div>
-        <div class="story-stats">
-          <div *ngFor="let stat of companyStats" class="stat-item">
-            <div class="stat-number">{{ stat.number }}</div>
-            <div class="stat-label">{{ stat.labelKey | translate }}</div>
-          </div>
+        <div class="story-body">
+          <p>{{ 'about.story.paragraph1' | translate }}</p>
+          <p>{{ 'about.story.paragraph2' | translate }}</p>
+          <p>{{ 'about.story.paragraph3' | translate }}</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Our Values -->
+  <!-- Values -->
   <section class="our-values">
     <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">{{ 'about.values.title' | translate }}</h2>
-        <p class="section-subtitle">
-          {{ 'about.values.subtitle' | translate }}
-        </p>
+      <div class="values-header">
+        <span class="section-tag">{{ 'about.values.title' | translate }}</span>
+        <h2>{{ 'about.values.subtitle' | translate }}</h2>
       </div>
       <div class="values-grid">
-        <div *ngFor="let value of values" class="value-card">
-          <div class="value-icon">
+        <div *ngFor="let value of values; let i = index" class="value-card">
+          <div class="value-num">0{{ i + 1 }}</div>
+          <div class="value-icon-wrap">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="value.icon"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" [attr.d]="value.icon"></path>
             </svg>
           </div>
-          <h3 class="value-title">{{ value.titleKey | translate }}</h3>
-          <p class="value-description">{{ value.descriptionKey | translate }}</p>
+          <h3>{{ value.titleKey | translate }}</h3>
+          <p>{{ value.descriptionKey | translate }}</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Our Team -->
-<!--  <section class="our-team">-->
-<!--    <div class="container">-->
-<!--      <div class="section-header">-->
-<!--        <h2 class="section-title">{{ 'about.team.title' | translate }}</h2>-->
-<!--        <p class="section-subtitle">-->
-<!--          {{ 'about.team.subtitle' | translate }}-->
-<!--        </p>-->
-<!--      </div>-->
-<!--      <div class="team-grid">-->
-<!--        <div *ngFor="let member of team" class="team-card">-->
-<!--          <div class="team-image">-->
-<!--            <img [src]="member.image" [alt]="member.nameKey | translate" />-->
-<!--          </div>-->
-<!--          <div class="team-info">-->
-<!--            <h3 class="team-name">{{ member.nameKey | translate }}</h3>-->
-<!--            <p class="team-position">{{ member.positionKey | translate }}</p>-->
-<!--            <p class="team-bio">{{ member.bioKey | translate }}</p>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
-<!--  </section>-->
-
-  <!-- CTA Section -->
+  <!-- CTA -->
   <section class="about-cta">
     <div class="container">
-      <div class="cta-content">
+      <div class="cta-inner">
         <h2>{{ 'about.cta.title' | translate }}</h2>
         <p>{{ 'about.cta.description' | translate }}</p>
-        <button class="btn btn-primary btn-lg" (click)="getQuote()">{{ 'about.cta.button' | translate }}</button>
+        <button class="cta-btn" (click)="getQuote()">{{ 'about.cta.button' | translate }}</button>
       </div>
     </div>
   </section>
+
 </div>

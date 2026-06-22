@@ -22,18 +22,6 @@ export class ServicesComponent {
   services: Service[] = [
     {
       id: 1,
-      titleKey: 'services.items.bulkDiscount.title',
-      descriptionKey: 'services.items.bulkDiscount.description',
-      icon: 'discount',
-      featureKeys: [
-        'services.items.bulkDiscount.features.tier1',
-        'services.items.bulkDiscount.features.tier2',
-        'services.items.bulkDiscount.features.tier3',
-        'services.items.bulkDiscount.features.tier4'
-      ]
-    },
-    {
-      id: 2,
       titleKey: 'services.items.fastTurnaround.title',
       descriptionKey: 'services.items.fastTurnaround.description',
       icon: 'clock',
@@ -43,10 +31,9 @@ export class ServicesComponent {
         'services.items.fastTurnaround.features.tracking',
         'services.items.fastTurnaround.features.guaranteed'
       ],
-      highlight: true
     },
     {
-      id: 3,
+      id: 2,
       titleKey: 'services.items.premiumQuality.title',
       descriptionKey: 'services.items.premiumQuality.description',
       icon: 'quality',
@@ -58,19 +45,7 @@ export class ServicesComponent {
       ]
     },
     {
-      id: 4,
-      titleKey: 'services.items.customBranding.title',
-      descriptionKey: 'services.items.customBranding.description',
-      icon: 'design',
-      featureKeys: [
-        'services.items.customBranding.features.design',
-        'services.items.customBranding.features.methods',
-        'services.items.customBranding.features.matching',
-        'services.items.customBranding.features.compliance'
-      ]
-    },
-    {
-      id: 5,
+      id: 3,
       titleKey: 'services.items.accountManagement.title',
       descriptionKey: 'services.items.accountManagement.description',
       icon: 'support',
@@ -82,7 +57,7 @@ export class ServicesComponent {
       ]
     },
     {
-      id: 6,
+      id: 4,
       titleKey: 'services.items.globalShipping.title',
       descriptionKey: 'services.items.globalShipping.description',
       icon: 'shipping',
@@ -90,7 +65,6 @@ export class ServicesComponent {
         'services.items.globalShipping.features.worldwide',
         'services.items.globalShipping.features.options',
         'services.items.globalShipping.features.tracking',
-        'services.items.globalShipping.features.insurance'
       ]
     }
   ];

@@ -150,18 +150,19 @@
 	<div class="hero-container">
 
 		<div class="hero-content">
-			<span class="tagline">{{ 'hero.badge' | translate }}</span>
 
-			<h1 class="hero-title">{{ 'hero.title' | translate }} {{ 'hero.titleHighlight' | translate }}</h1>
+			<div class="hero-title">{{ 'hero.title' | translate }} {{ 'hero.titleHighlight' | translate }}</div>
 
 			<p class="hero-description">
-				{{ 'hero.description' | translate }}
+				{{ 'hero.description' | translate }}<br>
+				{{ 'hero.subDescription' | translate }}
 			</p>
 
 			<ul class="hero-features">
 				<li><span class="check-icon">✓</span> {{ 'hero.features.bulkDiscount' | translate }}</li>
 				<li><span class="check-icon">✓</span> {{ 'hero.features.fastTurnaround' | translate }}</li>
 				<li><span class="check-icon">✓</span> {{ 'hero.features.qualityGuarantee' | translate }}</li>
+				<li><span class="check-icon">✓</span> {{ 'hero.features.ecoFriendly' | translate }}</li>
 			</ul>
 
 			<div class="hero-actions">
@@ -176,26 +177,26 @@
 			</button>
 				<button class="btn-secondary" (click)="scrollToProducts()">{{ 'hero.cta.viewProducts' | translate }}</button>
 			</div>
-
-			<div class="hero-stats">
-				<div class="stat-item">
-					<span class="stat-number">150+</span>
-					<span class="stat-label">{{ 'hero.stats.clients' | translate }}</span>
-				</div>
-				<div class="stat-item">
-					<span class="stat-number">3K+</span>
-					<span class="stat-label">{{ 'hero.stats.items' | translate }}</span>
-				</div>
-				<div class="stat-item">
-					<span class="stat-number">93%</span>
-					<span class="stat-label">{{ 'hero.stats.satisfaction' | translate }}</span>
-				</div>
-			</div>
 		</div>
 
 		<div class="hero-visual">
-			<div class="main-image-wrapper">
-				<img src="assets/pics/hoodie.png" alt="Premium Custom Apparel" />
+			<div class="photo-grid">
+				<div class="photo-cell">
+					<img src="assets/landing-pics/IMG_4406.JPG" alt="Premium quality" />
+					<div class="photo-overlay"></div>
+				</div>
+				<div class="photo-cell">
+					<img src="assets/landing-pics/IMG_4403.JPG" alt="Custom apparel" />
+					<div class="photo-overlay"></div>
+				</div>
+				<div class="photo-cell">
+					<img src="assets/landing-pics/IMG_4410.JPG" alt="Branded clothing" />
+					<div class="photo-overlay"></div>
+				</div>
+				<div class="photo-cell">
+					<img src="assets/landing-pics/IMG_4427.JPG" alt="Custom design" />
+					<div class="photo-overlay"></div>
+				</div>
 			</div>
 		</div>
 
