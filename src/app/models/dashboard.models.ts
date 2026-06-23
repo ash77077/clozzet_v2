@@ -221,6 +221,11 @@ export interface ProductDetails {
     };
   }>;
 
+  // Payment tracking
+  paymentStatus?: 'not_paid' | 'deposit' | 'partial' | 'paid';
+  paidAmount?: number;
+  expectedRevenue?: number;
+
   // Legacy compatibility properties
   status?: OrderStatus;
   totalAmount?: number;

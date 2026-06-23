@@ -55,8 +55,26 @@ export class CustomersService {
     );
   }
 
-  delete(id: string): Observable<void> {
-    return this.http.delete<ApiResponse<null>>(`${this.apiUrl}/${id}`).pipe(
+  delete(id: string, reason?: string): Observable<void> {
+    return this.http.delete<ApiResponse<null>>(`${this.apiUrl}/${id}`, { body: { reason } }).pipe(
+      map(() => undefined)
+    );
+  }
+
+  getDeleted(): Observable<Customer[]> {
+    return this.http.get<ApiResponse<Customer[]>>(`${this.apiUrl}/deleted`).pipe(
+      map(r => r.data)
+    );
+  }
+
+  restore(id: string): Observable<Customer> {
+    return this.http.patch<ApiResponse<Customer>>(`${this.apiUrl}/${id}/restore`, {}).pipe(
+      map(r => r.data)
+    );
+  }
+
+  hardDelete(id: string): Observable<void> {
+    return this.http.delete<ApiResponse<null>>(`${this.apiUrl}/${id}/hard`).pipe(
       map(() => undefined)
     );
   }

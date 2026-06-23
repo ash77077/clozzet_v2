@@ -3494,3 +3494,274 @@
     }
   }
 
+  // ─── Custom / Extra Sizes ──────────────────────────────────────────────────
+  .custom-sizes-section {
+    margin-top: 0.5rem;
+  }
+
+  .custom-sizes-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0.75rem 0 0.5rem;
+
+    &::before, &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--surface-300);
+    }
+
+    span {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+  }
+
+  .custom-size-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #6366f1 !important;
+  }
+
+  .remove-custom-size-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #ef4444;
+    padding: 0.1rem 0.2rem;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+    margin-left: auto;
+
+    &:hover { opacity: 1; background: #fee2e2; }
+  }
+
+  .add-custom-size-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    padding: 0.6rem 0.75rem;
+    background: #f0f9ff;
+    border: 1px dashed #7dd3fc;
+    border-radius: 8px;
+
+    .custom-size-name-input {
+      flex: 1;
+      height: 34px;
+      padding: 0 0.65rem;
+      border: 1px solid var(--surface-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--text-color);
+      background: var(--surface-0);
+      outline: none;
+      font-weight: 600;
+      text-transform: uppercase;
+
+      &:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.12); }
+
+      &::placeholder { text-transform: none; font-weight: 400; color: var(--text-color-secondary); }
+    }
+
+    .btn-confirm-size {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.85rem;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+
+      &:hover:not(:disabled) { background: #4f46e5; }
+      &:disabled { opacity: 0.45; cursor: not-allowed; }
+    }
+
+    .btn-cancel-size {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      color: var(--text-color-secondary);
+      border: 1px solid var(--surface-300);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+
+      &:hover { background: var(--surface-100); color: var(--text-color); }
+    }
+  }
+
+  .btn-add-custom-size {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.65rem;
+    padding: 0.35rem 0.85rem;
+    background: transparent;
+    color: #6366f1;
+    border: 1px dashed #a5b4fc;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    i { font-size: 0.75rem; }
+
+    &:hover {
+      background: #eef2ff;
+      border-color: #6366f1;
+    }
+  }
+
+// ─── Add Order Modal — Global UI Improvements ──────────────────────────────
+.orders-management-container .add-order-dialog {
+    .step-content {
+      min-height: 300px;
+      padding: 0.25rem 0;
+    }
+
+    .step-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--surface-100);
+
+      i { color: var(--primary-color); font-size: 1rem; }
+    }
+
+    .form-field .field-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .product-card {
+      background: var(--surface-0);
+      border: 2px solid var(--surface-200);
+      border-radius: 14px;
+      padding: 0 1.5rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
+      .product-card-header {
+        background: linear-gradient(135deg, var(--surface-50) 0%, var(--surface-100) 100%);
+        margin: 0 -1.5rem 1.25rem;
+        padding: 0.85rem 1.5rem;
+        border-radius: 12px 12px 0 0;
+        border-bottom: 2px solid var(--surface-200);
+
+        .product-title {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: var(--primary-color);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin: 0;
+
+          &::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: inline-block;
+            flex-shrink: 0;
+          }
+        }
+      }
+
+      .sizes-section {
+        border-radius: 10px;
+        border: 1.5px solid var(--surface-200);
+
+        .sizes-header-row {
+          padding: 0.75rem 1rem;
+          background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+          border-radius: 8px 8px 0 0;
+          border-bottom: 1px solid var(--surface-200);
+          margin: 0;
+
+          .sizes-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          }
+        }
+
+        .product-total-badge {
+          border-radius: 0 0 8px 8px;
+          background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+          border: none;
+          border-top: 1px solid var(--primary-200);
+          margin-top: 0;
+
+          strong { font-size: 1rem; }
+        }
+      }
+    }
+  }
+
+// Improved stepper
+.orders-management-container .stepper-header {
+    background: var(--surface-50);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--surface-200);
+
+    .stepper-line {
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    .step-item {
+      .step-circle {
+        width: 38px;
+        height: 38px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      }
+    }
+  }
+
+// Improved dialog footer
+.orders-management-container .dialog-footer {
+  .footer-btn.btn-submit {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-600, #ea580c) 100%);
+    box-shadow: 0 2px 8px rgba(249,115,22,0.25);
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 14px rgba(249,115,22,0.4);
+      transform: translateY(-1px);
+    }
+  }
+}

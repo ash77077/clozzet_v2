@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, forkJoin, firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
@@ -26,6 +26,8 @@ import { Customer, CustomerStatus, CreateCustomerDto, UpdateCustomerDto } from '
 import { Interaction, InteractionType, CreateInteractionDto } from '../../models/interaction.model';
 import { CustomerAiPayload } from '../../models/ai.models';
 import { AiStatusCellComponent } from '../../shared/components/ai-status-cell/ai-status-cell.component';
+import { AuthService } from '../../services/auth.service';
+import { OverflowTooltipDirective } from '../../shared/directives/overflow-tooltip.directive';
 
 @Component({
   selector: 'app-crm-dashboard',
@@ -33,6 +35,7 @@ import { AiStatusCellComponent } from '../../shared/components/ai-status-cell/ai
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     TableModule,
     ButtonModule,
     DialogModule,
@@ -46,6 +49,7 @@ import { AiStatusCellComponent } from '../../shared/components/ai-status-cell/ai
     ConfirmDialogModule,
     CardModule,
     TooltipModule,
+    OverflowTooltipDirective,
     TranslateModule,
     AiStatusCellComponent,
   ],
@@ -93,6 +97,18 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   quickViewInteractions: Interaction[] = [];
   isLoadingQuickView = false;
 
+  showDeletedDialog = false;
+  deletedCustomers: Customer[] = [];
+  isLoadingDeleted = false;
+  isAdmin = false;
+
+  showDeleteReasonDialog = false;
+  deleteReasonText = '';
+  customerToDelete: Customer | null = null;
+
+  dateFrom: Date | null = null;
+  dateTo: Date | null = null;
+
   statusOptions = [
     { label: 'Lead', value: CustomerStatus.LEAD },
     { label: 'Active', value: CustomerStatus.ACTIVE },
@@ -117,7 +133,8 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,
-    private aiService: AiService
+    private aiService: AiService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -125,6 +142,8 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     this.initializeFollowUpForm();
     this.loadManagerUsers();
     this.loadCustomers();
+    const user = this.authService.getCurrentUser();
+    this.isAdmin = user?.role === 'admin';
   }
 
   ngOnDestroy(): void {
@@ -470,45 +489,59 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   }
 
   deleteCustomer(customer: Customer): void {
+    this.customerToDelete = customer;
+    this.deleteReasonText = '';
+    this.showDeleteReasonDialog = true;
+  }
+
+  confirmDelete(): void {
+    const customer = this.customerToDelete;
+    if (!customer?._id) return;
+    this.customersService.delete(customer._id, this.deleteReasonText).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Deleted', detail: `${customer.companyName} has been deleted` });
+        this.showDeleteReasonDialog = false;
+        this.customerToDelete = null;
+        this.loadCustomers();
+      },
+      error: (error) => {
+        this.messageService.add({ severity: 'error', summary: 'Delete Failed', detail: error.error?.message || 'Failed to delete customer' });
+      }
+    });
+  }
+
+  openDeletedDialog(): void {
+    this.showDeletedDialog = true;
+    this.isLoadingDeleted = true;
+    this.customersService.getDeleted().pipe(takeUntil(this.destroy$)).subscribe({
+      next: customers => { this.deletedCustomers = customers; this.isLoadingDeleted = false; },
+      error: () => { this.isLoadingDeleted = false; }
+    });
+  }
+
+  restoreCustomer(customer: Customer): void {
+    this.customersService.restore(customer._id!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Restored', detail: `${customer.companyName} has been restored` });
+        this.deletedCustomers = this.deletedCustomers.filter(c => c._id !== customer._id);
+        this.loadCustomers();
+      }
+    });
+  }
+
+  permanentlyDeleteCustomer(customer: Customer): void {
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete ${customer.companyName}?`,
-      header: 'Confirm Delete',
+      message: `Permanently delete ${customer.companyName}? This cannot be undone.`,
+      header: 'Permanent Delete',
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        if (!customer._id) {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Customer ID is missing',
-          });
-          return;
-        }
-
-        this.customersService
-          .delete(customer._id)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Success',
-                detail: `${customer.companyName} has been deleted successfully`,
-              });
-              this.loadCustomers();
-            },
-            error: (error) => {
-              console.error('Delete error:', error);
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Delete Failed',
-                detail: error.error?.message || 'Failed to delete customer',
-              });
-            },
-          });
-      },
-      reject: () => {
-        // User cancelled, do nothing
+        this.customersService.hardDelete(customer._id!).pipe(takeUntil(this.destroy$)).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Deleted', detail: `${customer.companyName} permanently deleted` });
+            this.deletedCustomers = this.deletedCustomers.filter(c => c._id !== customer._id);
+          }
+        });
       }
     });
   }
@@ -828,10 +861,18 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   }
 
   hideEmail(email?: string): string {
-    if (!email) {
-      return 'N/A';
-    }
+    if (!email) return 'N/A';
     return email;
+  }
+
+  truncateEmail(email?: string): string {
+    if (!email) return 'N/A';
+    return email.length > 25 ? email.slice(0, 25) + '…' : email;
+  }
+
+  copyEmail(email: string, event: Event): void {
+    event.stopPropagation();
+    navigator.clipboard.writeText(email);
   }
 
   getLinkedInUrl(customer: Customer): string | null {
@@ -930,10 +971,28 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       });
     }
 
+    // Apply date range filter (matches createdAt OR updatedAt within range)
+    if (this.dateFrom || this.dateTo) {
+      const to = this.dateTo ? new Date(this.dateTo) : null;
+      if (to) to.setHours(23, 59, 59, 999);
+      this.filteredCustomers = this.filteredCustomers.filter(c => {
+        const dates = [c.createdAt, c.updatedAt].filter(Boolean).map(d => new Date(d!));
+        return dates.some(d =>
+          (!this.dateFrom || d >= this.dateFrom) && (!to || d <= to)
+        );
+      });
+    }
+
     // Recalculate stats for the currently visible (filtered) customers
     const filteredIds = new Set(this.filteredCustomers.map(c => c._id));
     const filteredFollowUps = this.followUpsCache.filter(c => filteredIds.has(c._id));
     this.calculateStats(this.filteredCustomers, filteredFollowUps);
+  }
+
+  clearDateFilters(): void {
+    this.dateFrom = null;
+    this.dateTo = null;
+    this.applyUserFilter();
   }
 
   openQuickView(companyName: string, event: Event): void {

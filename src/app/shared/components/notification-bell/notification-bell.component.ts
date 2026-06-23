@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, distinctUntilChanged, map } from 'rxjs';
 import { PopoverModule } from 'primeng/popover';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
@@ -50,12 +50,17 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
         this.unreadCount = count;
       });
 
-    // Connect to WebSocket for current user — disconnect first to avoid duplicate sockets on re-login
+    // Connect only when the user ID actually changes — prevents duplicate sockets
+    // from multiple BehaviorSubject emissions during auth init/token refresh
     this.authService.currentUser$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(user => {
-        if (user?.id) {
-          this.notificationService.connectSocket(user.id);
+      .pipe(
+        takeUntil(this.destroy$),
+        map(user => user?.id ?? null),
+        distinctUntilChanged()
+      )
+      .subscribe(userId => {
+        if (userId) {
+          this.notificationService.connectSocket(userId);
         } else {
           this.notificationService.disconnectSocket();
         }

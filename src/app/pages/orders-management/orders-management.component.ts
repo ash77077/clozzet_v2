@@ -101,6 +101,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   @ViewChild('commentTextarea') commentTextareaRef!: ElementRef;
   @ViewChild('activityFeed') activityFeedRef!: ElementRef;
+  @ViewChild('printContainer') printContainerRef!: ElementRef;
 
   // ─── Data ──────────────────────────────────────────────────────────────────
   allOrders: ProductDetails[] = [];
@@ -138,12 +139,68 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     s9_10: '9-10', s11_12: '11-12', s13_14: '13-14', s15_16: '15-16',
   };
 
+  // Custom/extra sizes per product: productIndex → array of {label, key}
+  customSizeKeys: { label: string; key: string }[][] = [[]];
+
+  // State for the "add custom size" inline form per product
+  showAddCustomSize: boolean[] = [false];
+  newCustomSizeLabel: string[] = [''];
+
   get activeSizeKeys(): string[] {
     return this.isChildSizes ? this.CHILD_SIZE_KEYS : this.ADULT_SIZE_KEYS;
   }
 
   getSizeLabelForKey(key: string): string {
     return this.CHILD_SIZE_LABELS[key] ?? key.toUpperCase();
+  }
+
+  getCustomSizeKeys(productIndex: number): { label: string; key: string }[] {
+    return this.customSizeKeys[productIndex] || [];
+  }
+
+  toggleAddCustomSize(productIndex: number): void {
+    this.showAddCustomSize[productIndex] = !this.showAddCustomSize[productIndex];
+    this.newCustomSizeLabel[productIndex] = '';
+  }
+
+  confirmAddCustomSize(productIndex: number): void {
+    const label = (this.newCustomSizeLabel[productIndex] || '').trim().toUpperCase();
+    if (!label) return;
+
+    // Derive a safe form key: lowercase + replace spaces/special chars with _
+    const key = 'custom_' + label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // Avoid duplicates
+    if (!this.customSizeKeys[productIndex]) this.customSizeKeys[productIndex] = [];
+    if (this.customSizeKeys[productIndex].some(s => s.key === key)) {
+      this.showAddCustomSize[productIndex] = false;
+      return;
+    }
+
+    this.customSizeKeys[productIndex].push({ label, key });
+
+    // Add the new size group to the form
+    const sizesGroup = this.getProductSizes(productIndex);
+    sizesGroup.addControl(key, this.fb.group({ men: [0], women: [0], uni: [0] }));
+
+    this.showAddCustomSize[productIndex] = false;
+    this.newCustomSizeLabel[productIndex] = '';
+  }
+
+  removeCustomSize(productIndex: number, key: string): void {
+    this.customSizeKeys[productIndex] = this.customSizeKeys[productIndex].filter(s => s.key !== key);
+    const sizesGroup = this.getProductSizes(productIndex);
+    if (sizesGroup.contains(key)) sizesGroup.removeControl(key);
+  }
+
+  calculateCustomSizeTotal(gender: 'men' | 'women' | 'uni', productIndex: number): number {
+    const sizesGroup = this.getProductSizes(productIndex);
+    let total = 0;
+    (this.customSizeKeys[productIndex] || []).forEach(({ key }) => {
+      const g = sizesGroup.get(key) as FormGroup;
+      if (g) total += Number(g.get(gender)?.value || 0);
+    });
+    return total;
   }
 
   // ─── Status change ─────────────────────────────────────────────────────────
@@ -158,7 +215,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Jira Modal — Edit mode ─────────────────────────────────────────────────
   isEditMode = false;
-  editOrderForm!: FormGroup;
   isEditSaving = false;
 
   // ─── Jira Modal — Inline status ────────────────────────────────────────────
@@ -406,6 +462,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Form init ─────────────────────────────────────────────────────────────
 
+  paymentStatusOptions = [
+    { label: 'Not Paid', value: 'not_paid' },
+    { label: 'Deposit', value: 'deposit' },
+    { label: 'Partial', value: 'partial' },
+    { label: 'Paid', value: 'paid' },
+  ];
+
   initForm(): void {
     this.addOrderForm = this.fb.group({
       orderNumber:         ['', Validators.required],
@@ -419,6 +482,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       specialInstructions: [''],
       packagingRequirements: [''],
       shippingAddress:     [''],
+      paymentStatus:       ['not_paid'],
+      paidAmount:          [null],
+      expectedRevenue:     [null],
       products:            this.fb.array([this.createProductGroup()])
     });
   }
@@ -465,12 +531,18 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // Add a new product to the array
   addProduct(): void {
     this.products.push(this.createProductGroup());
+    this.customSizeKeys.push([]);
+    this.showAddCustomSize.push(false);
+    this.newCustomSizeLabel.push('');
   }
 
   // Remove a product from the array
   removeProduct(index: number): void {
     if (this.products.length > 1) {
       this.products.removeAt(index);
+      this.customSizeKeys.splice(index, 1);
+      this.showAddCustomSize.splice(index, 1);
+      this.newCustomSizeLabel.splice(index, 1);
     }
   }
 
@@ -502,7 +574,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   calculateSingleProductTotal(productIndex: number): number {
     return this.calculateProductTotal('men', productIndex) +
            this.calculateProductTotal('women', productIndex) +
-           this.calculateProductTotal('uni', productIndex);
+           this.calculateProductTotal('uni', productIndex) +
+           this.calculateCustomSizeTotal('men', productIndex) +
+           this.calculateCustomSizeTotal('women', productIndex) +
+           this.calculateCustomSizeTotal('uni', productIndex);
   }
 
   // Calculate grand total across all products
@@ -564,7 +639,18 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       { key: 's7_8', label: '7-8' }, { key: 's9_10', label: '9-10' }, { key: 's11_12', label: '11-12' },
       { key: 's13_14', label: '13-14' }, { key: 's15_16', label: '15-16' },
     ];
-    return ALL_SIZES.map(({ key, label }) => ({ label, value: sizes[key] }));
+    const knownKeys = new Set(ALL_SIZES.map(s => s.key));
+    const entries = ALL_SIZES.map(({ key, label }) => ({ label, value: sizes[key] }));
+    // Append any custom keys (e.g. custom_5xl) not in the standard list
+    Object.keys(sizes || {}).forEach(key => {
+      if (!knownKeys.has(key)) {
+        const label = key.startsWith('custom_')
+          ? key.replace('custom_', '').replace(/_/g, ' ').toUpperCase()
+          : key.toUpperCase();
+        entries.push({ label, value: sizes[key] });
+      }
+    });
+    return entries;
   }
 
   // ─── Keyboard Navigation ──────────────────────────────────────────────────
@@ -663,6 +749,11 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       orderNumber: this.generateOrderNumber(),
       salesPerson: salesPersonName,
     });
+
+    this.customSizeKeys = [[]];
+    this.showAddCustomSize = [false];
+    this.newCustomSizeLabel = [''];
+
     this.showAddOrderDialog = true;
   }
 
@@ -674,6 +765,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.products.removeAt(0);
     }
     this.addOrderPendingFiles = [];
+    this.customSizeKeys = [[]];
+    this.showAddCustomSize = [false];
+    this.newCustomSizeLabel = [''];
   }
 
   generateOrderNumber(): string {
@@ -853,6 +947,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       specialInstructions: v.specialInstructions || undefined,
       packagingRequirements: v.packagingRequirements || undefined,
       shippingAddress: v.shippingAddress || undefined,
+      paymentStatus: v.paymentStatus || 'not_paid',
+      paidAmount: v.paidAmount || undefined,
+      expectedRevenue: v.expectedRevenue || undefined,
       products: v.products || [],
       quantity: this.calculateGrandTotal(),
       referenceImages: fileUrls.length > 0 ? fileUrls : undefined,
@@ -1049,10 +1146,42 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   }
 
   printOrder(): void {
-    if (!this.selectedOrder) return;
+    if (!this.selectedOrder || !this.printContainerRef) return;
 
-    // Trigger browser print dialog
-    window.print();
+    const content = this.printContainerRef.nativeElement.innerHTML;
+
+    // Collect all stylesheet links and style tags from the host document
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map(el => el.outerHTML)
+      .join('\n');
+
+    const win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) return;
+
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Order ${this.selectedOrder.orderNumber}</title>
+  ${styles}
+  <style>
+    @page { margin: 0; }
+    /* Force print-template visible in new window */
+    body { margin: 0; background: #fff; }
+    .print-template { display: block !important; font-family: 'Segoe UI', Arial, sans-serif; padding: 8mm 12mm; font-size: 10pt; line-height: 1.45; color: #111; }
+    .print-template * { display: revert !important; }
+    body > div { display: block !important; }
+  </style>
+</head>
+<body>${content}</body>
+</html>`);
+    win.document.close();
+
+    win.onload = () => {
+      win.focus();
+      win.print();
+      win.close();
+    };
   }
 
   loadOrderActivity(order: ProductDetails): void {
@@ -1143,20 +1272,30 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       status:               o.status || OrderStatus.PENDING,
       specialInstructions:  o.specialInstructions || '',
       packagingRequirements: o.packagingRequirements || '',
-      shippingAddress:      o.shippingAddress || ''
+      shippingAddress:      o.shippingAddress || '',
+      paymentStatus:        o.paymentStatus || 'not_paid',
+      paidAmount:           o.paidAmount || null,
+      expectedRevenue:      o.expectedRevenue || null,
     });
 
-    // Clear existing products
+    // Clear existing products and custom size state
     while (this.products.length > 0) {
       this.products.removeAt(0);
     }
+    this.customSizeKeys = [];
+    this.showAddCustomSize = [];
+    this.newCustomSizeLabel = [];
+
+    const knownSizeKeys = new Set([
+      ...this.ADULT_SIZE_KEYS,
+      ...this.CHILD_SIZE_KEYS,
+    ]);
 
     // Populate products from the order
     if (o.products && o.products.length > 0) {
-      o.products.forEach((product: any) => {
+      o.products.forEach((product: any, productIdx: number) => {
         const productGroup = this.createProductGroup();
 
-        // Set product data
         productGroup.patchValue({
           clothType:           product.clothType || '',
           textileType:         product.textileType || '',
@@ -1170,10 +1309,11 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
           costPricePerUnit:    product.costPricePerUnit || null
         });
 
-        // Set sizes
+        // Set all known sizes (adult + child)
         if (product.sizes) {
           const sizesGroup = productGroup.get('sizes') as FormGroup;
-          ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'].forEach(size => {
+
+          [...this.ADULT_SIZE_KEYS, ...this.CHILD_SIZE_KEYS].forEach(size => {
             if (product.sizes[size]) {
               sizesGroup.get(size)?.patchValue({
                 men:   product.sizes[size].men || 0,
@@ -1182,8 +1322,29 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
               });
             }
           });
+
+          // Restore custom sizes
+          const customKeys: { label: string; key: string }[] = [];
+          Object.keys(product.sizes).forEach(key => {
+            if (!knownSizeKeys.has(key)) {
+              const label = key.startsWith('custom_')
+                ? key.replace('custom_', '').replace(/_/g, ' ').toUpperCase()
+                : key.toUpperCase();
+              customKeys.push({ label, key });
+              sizesGroup.addControl(key, this.fb.group({
+                men:   [product.sizes[key]?.men || 0],
+                women: [product.sizes[key]?.women || 0],
+                uni:   [product.sizes[key]?.uni || 0],
+              }));
+            }
+          });
+          this.customSizeKeys.push(customKeys);
+        } else {
+          this.customSizeKeys.push([]);
         }
 
+        this.showAddCustomSize.push(false);
+        this.newCustomSizeLabel.push('');
         this.products.push(productGroup);
       });
     } else if (o.clothType) {
@@ -1202,6 +1363,15 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         costPricePerUnit:    null
       });
       this.products.push(productGroup);
+      this.customSizeKeys.push([]);
+      this.showAddCustomSize.push(false);
+      this.newCustomSizeLabel.push('');
+    } else {
+      // No products at all — provide one empty product
+      this.products.push(this.createProductGroup());
+      this.customSizeKeys.push([]);
+      this.showAddCustomSize.push(false);
+      this.newCustomSizeLabel.push('');
     }
 
     // Switch to edit mode and show the add dialog
@@ -1245,6 +1415,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       specialInstructions:  formValue.specialInstructions,
       packagingRequirements: formValue.packagingRequirements,
       shippingAddress:      formValue.shippingAddress,
+      paymentStatus:        formValue.paymentStatus || 'not_paid',
+      paidAmount:           formValue.paidAmount || undefined,
+      expectedRevenue:      formValue.expectedRevenue || undefined,
       products:             formValue.products
     };
 

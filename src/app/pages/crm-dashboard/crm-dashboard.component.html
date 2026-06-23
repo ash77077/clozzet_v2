@@ -18,6 +18,13 @@
 					(onClick)="openImportDialog()"
 					styleClass="p-button-info">
 			</p-button>
+			<p-button
+					*ngIf="isAdmin"
+					label="Deleted Customers"
+					icon="pi pi-trash"
+					(onClick)="openDeletedDialog()"
+					styleClass="p-button-secondary p-button-outlined">
+			</p-button>
 		</div>
 
 		<!-- Statistics Cards -->
@@ -222,6 +229,24 @@
 								[disabled]="isAnalyzingAll"
 								(onClick)="analyzeAll()">
 							</p-button>
+							<p-datepicker
+								[(ngModel)]="dateFrom"
+								(ngModelChange)="applyUserFilter()"
+								placeholder="From date"
+								dateFormat="yy-mm-dd"
+								[showClear]="true"
+								appendTo="body"
+								styleClass="date-filter-input">
+							</p-datepicker>
+							<p-datepicker
+								[(ngModel)]="dateTo"
+								(ngModelChange)="applyUserFilter()"
+								placeholder="To date"
+								dateFormat="yy-mm-dd"
+								[showClear]="true"
+								appendTo="body"
+								styleClass="date-filter-input">
+							</p-datepicker>
 							<span class="p-input-icon-left">
                 <input
 		                pInputText
@@ -270,10 +295,9 @@
 				<tr
 						[class.follow-up-today]="isFollowUpToday(customer.nextFollowUpAt)"
 						[class.follow-up-overdue]="isFollowUpOverdue(customer.nextFollowUpAt)"
-						[class.clickable-row]="isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)"
-						(click)="(isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)) && openFollowUpDialog(customer)"
-						[pTooltip]="(isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)) ? 'Click to complete follow-up' : ''"
-						tooltipPosition="top">
+						class="clickable-row"
+						(click)="viewCustomerProfile(customer)"
+						style="cursor:pointer">
 					<td>
 						<div class="flex items-center gap-2" style="min-width: 0;">
 							<i
@@ -282,25 +306,34 @@
 									pTooltip="Follow-up due TODAY!"
 									tooltipPosition="top"
 									style="flex-shrink: 0;"></i>
-							<div
-									[pTooltip]="customer.companyName + (customer.industry ? ' - ' + customer.industry : '')"
-									tooltipPosition="top"
-									class="truncate-cell">
-								<strong class="truncate-text">{{ customer.companyName }}</strong>
-								<div class="text-sm text-gray-500 truncate-text" *ngIf="customer.industry">
+							<div class="truncate-cell">
+								<strong class="truncate-text" [overflowTooltip]="customer.companyName">{{ customer.companyName }}</strong>
+								<div class="text-sm text-gray-500 truncate-text" *ngIf="customer.industry" [overflowTooltip]="customer.industry">
 									{{ customer.industry }}
 								</div>
 							</div>
 						</div>
 					</td>
-					<td [pTooltip]="customer.contactPerson" tooltipPosition="top">
-						<span class="truncate-text">{{ customer.contactPerson }}</span>
+					<td>
+						<span class="truncate-text" [overflowTooltip]="customer.contactPerson">{{ customer.contactPerson }}</span>
 					</td>
-					<td [pTooltip]="customer.phone" tooltipPosition="top">
-						<span class="truncate-text">{{ customer.phone }}</span>
+					<td>
+						<span class="truncate-text" [overflowTooltip]="customer.phone">{{ customer.phone }}</span>
 					</td>
-					<td [pTooltip]="hideEmail(customer.email)" tooltipPosition="top">
-						<span class="truncate-text">{{ hideEmail(customer.email) }}</span>
+					<td>
+						<div class="email-cell">
+							<span class="email-text" [overflowTooltip]="hideEmail(customer.email)">
+								{{ truncateEmail(customer.email) }}
+							</span>
+							<button
+								*ngIf="customer.email"
+								class="copy-btn"
+								(click)="copyEmail(customer.email, $event)"
+								pTooltip="Copy email"
+								tooltipPosition="top">
+								<i class="pi pi-copy"></i>
+							</button>
+						</div>
 					</td>
 					<td>
 						<a
@@ -322,7 +355,11 @@
 						</p-tag>
 					</td>
 					<td>{{ formatDate(customer.lastContactedAt) }}</td>
-					<td>
+					<td
+						(click)="(isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)) ? openFollowUpDialog(customer) : viewCustomerProfile(customer); $event.stopPropagation()"
+						[pTooltip]="(isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)) ? 'Click to complete follow-up' : ''"
+						tooltipPosition="top"
+						[style.cursor]="(isFollowUpOverdue(customer.nextFollowUpAt) || isFollowUpToday(customer.nextFollowUpAt)) ? 'pointer' : 'default'">
 						<div class="follow-up-cell">
 							<p-tag
 									*ngIf="customer.nextFollowUpAt"
@@ -828,6 +865,118 @@
 				</div>
 			</form>
 		</div>
+	</p-dialog>
+
+	<!-- Delete Reason Dialog -->
+	<p-dialog
+			[(visible)]="showDeleteReasonDialog"
+			header="Reason for Deletion"
+			[modal]="true"
+			[style]="{width: '440px'}"
+			[draggable]="false"
+			[resizable]="false">
+		<div class="form-field" style="padding: 0.5rem 0;">
+			<label style="display:block; margin-bottom: 0.5rem;">
+				Why are you deleting <strong>{{ customerToDelete?.companyName }}</strong>?
+			</label>
+			<textarea
+					pTextarea
+					[(ngModel)]="deleteReasonText"
+					placeholder="Enter reason (optional)..."
+					rows="4"
+					class="w-full"
+					style="width:100%;">
+			</textarea>
+		</div>
+		<ng-template pTemplate="footer">
+			<p-button
+					label="Cancel"
+					icon="pi pi-times"
+					(onClick)="showDeleteReasonDialog = false; customerToDelete = null; deleteReasonText = ''"
+					styleClass="p-button-text">
+			</p-button>
+			<p-button
+					label="Confirm Delete"
+					icon="pi pi-trash"
+					styleClass="p-button-danger"
+					(onClick)="confirmDelete()">
+			</p-button>
+		</ng-template>
+	</p-dialog>
+
+	<!-- Deleted Customers Dialog -->
+	<p-dialog
+			[(visible)]="showDeletedDialog"
+			header="Deleted Customers"
+			[modal]="true"
+			[style]="{width: '960px'}"
+			[draggable]="false"
+			[resizable]="false">
+
+		<div *ngIf="isLoadingDeleted" class="text-center py-4">
+			<i class="pi pi-spin pi-spinner text-2xl"></i>
+		</div>
+
+		<div *ngIf="!isLoadingDeleted && deletedCustomers.length === 0" class="text-center py-6 text-gray-400">
+			<i class="pi pi-check-circle text-3xl mb-2 block"></i>
+			No deleted customers.
+		</div>
+
+		<p-table
+				*ngIf="!isLoadingDeleted && deletedCustomers.length > 0"
+				[value]="deletedCustomers"
+				[paginator]="true"
+				[rows]="10"
+				styleClass="p-datatable-striped p-datatable-sm">
+			<ng-template pTemplate="header">
+				<tr>
+					<th>Company</th>
+					<th>Deleted At</th>
+					<th>Deleted By</th>
+					<th>Reason</th>
+					<th>Actions</th>
+				</tr>
+			</ng-template>
+			<ng-template pTemplate="body" let-customer>
+				<tr>
+					<td><strong>{{ customer.companyName }}</strong></td>
+					<td>{{ formatDate(customer.updatedAt) }}</td>
+					<td>
+						<span *ngIf="customer.deletedBy?.firstName">
+							{{ customer.deletedBy.firstName }} {{ customer.deletedBy.lastName }}
+						</span>
+						<span *ngIf="!customer.deletedBy?.firstName" class="text-gray-400">—</span>
+					</td>
+					<td>
+						<span *ngIf="customer.deleteReason"
+							[pTooltip]="customer.deleteReason.length > 30 ? customer.deleteReason : ''"
+							tooltipPosition="top"
+							style="cursor: default;">
+							{{ customer.deleteReason.length > 40 ? (customer.deleteReason | slice:0:40) + '…' : customer.deleteReason }}
+						</span>
+						<span *ngIf="!customer.deleteReason" class="text-gray-400">—</span>
+					</td>
+					<td>
+						<div class="flex gap-2">
+							<p-button
+									label="Restore"
+									styleClass="p-button-success p-button-sm p-button-outlined"
+									(onClick)="restoreCustomer(customer)">
+							</p-button>
+							<p-button
+									label="Delete Forever"
+									styleClass="p-button-danger p-button-sm p-button-outlined"
+									(onClick)="permanentlyDeleteCustomer(customer)">
+							</p-button>
+						</div>
+					</td>
+				</tr>
+			</ng-template>
+		</p-table>
+
+		<ng-template pTemplate="footer">
+			<p-button label="Close" icon="pi pi-times" (onClick)="showDeletedDialog = false" styleClass="p-button-text"></p-button>
+		</ng-template>
 	</p-dialog>
 
 	<!-- Quick View Dialog -->

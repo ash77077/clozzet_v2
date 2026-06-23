@@ -25,6 +25,7 @@ export class NotificationService implements OnDestroy {
   private apiUrl = 'http://localhost:3000/api';
   private socketUrl = 'http://localhost:3000';
   private socket: Socket | null = null;
+  private connectedUserId: string | null = null;
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
   private unreadCountSubject = new BehaviorSubject<number>(0);
   private socketReady$ = new Subject<void>();
@@ -46,6 +47,11 @@ export class NotificationService implements OnDestroy {
       return;
     }
 
+    // Already connected for this user — do nothing
+    if (this.socket?.connected && this.connectedUserId === userId) {
+      return;
+    }
+
     // Disconnect existing socket if any
     this.disconnectSocket();
 
@@ -59,6 +65,7 @@ export class NotificationService implements OnDestroy {
 
     // Handle connection
     this.socket.on('connect', () => {
+      this.connectedUserId = userId;
       // Register user with socket
       if (this.socket) {
         this.socket.emit('register', { userId });
@@ -103,6 +110,7 @@ export class NotificationService implements OnDestroy {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
+      this.connectedUserId = null;
     }
   }
 

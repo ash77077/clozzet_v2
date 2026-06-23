@@ -478,6 +478,40 @@
       max-width: 100%;
     }
 
+    .email-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+
+      .email-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .copy-btn {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 4px;
+        color: #94a3b8;
+        line-height: 1;
+        transition: color 0.15s, background 0.15s;
+
+        &:hover {
+          color: #3b82f6;
+          background: #eff6ff;
+        }
+
+        i { font-size: 0.8rem; }
+      }
+    }
+
     .truncate-cell {
       flex: 1;
       min-width: 0;
@@ -976,6 +1010,56 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.date-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 0 4px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 10px;
+}
+
+.date-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+::ng-deep .date-filter-input .p-datepicker-input {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  width: 130px;
+}
+
+.clear-date-btn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
 }
 
 .user-filter-section {
