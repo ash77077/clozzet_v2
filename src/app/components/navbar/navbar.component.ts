@@ -206,6 +206,23 @@ export class NavbarComponent implements OnInit {
     return user?.role === 'admin' || user?.role === 'manager';
   }
 
+  isAdmin(): boolean {
+    const role = this.authService.getCurrentUser()?.role;
+    return role === 'admin' || role === 'manager';
+  }
+
+  openWeddingGuests() {
+    this.closeMobileMenu();
+    this.showUserMenu = false;
+    this.router.navigate(['/wedding-guests']);
+  }
+
+  openEmployees() {
+    this.closeMobileMenu();
+    this.showUserMenu = false;
+    this.router.navigate(['/employees']);
+  }
+
   isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
   }

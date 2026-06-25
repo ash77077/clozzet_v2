@@ -1,0 +1,903 @@
+<div class="emp-page">
+  <p-toast position="top-right" />
+  <p-confirmDialog />
+
+  <!-- ─── Page Header ─────────────────────────────────────────── -->
+  <div class="emp-header">
+    <div class="emp-header-text">
+      <h1 class="emp-title">Employee Management</h1>
+      <p class="emp-subtitle">Salary &amp; Payroll Tracker</p>
+    </div>
+  </div>
+
+  <!-- ─── Summary Cards ───────────────────────────────────────── -->
+  <div class="summary-grid">
+    <div class="summary-card summary-blue">
+      <div class="summary-icon"><i class="pi pi-users"></i></div>
+      <div class="summary-body">
+        <div class="summary-value">{{ summary.totalEmployees }}</div>
+        <div class="summary-label">Total Employees</div>
+      </div>
+    </div>
+
+    <div class="summary-card summary-gold">
+      <div class="summary-icon"><i class="pi pi-wallet"></i></div>
+      <div class="summary-body">
+        <div class="summary-value">{{ formatCurrency(summary.totalPayroll) }}</div>
+        <div class="summary-label">Monthly Payroll</div>
+      </div>
+    </div>
+
+    <div class="summary-card summary-green">
+      <div class="summary-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="summary-body">
+        <div class="summary-value">{{ formatCurrency(summary.totalPaid) }}</div>
+        <div class="summary-label">Paid This Month</div>
+      </div>
+    </div>
+
+    <div class="summary-card summary-red">
+      <div class="summary-icon"><i class="pi pi-clock"></i></div>
+      <div class="summary-body">
+        <div class="summary-value">{{ formatCurrency(summary.totalPending) }}</div>
+        <div class="summary-label">Pending</div>
+      </div>
+    </div>
+
+    <div class="summary-card summary-split">
+      <div class="summary-split-row">
+        <div class="summary-split-item">
+          <div class="summary-split-icon cash"><i class="pi pi-money-bill"></i></div>
+          <div>
+            <div class="summary-split-value">{{ formatCurrency(summary.totalCash) }}</div>
+            <div class="summary-split-label">Cash</div>
+          </div>
+        </div>
+        <div class="summary-split-divider"></div>
+        <div class="summary-split-item">
+          <div class="summary-split-icon card"><i class="pi pi-credit-card"></i></div>
+          <div>
+            <div class="summary-split-value">{{ formatCurrency(summary.totalCard) }}</div>
+            <div class="summary-split-label">Card</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Tab View ─────────────────────────────────────────────── -->
+  <p-tabs styleClass="emp-tabs" value="0">
+    <p-tablist>
+      <p-tab value="0">Employees</p-tab>
+      <p-tab value="1">Payroll</p-tab>
+      <p-tab value="2">Payment History</p-tab>
+    </p-tablist>
+
+    <p-tabpanels>
+
+    <!-- TAB 1: Employees -->
+    <p-tabpanel value="0">
+      <div class="tab-toolbar">
+        <div class="toolbar-left">
+          <label class="toggle-label">
+            <input type="checkbox" [(ngModel)]="showInactive" class="toggle-checkbox" />
+            <span>Show Inactive</span>
+          </label>
+        </div>
+        <div class="toolbar-right">
+          <p-button
+            label="Add Employee"
+            icon="pi pi-plus"
+            styleClass="emp-btn-primary"
+            (onClick)="openAddEmployee()"
+          />
+        </div>
+      </div>
+
+      <p-table
+        [value]="filteredEmployees"
+        [loading]="loading"
+        [paginator]="true"
+        [rows]="15"
+        styleClass="emp-table"
+        [rowHover]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="lastName">Name <p-sortIcon field="lastName" /></th>
+            <th>Position</th>
+            <th>Department</th>
+            <th pSortableColumn="monthlySalary">Monthly Salary <p-sortIcon field="monthlySalary" /></th>
+            <th>Payment Method</th>
+            <th>Cash Portion</th>
+            <th>Card Portion</th>
+            <th>Status</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-emp>
+          <tr>
+            <td class="cell-name">{{ getFullName(emp) }}</td>
+            <td class="cell-muted">{{ emp.position || '—' }}</td>
+            <td class="cell-muted">{{ emp.department || '—' }}</td>
+            <td class="cell-currency">{{ formatCurrency(emp.monthlySalary) }}</td>
+            <td>
+              <span class="method-badge method-{{ emp.paymentMethod }}">
+                {{ getPaymentMethodLabel(emp.paymentMethod) }}
+              </span>
+            </td>
+            <td class="cell-currency">{{ emp.cashPortion ? formatCurrency(emp.cashPortion) : '—' }}</td>
+            <td class="cell-currency">{{ emp.cardPortion ? formatCurrency(emp.cardPortion) : '—' }}</td>
+            <td>
+              <p-tag
+                [value]="getStatusLabel(emp.status)"
+                [severity]="getStatusSeverity(emp.status)"
+              />
+            </td>
+            <td>
+              <div class="action-btns">
+                <p-button
+                  icon="pi pi-pencil"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="info"
+                  pTooltip="Edit Employee"
+                  tooltipPosition="top"
+                  (onClick)="openEditEmployee(emp)"
+                />
+                <p-button
+                  icon="pi pi-dollar"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="success"
+                  pTooltip="Add Payment"
+                  tooltipPosition="top"
+                  (onClick)="openAddPayment(emp)"
+                />
+                <p-button
+                  icon="pi pi-history"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  pTooltip="View Payments"
+                  tooltipPosition="top"
+                  (onClick)="openViewPayments(emp)"
+                />
+                @if (emp.isActive) {
+                  <p-button
+                    icon="pi pi-user-minus"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="danger"
+                    pTooltip="Deactivate"
+                    tooltipPosition="top"
+                    (onClick)="deactivateEmployee(emp)"
+                  />
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="empty-cell">
+              <div class="empty-state">
+                <i class="pi pi-users"></i>
+                <p>No employees found</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabpanel>
+
+    <!-- TAB 2: Payroll -->
+    <p-tabpanel value="1">
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label">Month</label>
+          <p-select
+            [options]="months"
+            [(ngModel)]="selectedMonth"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="emp-select"
+            (onChange)="onMonthYearChange()"
+          />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Year</label>
+          <p-select
+            [options]="years"
+            [(ngModel)]="selectedYear"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="emp-select"
+            (onChange)="onMonthYearChange()"
+          />
+        </div>
+        <div class="filter-info">
+          Showing payroll for <strong>{{ getMonthLabel(selectedMonth) }} {{ selectedYear }}</strong>
+        </div>
+      </div>
+
+      <p-table
+        [value]="filteredEmployees"
+        [loading]="paymentsLoading || loading"
+        styleClass="emp-table"
+        [rowHover]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Employee</th>
+            <th>Position</th>
+            <th>Monthly Salary</th>
+            <th># Payments</th>
+            <th>Paid</th>
+            <th>Outstanding</th>
+            <th>Status</th>
+            <th class="col-actions">Action</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-emp>
+          <tr>
+            <td class="cell-name">{{ getFullName(emp) }}</td>
+            <td class="cell-muted">{{ emp.position || '—' }}</td>
+            <td class="cell-currency">{{ formatCurrency(emp.monthlySalary) }}</td>
+            <td class="cell-center">
+              <span class="payment-count-badge">{{ getEmployeePaymentsForMonth(emp._id).length }}</span>
+            </td>
+            <td class="cell-currency cell-green">{{ formatCurrency(getEmployeePaidAmount(emp._id)) }}</td>
+            <td>
+              @if (getEmployeePendingAmount(emp) > 0) {
+                <span class="outstanding-amount">{{ formatCurrency(getEmployeePendingAmount(emp)) }}</span>
+              } @else {
+                <span class="cell-muted">—</span>
+              }
+            </td>
+            <td>
+              <p-tag
+                [value]="getPayrollStatusLabel(getEmployeePaymentStatus(emp))"
+                [severity]="getPayrollStatusSeverity(getEmployeePaymentStatus(emp))"
+              />
+            </td>
+            <td>
+              @if (getEmployeePendingAmount(emp) > 0) {
+                <p-button
+                  icon="pi pi-dollar"
+                  [label]="'Pay ' + formatCurrency(getEmployeePendingAmount(emp))"
+                  [text]="true"
+                  severity="success"
+                  styleClass="emp-pay-btn"
+                  (onClick)="openAddPayment(emp)"
+                />
+              } @else {
+                <span class="all-paid-label"><i class="pi pi-check-circle"></i> Done</span>
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="empty-cell">
+              <div class="empty-state">
+                <i class="pi pi-wallet"></i>
+                <p>No payroll data for this period</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabpanel>
+
+    <!-- TAB 3: Payment History -->
+    <p-tabpanel value="2">
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label">Month</label>
+          <p-select
+            [options]="months"
+            [(ngModel)]="selectedMonth"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="emp-select"
+            (onChange)="onMonthYearChange()"
+          />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Year</label>
+          <p-select
+            [options]="years"
+            [(ngModel)]="selectedYear"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="emp-select"
+            (onChange)="onMonthYearChange()"
+          />
+        </div>
+        <div class="filter-info">
+          <strong>{{ summary.paymentsCount }}</strong> payment(s) recorded
+        </div>
+      </div>
+
+      <p-table
+        [value]="payments"
+        [loading]="paymentsLoading"
+        [paginator]="true"
+        [rows]="20"
+        styleClass="emp-table"
+        [rowHover]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="employee.lastName">Employee <p-sortIcon field="employee.lastName" /></th>
+            <th>Period</th>
+            <th pSortableColumn="amount">Amount <p-sortIcon field="amount" /></th>
+            <th>Cash</th>
+            <th>Card</th>
+            <th>Status</th>
+            <th>Paid At</th>
+            <th>Notes</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-payment>
+          <tr>
+            <td class="cell-name">
+              @if (payment.employee && payment.employee.firstName) {
+                {{ payment.employee.firstName }} {{ payment.employee.lastName }}
+              } @else {
+                —
+              }
+            </td>
+            <td>
+              <span class="period-badge">{{ getPeriodLabel(payment.period) }}</span>
+            </td>
+            <td class="cell-currency">{{ formatCurrency(payment.amount) }}</td>
+            <td class="cell-currency">{{ payment.cashAmount ? formatCurrency(payment.cashAmount) : '—' }}</td>
+            <td class="cell-currency">{{ payment.cardAmount ? formatCurrency(payment.cardAmount) : '—' }}</td>
+            <td>
+              <p-tag
+                [value]="payment.status | titlecase"
+                [severity]="getPaymentStatusSeverity(payment.status)"
+              />
+            </td>
+            <td class="cell-muted cell-date">
+              @if (payment.paidAt) {
+                {{ payment.paidAt | date:'dd MMM yyyy' }}
+              } @else {
+                —
+              }
+            </td>
+            <td class="cell-muted cell-notes">{{ payment.notes || '—' }}</td>
+            <td>
+              <div class="action-btns">
+                @if (payment.status !== 'paid') {
+                  <p-button
+                    icon="pi pi-check"
+                    [rounded]="true"
+                    [text]="true"
+                    severity="success"
+                    pTooltip="Mark as Paid"
+                    tooltipPosition="top"
+                    (onClick)="markAsPaid(payment)"
+                  />
+                }
+                <p-button
+                  icon="pi pi-trash"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                  pTooltip="Delete"
+                  tooltipPosition="top"
+                  (onClick)="deletePayment(payment)"
+                />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9" class="empty-cell">
+              <div class="empty-state">
+                <i class="pi pi-receipt"></i>
+                <p>No payments recorded for this period</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabpanel>
+
+    </p-tabpanels>
+  </p-tabs>
+</div>
+
+<!-- ─── Add Employee Dialog ───────────────────────────────────── -->
+<p-dialog
+  header="Add Employee"
+  [(visible)]="addEmployeeDialog"
+  [modal]="true"
+  [style]="{ width: '620px' }"
+  styleClass="emp-dialog"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <form [formGroup]="employeeForm" class="emp-form">
+    <div class="form-section-title">Personal Information</div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>First Name <span class="required">*</span></label>
+        <input pInputText formControlName="firstName" placeholder="First name" class="emp-input" />
+        @if (employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched) {
+          <span class="field-error">First name is required</span>
+        }
+      </div>
+      <div class="form-field">
+        <label>Last Name <span class="required">*</span></label>
+        <input pInputText formControlName="lastName" placeholder="Last name" class="emp-input" />
+        @if (employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched) {
+          <span class="field-error">Last name is required</span>
+        }
+      </div>
+      <div class="form-field">
+        <label>Position</label>
+        <input pInputText formControlName="position" placeholder="e.g. Designer" class="emp-input" />
+      </div>
+      <div class="form-field">
+        <label>Department</label>
+        <input pInputText formControlName="department" placeholder="e.g. Production" class="emp-input" />
+      </div>
+      <div class="form-field">
+        <label>Phone</label>
+        <input pInputText formControlName="phone" placeholder="+374 00 000000" class="emp-input" />
+      </div>
+      <div class="form-field">
+        <label>Email</label>
+        <input pInputText formControlName="email" placeholder="email@example.com" class="emp-input" />
+      </div>
+    </div>
+
+    <div class="form-section-title">Status</div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Employee Status</label>
+        <p-select
+          [options]="statusOptions"
+          formControlName="status"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="emp-select-full"
+        />
+      </div>
+    </div>
+
+    <div class="form-section-title">Salary &amp; Payment</div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Monthly Salary <span class="required">*</span></label>
+        <p-inputNumber
+          formControlName="monthlySalary"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+        @if (employeeForm.get('monthlySalary')?.invalid && employeeForm.get('monthlySalary')?.touched) {
+          <span class="field-error">Valid salary is required</span>
+        }
+      </div>
+      <div class="form-field">
+        <label>Payment Method</label>
+        <p-select
+          [options]="paymentMethodOptions"
+          formControlName="paymentMethod"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="emp-select-full"
+        />
+      </div>
+      <div class="form-field">
+        <label>Cash Portion per Payment</label>
+        <p-inputNumber
+          formControlName="cashPortion"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+      </div>
+      <div class="form-field">
+        <label>Card Portion per Payment</label>
+        <p-inputNumber
+          formControlName="cardPortion"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label>Notes</label>
+      <textarea
+        pTextarea
+        formControlName="notes"
+        rows="3"
+        placeholder="Optional notes..."
+        class="emp-textarea"
+      ></textarea>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" [text]="true" severity="secondary" (onClick)="addEmployeeDialog = false" />
+    <p-button
+      label="Add Employee"
+      icon="pi pi-check"
+      styleClass="emp-btn-primary"
+      [loading]="savingEmployee"
+      (onClick)="saveEmployee()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- ─── Edit Employee Dialog ──────────────────────────────────── -->
+<p-dialog
+  header="Edit Employee"
+  [(visible)]="editEmployeeDialog"
+  [modal]="true"
+  [style]="{ width: '620px' }"
+  styleClass="emp-dialog"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <form [formGroup]="employeeForm" class="emp-form">
+    <div class="form-section-title">Personal Information</div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>First Name <span class="required">*</span></label>
+        <input pInputText formControlName="firstName" placeholder="First name" class="emp-input" />
+        @if (employeeForm.get('firstName')?.invalid && employeeForm.get('firstName')?.touched) {
+          <span class="field-error">First name is required</span>
+        }
+      </div>
+      <div class="form-field">
+        <label>Last Name <span class="required">*</span></label>
+        <input pInputText formControlName="lastName" placeholder="Last name" class="emp-input" />
+        @if (employeeForm.get('lastName')?.invalid && employeeForm.get('lastName')?.touched) {
+          <span class="field-error">Last name is required</span>
+        }
+      </div>
+      <div class="form-field">
+        <label>Position</label>
+        <input pInputText formControlName="position" placeholder="e.g. Designer" class="emp-input" />
+      </div>
+      <div class="form-field">
+        <label>Department</label>
+        <input pInputText formControlName="department" placeholder="e.g. Production" class="emp-input" />
+      </div>
+      <div class="form-field">
+        <label>Phone</label>
+        <input pInputText formControlName="phone" placeholder="+374 00 000000" class="emp-input" />
+      </div>
+      <div class="form-field">
+        <label>Email</label>
+        <input pInputText formControlName="email" placeholder="email@example.com" class="emp-input" />
+      </div>
+    </div>
+
+    <div class="form-section-title">Status</div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Employee Status</label>
+        <p-select
+          [options]="statusOptions"
+          formControlName="status"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="emp-select-full"
+        />
+      </div>
+    </div>
+
+    <div class="form-section-title">Salary &amp; Payment</div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Monthly Salary <span class="required">*</span></label>
+        <p-inputNumber
+          formControlName="monthlySalary"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+      </div>
+      <div class="form-field">
+        <label>Payment Method</label>
+        <p-select
+          [options]="paymentMethodOptions"
+          formControlName="paymentMethod"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="emp-select-full"
+        />
+      </div>
+      <div class="form-field">
+        <label>Cash Portion per Payment</label>
+        <p-inputNumber
+          formControlName="cashPortion"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+      </div>
+      <div class="form-field">
+        <label>Card Portion per Payment</label>
+        <p-inputNumber
+          formControlName="cardPortion"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label>Notes</label>
+      <textarea
+        pTextarea
+        formControlName="notes"
+        rows="3"
+        placeholder="Optional notes..."
+        class="emp-textarea"
+      ></textarea>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" [text]="true" severity="secondary" (onClick)="editEmployeeDialog = false" />
+    <p-button
+      label="Save Changes"
+      icon="pi pi-check"
+      styleClass="emp-btn-primary"
+      [loading]="savingEmployee"
+      (onClick)="saveEmployee()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- ─── Add Payment Dialog ────────────────────────────────────── -->
+<p-dialog
+  header="Record Salary Payment"
+  [(visible)]="addPaymentDialog"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  styleClass="emp-dialog"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <form [formGroup]="paymentForm" class="emp-form">
+    <div class="form-field">
+      <label>Employee <span class="required">*</span></label>
+      <p-select
+        [options]="employeeOptions"
+        formControlName="employeeId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select employee"
+        styleClass="emp-select-full"
+        [filter]="true"
+        filterBy="label"
+      />
+      @if (paymentForm.get('employeeId')?.invalid && paymentForm.get('employeeId')?.touched) {
+        <span class="field-error">Please select an employee</span>
+      }
+    </div>
+
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Payment Period <span class="required">*</span></label>
+        <p-select
+          [options]="periodOptions"
+          formControlName="period"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select period"
+          styleClass="emp-select-full"
+        />
+        @if (paymentForm.get('period')?.invalid && paymentForm.get('period')?.touched) {
+          <span class="field-error">Period is required</span>
+        }
+      </div>
+      <div class="form-field">
+        <label>Payment Status</label>
+        <p-select
+          [options]="paymentStatusOptions"
+          formControlName="status"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="emp-select-full"
+        />
+      </div>
+    </div>
+
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label>Cash Amount</label>
+        <p-inputNumber
+          formControlName="cashAmount"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+      </div>
+      <div class="form-field">
+        <label>Card Amount</label>
+        <p-inputNumber
+          formControlName="cardAmount"
+          mode="decimal"
+          [min]="0"
+          suffix=" ֏"
+          styleClass="emp-input-number"
+          inputStyleClass="emp-input"
+        />
+      </div>
+    </div>
+
+    <div class="total-amount-display">
+      <span class="total-amount-label">Total Amount</span>
+      <span class="total-amount-value">{{ formatCurrency(paymentForm.get('amount')?.value ?? 0) }}</span>
+    </div>
+
+    <div class="form-field">
+      <label>Notes</label>
+      <textarea
+        pTextarea
+        formControlName="notes"
+        rows="2"
+        placeholder="Optional payment note..."
+        class="emp-textarea"
+      ></textarea>
+    </div>
+
+    <div class="payment-period-info">
+      Recording payment for <strong>{{ getMonthLabel(selectedMonth) }} {{ selectedYear }}</strong>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" [text]="true" severity="secondary" (onClick)="addPaymentDialog = false" />
+    <p-button
+      label="Record Payment"
+      icon="pi pi-check"
+      styleClass="emp-btn-primary"
+      [loading]="savingPayment"
+      (onClick)="savePayment()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- ─── View Employee Payments Dialog ────────────────────────── -->
+<p-dialog
+  [header]="selectedEmployee ? 'Payment History — ' + getFullName(selectedEmployee) : 'Payment History'"
+  [(visible)]="viewPaymentsDialog"
+  [modal]="true"
+  [style]="{ width: '860px' }"
+  styleClass="emp-dialog"
+  [draggable]="false"
+  [resizable]="false"
+>
+  @if (selectedEmployee) {
+    <div class="view-payments-summary">
+      <div class="vps-card vps-green">
+        <div class="vps-label">Total Paid</div>
+        <div class="vps-value">{{ formatCurrency(getEmployeePaymentsTotal(employeePayments, 'paid')) }}</div>
+      </div>
+      <div class="vps-card vps-orange">
+        <div class="vps-label">Total Pending</div>
+        <div class="vps-value">{{ formatCurrency(getEmployeePaymentsTotal(employeePayments, 'pending')) }}</div>
+      </div>
+      <div class="vps-card vps-blue">
+        <div class="vps-label">All Payments</div>
+        <div class="vps-value">{{ employeePayments.length }}</div>
+      </div>
+    </div>
+  }
+
+  <p-table
+    [value]="employeePayments"
+    styleClass="emp-table"
+    [rowHover]="true"
+    [paginator]="employeePayments.length > 10"
+    [rows]="10"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Month / Year</th>
+        <th>Period</th>
+        <th>Amount</th>
+        <th>Cash</th>
+        <th>Card</th>
+        <th>Status</th>
+        <th>Paid At</th>
+        <th>Notes</th>
+        <th class="col-actions">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-payment>
+      <tr>
+        <td class="cell-muted">{{ getMonthLabel(payment.month) }} {{ payment.year }}</td>
+        <td>
+          <span class="period-badge">{{ getPeriodLabel(payment.period) }}</span>
+        </td>
+        <td class="cell-currency">{{ formatCurrency(payment.amount) }}</td>
+        <td class="cell-currency">{{ payment.cashAmount ? formatCurrency(payment.cashAmount) : '—' }}</td>
+        <td class="cell-currency">{{ payment.cardAmount ? formatCurrency(payment.cardAmount) : '—' }}</td>
+        <td>
+          <p-tag
+            [value]="payment.status | titlecase"
+            [severity]="getPaymentStatusSeverity(payment.status)"
+          />
+        </td>
+        <td class="cell-muted cell-date">
+          @if (payment.paidAt) {
+            {{ payment.paidAt | date:'dd MMM yyyy' }}
+          } @else {
+            —
+          }
+        </td>
+        <td class="cell-muted cell-notes">{{ payment.notes || '—' }}</td>
+        <td>
+          <div class="action-btns">
+            @if (payment.status !== 'paid') {
+              <p-button
+                icon="pi pi-check"
+                [rounded]="true"
+                [text]="true"
+                severity="success"
+                pTooltip="Mark as Paid"
+                tooltipPosition="top"
+                (onClick)="markAsPaid(payment)"
+              />
+            }
+            <p-button
+              icon="pi pi-trash"
+              [rounded]="true"
+              [text]="true"
+              severity="danger"
+              pTooltip="Delete"
+              tooltipPosition="top"
+              (onClick)="deletePayment(payment)"
+            />
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="empty-cell">
+          <div class="empty-state">
+            <i class="pi pi-receipt"></i>
+            <p>No payment history found</p>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Close" [text]="true" severity="secondary" (onClick)="viewPaymentsDialog = false" />
+  </ng-template>
+</p-dialog>

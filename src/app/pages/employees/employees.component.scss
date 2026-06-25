@@ -1,0 +1,849 @@
+// ── Design tokens ────────────────────────────────────────────────
+$bg:          #f4f6f9;
+$surface:     #ffffff;
+$surface-2:   #f8fafc;
+$border:      #e2e8f0;
+$border-2:    #cbd5e1;
+$text:        #1e293b;
+$text-muted:  #64748b;
+$text-dim:    #94a3b8;
+$gold:        #b8860b;
+$gold-light:  #d4a017;
+$gold-dim:    rgba(184,134,11,0.1);
+$blue:        #3b82f6;
+$blue-dim:    rgba(59,130,246,0.1);
+$green:       #16a34a;
+$green-dim:   rgba(22,163,74,0.1);
+$red:         #dc2626;
+$red-dim:     rgba(220,38,38,0.1);
+$orange:      #d97706;
+$orange-dim:  rgba(217,119,6,0.1);
+$purple:      #7c3aed;
+$purple-dim:  rgba(124,58,237,0.1);
+
+// ── Page Shell ───────────────────────────────────────────────────
+.emp-page {
+  min-height: 100vh;
+  background: $bg;
+  padding: 40px 40px 80px;
+  font-family: 'Inter', sans-serif;
+  color: $text;
+
+  @media (max-width: 768px) { padding: 24px 16px 60px; }
+}
+
+// ── Header ───────────────────────────────────────────────────────
+.emp-header {
+  margin-bottom: 32px;
+}
+
+.emp-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: $text;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.emp-subtitle {
+  font-size: 14px;
+  color: $text-muted;
+  margin: 0;
+}
+
+// ── Summary Cards ────────────────────────────────────────────────
+.summary-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr 2fr 2fr 3fr;
+  gap: 16px;
+  margin-bottom: 28px;
+
+  @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 640px)  { grid-template-columns: 1fr 1fr; }
+}
+
+.summary-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 14px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: $border-2;
+  }
+}
+
+.summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+
+  .summary-blue & {
+    background: $blue-dim;
+    color: $blue;
+  }
+  .summary-gold & {
+    background: $gold-dim;
+    color: $gold;
+  }
+  .summary-green & {
+    background: $green-dim;
+    color: $green;
+  }
+  .summary-red & {
+    background: $red-dim;
+    color: $red;
+  }
+}
+
+.summary-body {
+  min-width: 0;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: $text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: $text-muted;
+  margin-top: 2px;
+}
+
+// Split card (Cash / Card)
+.summary-split {
+  padding: 16px 20px;
+}
+
+.summary-split-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.summary-split-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.summary-split-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+
+  &.cash {
+    background: $green-dim;
+    color: $green;
+  }
+  &.card {
+    background: $purple-dim;
+    color: $purple;
+  }
+}
+
+.summary-split-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: $text;
+}
+
+.summary-split-label {
+  font-size: 11px;
+  color: $text-muted;
+}
+
+.summary-split-divider {
+  width: 1px;
+  height: 36px;
+  background: $border;
+  flex-shrink: 0;
+}
+
+// ── Tabs (PrimeNG new API) ───────────────────────────────────────
+:host ::ng-deep {
+  .emp-tabs {
+    .p-tablist {
+      background: $surface;
+      border-bottom: 1px solid $border;
+      border-radius: 12px 12px 0 0;
+      padding: 0 4px;
+
+      .p-tablist-content { gap: 4px; }
+    }
+
+    .p-tab {
+      background: transparent;
+      color: $text-muted;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 14px 22px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s, border-color 0.2s;
+      cursor: pointer;
+      margin-bottom: -1px;
+
+      &:hover { color: $text; }
+
+      &[data-p-active='true'],
+      &.p-tab-active {
+        color: $gold;
+        border-bottom-color: $gold;
+        background: transparent;
+      }
+    }
+
+    .p-tabpanels {
+      background: transparent;
+      padding: 24px 0 0;
+    }
+
+    .p-tabpanel {
+      background: transparent;
+      padding: 0;
+    }
+  }
+}
+
+// ── Tab Toolbar ──────────────────────────────────────────────────
+.tab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-left, .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: $text-muted;
+  cursor: pointer;
+
+  .toggle-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: $gold;
+    cursor: pointer;
+  }
+}
+
+// Filter bar (month/year selector)
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 13px;
+  color: $text-muted;
+  white-space: nowrap;
+}
+
+.filter-info {
+  font-size: 13px;
+  color: $text-muted;
+  margin-left: auto;
+
+  strong { color: $text; }
+}
+
+// ── Table ────────────────────────────────────────────────────────
+:host ::ng-deep {
+  .emp-table {
+    background: $surface;
+    border-radius: 12px;
+    border: 1px solid $border;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+
+    .p-datatable-wrapper { border-radius: 12px; }
+
+    .p-datatable-thead > tr > th {
+      background: $surface-2;
+      color: $text-muted;
+      border-color: $border;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      padding: 12px 16px;
+    }
+
+    .p-datatable-tbody > tr {
+      background: $surface;
+      color: $text;
+      border-color: $border;
+      transition: background 0.15s;
+
+      &:hover { background: $surface-2 !important; }
+
+      > td {
+        border-color: $border;
+        padding: 12px 16px;
+        font-size: 13px;
+        vertical-align: middle;
+      }
+    }
+
+    .p-sortable-column:not(.p-highlight):hover {
+      background: $gold-dim !important;
+      color: $text !important;
+    }
+
+    .p-sortable-column.p-highlight {
+      background: $gold-dim !important;
+      color: $gold !important;
+
+      .p-sortable-column-icon { color: $gold !important; }
+    }
+
+    .p-paginator {
+      background: $surface-2;
+      border-color: $border;
+      border-top: 1px solid $border;
+      color: $text-muted;
+      font-size: 13px;
+
+      .p-paginator-page.p-highlight {
+        background: $gold;
+        color: #fff;
+        border-color: $gold;
+      }
+
+      .p-paginator-element:not(.p-disabled):hover {
+        background: $gold-dim;
+        color: $gold;
+      }
+    }
+  }
+}
+
+// Table cell helpers
+.cell-name {
+  font-weight: 600;
+  color: $text;
+}
+
+.cell-muted {
+  color: $text-muted;
+}
+
+.cell-currency {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 13px;
+  color: $text;
+}
+
+.cell-green { color: $green !important; font-weight: 600; }
+.cell-red   { color: $red !important; font-weight: 600; }
+
+.cell-center { text-align: center; }
+
+.cell-date {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.cell-notes {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-actions { width: 140px; text-align: center; }
+
+// ── Empty state ───────────────────────────────────────────────────
+.empty-cell {
+  text-align: center;
+}
+
+.empty-state {
+  padding: 48px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  i {
+    font-size: 32px;
+    color: $border-2;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: $text-dim;
+  }
+}
+
+// ── Badges ───────────────────────────────────────────────────────
+.method-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  &.method-cash {
+    background: $green-dim;
+    color: $green;
+    border: 1px solid rgba(22,163,74,0.25);
+  }
+  &.method-card {
+    background: $purple-dim;
+    color: $purple;
+    border: 1px solid rgba(124,58,237,0.25);
+  }
+  &.method-mixed {
+    background: $orange-dim;
+    color: $orange;
+    border: 1px solid rgba(217,119,6,0.25);
+  }
+}
+
+.period-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: $gold-dim;
+  color: $gold;
+  border: 1px solid rgba(184,134,11,0.25);
+}
+
+// ── Payroll tab helpers ───────────────────────────────────────────
+.payment-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: $blue-dim;
+  color: $blue;
+}
+
+.outstanding-amount {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: $red;
+  background: $red-dim;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.all-paid-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $green;
+
+  i { font-size: 14px; }
+}
+
+// ── Action buttons ────────────────────────────────────────────────
+.action-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+}
+
+// ── Buttons (PrimeNG override) ────────────────────────────────────
+:host ::ng-deep {
+  .emp-btn-primary.p-button {
+    background: $gold;
+    border-color: $gold;
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+
+    &:hover, &:focus {
+      background: $gold-light !important;
+      border-color: $gold-light !important;
+    }
+  }
+
+  .emp-pay-btn.p-button {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .emp-select {
+    .p-select {
+      background: $surface;
+      border-color: $border;
+      color: $text;
+      min-width: 140px;
+
+      &:hover { border-color: $border-2; }
+      &.p-focus { border-color: $gold; box-shadow: 0 0 0 2px rgba(184,134,11,0.15); }
+    }
+
+    .p-select-label { color: $text; font-size: 13px; }
+    .p-select-dropdown { color: $text-muted; }
+  }
+}
+
+// ── Dialogs ───────────────────────────────────────────────────────
+:host ::ng-deep {
+  .emp-dialog {
+    .p-dialog {
+      background: $surface;
+      border: 1px solid $border;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+
+    .p-dialog-header {
+      background: $surface;
+      border-bottom: 1px solid $border;
+      color: $text;
+      font-size: 17px;
+      font-weight: 700;
+      padding: 20px 24px 16px;
+      border-radius: 16px 16px 0 0;
+
+      .p-dialog-header-icon {
+        color: $text-muted;
+        &:hover { color: $text; background: $surface-2; }
+      }
+    }
+
+    .p-dialog-content {
+      background: $surface;
+      color: $text;
+      padding: 20px 24px;
+    }
+
+    .p-dialog-footer {
+      background: $surface-2;
+      border-top: 1px solid $border;
+      padding: 14px 24px;
+      border-radius: 0 0 16px 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  }
+
+  .p-confirm-dialog {
+    .p-dialog {
+      background: $surface;
+      border: 1px solid $border;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .p-dialog-header {
+      background: $surface;
+      color: $text;
+      border-bottom: 1px solid $border;
+    }
+    .p-dialog-content {
+      background: $surface;
+      color: $text;
+    }
+    .p-dialog-footer {
+      background: $surface-2;
+      border-top: 1px solid $border;
+    }
+  }
+}
+
+// ── Form styles ───────────────────────────────────────────────────
+.emp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $text-muted;
+  border-bottom: 1px solid $border;
+  padding-bottom: 6px;
+  margin-top: 6px;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+.required {
+  color: $red;
+  margin-left: 2px;
+}
+
+.field-error {
+  font-size: 11px;
+  color: $red;
+}
+
+.total-amount-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $gold-dim;
+  border: 1px solid rgba(184,134,11,0.25);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.total-amount-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $text-muted;
+}
+
+.total-amount-value {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: $gold;
+}
+
+.payment-period-info {
+  font-size: 13px;
+  color: $text-muted;
+  background: $gold-dim;
+  border: 1px solid rgba(184,134,11,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 4px;
+
+  strong { color: $gold; }
+}
+
+:host ::ng-deep {
+  .emp-input {
+    background: $surface !important;
+    border-color: $border !important;
+    color: $text !important;
+    font-size: 13px;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:focus {
+      border-color: $gold !important;
+      box-shadow: 0 0 0 2px rgba(184,134,11,0.15) !important;
+      outline: none;
+    }
+
+    &::placeholder { color: $text-dim; }
+  }
+
+  .emp-textarea {
+    background: $surface !important;
+    border-color: $border !important;
+    color: $text !important;
+    font-size: 13px;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: inherit;
+
+    &:focus {
+      border-color: $gold !important;
+      box-shadow: 0 0 0 2px rgba(184,134,11,0.15) !important;
+      outline: none;
+    }
+    &::placeholder { color: $text-dim; }
+  }
+
+  .emp-input-number {
+    width: 100%;
+
+    .p-inputnumber-input {
+      background: $surface !important;
+      border-color: $border !important;
+      color: $text !important;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      width: 100%;
+
+      &:focus {
+        border-color: $gold !important;
+        box-shadow: 0 0 0 2px rgba(184,134,11,0.15) !important;
+      }
+    }
+  }
+
+  .emp-select-full {
+    width: 100%;
+
+    .p-select {
+      width: 100%;
+      background: $surface;
+      border-color: $border;
+      color: $text;
+      border-radius: 8px;
+
+      &:hover { border-color: $border-2; }
+      &.p-focus { border-color: $gold; box-shadow: 0 0 0 2px rgba(184,134,11,0.15); }
+    }
+
+    .p-select-label { color: $text; font-size: 13px; }
+
+    .p-select-overlay {
+      background: $surface;
+      border: 1px solid $border;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .p-select-option {
+      color: $text;
+      font-size: 13px;
+
+      &:hover, &.p-focus { background: $gold-dim !important; color: $gold !important; }
+      &.p-selected { background: $gold-dim; color: $gold; }
+    }
+  }
+
+  // PrimeNG Toast
+  .p-toast .p-toast-message {
+    background: $surface;
+    border: 1px solid $border;
+    color: $text;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+
+    .p-toast-message-icon,
+    .p-toast-icon-close { color: $text-muted; }
+
+    &.p-toast-message-success { border-left: 4px solid $green; }
+    &.p-toast-message-error   { border-left: 4px solid $red; }
+    &.p-toast-message-info    { border-left: 4px solid $blue; }
+    &.p-toast-message-warn    { border-left: 4px solid $orange; }
+  }
+}
+
+// ── View Payments Summary ─────────────────────────────────────────
+.view-payments-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @media (max-width: 560px) { flex-wrap: wrap; }
+}
+
+.vps-card {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid $border;
+  background: $surface;
+}
+
+.vps-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $text-muted;
+  margin-bottom: 6px;
+}
+
+.vps-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.vps-green {
+  background: $green-dim;
+  border-color: rgba(22,163,74,0.2);
+  .vps-value { color: $green; }
+}
+
+.vps-orange {
+  background: $orange-dim;
+  border-color: rgba(217,119,6,0.2);
+  .vps-value { color: $orange; }
+}
+
+.vps-blue {
+  background: $blue-dim;
+  border-color: rgba(59,130,246,0.2);
+  .vps-value { color: $blue; }
+}

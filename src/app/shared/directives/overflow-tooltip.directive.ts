@@ -1,4 +1,5 @@
 import { Directive, ElementRef, HostListener, Input, OnChanges } from '@angular/core';
+import { TooltipOptions } from 'primeng/api';
 
 // Shows pTooltip only when the element's text is actually truncated (scrollWidth > clientWidth)
 @Directive({
