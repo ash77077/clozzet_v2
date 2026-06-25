@@ -1,0 +1,530 @@
+<div class="wedding-shell" [class.curtain-open]="curtainOpen">
+  <!-- Subtle textured background -->
+  <div class="bg-texture" aria-hidden="true"></div>
+  <div class="bg-vignette" aria-hidden="true"></div>
+
+  <!-- ============================================================ -->
+  <!-- HERO — curtain reveal, monogram, names, date                  -->
+  <!-- ============================================================ -->
+  <section class="hero" id="hero">
+    <!-- Many flowers falling to reveal the invitation -->
+    <div class="flower-overlay" aria-hidden="true">
+      @for (p of petals; track $index) {
+        <div class="fp"
+             [style.--x]="p.x + 'vw'"
+             [style.--y]="p.y + 'vh'"
+             [style.--rot]="p.rotate + 'deg'"
+             [style.--sc]="p.scale"
+             [style.--delay]="p.delay + 's'"
+             [style.--dur]="p.duration + 's'"
+             [style.--drift]="p.drift + 'px'"
+             [style.--spin]="p.spin + 'deg'">
+
+          <!-- VARIANT 0: Cherry blossom — 5 rounded petals + yellow stamens -->
+          @if (p.variant === 0) {
+            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient [attr.id]="'cb' + $index" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"   stop-color="#fff0f5"/>
+                  <stop offset="60%"  stop-color="#f0d8e0"/>
+                  <stop offset="100%" stop-color="#d4b8c0"/>
+                </radialGradient>
+                <radialGradient [attr.id]="'cbc' + $index" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"   stop-color="#fff8e0"/>
+                  <stop offset="100%" stop-color="#e8c840"/>
+                </radialGradient>
+              </defs>
+              <!-- 5 petals at 72° each -->
+              <ellipse cx="60" cy="28" rx="14" ry="22" [attr.fill]="'url(#cb' + $index + ')'" transform="rotate(0 60 60)"/>
+              <ellipse cx="60" cy="28" rx="14" ry="22" [attr.fill]="'url(#cb' + $index + ')'" transform="rotate(72 60 60)"/>
+              <ellipse cx="60" cy="28" rx="14" ry="22" [attr.fill]="'url(#cb' + $index + ')'" transform="rotate(144 60 60)"/>
+              <ellipse cx="60" cy="28" rx="14" ry="22" [attr.fill]="'url(#cb' + $index + ')'" transform="rotate(216 60 60)"/>
+              <ellipse cx="60" cy="28" rx="14" ry="22" [attr.fill]="'url(#cb' + $index + ')'" transform="rotate(288 60 60)"/>
+              <!-- Petal vein lines -->
+              <line x1="60" y1="60" x2="60" y2="10" stroke="rgba(200,160,170,0.4)" stroke-width="0.8" transform="rotate(0 60 60)"/>
+              <line x1="60" y1="60" x2="60" y2="10" stroke="rgba(200,160,170,0.4)" stroke-width="0.8" transform="rotate(72 60 60)"/>
+              <line x1="60" y1="60" x2="60" y2="10" stroke="rgba(200,160,170,0.4)" stroke-width="0.8" transform="rotate(144 60 60)"/>
+              <line x1="60" y1="60" x2="60" y2="10" stroke="rgba(200,160,170,0.4)" stroke-width="0.8" transform="rotate(216 60 60)"/>
+              <line x1="60" y1="60" x2="60" y2="10" stroke="rgba(200,160,170,0.4)" stroke-width="0.8" transform="rotate(288 60 60)"/>
+              <!-- Center -->
+              <circle cx="60" cy="60" r="11" [attr.fill]="'url(#cbc' + $index + ')'"/>
+              <circle cx="60" cy="60" r="5"  fill="#d4a820"/>
+              <!-- Stamens -->
+              <line x1="60" y1="60" x2="60" y2="47" stroke="#c8a020" stroke-width="1"/>
+              <circle cx="60" cy="46" r="2" fill="#e8c020"/>
+              <line x1="60" y1="60" x2="68" y2="50" stroke="#c8a020" stroke-width="1"/>
+              <circle cx="69" cy="49" r="2" fill="#e8c020"/>
+              <line x1="60" y1="60" x2="52" y2="50" stroke="#c8a020" stroke-width="1"/>
+              <circle cx="51" cy="49" r="2" fill="#e8c020"/>
+              <line x1="60" y1="60" x2="65" y2="56" stroke="#c8a020" stroke-width="1"/>
+              <circle cx="66" cy="55" r="2" fill="#e8c020"/>
+              <line x1="60" y1="60" x2="55" y2="56" stroke="#c8a020" stroke-width="1"/>
+              <circle cx="54" cy="55" r="2" fill="#e8c020"/>
+            </svg>
+          }
+
+          <!-- VARIANT 1: Rose — layered overlapping petals -->
+          @if (p.variant === 1) {
+            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient [attr.id]="'ro' + $index" cx="40%" cy="35%" r="65%">
+                  <stop offset="0%"   stop-color="#fdf4ec"/>
+                  <stop offset="40%"  stop-color="#e8d0a8"/>
+                  <stop offset="75%"  stop-color="#c8b080"/>
+                  <stop offset="100%" stop-color="#a89060"/>
+                </radialGradient>
+                <radialGradient [attr.id]="'roi' + $index" cx="45%" cy="40%" r="55%">
+                  <stop offset="0%"   stop-color="#fff8f0"/>
+                  <stop offset="100%" stop-color="#d4b888"/>
+                </radialGradient>
+              </defs>
+              <!-- Outer petals layer -->
+              <ellipse cx="60" cy="24" rx="16" ry="26" [attr.fill]="'url(#ro' + $index + ')'" transform="rotate(0 60 60)"/>
+              <ellipse cx="60" cy="24" rx="16" ry="26" [attr.fill]="'url(#ro' + $index + ')'" transform="rotate(60 60 60)"/>
+              <ellipse cx="60" cy="24" rx="16" ry="26" [attr.fill]="'url(#ro' + $index + ')'" transform="rotate(120 60 60)"/>
+              <ellipse cx="60" cy="24" rx="16" ry="26" [attr.fill]="'url(#ro' + $index + ')'" transform="rotate(180 60 60)"/>
+              <ellipse cx="60" cy="24" rx="16" ry="26" [attr.fill]="'url(#ro' + $index + ')'" transform="rotate(240 60 60)"/>
+              <ellipse cx="60" cy="24" rx="16" ry="26" [attr.fill]="'url(#ro' + $index + ')'" transform="rotate(300 60 60)"/>
+              <!-- Inner petals layer (smaller, rotated 30°) -->
+              <ellipse cx="60" cy="34" rx="11" ry="18" [attr.fill]="'url(#roi' + $index + ')'" transform="rotate(30 60 60)"/>
+              <ellipse cx="60" cy="34" rx="11" ry="18" [attr.fill]="'url(#roi' + $index + ')'" transform="rotate(90 60 60)"/>
+              <ellipse cx="60" cy="34" rx="11" ry="18" [attr.fill]="'url(#roi' + $index + ')'" transform="rotate(150 60 60)"/>
+              <ellipse cx="60" cy="34" rx="11" ry="18" [attr.fill]="'url(#roi' + $index + ')'" transform="rotate(210 60 60)"/>
+              <ellipse cx="60" cy="34" rx="11" ry="18" [attr.fill]="'url(#roi' + $index + ')'" transform="rotate(270 60 60)"/>
+              <ellipse cx="60" cy="34" rx="11" ry="18" [attr.fill]="'url(#roi' + $index + ')'" transform="rotate(330 60 60)"/>
+              <!-- Rose center bud -->
+              <circle cx="60" cy="60" r="13" fill="#e8c888"/>
+              <circle cx="60" cy="60" r="7"  fill="#d4a840"/>
+              <circle cx="60" cy="60" r="3"  fill="#b88820"/>
+            </svg>
+          }
+
+          <!-- VARIANT 2: Magnolia — large cupped petals, ivory & sage -->
+          @if (p.variant === 2) {
+            <svg viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient [attr.id]="'mg' + $index" cx="38%" cy="30%" r="68%">
+                  <stop offset="0%"   stop-color="#fdfaf0"/>
+                  <stop offset="35%"  stop-color="#e8e0c8"/>
+                  <stop offset="70%"  stop-color="#c8d0b8"/>
+                  <stop offset="100%" stop-color="#8fa98a"/>
+                </radialGradient>
+                <radialGradient [attr.id]="'mgc' + $index" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%"   stop-color="#f8f0d8"/>
+                  <stop offset="100%" stop-color="#c8a840"/>
+                </radialGradient>
+              </defs>
+              <!-- 6 large cupped petals -->
+              <ellipse cx="65" cy="22" rx="18" ry="30" [attr.fill]="'url(#mg' + $index + ')'" transform="rotate(0 65 65)"/>
+              <ellipse cx="65" cy="22" rx="18" ry="30" [attr.fill]="'url(#mg' + $index + ')'" transform="rotate(60 65 65)"/>
+              <ellipse cx="65" cy="22" rx="18" ry="30" [attr.fill]="'url(#mg' + $index + ')'" transform="rotate(120 65 65)"/>
+              <ellipse cx="65" cy="22" rx="18" ry="30" [attr.fill]="'url(#mg' + $index + ')'" transform="rotate(180 65 65)"/>
+              <ellipse cx="65" cy="22" rx="18" ry="30" [attr.fill]="'url(#mg' + $index + ')'" transform="rotate(240 65 65)"/>
+              <ellipse cx="65" cy="22" rx="18" ry="30" [attr.fill]="'url(#mg' + $index + ')'" transform="rotate(300 65 65)"/>
+              <!-- Petal vein highlights -->
+              <line x1="65" y1="65" x2="65" y2="6"  stroke="rgba(255,255,255,0.5)" stroke-width="1"   transform="rotate(0 65 65)"/>
+              <line x1="65" y1="65" x2="65" y2="6"  stroke="rgba(255,255,255,0.5)" stroke-width="1"   transform="rotate(60 65 65)"/>
+              <line x1="65" y1="65" x2="65" y2="6"  stroke="rgba(255,255,255,0.5)" stroke-width="1"   transform="rotate(120 65 65)"/>
+              <line x1="65" y1="65" x2="65" y2="6"  stroke="rgba(255,255,255,0.5)" stroke-width="1"   transform="rotate(180 65 65)"/>
+              <line x1="65" y1="65" x2="65" y2="6"  stroke="rgba(255,255,255,0.5)" stroke-width="1"   transform="rotate(240 65 65)"/>
+              <line x1="65" y1="65" x2="65" y2="6"  stroke="rgba(255,255,255,0.5)" stroke-width="1"   transform="rotate(300 65 65)"/>
+              <!-- Center -->
+              <circle cx="65" cy="65" r="14" [attr.fill]="'url(#mgc' + $index + ')'"/>
+              <circle cx="65" cy="65" r="6"  fill="#b88820"/>
+              <!-- Stamen cluster -->
+              <circle cx="62" cy="60" r="1.5" fill="#e8d060"/>
+              <circle cx="68" cy="60" r="1.5" fill="#e8d060"/>
+              <circle cx="65" cy="57" r="1.5" fill="#e8d060"/>
+              <circle cx="61" cy="64" r="1.5" fill="#e8d060"/>
+              <circle cx="69" cy="64" r="1.5" fill="#e8d060"/>
+            </svg>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Soap bubbles floating behind everything else -->
+    <div class="fireflies" aria-hidden="true">
+      @for (f of fireflies; track $index) {
+        <span
+          class="firefly"
+          [style.left.%]="f.left"
+          [style.top.%]="f.top"
+          [style.width.px]="f.size"
+          [style.height.px]="f.size"
+          [style.animation-delay.s]="f.delay"
+          [style.animation-duration.s]="f.duration"
+          [style.--drift.px]="f.drift"
+          [style.--hue]="f.hue"
+        ></span>
+      }
+    </div>
+
+    <div class="hero-inner">
+      <!-- Monogram with rotating gold ring -->
+      <div class="monogram" aria-hidden="true">
+        <svg viewBox="0 0 220 220" class="monogram-svg">
+          <defs>
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#e8d0c4"/>
+              <stop offset="50%" stop-color="#b8935a"/>
+              <stop offset="100%" stop-color="#8c6a3a"/>
+            </linearGradient>
+          </defs>
+          <!-- Rotating ring -->
+          <circle class="monogram-ring" cx="110" cy="110" r="96"
+                  fill="none" stroke="url(#goldGradient)" stroke-width="1.4"
+                  stroke-dasharray="6 10"/>
+          <!-- Inner thin ring -->
+          <circle cx="110" cy="110" r="78"
+                  fill="none" stroke="#8fa98a" stroke-width="0.6" opacity="0.55"/>
+          <!-- Initials -->
+          <text x="78" y="132" class="monogram-letter">A</text>
+          <text x="108" y="125" class="monogram-amp">&amp;</text>
+          <text x="128" y="132" class="monogram-letter">G</text>
+        </svg>
+      </div>
+
+      <p class="hero-prelude">You are cordially invited to the wedding of</p>
+
+      <h1 class="hero-names">
+        <span class="name">Ashkharhik</span>
+        <span class="amp">
+          <svg viewBox="0 0 60 40" class="amp-svg" aria-hidden="true">
+            <path d="M5 20 Q 15 5, 30 20 T 55 20"
+                  fill="none" stroke="#b8935a" stroke-width="1.2"/>
+          </svg>
+          <span class="amp-letter">&amp;</span>
+        </span>
+        <span class="name">Gohar</span>
+      </h1>
+
+      <!-- Ornamental divider beneath the names -->
+      <div class="ornament" aria-hidden="true">
+        <span class="ornament-line"></span>
+        <svg viewBox="0 0 60 18" class="ornament-flourish">
+          <path d="M2 9 Q 15 -2, 30 9 T 58 9"
+                fill="none" stroke="#b8935a" stroke-width="1"/>
+          <circle cx="30" cy="9" r="2.4" fill="#b8935a"/>
+          <circle cx="30" cy="9" r="0.9" fill="#0a0e1a"/>
+        </svg>
+        <span class="ornament-line"></span>
+      </div>
+
+      <p class="hero-date">
+        <span class="date-piece">July 31</span>
+        <span class="date-dot">·</span>
+        <span class="date-piece">2026</span>
+      </p>
+
+      <p class="hero-venue">Platinium Hall · Mughni, Armenia</p>
+
+      <button type="button" class="hero-cta" (click)="scrollToRsvp()">
+        <span>Reply with grace</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4 v 14 M6 12 l 6 6 6 -6"
+                fill="none" stroke="currentColor" stroke-width="1.4"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <span class="scroll-line"></span>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- COUNTDOWN                                                     -->
+  <!-- ============================================================ -->
+  <section #revealSection class="section countdown-section reveal" id="countdown">
+    <div class="section-eyebrow">A moment we are counting</div>
+    <h2 class="section-title">Until we say <em>yes</em></h2>
+
+    <div class="countdown" role="timer" aria-live="polite">
+      <div class="flip-card">
+        <div class="flip-card-inner" [attr.data-flip]="flipKeys.days">
+          <span class="flip-value">{{ countdown.days }}</span>
+        </div>
+        <div class="flip-label">Days</div>
+      </div>
+      <div class="flip-divider">:</div>
+      <div class="flip-card">
+        <div class="flip-card-inner" [attr.data-flip]="flipKeys.hours">
+          <span class="flip-value">{{ countdown.hours }}</span>
+        </div>
+        <div class="flip-label">Hours</div>
+      </div>
+      <div class="flip-divider">:</div>
+      <div class="flip-card">
+        <div class="flip-card-inner" [attr.data-flip]="flipKeys.minutes">
+          <span class="flip-value">{{ countdown.minutes }}</span>
+        </div>
+        <div class="flip-label">Minutes</div>
+      </div>
+      <div class="flip-divider">:</div>
+      <div class="flip-card">
+        <div class="flip-card-inner" [attr.data-flip]="flipKeys.seconds">
+          <span class="flip-value">{{ countdown.seconds }}</span>
+        </div>
+        <div class="flip-label">Seconds</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ornamental section divider -->
+  <div class="divider" aria-hidden="true">
+    <span class="divider-line"></span>
+    <svg viewBox="0 0 120 30" class="divider-leaf">
+      <path d="M10 15 Q 30 -2, 60 15 T 110 15"
+            fill="none" stroke="#b8935a" stroke-width="0.9"/>
+      <path d="M52 15 q 4 -10, 8 0 q 4 10, 8 0"
+            fill="none" stroke="#b8935a" stroke-width="0.9"/>
+      <circle cx="60" cy="15" r="2.4" fill="#b8935a"/>
+    </svg>
+    <span class="divider-line"></span>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- EVENT DETAILS                                                 -->
+  <!-- ============================================================ -->
+  <section #revealSection class="section events-section reveal" id="events">
+    <div class="section-eyebrow">The order of the evening</div>
+    <h2 class="section-title">The Celebration</h2>
+
+    <div class="event-cards">
+      <article class="event-card">
+        <div class="event-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <path d="M32 8 C 18 22, 18 38, 32 56 C 46 38, 46 22, 32 8 Z"
+                  fill="none" stroke="#b8935a" stroke-width="1.4"/>
+            <path d="M32 18 C 26 28, 26 38, 32 48 C 38 38, 38 28, 32 18 Z"
+                  fill="none" stroke="#b8935a" stroke-width="0.9" opacity="0.7"/>
+            <circle cx="32" cy="32" r="2.4" fill="#b8935a"/>
+          </svg>
+        </div>
+        <p class="event-kicker">Ceremony</p>
+        <h3 class="event-title">The Vows</h3>
+        <p class="event-time">Three o'clock in the afternoon</p>
+        <p class="event-meta">15 : 00</p>
+        <div class="event-line" aria-hidden="true"></div>
+        <p class="event-venue">Tegher Monastery</p>
+        <p class="event-address">Tegher, Armenia</p>
+      </article>
+
+      <article class="event-card">
+        <div class="event-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <path d="M20 12 L 44 12 L 40 32 Q 32 40, 24 32 Z"
+                  fill="none" stroke="#b8935a" stroke-width="1.4"/>
+            <path d="M32 40 L 32 52 M 24 52 L 40 52"
+                  stroke="#b8935a" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M28 18 q 4 6, 8 0"
+                  fill="none" stroke="#b8935a" stroke-width="0.9" opacity="0.7"/>
+          </svg>
+        </div>
+        <p class="event-kicker">Reception</p>
+        <h3 class="event-title">The Feast</h3>
+        <p class="event-time">Six o'clock in the evening</p>
+        <p class="event-meta">18 : 00</p>
+        <div class="event-line" aria-hidden="true"></div>
+        <p class="event-venue">Platinium Hall</p>
+        <p class="event-address">Mughni, Armenia</p>
+      </article>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <span class="divider-line"></span>
+    <svg viewBox="0 0 120 30" class="divider-leaf">
+      <path d="M10 15 Q 30 -2, 60 15 T 110 15"
+            fill="none" stroke="#b8935a" stroke-width="0.9"/>
+      <path d="M52 15 q 4 -10, 8 0 q 4 10, 8 0"
+            fill="none" stroke="#b8935a" stroke-width="0.9"/>
+      <circle cx="60" cy="15" r="2.4" fill="#b8935a"/>
+    </svg>
+    <span class="divider-line"></span>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MAP                                                           -->
+  <!-- ============================================================ -->
+  <section #revealSection class="section map-section reveal" id="map">
+    <div class="section-eyebrow">Find us on the day</div>
+    <h2 class="section-title">The Venues</h2>
+
+    <div class="maps-grid">
+      <div class="map-item">
+        <div class="map-label">
+          <span class="map-label-kicker">Ceremony · 15:00</span>
+          <span class="map-label-name">Tegher Monastery</span>
+        </div>
+        <div class="map-frame">
+          <iframe
+            title="Tegher Monastery, Armenia"
+            [src]="mapUrlCeremony"
+            width="100%"
+            height="100%"
+            style="border:0"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen></iframe>
+        </div>
+        <p class="map-caption">Tegher · Aragatsotn Province, Armenia</p>
+      </div>
+
+      <div class="map-item">
+        <div class="map-label">
+          <span class="map-label-kicker">Reception · 18:00</span>
+          <span class="map-label-name">Platinium Hall</span>
+        </div>
+        <div class="map-frame">
+          <iframe
+            title="Platinium Hall, Mughni, Armenia"
+            [src]="mapUrlReception"
+            width="100%"
+            height="100%"
+            style="border:0"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen></iframe>
+        </div>
+        <p class="map-caption">Mughni · Aragatsotn Province, Armenia</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <span class="divider-line"></span>
+    <svg viewBox="0 0 120 30" class="divider-leaf">
+      <path d="M10 15 Q 30 -2, 60 15 T 110 15"
+            fill="none" stroke="#b8935a" stroke-width="0.9"/>
+      <path d="M52 15 q 4 -10, 8 0 q 4 10, 8 0"
+            fill="none" stroke="#b8935a" stroke-width="0.9"/>
+      <circle cx="60" cy="15" r="2.4" fill="#b8935a"/>
+    </svg>
+    <span class="divider-line"></span>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- RSVP                                                          -->
+  <!-- ============================================================ -->
+  <section #revealSection class="section rsvp-section reveal" id="rsvp">
+    <div class="section-eyebrow">Kindly reply by July 1st</div>
+    <h2 class="section-title">Will you join us?</h2>
+
+    @if (!submitted) {
+      <form class="rsvp-form" [formGroup]="rsvpForm" (ngSubmit)="onSubmit()" novalidate>
+
+        <div class="field">
+          <label for="name">Your full name</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            autocomplete="name"
+            placeholder="As you'd like it on the place card"
+          />
+          @if (nameCtrl?.touched && nameCtrl?.invalid) {
+            <span class="field-error">A name lets us set your place — please share it.</span>
+          }
+        </div>
+
+        <div class="field">
+          <span class="field-label">Will you attend?</span>
+          <div class="pill-group" role="radiogroup" aria-label="Will you attend?">
+            <label class="pill" [class.is-selected]="rsvpForm.value.attending === 'yes'">
+              <input type="radio" formControlName="attending" value="yes" />
+              <span>Joyfully, yes</span>
+            </label>
+            <label class="pill" [class.is-selected]="rsvpForm.value.attending === 'maybe'">
+              <input type="radio" formControlName="attending" value="maybe" />
+              <span>Hoping to</span>
+            </label>
+            <label class="pill" [class.is-selected]="rsvpForm.value.attending === 'no'">
+              <input type="radio" formControlName="attending" value="no" />
+              <span>With regrets</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="guestCount">How many guests will be attending?</label>
+          <div class="guest-count-wrapper">
+            <button type="button" class="guest-count-btn" (click)="decrementGuests()" [disabled]="rsvpForm.value.guestCount <= 1" aria-label="Decrease">−</button>
+            <input
+              id="guestCount"
+              type="number"
+              formControlName="guestCount"
+              min="1"
+              max="20"
+              readonly
+            />
+            <button type="button" class="guest-count-btn" (click)="incrementGuests()" [disabled]="rsvpForm.value.guestCount >= 20" aria-label="Increase">+</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="message">A message for the couple</label>
+          <textarea
+            id="message"
+            formControlName="message"
+            rows="4"
+            placeholder="Wishes, blessings, or a private joke — we'll cherish it."
+          ></textarea>
+        </div>
+
+        @if (submitError) {
+          <div class="form-error" role="alert">{{ submitError }}</div>
+        }
+
+        <button type="submit" class="submit-btn" [disabled]="submitting">
+          <span class="submit-shimmer" aria-hidden="true"></span>
+          <span class="submit-label">
+            @if (!submitting) {
+              <span>Send our reply</span>
+            } @else {
+              <span>Sealing the envelope…</span>
+            }
+          </span>
+        </button>
+      </form>
+    } @else {
+      <div class="thank-you" role="status" aria-live="polite">
+        <div class="thank-heart" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <defs>
+              <radialGradient id="heartGrad" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#ccddc8"/>
+                <stop offset="100%" stop-color="#627a5e"/>
+              </radialGradient>
+            </defs>
+            <path d="M32 56 C 8 40, 4 22, 16 14 C 24 8, 30 14, 32 20
+                     C 34 14, 40 8, 48 14 C 60 22, 56 40, 32 56 Z"
+                  fill="url(#heartGrad)" stroke="#b8935a" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <h3 class="thank-title">Thank you</h3>
+        <p class="thank-body">
+          Your reply has fluttered home to us. We can't wait to share this day with you —
+          until the 31<sup>st</sup> of July.
+        </p>
+        <p class="thank-signature"><em>— Ashkharhik &amp; Gohar</em></p>
+      </div>
+    }
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================ -->
+  <footer class="wedding-footer">
+    <div class="footer-flourish" aria-hidden="true">
+      <svg viewBox="0 0 200 24">
+        <path d="M10 12 Q 60 0, 100 12 T 190 12"
+              fill="none" stroke="#b8935a" stroke-width="0.9"/>
+        <circle cx="100" cy="12" r="2.4" fill="#b8935a"/>
+      </svg>
+    </div>
+    <p class="footer-line"><em>Ashkharhik &amp; Gohar</em> · July 31, 2026</p>
+  </footer>
+</div>

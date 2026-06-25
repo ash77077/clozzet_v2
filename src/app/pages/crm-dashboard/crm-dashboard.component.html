@@ -231,7 +231,7 @@
 							</p-button>
 							<p-datepicker
 								[(ngModel)]="dateFrom"
-								(ngModelChange)="applyUserFilter()"
+								(ngModelChange)="onDateFilterChange()"
 								placeholder="From date"
 								dateFormat="yy-mm-dd"
 								[showClear]="true"
@@ -240,7 +240,7 @@
 							</p-datepicker>
 							<p-datepicker
 								[(ngModel)]="dateTo"
-								(ngModelChange)="applyUserFilter()"
+								(ngModelChange)="onDateFilterChange()"
 								placeholder="To date"
 								dateFormat="yy-mm-dd"
 								[showClear]="true"

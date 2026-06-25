@@ -2,4 +2,4 @@
 <app-secondary-navbar *ngIf="!hideNavbars"></app-secondary-navbar>
 <router-outlet></router-outlet>
 <app-footer *ngIf="!hideNavbars"></app-footer>
-<app-ai-chat-widget *ngIf="(aiEnabled$ | async) && (isAuthenticated$ | async)"></app-ai-chat-widget>
+<app-ai-chat-widget *ngIf="(aiEnabled$ | async) && (isAuthenticated$ | async) && !hideNavbars"></app-ai-chat-widget>

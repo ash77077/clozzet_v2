@@ -1,0 +1,326 @@
+// Palette
+$parchment:   #f7f1e8;
+$parchment-2: #efe8da;
+$parchment-3: #e8dfd0;
+$gold:        #c9a96e;
+$gold-light:  #e0c898;
+$blush:       #d4a5a5;
+$sage:        #8fa98a;
+$ink:         #3c3530;
+$ink-light:   #6b5e56;
+$ink-muted:   #9e8f86;
+$border:      rgba(201,169,110,0.25);
+
+.wg-page {
+  min-height: 100vh;
+  background: $parchment;
+  padding: 48px 48px 80px;
+  font-family: 'Inter', sans-serif;
+
+  // Subtle linen texture via layered gradients
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(201,169,110,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(212,165,165,0.08) 0%, transparent 60%);
+}
+
+/* ─── Header ─────────────────────────────────────────────────── */
+.wg-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.wg-monogram {
+  font-family: 'Cormorant Garamond', 'Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  color: $gold;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.wg-title {
+  font-family: 'Cormorant Garamond', 'Garamond', serif;
+  font-size: 46px;
+  font-weight: 300;
+  color: $ink;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+  line-height: 1.1;
+}
+
+.wg-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: $ink-muted;
+  text-transform: uppercase;
+  margin: 0 0 20px;
+}
+
+.wg-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: $gold;
+  font-size: 11px;
+
+  span {
+    display: block;
+    width: 80px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, $gold);
+
+    &:last-child {
+      background: linear-gradient(to left, transparent, $gold);
+    }
+  }
+
+  i { font-size: 10px; }
+}
+
+/* ─── Stats ───────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 640px)  { grid-template-columns: 1fr 1fr; }
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 12px rgba(60,53,48,0.05);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(60,53,48,0.10);
+  }
+}
+
+.stat-icon {
+  font-size: 22px;
+  color: $gold;
+  margin-bottom: 10px;
+}
+
+.stat-card.stat-coming    .stat-icon { color: $sage; }
+.stat-card.stat-not-coming .stat-icon { color: $blush; }
+.stat-card.stat-maybe     .stat-icon { color: $gold-light; }
+.stat-card.stat-headcount  .stat-icon { color: $gold; }
+
+.stat-value {
+  font-family: 'Cormorant Garamond', 'Garamond', serif;
+  font-size: 42px;
+  font-weight: 600;
+  color: $ink;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $ink-muted;
+}
+
+/* ─── Table Card ──────────────────────────────────────────────── */
+.table-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(60,53,48,0.06);
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px;
+  border-bottom: 1px solid $border;
+  background: rgba(247,241,232,0.6);
+}
+
+.table-title {
+  font-family: 'Cormorant Garamond', 'Garamond', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: $ink;
+  letter-spacing: 0.03em;
+}
+
+/* ─── RSVP Badge ──────────────────────────────────────────────── */
+.rsvp-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+
+  &.rsvp-yes   { background: rgba(143,169,138,0.18); color: #4a7a44; border: 1px solid rgba(143,169,138,0.4); }
+  &.rsvp-no    { background: rgba(212,165,165,0.18); color: #a04040; border: 1px solid rgba(212,165,165,0.4); }
+  &.rsvp-maybe { background: rgba(201,169,110,0.15); color: #8a6a30; border: 1px solid rgba(201,169,110,0.4); }
+}
+
+/* ─── Table Cells ─────────────────────────────────────────────── */
+.guest-name {
+  font-family: 'Cormorant Garamond', 'Garamond', serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: $ink;
+}
+
+.guest-message {
+  font-size: 13px;
+  color: $ink-light;
+  max-width: 260px;
+  font-style: italic;
+}
+
+.guest-date {
+  font-size: 12px;
+  color: $ink-muted;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+.no-message {
+  color: $parchment-3;
+}
+
+.text-center { text-align: center; }
+
+/* ─── Delete Button ───────────────────────────────────────────── */
+.delete-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: $ink-muted;
+  transition: all 0.18s;
+
+  &:hover {
+    border-color: rgba(212,165,165,0.5);
+    background: rgba(212,165,165,0.12);
+    color: #a04040;
+  }
+
+  i { font-size: 13px; }
+}
+
+/* ─── Empty State ─────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 72px 0;
+  color: $ink-muted;
+
+  i {
+    font-size: 36px;
+    color: $gold-light;
+    display: block;
+    margin-bottom: 14px;
+  }
+
+  p {
+    font-family: 'Cormorant Garamond', 'Garamond', serif;
+    font-size: 18px;
+    color: $ink-muted;
+    margin: 0;
+    font-style: italic;
+  }
+}
+
+/* ─── PrimeNG overrides ───────────────────────────────────────── */
+:host ::ng-deep {
+
+  .wg-refresh-btn.p-button {
+    border-color: $border;
+    color: $ink-light;
+    background: transparent;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+
+    &:hover {
+      background: rgba(201,169,110,0.08) !important;
+      border-color: $gold !important;
+      color: $gold !important;
+    }
+  }
+
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: rgba(247,241,232,0.8);
+      color: $ink-muted;
+      border-color: $border;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .p-datatable-tbody > tr {
+      background: #fff;
+      color: $ink;
+      border-color: $border;
+      transition: background 0.15s;
+
+      &:hover { background: rgba(247,241,232,0.7) !important; }
+
+      > td { border-color: $border; }
+    }
+
+    .p-sortable-column:not(.p-highlight):hover {
+      background: rgba(201,169,110,0.06) !important;
+      color: $ink !important;
+    }
+
+    .p-sortable-column.p-highlight {
+      background: rgba(201,169,110,0.08) !important;
+      color: $gold !important;
+
+      .p-sortable-column-icon { color: $gold !important; }
+    }
+
+    .p-paginator {
+      background: rgba(247,241,232,0.6);
+      border-color: $border;
+      color: $ink-muted;
+      font-size: 13px;
+
+      .p-paginator-page.p-highlight {
+        background: $gold;
+        color: #fff;
+        border-color: $gold;
+      }
+
+      .p-paginator-element:not(.p-disabled):hover {
+        background: rgba(201,169,110,0.1);
+        color: $gold;
+      }
+    }
+
+    .p-datatable-loading-overlay { background: rgba(247,241,232,0.7); }
+  }
+
+  .p-confirm-dialog {
+    .p-dialog-header { font-family: 'Cormorant Garamond', serif; }
+  }
+}

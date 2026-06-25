@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, forkJoin, firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -133,6 +133,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,
+    private route: ActivatedRoute,
     private aiService: AiService,
     private authService: AuthService
   ) {}
@@ -140,10 +141,25 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForm();
     this.initializeFollowUpForm();
-    this.loadManagerUsers();
-    this.loadCustomers();
     const user = this.authService.getCurrentUser();
     this.isAdmin = user?.role === 'admin';
+
+    // Read filter state from URL before loading data
+    const params = this.route.snapshot.queryParamMap;
+    const users = params.get('users');
+    if (users) {
+      users.split(',').filter(Boolean).forEach(id => this.selectedUserIds.add(id));
+    }
+    this.showUnassigned = params.get('unassigned') === '1';
+    const qf = params.get('qf');
+    if (qf === 'today' || qf === 'overdue') this.activeQuickFilter = qf;
+    const df = params.get('dateFrom');
+    const dt = params.get('dateTo');
+    if (df) this.dateFrom = new Date(df);
+    if (dt) this.dateTo = new Date(dt);
+
+    this.loadManagerUsers();
+    this.loadCustomers();
   }
 
   ngOnDestroy(): void {
@@ -901,17 +917,35 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   }
 
   // User filtering methods
+  private syncFiltersToUrl(): void {
+    const queryParams: Record<string, string | null> = {
+      users: this.selectedUserIds.size > 0 ? [...this.selectedUserIds].join(',') : null,
+      unassigned: this.showUnassigned ? '1' : null,
+      qf: this.activeQuickFilter ?? null,
+      dateFrom: this.dateFrom ? this.dateFrom.toISOString().split('T')[0] : null,
+      dateTo: this.dateTo ? this.dateTo.toISOString().split('T')[0] : null,
+    };
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
   toggleUserFilter(userId: string): void {
     if (this.selectedUserIds.has(userId)) {
       this.selectedUserIds.delete(userId);
     } else {
       this.selectedUserIds.add(userId);
     }
+    this.syncFiltersToUrl();
     this.applyUserFilter();
   }
 
   toggleUnassignedFilter(): void {
     this.showUnassigned = !this.showUnassigned;
+    this.syncFiltersToUrl();
     this.applyUserFilter();
   }
 
@@ -923,11 +957,15 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     this.selectedUserIds.clear();
     this.showUnassigned = false;
     this.activeQuickFilter = null;
+    this.dateFrom = null;
+    this.dateTo = null;
+    this.syncFiltersToUrl();
     this.applyUserFilter();
   }
 
   toggleQuickFilter(filter: 'today' | 'overdue'): void {
     this.activeQuickFilter = this.activeQuickFilter === filter ? null : filter;
+    this.syncFiltersToUrl();
     this.applyUserFilter();
   }
 
@@ -989,9 +1027,15 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     this.calculateStats(this.filteredCustomers, filteredFollowUps);
   }
 
+  onDateFilterChange(): void {
+    this.syncFiltersToUrl();
+    this.applyUserFilter();
+  }
+
   clearDateFilters(): void {
     this.dateFrom = null;
     this.dateTo = null;
+    this.syncFiltersToUrl();
     this.applyUserFilter();
   }
 
