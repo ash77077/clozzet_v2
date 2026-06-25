@@ -1,0 +1,106 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="wg-page">
+
+  <!-- Header -->
+  <div class="wg-header">
+    <div class="wg-monogram">A & G</div>
+    <h1 class="wg-title">Wedding Guests</h1>
+    <p class="wg-subtitle">Ashkharhik & Gohar &nbsp;·&nbsp; RSVP Responses</p>
+    <div class="wg-divider"><span></span><i class="pi pi-heart-fill"></i><span></span></div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="pi pi-users"></i></div>
+      <div class="stat-value">{{ stats.totalResponses }}</div>
+      <div class="stat-label">Responses</div>
+    </div>
+    <div class="stat-card stat-coming">
+      <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="stat-value">{{ stats.attending }}</div>
+      <div class="stat-label">Coming</div>
+    </div>
+    <div class="stat-card stat-not-coming">
+      <div class="stat-icon"><i class="pi pi-times-circle"></i></div>
+      <div class="stat-value">{{ stats.notAttending }}</div>
+      <div class="stat-label">Not Coming</div>
+    </div>
+    <div class="stat-card stat-maybe">
+      <div class="stat-icon"><i class="pi pi-question-circle"></i></div>
+      <div class="stat-value">{{ stats.maybe }}</div>
+      <div class="stat-label">Maybe</div>
+    </div>
+    <div class="stat-card stat-headcount">
+      <div class="stat-icon"><i class="pi pi-heart-fill"></i></div>
+      <div class="stat-value">{{ stats.totalGuests }}</div>
+      <div class="stat-label">Total Guests</div>
+    </div>
+  </div>
+
+  <!-- Guest Table -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <span class="table-title">Guest List</span>
+      <p-button icon="pi pi-refresh" label="Refresh" styleClass="p-button-outlined p-button-sm wg-refresh-btn" (onClick)="load()"></p-button>
+    </div>
+
+    <p-table
+      [value]="guests"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="20"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      [sortField]="'createdAt'"
+      [sortOrder]="-1"
+      styleClass="p-datatable-sm"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+          <th pSortableColumn="attending">RSVP <p-sortIcon field="attending"></p-sortIcon></th>
+          <th pSortableColumn="guestCount" style="width:100px; text-align:center">Guests <p-sortIcon field="guestCount"></p-sortIcon></th>
+          <th>Message</th>
+          <th pSortableColumn="createdAt">Submitted <p-sortIcon field="createdAt"></p-sortIcon></th>
+          <th style="width:64px"></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-guest>
+        <tr>
+          <td class="guest-name">{{ guest.name }}</td>
+          <td>
+            <span class="rsvp-badge rsvp-{{ guest.attending }}">{{ attendingLabel(guest.attending) }}</span>
+          </td>
+          <td class="text-center">{{ guest.guestCount }}</td>
+          <td class="guest-message">
+            <span
+              *ngIf="guest.message"
+              [pTooltip]="guest.message"
+              tooltipPosition="top"
+            >{{ guest.message.length > 55 ? (guest.message | slice:0:55) + '…' : guest.message }}</span>
+            <span *ngIf="!guest.message" class="no-message">—</span>
+          </td>
+          <td class="guest-date">{{ guest.createdAt | date:'dd MMM yyyy · HH:mm' }}</td>
+          <td>
+            <button class="delete-btn" (click)="confirmDelete(guest)" pTooltip="Remove guest" tooltipPosition="left">
+              <i class="pi pi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="empty-state">
+            <i class="pi pi-envelope"></i>
+            <p>No RSVPs received yet</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+</div>

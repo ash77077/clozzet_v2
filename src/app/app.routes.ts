@@ -168,10 +168,22 @@ export const routes: Routes = [
     path: 'configurator',
     loadComponent: () => import('./components/configurator/configurator.component').then(m => m.ConfiguratorComponent)
   },
-  // Wedding invitation — Hasmik & Artyom (chrome-less route)
+  // Wedding invitation — chrome-less route
   {
     path: 'invitation',
     loadComponent: () => import('./components/wedding/wedding.component').then(m => m.WeddingComponent)
+  },
+  // Wedding guests admin
+  {
+    path: 'wedding-guests',
+    loadComponent: () => import('./pages/wedding-guests/wedding-guests.component').then(m => m.WeddingGuestsComponent),
+    canActivate: [ManagerGuard]
+  },
+  // Employee Salary Management
+  {
+    path: 'employees',
+    loadComponent: () => import('./pages/employees/employees.component').then(m => m.EmployeesComponent),
+    canActivate: [AdminGuard]
   },
   // Wildcard route - must be last
   {

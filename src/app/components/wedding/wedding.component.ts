@@ -15,6 +15,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 interface Countdown {
   days: string;
@@ -23,19 +24,20 @@ interface Countdown {
   seconds: string;
 }
 
-interface Firefly {
+interface Bubble {
   left: number;
   top: number;
   delay: number;
   duration: number;
   size: number;
   drift: number;
+  hue: number;
 }
 
 
 
 /**
- * Wedding invitation page — Hasmik & Artyom · July 31, 2026
+ * Wedding invitation page — Ashkharhik & Gohar · July 31, 2026
  * A self-contained, chrome-less route that hides the app navbar/footer.
  * All visuals are CSS/SVG — no external animation libraries.
  */
@@ -71,11 +73,27 @@ export class WeddingComponent implements OnInit, AfterViewInit, OnDestroy {
   submitted = false;
   submitError: string | null = null;
 
-  // Decorative firefly particles drifting behind the hero
-  fireflies: Firefly[] = [];
+  // Decorative soap bubbles floating behind the hero
+  fireflies: Bubble[] = [];
 
-  // The Google Maps embed URL for Platinium Hall, Mughni, Armenia
-  mapUrl: SafeResourceUrl;
+  // Full flowers scattered across the screen
+  petals = Array.from({ length: 20 }, (_, i) => {
+    const s = i * 137.508;
+    return {
+      x:        (i / 20) * 105 - 2,         // spread 0–105% width
+      y:        (i / 20) * 108 - 4,         // spread 0–108% height
+      rotate:   s % 360,                    // initial rotation
+      scale:    0.55 + (s % 100) / 180,     // 0.55 – 1.1 size variety
+      delay:    (i % 8) * 0.09,            // 0 – 0.63s stagger
+      duration: 1.3 + (s % 100) / 110,     // 1.3 – 2.2s fall
+      drift:    -140 + (s % 280),           // horizontal drift px
+      spin:     -240 + (s % 480),           // spin while falling
+      variant:  i % 3,                      // 3 full flower types
+    };
+  });
+
+  mapUrlCeremony: SafeResourceUrl;
+  mapUrlReception: SafeResourceUrl;
 
 
   // Sections we want to fade in on scroll
@@ -92,7 +110,10 @@ export class WeddingComponent implements OnInit, AfterViewInit, OnDestroy {
       message: ['', [Validators.maxLength(800)]]
     });
 
-    this.mapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+    this.mapUrlCeremony = this.sanitizer.bypassSecurityTrustResourceUrl(
+      'https://maps.google.com/maps?q=Tegher+Monastery+Tegher+Armenia&output=embed'
+    );
+    this.mapUrlReception = this.sanitizer.bypassSecurityTrustResourceUrl(
       'https://maps.google.com/maps?q=Platinium+Hall+Mughni+Armenia&output=embed'
     );
 
@@ -112,10 +133,12 @@ export class WeddingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Pull the curtain back on the next tick to ensure the initial frame paints first
+    // Let the browser paint the closed curtain first, then open it
     requestAnimationFrame(() => {
-      this.curtainOpen = true;
-      this.cdr.markForCheck();
+      setTimeout(() => {
+        this.curtainOpen = true;
+        this.cdr.markForCheck();
+      }, 800);
     });
 
     // Scroll-triggered fade-in for each section
@@ -198,17 +221,18 @@ export class WeddingComponent implements OnInit, AfterViewInit, OnDestroy {
     return n.toString().padStart(width, '0');
   }
 
-  // Procedural firefly cloud — randomized but deterministic per refresh
-  private generateFireflies(count: number): Firefly[] {
-    const items: Firefly[] = [];
+  // Procedural soap bubble cloud
+  private generateFireflies(count: number): Bubble[] {
+    const items: Bubble[] = [];
     for (let i = 0; i < count; i++) {
       items.push({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        delay: -Math.random() * 12,
-        duration: 9 + Math.random() * 10,
-        size: 2 + Math.random() * 3,
-        drift: -30 + Math.random() * 60
+        left:     Math.random() * 100,
+        top:      80 + Math.random() * 20,   // start near bottom
+        delay:    -Math.random() * 18,
+        duration: 12 + Math.random() * 14,
+        size:     14 + Math.random() * 32,   // bigger — real bubble scale
+        drift:    -40 + Math.random() * 80,
+        hue:      Math.floor(Math.random() * 360),
       });
     }
     return items;
@@ -235,7 +259,7 @@ export class WeddingComponent implements OnInit, AfterViewInit, OnDestroy {
       message: (raw.message ?? '').trim()
     };
 
-    this.http.post('http://localhost:3000/api/wedding-guests', payload).subscribe({
+    this.http.post(`${environment.apiUrl}/wedding-guests`, payload).subscribe({
       next: () => {
         this.submitting = false;
         this.submitted = true;
