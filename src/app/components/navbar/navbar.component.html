@@ -112,6 +112,12 @@
               </svg>
               {{ 'navbar.dashboard' | translate }}
             </button>
+            <button *ngIf="isAdmin()" class="user-dropdown-item" (click)="openMeetings()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              Meetings
+            </button>
             <div class="user-dropdown-divider"></div>
             <div class="user-dropdown-section">
               <span class="user-dropdown-section-title">
@@ -133,18 +139,29 @@
               </button>
             </div>
 
-            <button *ngIf="isAdmin()" class="user-dropdown-item" (click)="openWeddingGuests()">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-              </svg>
-              Wedding Guests
-            </button>
-            <button *ngIf="isAdmin()" class="user-dropdown-item" (click)="openEmployees()">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-              Employees
-            </button>
+            <ng-container *ngIf="isAdmin()">
+              <div class="user-dropdown-divider"></div>
+              <div class="user-dropdown-section">
+                <span class="user-dropdown-section-title">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                  </svg>
+                  Admin
+                </span>
+                <button class="user-dropdown-item" (click)="openEmployees()">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  Employees
+                </button>
+                <button class="user-dropdown-item" (click)="openWeddingGuests()">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                  </svg>
+                  Wedding Guests
+                </button>
+              </div>
+            </ng-container>
             <div class="user-dropdown-divider"></div>
             <button class="user-dropdown-item logout" (click)="logout()">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,6 +292,14 @@
             </svg>
             {{ 'navbar.dashboard' | translate }}
           </button>
+          <ng-container *ngIf="isAdmin()">
+            <button class="btn btn-secondary btn-lg mobile-dashboard-btn" (click)="openEmployees()">
+              <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              Employees
+            </button>
+          </ng-container>
           <button class="btn btn-secondary btn-lg mobile-logout-btn" (click)="logout()">
             <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>

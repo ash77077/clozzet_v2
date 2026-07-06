@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin, BehaviorSubject } from 'rxjs';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TimelineModule } from 'primeng/timeline';
 import { CardModule } from 'primeng/card';
@@ -22,7 +22,10 @@ import { MessageService } from 'primeng/api';
 import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
 import { AiService } from '../../services/ai.service';
-import { Customer, CustomerStatus } from '../../models/customer.model';
+import { UsersService, User as AppUser } from '../../services/users.service';
+import { MeetingsService } from '../../services/meetings.service';
+import { MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
+import { Customer, CustomerStatus, AssignmentLogEntry } from '../../models/customer.model';
 import { Interaction, InteractionType, CallOutcome, CreateInteractionDto } from '../../models/interaction.model';
 import { CustomerAiPayload, CustomerAiResult } from '../../models/ai.models';
 import { ExternalLinkPipe } from '../../pipes/external-link.pipe';
@@ -84,6 +87,20 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   editedNotes = '';
   isEditMode = false;
   editingInteractionId: string | null = null;
+
+  // Assignment
+  assignableUsers: AppUser[] = [];
+  selectedAssigneeId: string | null = null;
+  isReassigning = false;
+  showAssignmentLog = false;
+  assignmentLog: AssignmentLogEntry[] = [];
+  isLoadingLog = false;
+
+  // Meeting
+  showMeetingDialog = false;
+  meetingForm!: FormGroup;
+  isSavingMeeting = false;
+
   private destroy$ = new Subject<void>();
 
   get aiEnabled$() { return this.aiService.aiEnabled$; }
@@ -115,7 +132,9 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     private customersService: CustomersService,
     private interactionsService: InteractionsService,
     private messageService: MessageService,
-    private aiService: AiService
+    private aiService: AiService,
+    private usersService: UsersService,
+    private meetingsService: MeetingsService,
   ) {}
 
   ngOnInit(): void {
@@ -132,7 +151,9 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
 
     this.initializeForm();
     this.initializeAddContactForm();
+    this.initializeMeetingForm();
     this.loadCustomerData();
+    this.loadAssignableUsers();
     const cached = this.aiService.getCachedAnalysis(this.customerId);
     if (cached) this.aiResult = cached;
   }
@@ -182,6 +203,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
             new Date(b.interactionDate).getTime() - new Date(a.interactionDate).getTime()
           );
           this.isLoading = false;
+          this.syncSelectedAssignee();
         },
         error: () => {
           this.messageService.add({
@@ -567,10 +589,139 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     this.editedNotes = '';
   }
 
+  loadAssignableUsers(): void {
+    this.usersService.getAllUsers().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (users) => {
+        this.assignableUsers = users.filter(u =>
+          u.isActive && (u.role === 'admin' || u.role === 'manager')
+        );
+        this.syncSelectedAssignee();
+      },
+    });
+  }
+
+  // Keep selectedAssigneeId in sync with the customer's effective owner
+  private syncSelectedAssignee(): void {
+    if (!this.customer) return;
+    const owner = this.customer.assignedTo ?? this.customer.createdBy ?? null;
+    if (!owner) { this.selectedAssigneeId = null; return; }
+    this.selectedAssigneeId = typeof owner === 'string' ? owner : (owner as any)?._id ?? null;
+  }
+
+  getAssigneeName(id: string | null): string {
+    if (!id) return 'Unassigned';
+    const user = this.assignableUsers.find(u => u._id === id);
+    return user ? `${user.firstName} ${user.lastName}` : 'Unassigned';
+  }
+
+  getOwnerInitials(customer: Customer): string {
+    const owner = customer.assignedTo ?? customer.createdBy ?? null;
+    if (!owner || typeof owner === 'string') return '?';
+    const first = (owner as any).firstName?.[0] ?? '';
+    const last = (owner as any).lastName?.[0] ?? '';
+    return (first + last).toUpperCase() || '?';
+  }
+
+  reassignCustomer(): void {
+    if (!this.customer?._id) return;
+    this.isReassigning = true;
+    this.customersService.reassign(this.customer._id, this.selectedAssigneeId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updated) => {
+          this.customer = updated;
+          this.isReassigning = false;
+          this.syncSelectedAssignee();
+          this.messageService.add({ severity: 'success', summary: 'Reassigned', detail: 'Customer assignment updated' });
+        },
+        error: () => {
+          this.isReassigning = false;
+          this.syncSelectedAssignee();
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to reassign customer' });
+        },
+      });
+  }
+
+  openAssignmentLogModal(): void {
+    this.showAssignmentLog = true;
+    this.loadAssignmentLog();
+  }
+
+  loadAssignmentLog(): void {
+    if (!this.customer?._id) return;
+    this.isLoadingLog = true;
+    this.assignmentLog = [];
+    this.customersService.getAssignmentLog(this.customer._id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (log) => {
+          this.assignmentLog = log;
+          this.isLoadingLog = false;
+        },
+        error: () => { this.isLoadingLog = false; },
+      });
+  }
+
   private markFormGroupTouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsTouched();
+    });
+  }
+
+  private initializeMeetingForm(): void {
+    this.meetingForm = this.fb.group({
+      title: ['', Validators.required],
+      customerName: ['', Validators.required],
+      contactPerson: [''],
+      phone: [''],
+      meetingDate: [null, Validators.required],
+      duration: [30],
+      address: [''],
+      notes: [''],
+    });
+  }
+
+  openSetupMeetingDialog(): void {
+    if (!this.customer) return;
+    const firstContact = this.customer.contacts?.[0];
+    this.meetingForm.reset();
+    this.meetingForm.patchValue({
+      title: `Meeting with ${this.customer.companyName}`,
+      customerName: this.customer.companyName || '',
+      contactPerson: firstContact?.contactPerson || this.customer.contactPerson || '',
+      phone: firstContact?.phone || this.customer.phone || '',
+      address: this.customer.address || '',
+      duration: 30,
+    });
+    this.showMeetingDialog = true;
+  }
+
+  saveMeeting(): void {
+    if (this.meetingForm.invalid) { this.meetingForm.markAllAsTouched(); return; }
+    this.isSavingMeeting = true;
+    const v = this.meetingForm.value;
+    const dto: CreateMeetingDto = {
+      title: v.title,
+      customerName: v.customerName,
+      contactPerson: v.contactPerson || undefined,
+      phone: v.phone || undefined,
+      address: v.address || undefined,
+      meetingDate: v.meetingDate instanceof Date ? v.meetingDate.toISOString() : v.meetingDate,
+      duration: v.duration || undefined,
+      notes: v.notes || undefined,
+      status: MeetingStatus.SCHEDULED,
+    };
+    this.meetingsService.create(dto).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.isSavingMeeting = false;
+        this.showMeetingDialog = false;
+        this.messageService.add({ severity: 'success', summary: 'Meeting Saved', detail: `Meeting "${dto.title}" scheduled.` });
+      },
+      error: () => {
+        this.isSavingMeeting = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save meeting.' });
+      },
     });
   }
 }

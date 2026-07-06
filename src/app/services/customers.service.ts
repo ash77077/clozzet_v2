@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Customer, CreateCustomerDto, UpdateCustomerDto, CustomerStatus } from '../models/customer.model';
+import { Customer, CreateCustomerDto, UpdateCustomerDto, CustomerStatus, AssignmentLogEntry } from '../models/customer.model';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -76,6 +76,18 @@ export class CustomersService {
   hardDelete(id: string): Observable<void> {
     return this.http.delete<ApiResponse<null>>(`${this.apiUrl}/${id}/hard`).pipe(
       map(() => undefined)
+    );
+  }
+
+  reassign(id: string, assignedTo: string | null): Observable<Customer> {
+    return this.http.patch<ApiResponse<Customer>>(`${this.apiUrl}/${id}/assign`, { assignedTo }).pipe(
+      map(r => r.data)
+    );
+  }
+
+  getAssignmentLog(id: string): Observable<AssignmentLogEntry[]> {
+    return this.http.get<ApiResponse<AssignmentLogEntry[]>>(`${this.apiUrl}/${id}/assignment-log`).pipe(
+      map(r => r.data)
     );
   }
 

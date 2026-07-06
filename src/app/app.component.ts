@@ -44,7 +44,7 @@ export class AppComponent implements OnInit {
   }
 
   private checkRoute(url: string) {
-    const noNavbarRoutes = [/^\/order-blank\/[^\/]+$/, /^\/login$/, /^\/register$/, /^\/reset-password$/, /^\/invitation$/];
+    const noNavbarRoutes = [/^\/order-blank\/[^\/]+$/, /^\/login$/, /^\/register$/, /^\/reset-password$/, /^\/invitation$/, /^\/invitation2$/];
     this.hideNavbars = noNavbarRoutes.some(pattern => pattern.test(url.split('?')[0]));
   }
 }

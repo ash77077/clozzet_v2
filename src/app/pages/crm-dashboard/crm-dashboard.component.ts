@@ -22,8 +22,10 @@ import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
 import { UsersService, User } from '../../services/users.service';
 import { AiService } from '../../services/ai.service';
+import { MeetingsService } from '../../services/meetings.service';
 import { Customer, CustomerStatus, CreateCustomerDto, UpdateCustomerDto } from '../../models/customer.model';
 import { Interaction, InteractionType, CreateInteractionDto } from '../../models/interaction.model';
+import { MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
 import { CustomerAiPayload } from '../../models/ai.models';
 import { AiStatusCellComponent } from '../../shared/components/ai-status-cell/ai-status-cell.component';
 import { AuthService } from '../../services/auth.service';
@@ -71,6 +73,10 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   isImporting = false;
   isProcessingFollowUp = false;
+  customerInteractions: Interaction[] = [];
+  isLoadingInteractions = false;
+  showAllInteractions = false;
+  readonly INTERACTIONS_PREVIEW = 3;
   selectedFile: File | null = null;
   importResults: any = null;
   CustomerStatus = CustomerStatus;
@@ -109,6 +115,12 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   dateFrom: Date | null = null;
   dateTo: Date | null = null;
 
+  // Meeting dialog
+  showMeetingDialog = false;
+  meetingForm!: FormGroup;
+  isSavingMeeting = false;
+  MeetingStatus = MeetingStatus;
+
   statusOptions = [
     { label: 'Lead', value: CustomerStatus.LEAD },
     { label: 'Active', value: CustomerStatus.ACTIVE },
@@ -130,6 +142,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     private customersService: CustomersService,
     private interactionsService: InteractionsService,
     private usersService: UsersService,
+    private meetingsService: MeetingsService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,
@@ -141,6 +154,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForm();
     this.initializeFollowUpForm();
+    this.initializeMeetingForm();
     const user = this.authService.getCurrentUser();
     this.isAdmin = user?.role === 'admin';
 
@@ -170,7 +184,7 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   private initializeForm(): void {
     this.customerForm = this.fb.group({
       companyName: ['', [Validators.required, Validators.minLength(2)]],
-      industry: [''],
+      industry: ['', [Validators.required]],
       contacts: this.fb.array([this.createContactGroup()]),
       status: [CustomerStatus.LEAD, [Validators.required]],
       address: [''],
@@ -247,11 +261,16 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
           // Sort newest first by default
           this.customers = data.customers.slice().sort((a, b) =>
             new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
-          );
+          ).map(c => ({
+            ...c,
+            _searchIndex: (c.contacts || []).map(ct =>
+              [ct.contactPerson, ct.phone, ct.email, ct.position].filter(Boolean).join(' ')
+            ).join(' '),
+          }));
           this.followUpsCache = data.followUps;
 
-          // Count unassigned customers
-          this.unassignedCustomersCount = this.customers.filter(c => !c.createdBy).length;
+          // Count unassigned: no assignedTo AND no createdBy
+          this.unassignedCustomersCount = this.customers.filter(c => !c.assignedTo && !c.createdBy).length;
 
           this.applyUserFilter();
           this.isLoading = false;
@@ -626,20 +645,42 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  get visibleInteractions(): Interaction[] {
+    const sorted = [...this.customerInteractions].sort(
+      (a, b) => new Date(b.interactionDate).getTime() - new Date(a.interactionDate).getTime()
+    );
+    return this.showAllInteractions ? sorted : sorted.slice(0, this.INTERACTIONS_PREVIEW);
+  }
+
   // Follow-up action methods
   openFollowUpDialog(customer: Customer): void {
     this.selectedCustomer = customer;
+    this.showAllInteractions = false;
+    this.customerInteractions = [];
     this.followUpForm.patchValue({
       message: '',
       status: customer.status,
       nextFollowUpDate: null,
     });
     this.showFollowUpDialog = true;
+
+    this.isLoadingInteractions = true;
+    this.interactionsService.getByCustomer(customer._id!)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (interactions) => {
+          this.customerInteractions = interactions;
+          this.isLoadingInteractions = false;
+        },
+        error: () => { this.isLoadingInteractions = false; }
+      });
   }
 
   closeFollowUpDialog(): void {
     this.showFollowUpDialog = false;
     this.selectedCustomer = null;
+    this.customerInteractions = [];
+    this.showAllInteractions = false;
     this.followUpForm.reset();
   }
 
@@ -992,20 +1033,20 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Then apply user filter on top
+    // Then apply user filter on top.
+    // Effective owner = assignedTo if set, otherwise createdBy (fallback for legacy records).
     if (this.selectedUserIds.size === 0 && !this.showUnassigned) {
       this.filteredCustomers = base;
     } else {
       this.filteredCustomers = base.filter(customer => {
-        if (this.showUnassigned && !customer.createdBy) {
-          return true;
-        }
+        const effectiveOwner = customer.assignedTo ?? customer.createdBy ?? null;
+        if (this.showUnassigned && !effectiveOwner) return true;
         if (this.selectedUserIds.size === 0) return false;
-        if (!customer.createdBy) return false;
-        const createdById = typeof customer.createdBy === 'string'
-          ? customer.createdBy
-          : (customer.createdBy as any)?._id;
-        return createdById && this.selectedUserIds.has(createdById);
+        if (!effectiveOwner) return false;
+        const ownerId = typeof effectiveOwner === 'string'
+          ? effectiveOwner
+          : (effectiveOwner as any)?._id;
+        return ownerId && this.selectedUserIds.has(ownerId);
       });
     }
 
@@ -1161,11 +1202,96 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     };
   }
 
+  private initializeMeetingForm(): void {
+    this.meetingForm = this.fb.group({
+      title: ['', Validators.required],
+      customerName: ['', Validators.required],
+      contactPerson: [''],
+      phone: [''],
+      meetingDate: [null, Validators.required],
+      duration: [30],
+      address: [''],
+      notes: [''],
+    });
+  }
+
+  openMeetingForCustomer(customer: Customer): void {
+    const firstContact = customer.contacts?.[0];
+    this.meetingForm.reset();
+    this.meetingForm.patchValue({
+      title: `Meeting with ${customer.companyName}`,
+      customerName: customer.companyName || '',
+      contactPerson: firstContact?.contactPerson || customer.contactPerson || '',
+      phone: firstContact?.phone || customer.phone || '',
+      address: customer.address || '',
+      duration: 30,
+    });
+    this.showMeetingDialog = true;
+  }
+
+  openMeetingFromCustomer(): void {
+    const cv = this.customerForm.value;
+    const firstContact = cv.contacts?.[0];
+    this.meetingForm.reset();
+    this.meetingForm.patchValue({
+      title: cv.companyName ? `Meeting with ${cv.companyName}` : '',
+      customerName: cv.companyName || '',
+      contactPerson: firstContact?.contactPerson || '',
+      phone: firstContact?.phone || '',
+      address: cv.address || '',
+      duration: 30,
+    });
+    this.showMeetingDialog = true;
+  }
+
+  importAddressFromCustomer(): void {
+    const addr = this.customerForm.get('address')?.value;
+    if (addr) this.meetingForm.patchValue({ address: addr });
+  }
+
+  saveMeeting(): void {
+    if (this.meetingForm.invalid) {
+      this.meetingForm.markAllAsTouched();
+      return;
+    }
+    this.isSavingMeeting = true;
+    const v = this.meetingForm.value;
+    const dto: CreateMeetingDto = {
+      title: v.title,
+      customerName: v.customerName,
+      contactPerson: v.contactPerson || undefined,
+      phone: v.phone || undefined,
+      address: v.address || undefined,
+      meetingDate: v.meetingDate instanceof Date ? v.meetingDate.toISOString() : v.meetingDate,
+      duration: v.duration || undefined,
+      notes: v.notes || undefined,
+      status: MeetingStatus.SCHEDULED,
+    };
+    this.meetingsService.create(dto).subscribe({
+      next: () => {
+        this.isSavingMeeting = false;
+        this.showMeetingDialog = false;
+        this.messageService.add({ severity: 'success', summary: 'Meeting Scheduled', detail: `Meeting "${dto.title}" has been saved.` });
+      },
+      error: () => {
+        this.isSavingMeeting = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save meeting.' });
+      }
+    });
+  }
+
   getCreatedByName(createdBy: any): string | null {
     if (!createdBy) return null;
     if (typeof createdBy === 'string') return null;
     if (createdBy.firstName) return `${createdBy.firstName} ${createdBy.lastName || ''}`.trim();
     return null;
+  }
+
+  // Returns the name of whoever currently owns the customer:
+  // assignedTo takes priority over createdBy (legacy).
+  getOwnerName(customer: Customer): string | null {
+    const owner = customer.assignedTo ?? customer.createdBy ?? null;
+    return this.getCreatedByName(owner);
   }
 
   getUserInitials(user: User): string {

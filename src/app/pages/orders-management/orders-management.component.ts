@@ -47,12 +47,12 @@ export interface ActivityItem {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const CLOTH_TYPES = [
+const DEFAULT_CLOTH_TYPES = [
   'T-Shirt', 'Polo', 'Hoodie', 'Sweatshirt', 'Cap', 'Jacket',
   'Tote Bag', 'Apron', 'Long Sleeve', 'Tank Top', 'Vest', 'Other'
 ];
 
-const TEXTILE_TYPES = [
+const DEFAULT_TEXTILE_TYPES = [
   'Cotton', 'Polyester', 'Cotton/Polyester Blend', 'Fleece',
   'Jersey', 'Pique', 'French Terry', 'Canvas', 'Nylon', 'Other'
 ];
@@ -187,6 +187,28 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newCustomSizeLabel[productIndex] = '';
   }
 
+  confirmAddClothType(productIndex: number): void {
+    const label = (this.newClothTypeLabel[productIndex] || '').trim();
+    if (!label) return;
+    if (!this.clothTypes.includes(label)) {
+      this.clothTypes = [...this.clothTypes, label];
+    }
+    this.products.at(productIndex).patchValue({ clothType: label });
+    this.showAddClothType[productIndex] = false;
+    this.newClothTypeLabel[productIndex] = '';
+  }
+
+  confirmAddTextileType(productIndex: number): void {
+    const label = (this.newTextileTypeLabel[productIndex] || '').trim();
+    if (!label) return;
+    if (!this.textileTypes.includes(label)) {
+      this.textileTypes = [...this.textileTypes, label];
+    }
+    this.products.at(productIndex).patchValue({ textileType: label });
+    this.showAddTextileType[productIndex] = false;
+    this.newTextileTypeLabel[productIndex] = '';
+  }
+
   removeCustomSize(productIndex: number, key: string): void {
     this.customSizeKeys[productIndex] = this.customSizeKeys[productIndex].filter(s => s.key !== key);
     const sizesGroup = this.getProductSizes(productIndex);
@@ -252,9 +274,15 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // ─── Constants ─────────────────────────────────────────────────────────────
   OrderStatus = OrderStatus;
   UserRole = UserRole;
-  clothTypes = CLOTH_TYPES;
-  textileTypes = TEXTILE_TYPES;
+  clothTypes: string[] = [...DEFAULT_CLOTH_TYPES];
+  textileTypes: string[] = [...DEFAULT_TEXTILE_TYPES];
   designMethods = DESIGN_METHODS;
+
+  // State for inline "add new type" inputs per product
+  showAddClothType: boolean[] = [false];
+  newClothTypeLabel: string[] = [''];
+  showAddTextileType: boolean[] = [false];
+  newTextileTypeLabel: string[] = [''];
 
   availableStatuses = [
     { value: '', label: 'All Statuses' },
@@ -494,7 +522,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     return this.fb.group({
       clothType:           ['', Validators.required],
       textileType:         ['', Validators.required],
-      designMethod:        ['', Validators.required],
+      designMethod:        [''],
       colors:              [''],
       customColorDetails:  [''],
       logoPosition:        [''],
@@ -534,6 +562,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys.push([]);
     this.showAddCustomSize.push(false);
     this.newCustomSizeLabel.push('');
+    this.showAddClothType.push(false);
+    this.newClothTypeLabel.push('');
+    this.showAddTextileType.push(false);
+    this.newTextileTypeLabel.push('');
   }
 
   // Remove a product from the array
@@ -543,6 +575,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.customSizeKeys.splice(index, 1);
       this.showAddCustomSize.splice(index, 1);
       this.newCustomSizeLabel.splice(index, 1);
+      this.showAddClothType.splice(index, 1);
+      this.newClothTypeLabel.splice(index, 1);
+      this.showAddTextileType.splice(index, 1);
+      this.newTextileTypeLabel.splice(index, 1);
     }
   }
 
@@ -753,6 +789,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys = [[]];
     this.showAddCustomSize = [false];
     this.newCustomSizeLabel = [''];
+    this.showAddClothType = [false];
+    this.newClothTypeLabel = [''];
+    this.showAddTextileType = [false];
+    this.newTextileTypeLabel = [''];
 
     this.showAddOrderDialog = true;
   }
@@ -768,6 +808,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys = [[]];
     this.showAddCustomSize = [false];
     this.newCustomSizeLabel = [''];
+    this.showAddClothType = [false];
+    this.newClothTypeLabel = [''];
+    this.showAddTextileType = [false];
+    this.newTextileTypeLabel = [''];
   }
 
   generateOrderNumber(): string {
@@ -802,8 +846,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         return productsArray.controls.every(productGroup => {
           const product = productGroup as FormGroup;
           return product.get('clothType')?.valid &&
-                 product.get('textileType')?.valid &&
-                 product.get('designMethod')?.valid;
+                 product.get('textileType')?.valid;
         });
       }
       case 3: return true; // File upload is optional
@@ -824,7 +867,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
           const product = productGroup as FormGroup;
           product.get('clothType')?.markAsTouched();
           product.get('textileType')?.markAsTouched();
-          product.get('designMethod')?.markAsTouched();
         });
         break;
       case 3:
@@ -1285,6 +1327,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys = [];
     this.showAddCustomSize = [];
     this.newCustomSizeLabel = [];
+    this.showAddClothType = [];
+    this.newClothTypeLabel = [];
+    this.showAddTextileType = [];
+    this.newTextileTypeLabel = [];
 
     const knownSizeKeys = new Set([
       ...this.ADULT_SIZE_KEYS,
@@ -1345,6 +1391,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
         this.showAddCustomSize.push(false);
         this.newCustomSizeLabel.push('');
+        this.showAddClothType.push(false);
+        this.newClothTypeLabel.push('');
+        this.showAddTextileType.push(false);
+        this.newTextileTypeLabel.push('');
         this.products.push(productGroup);
       });
     } else if (o.clothType) {
@@ -1366,12 +1416,20 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.customSizeKeys.push([]);
       this.showAddCustomSize.push(false);
       this.newCustomSizeLabel.push('');
+      this.showAddClothType.push(false);
+      this.newClothTypeLabel.push('');
+      this.showAddTextileType.push(false);
+      this.newTextileTypeLabel.push('');
     } else {
       // No products at all — provide one empty product
       this.products.push(this.createProductGroup());
       this.customSizeKeys.push([]);
       this.showAddCustomSize.push(false);
       this.newCustomSizeLabel.push('');
+      this.showAddClothType.push(false);
+      this.newClothTypeLabel.push('');
+      this.showAddTextileType.push(false);
+      this.newTextileTypeLabel.push('');
     }
 
     // Switch to edit mode and show the add dialog
@@ -1944,4 +2002,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   }
 
   f(name: string): AbstractControl { return this.addOrderForm.get(name)!; }
+
+  onNumberWheel(event: WheelEvent): void {
+    (event.target as HTMLElement).blur();
+    (document.activeElement as HTMLElement)?.blur();
+  }
 }

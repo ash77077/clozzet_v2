@@ -10,14 +10,24 @@
       (onClick)="goBack()">
     </p-button>
 
-    <p-button
-      label="Create Order"
-      icon="pi pi-plus"
-      severity="primary"
-      (onClick)="openCreateOrderDialog()"
-      pTooltip="Create new order for this customer"
-      tooltipPosition="left">
-    </p-button>
+    <div class="flex gap-2 items-center">
+      <p-button
+        label="Set up Meeting"
+        icon="pi pi-calendar-plus"
+        severity="warn"
+        (onClick)="openSetupMeetingDialog()"
+        pTooltip="Schedule a meeting with this customer"
+        tooltipPosition="left">
+      </p-button>
+      <p-button
+        label="Create Order"
+        icon="pi pi-plus"
+        severity="primary"
+        (onClick)="openCreateOrderDialog()"
+        pTooltip="Create new order for this customer"
+        tooltipPosition="left">
+      </p-button>
+    </div>
   </div>
 
   <!-- Loading State -->
@@ -32,7 +42,7 @@
     <p-card styleClass="customer-details-card mb-8">
       <div class="customer-header">
         <div class="customer-info">
-          <div class="items-start justify-between">
+          <div class="customer-title-row">
             <div>
               <h1 class="text-3xl font-bold text-gray-800 mb-2">
                 {{ customer.companyName }}
@@ -41,11 +51,43 @@
                 <i class="pi pi-user mr-2"></i>{{ customer.contactPerson }}
               </p>
             </div>
-            <p-tag
-              [value]="customer.status"
-              [severity]="getStatusSeverity(customer.status)"
-              styleClass="text-lg px-4 py-2">
-            </p-tag>
+            <div class="customer-title-right">
+              <!-- Assignee badge -->
+              <div class="assignee-badge">
+                <div class="assignee-avatar">{{ getOwnerInitials(customer) }}</div>
+                <div class="assignee-info">
+                  <span class="assignee-label">Assigned to</span>
+                  <p-select
+                    [options]="assignableUsers"
+                    [(ngModel)]="selectedAssigneeId"
+                    optionValue="_id"
+                    optionLabel="firstName"
+                    [filter]="true"
+                    filterBy="firstName,lastName"
+                    placeholder="Unassigned"
+                    styleClass="assignee-select"
+                    (onChange)="reassignCustomer()">
+                    <ng-template #selectedItem let-user>
+                      {{ user?.firstName }} {{ user?.lastName }}
+                    </ng-template>
+                    <ng-template #item let-user>
+                      {{ user.firstName }} {{ user.lastName }}
+                    </ng-template>
+                  </p-select>
+                </div>
+                <button
+                  class="assignee-history-btn"
+                  pTooltip="Assignment history"
+                  tooltipPosition="left"
+                  (click)="openAssignmentLogModal()">
+                  <i class="pi pi-history"></i>
+                </button>
+              </div>
+	            <p-tag
+			            [value]="customer.status"
+			            [severity]="getStatusSeverity(customer.status)">
+	            </p-tag>
+            </div>
           </div>
 
           <!-- Contact Persons Section -->
@@ -607,5 +649,109 @@
         </p-button>
       </div>
     </form>
+  </p-dialog>
+
+  <!-- Set up Meeting Dialog -->
+  <p-dialog
+    [(visible)]="showMeetingDialog"
+    header="Set up Meeting"
+    [modal]="true"
+    [style]="{width: '520px', maxWidth: '96vw'}"
+    [draggable]="false"
+    [resizable]="false">
+    <form [formGroup]="meetingForm" (ngSubmit)="saveMeeting()" class="meeting-form">
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label class="required">Meeting Title</label>
+          <input pInputText formControlName="title" placeholder="e.g. Sales call" class="w-full" />
+          <small class="p-error" *ngIf="meetingForm.get('title')?.invalid && meetingForm.get('title')?.touched">Title is required</small>
+        </div>
+        <div class="form-field">
+          <label class="required">Customer / Company</label>
+          <input pInputText formControlName="customerName" placeholder="Company name" class="w-full" />
+        </div>
+        <div class="form-field">
+          <label>Contact Person</label>
+          <input pInputText formControlName="contactPerson" placeholder="Contact name" class="w-full" />
+        </div>
+        <div class="form-field">
+          <label>Phone</label>
+          <input pInputText formControlName="phone" placeholder="Phone number" class="w-full" />
+        </div>
+        <div class="form-field">
+          <label class="required">Meeting Date &amp; Time</label>
+          <p-datepicker
+            formControlName="meetingDate"
+            [showIcon]="true"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            dateFormat="yy-mm-dd"
+            placeholder="Select date &amp; time"
+            appendTo="body"
+            class="w-full">
+          </p-datepicker>
+          <small class="p-error" *ngIf="meetingForm.get('meetingDate')?.invalid && meetingForm.get('meetingDate')?.touched">Date is required</small>
+        </div>
+        <div class="form-field">
+          <label>Duration (minutes)</label>
+          <input pInputText type="number" formControlName="duration" placeholder="e.g. 30" class="w-full" min="5" />
+        </div>
+        <div class="form-field full-width">
+          <label>Address</label>
+          <textarea pTextarea formControlName="address" placeholder="Meeting location / address" rows="2" class="w-full"></textarea>
+        </div>
+        <div class="form-field full-width">
+          <label>Notes</label>
+          <textarea pTextarea formControlName="notes" placeholder="Meeting agenda, preparation notes…" rows="3" class="w-full"></textarea>
+        </div>
+      </div>
+      <div class="dialog-footer" style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;">
+        <p-button label="Cancel" icon="pi pi-times" (onClick)="showMeetingDialog = false" styleClass="p-button-text" [disabled]="isSavingMeeting"></p-button>
+        <p-button label="Save Meeting" icon="pi pi-check" type="submit" [loading]="isSavingMeeting" [disabled]="meetingForm.invalid || isSavingMeeting"></p-button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- Assignment History Modal -->
+  <p-dialog
+    [(visible)]="showAssignmentLog"
+    header="Assignment History"
+    [modal]="true"
+    [style]="{ width: '520px', maxWidth: '95vw' }"
+    [draggable]="false"
+    styleClass="assignment-log-dialog">
+    <div class="log-modal-body">
+      @if (isLoadingLog) {
+        <div class="log-loading">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading history…</span>
+        </div>
+      } @else if (assignmentLog.length === 0) {
+        <div class="log-empty-state">
+          <i class="pi pi-inbox"></i>
+          <p>No assignment changes yet.</p>
+        </div>
+      } @else {
+        <ul class="log-list">
+          @for (entry of assignmentLog; track $index) {
+            <li class="log-entry">
+              <div class="log-entry-dot"></div>
+              <div class="log-entry-body">
+                <div class="log-change">
+                  <span class="log-from">{{ entry.fromUserName ?? 'Unassigned' }}</span>
+                  <i class="pi pi-arrow-right log-arrow"></i>
+                  <span class="log-to">{{ entry.toUserName ?? 'Unassigned' }}</span>
+                </div>
+                <div class="log-meta">
+                  Changed by <strong>{{ entry.changedByName }}</strong>
+                  &nbsp;·&nbsp;
+                  {{ entry.changedAt | date:'dd MMM yyyy, HH:mm' }}
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
   </p-dialog>
 </div>
