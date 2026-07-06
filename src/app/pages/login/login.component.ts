@@ -37,7 +37,7 @@ export class LoginComponent {
       this.isLoading = true;
       this.errorMessage = '';
       
-      this.authService.login(this.loginData).subscribe({
+      this.authService.login(this.loginData, this.rememberMe).subscribe({
         next: (response) => {
           this.isLoading = false;
           if (response.user.mustChangePassword) {

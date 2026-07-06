@@ -107,6 +107,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/customer-profile/customer-profile.component').then(m => m.CustomerProfileComponent),
     canActivate: [ManagerGuard]
   },
+  {
+    path: 'meetings',
+    loadComponent: () => import('./pages/meetings/meetings.component').then(m => m.MeetingsComponent),
+    canActivate: [ManagerGuard]
+  },
   // Order Blank routes
   {
     path: 'order-blank',
@@ -172,6 +177,11 @@ export const routes: Routes = [
   {
     path: 'invitation',
     loadComponent: () => import('./components/wedding/wedding.component').then(m => m.WeddingComponent)
+  },
+  // Beating Heart — Artavazd & Ani wedding invitation
+  {
+    path: 'invitation2',
+    loadComponent: () => import('./components/invitation2/invitation2.component').then(m => m.Invitation2Component)
   },
   // Wedding guests admin
   {

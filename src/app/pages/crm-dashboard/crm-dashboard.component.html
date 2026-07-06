@@ -148,7 +148,7 @@
 			[showCurrentPageReport]="true"
 			currentPageReportTemplate="Showing {first} to {last} of {totalRecords} customers"
 			showGridlines
-			[globalFilterFields]="['companyName', 'contactPerson', 'email', 'phone']"
+			[globalFilterFields]="['companyName', 'contactPerson', 'email', 'phone', '_searchIndex']"
 			styleClass="p-datatable-striped">
 
 			<ng-template pTemplate="caption">
@@ -391,6 +391,12 @@
 									(onClick)="viewCustomerProfile(customer)">
 							</p-button>
 							<p-button
+									icon="pi pi-calendar-plus"
+									styleClass="p-button-rounded p-button-warning p-button-text"
+									pTooltip="Set up Meeting"
+									(onClick)="openMeetingForCustomer(customer)">
+							</p-button>
+							<p-button
 									icon="pi pi-pencil"
 									styleClass="p-button-rounded p-button-success p-button-text"
 									pTooltip="Edit"
@@ -464,13 +470,18 @@
 
 				<!-- Industry -->
 				<div class="form-field">
-					<label for="industry">Industry</label>
+					<label for="industry">Industry <span class="required-star">*</span></label>
 					<input
 							pInputText
 							id="industry"
 							formControlName="industry"
 							placeholder="Enter industry"
-							class="w-full"/>
+							class="w-full"
+							[class.ng-invalid]="customerForm.get('industry')?.invalid && customerForm.get('industry')?.touched"
+							[class.ng-dirty]="customerForm.get('industry')?.touched"/>
+					<small class="field-error" *ngIf="customerForm.get('industry')?.invalid && customerForm.get('industry')?.touched">
+						Industry is required
+					</small>
 				</div>
 
 				<!-- Contacts Array -->
@@ -628,21 +639,27 @@
 				</div>
 			</div>
 
-			<div class="dialog-footer">
-				<p-button
-						label="Cancel"
-						icon="pi pi-times"
-						(onClick)="showCustomerDialog = false"
-						styleClass="p-button-text"
-						[disabled]="isSubmitting">
-				</p-button>
-				<p-button
-						label="Save"
-						icon="pi pi-check"
-						type="submit"
-						[loading]="isSubmitting"
-						[disabled]="customerForm.invalid || isSubmitting">
-				</p-button>
+			<div class="customer-dialog-footer">
+				<button type="button" class="setup-meeting-btn" (click)="openMeetingFromCustomer()">
+					<i class="pi pi-calendar-plus"></i>
+					Set up Meeting
+				</button>
+				<div class="footer-right">
+					<p-button
+							label="Cancel"
+							icon="pi pi-times"
+							(onClick)="showCustomerDialog = false"
+							styleClass="p-button-text"
+							[disabled]="isSubmitting">
+					</p-button>
+					<p-button
+							label="Save"
+							icon="pi pi-check"
+							type="submit"
+							[loading]="isSubmitting"
+							[disabled]="customerForm.invalid || isSubmitting">
+					</p-button>
+				</div>
 			</div>
 		</form>
 	</p-dialog>
@@ -784,7 +801,7 @@
 			[(visible)]="showFollowUpDialog"
 			header="Complete Follow-up"
 			[modal]="true"
-			[style]="{width: '500px'}"
+			[style]="{width: '560px', maxWidth: '96vw'}"
 			[draggable]="false"
 			[resizable]="false">
 
@@ -794,6 +811,47 @@
 				<h3>{{ selectedCustomer.companyName }}</h3>
 				<p>Contact: {{ selectedCustomer.contactPerson }}</p>
 				<p>Phone: {{ selectedCustomer.phone }}</p>
+			</div>
+
+			<!-- Conversation History -->
+			<div class="conversation-history">
+				<div class="history-header">
+					<span class="history-title"><i class="pi pi-history"></i> Conversation History</span>
+					<span class="history-count" *ngIf="customerInteractions.length > 0">{{ customerInteractions.length }}</span>
+				</div>
+
+				<div *ngIf="isLoadingInteractions" class="history-loading">
+					<i class="pi pi-spin pi-spinner"></i> Loading…
+				</div>
+
+				<div *ngIf="!isLoadingInteractions && customerInteractions.length === 0" class="history-empty">
+					No interactions yet
+				</div>
+
+				<div *ngIf="!isLoadingInteractions && customerInteractions.length > 0" class="history-list">
+					<div *ngFor="let item of visibleInteractions" class="history-item">
+						<div class="history-item-dot"></div>
+						<div class="history-item-body">
+							<div class="history-item-meta">
+								<span class="history-type">{{ item.type }}</span>
+								<span class="history-date">{{ formatDate(item.interactionDate) }}</span>
+							</div>
+							<div *ngIf="item.subject" class="history-subject">{{ item.subject }}</div>
+							<div class="history-summary">{{ item.summary }}</div>
+						</div>
+					</div>
+
+					<button *ngIf="!showAllInteractions && customerInteractions.length > INTERACTIONS_PREVIEW"
+						type="button" class="see-more-btn" (click)="showAllInteractions = true">
+						<i class="pi pi-chevron-down"></i>
+						See {{ customerInteractions.length - INTERACTIONS_PREVIEW }} more
+					</button>
+					<button *ngIf="showAllInteractions && customerInteractions.length > INTERACTIONS_PREVIEW"
+						type="button" class="see-more-btn" (click)="showAllInteractions = false">
+						<i class="pi pi-chevron-up"></i>
+						Show less
+					</button>
+				</div>
 			</div>
 
 			<!-- Follow-up Form -->
@@ -1023,9 +1081,9 @@
 						Next follow-up: {{ formatDate(quickViewCustomer!.nextFollowUpAt) }}
 					</span>
 				</div>
-				<div class="qv-info-item" *ngIf="getCreatedByName(quickViewCustomer!.createdBy)">
+				<div class="qv-info-item" *ngIf="getOwnerName(quickViewCustomer!)">
 					<i class="pi pi-user"></i>
-					<span>Sales person: <strong>{{ getCreatedByName(quickViewCustomer!.createdBy) }}</strong></span>
+					<span>Assigned to: <strong>{{ getOwnerName(quickViewCustomer!) }}</strong></span>
 				</div>
 			</div>
 
@@ -1111,5 +1169,79 @@
 				styleClass="p-button-outlined p-button-sm">
 			</p-button>
 		</ng-template>
+	</p-dialog>
+
+	<!-- Meeting Setup Dialog -->
+	<p-dialog
+			[(visible)]="showMeetingDialog"
+			header="Set up Meeting"
+			[modal]="true"
+			[style]="{width: '520px', maxWidth: '96vw'}"
+			[draggable]="false"
+			[resizable]="false">
+		<form [formGroup]="meetingForm" (ngSubmit)="saveMeeting()" class="meeting-form">
+			<div class="form-grid">
+				<div class="form-field full-width">
+					<label class="required">Meeting Title</label>
+					<input pInputText formControlName="title" placeholder="e.g. Sales call with Acme Corp" class="w-full" />
+					<small class="p-error" *ngIf="meetingForm.get('title')?.invalid && meetingForm.get('title')?.touched">Title is required</small>
+				</div>
+
+				<div class="form-field">
+					<label class="required">Customer / Company</label>
+					<input pInputText formControlName="customerName" placeholder="Company name" class="w-full" />
+				</div>
+
+				<div class="form-field">
+					<label>Contact Person</label>
+					<input pInputText formControlName="contactPerson" placeholder="Contact name" class="w-full" />
+				</div>
+
+				<div class="form-field">
+					<label>Phone</label>
+					<input pInputText formControlName="phone" placeholder="Phone number" class="w-full" />
+				</div>
+
+				<div class="form-field">
+					<label class="required">Meeting Date &amp; Time</label>
+					<p-datepicker
+							formControlName="meetingDate"
+							[showIcon]="true"
+							[showTime]="true"
+							[hourFormat]="'24'"
+							dateFormat="yy-mm-dd"
+							placeholder="Select date &amp; time"
+							appendTo="body"
+							class="w-full">
+					</p-datepicker>
+					<small class="p-error" *ngIf="meetingForm.get('meetingDate')?.invalid && meetingForm.get('meetingDate')?.touched">Date is required</small>
+				</div>
+
+				<div class="form-field">
+					<label>Duration (minutes)</label>
+					<input pInputText type="number" formControlName="duration" placeholder="e.g. 30" class="w-full" min="5" (wheel)="$any($event.target).blur()" />
+				</div>
+
+				<div class="form-field full-width">
+					<label>
+						Address
+						<button type="button" class="import-address-btn" (click)="importAddressFromCustomer()" *ngIf="customerForm.get('address')?.value">
+							<i class="pi pi-map-marker"></i> Import from customer
+						</button>
+					</label>
+					<textarea pTextarea formControlName="address" placeholder="Meeting location / address" rows="2" class="w-full"></textarea>
+				</div>
+
+				<div class="form-field full-width">
+					<label>Notes</label>
+					<textarea pTextarea formControlName="notes" placeholder="Meeting agenda, preparation notes…" rows="3" class="w-full"></textarea>
+				</div>
+			</div>
+
+			<div class="dialog-footer">
+				<p-button label="Cancel" icon="pi pi-times" (onClick)="showMeetingDialog = false" styleClass="p-button-text" [disabled]="isSavingMeeting"></p-button>
+				<p-button label="Save Meeting" icon="pi pi-check" type="submit" [loading]="isSavingMeeting" [disabled]="meetingForm.invalid || isSavingMeeting"></p-button>
+			</div>
+		</form>
 	</p-dialog>
 </div>

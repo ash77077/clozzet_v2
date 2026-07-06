@@ -1,9 +1,8 @@
-.orders-management-container {
+﻿.orders-management-container {
   padding: 1.5rem;
   min-height: calc(100vh - 100px);
   background: var(--surface-50);
 
-  // ─── Breadcrumb ────────────────────────────────────────────────────────────
   .breadcrumb {
     display: flex;
     align-items: center;
@@ -20,7 +19,6 @@
     .breadcrumb-current { color: var(--text-color); font-weight: 500; }
   }
 
-  // ─── Page header ───────────────────────────────────────────────────────────
   .page-header {
     display: flex;
     justify-content: space-between;
@@ -212,7 +210,6 @@
     }
   }
 
-  // ─── Stats row ─────────────────────────────────────────────────────────────
   .stats-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -308,7 +305,6 @@
     }
   }
 
-  // ─── Loading / Error ───────────────────────────────────────────────────────
   .loading-container,
   .error-container {
     display: flex;
@@ -337,7 +333,6 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  // ─── Filters bar ───────────────────────────────────────────────────────────
   .filters-bar {
     display: flex;
     gap: 1rem;
@@ -429,7 +424,6 @@
     }
   }
 
-  // ─── Kanban board ──────────────────────────────────────────────────────────
   .kanban-board {
     display: flex;
     gap: 1rem;
@@ -519,7 +513,6 @@
     }
   }
 
-  // ─── Order card ────────────────────────────────────────────────────────────
   .order-card {
     background: #ffffff;
     border: 2px solid #cbd5e1;
@@ -650,7 +643,6 @@
     }
   }
 
-  // ─── Drag and Drop Styles ──────────────────────────────────────────────────
   .cdk-drag {
     cursor: move;
     transition: transform 0.2s ease;
@@ -703,7 +695,6 @@
     border-radius: 8px;
   }
 
-  // ─── Table view ────────────────────────────────────────────────────────────
   .table-section {
     background: var(--surface-0);
     border: 1px solid var(--surface-200);
@@ -952,7 +943,6 @@
     }
   }
 
-  // ─── Status dialog ─────────────────────────────────────────────────────────
   .status-dialog-body {
     display: flex;
     flex-direction: column;
@@ -972,7 +962,6 @@
     }
   }
 
-  // ─── Order details modal ───────────────────────────────────────────────────
   .order-details-dialog {
     .order-header-card {
       background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
@@ -1013,7 +1002,6 @@
     }
   }
 
-  // ─── Accordion ─────────────────────────────────────────────────────────────
   .content-accordion {
     .accordion-content {
       padding: 1.25rem;
@@ -1167,7 +1155,6 @@
     }
   }
 
-  // ─── Add-Order Dialog ──────────────────────────────────────────────────────
   .add-order-dialog {
     display: flex;
     flex-direction: column;
@@ -1795,9 +1782,7 @@
     }
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
   // JIRA-STYLE ORDER DETAILS MODAL
-  // ══════════════════════════════════════════════════════════════════════════
 
   .jira-modal-wrapper {
     display: flex;
@@ -1809,7 +1794,6 @@
     overflow: hidden;
   }
 
-  // ─── Modal header ──────────────────────────────────────────────────────────
   .jira-modal-header {
     display: flex;
     justify-content: space-between;
@@ -1911,7 +1895,6 @@
     }
   }
 
-  // ─── Status select in header ────────────────────────────────────────────────
   :host ::ng-deep .jira-status-select {
     .p-select {
       border-radius: 999px;
@@ -1926,7 +1909,6 @@
     }
   }
 
-  // ─── Two-column body ────────────────────────────────────────────────────────
   .jira-body {
     display: flex;
     flex: 1;
@@ -1934,7 +1916,6 @@
     min-height: 0;
   }
 
-  // ─── LEFT panel ─────────────────────────────────────────────────────────────
   .jira-left {
     flex: 0 0 58%;
     overflow-y: auto;
@@ -1980,7 +1961,6 @@
     i { color: var(--primary-color, #f97316); }
   }
 
-  // ─── Creator card ────────────────────────────────────────────────────────────
   .creator-section {
     display: flex;
     flex-direction: column;
@@ -2045,7 +2025,6 @@
     }
   }
 
-  // ─── Detail rows ─────────────────────────────────────────────────────────────
   .detail-grid {
     display: flex;
     flex-direction: column;
@@ -2063,23 +2042,33 @@
     &:last-child { border-bottom: none; }
 
     .dk {
-      flex: 0 0 130px;
+      flex: 0 0 120px;
+      min-width: 0;
       color: var(--text-color-secondary);
       font-weight: 500;
       font-size: 0.82rem;
+
+      @media (max-width: 400px) {
+        flex: 0 0 90px;
+        font-size: 0.78rem;
+      }
     }
 
     .dv {
       color: var(--text-color);
       font-weight: 500;
       flex: 1;
+      min-width: 0;
       word-break: break-word;
 
       &.wrap { white-space: pre-wrap; }
+
+      @media (max-width: 400px) {
+        font-size: 0.82rem;
+      }
     }
   }
 
-  // ─── Products List ────────────────────────────────────────────────────────────
   .products-list {
     display: flex;
     flex-direction: column;
@@ -2091,11 +2080,18 @@
     border: 1px solid var(--surface-200);
     border-radius: 8px;
     padding: 1rem;
+    overflow: hidden;
+
+    @media (max-width: 480px) {
+      padding: 0.75rem;
+    }
 
     .product-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
       margin-bottom: 0.75rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--surface-200);
@@ -2109,9 +2105,9 @@
       .product-qty-badge {
         background: var(--primary-100);
         color: var(--primary-700);
-        padding: 0.25rem 0.75rem;
+        padding: 0.25rem 0.65rem;
         border-radius: 999px;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         font-weight: 600;
       }
     }
@@ -2121,6 +2117,10 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 0.5rem 1rem;
       margin-bottom: 0.75rem;
+
+      @media (max-width: 540px) {
+        grid-template-columns: 1fr;
+      }
 
       .product-detail-row {
         display: flex;
@@ -2134,13 +2134,25 @@
         .pdk {
           font-weight: 500;
           color: var(--text-color-secondary);
-          flex: 0 0 100px;
+          flex: 0 0 90px;
+          min-width: 0;
+
+          @media (max-width: 400px) {
+            flex: 0 0 76px;
+            font-size: 0.8rem;
+          }
         }
 
         .pdv {
           font-weight: 500;
           color: var(--text-color);
           flex: 1;
+          min-width: 0;
+          word-break: break-word;
+
+          @media (max-width: 400px) {
+            font-size: 0.8rem;
+          }
         }
       }
     }
@@ -2161,32 +2173,40 @@
       .size-grid-compact {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.4rem;
 
         .size-chip-compact {
           background: white;
           border: 1px solid var(--surface-300);
           border-radius: 6px;
-          padding: 0.4rem 0.6rem;
+          padding: 0.35rem 0.5rem;
           display: flex;
           flex-direction: column;
           gap: 0.2rem;
-          min-width: 80px;
+          min-width: 0;
+          flex: 0 0 auto;
+
+          @media (max-width: 480px) {
+            padding: 0.3rem 0.45rem;
+          }
 
           .size-name {
             font-weight: 700;
             font-size: 0.75rem;
             color: var(--text-color);
+            white-space: nowrap;
           }
 
           .size-breakdown-details {
             display: flex;
-            gap: 0.4rem;
-            font-size: 0.7rem;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            font-size: 0.68rem;
 
             .size-qty {
               color: var(--text-color-secondary);
               font-weight: 500;
+              white-space: nowrap;
             }
           }
         }
@@ -2194,7 +2214,6 @@
     }
   }
 
-  // ─── Size breakdown ───────────────────────────────────────────────────────────
   .size-breakdown {
     border: 1px solid var(--surface-200);
     border-radius: 8px;
@@ -2234,7 +2253,6 @@
     }
   }
 
-  // ─── Edit mode form ────────────────────────────────────────────────────────────
   .edit-mode-form {
     background: var(--surface-50);
     border-radius: 10px;
@@ -2280,7 +2298,6 @@
     }
   }
 
-  // ─── Attachments ──────────────────────────────────────────────────────────────
   .attachments-section {
     margin-bottom: 1.5rem;
     padding-bottom: 1.5rem;
@@ -2452,7 +2469,6 @@
     }
   }
 
-  // ─── File Preview Grid ────────────────────────────────────────────────────────
   .files-preview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -2668,7 +2684,6 @@
     }
   }
 
-  // ─── RIGHT panel — Activity ─────────────────────────────────────────────────
   .jira-right {
     flex: 0 0 42%;
     display: flex;
@@ -2821,7 +2836,6 @@
     }
   }
 
-  // ─── Comment box ──────────────────────────────────────────────────────────────
   .comment-box {
     display: flex;
     gap: 0.65rem;
@@ -2905,7 +2919,6 @@
     }
   }
 
-  // ─── @mention dropdown ────────────────────────────────────────────────────────
   .mention-dropdown {
     position: absolute;
     bottom: calc(100% + 4px);
@@ -2954,11 +2967,10 @@
     }
   }
 
-  // ─── Responsive ───────────────────────────────────────────────────────────────
   @media (max-width: 768px) {
     .jira-modal-wrapper { height: 95vh; max-height: 95vh; }
 
-    .jira-body { flex-direction: column; overflow-y: auto; }
+    .jira-body { flex-direction: column; overflow-y: auto; overflow-x: hidden; }
 
     .jira-left {
       flex: none;
@@ -2968,6 +2980,7 @@
       padding: 1rem;
       max-height: none;
       overflow-y: visible;
+      overflow-x: hidden;
     }
 
     .jira-right {
@@ -3003,9 +3016,16 @@
   @media (max-width: 480px) {
     .stepper-header {
       margin-bottom: 1rem;
+      padding: 0.75rem 0.5rem;
 
       .step-item .step-label {
         display: none;
+      }
+
+      .step-item .step-circle {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
       }
     }
 
@@ -3017,6 +3037,46 @@
     .sizes-table .size-row .size-input {
       height: 44px;
       font-size: 1rem;
+    }
+
+    .add-order-dialog {
+      .step-content { min-height: unset; }
+    }
+
+    .product-card-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.5rem !important;
+
+      .btn-remove-product { align-self: flex-end; }
+    }
+
+    .sizes-header-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.5rem !important;
+
+      .sizes-toggles {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
+        width: 100%;
+      }
+    }
+
+    .step-header-with-action {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.4rem !important;
+    }
+
+    .select-with-add {
+      flex-wrap: nowrap;
+    }
+
+    .inline-add-type {
+      flex-wrap: wrap;
+      .add-type-input { min-width: 0; }
     }
   }
 
@@ -3043,7 +3103,6 @@
     }
   }
 
-  // ─── PrimeNG overrides ─────────────────────────────────────────────────────
   :host ::ng-deep {
     .status-filter { width: 100% !important; }
 
@@ -3145,9 +3204,7 @@
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
 // Image Preview Modal
-// ════════════════════════════════════════════════════════════════════════════
 
   .p-dialog-header {
     background: var(--surface-100);
@@ -3200,7 +3257,6 @@
     }
   }
 
-  // ─── File Upload Zone (Add Order Modal) ───────────────────────────────────
   .file-upload-zone {
     border: 2px dashed var(--surface-300);
     border-radius: 10px;
@@ -3350,7 +3406,6 @@
     }
   }
 
-  // ─── User Filter Chips ─────────────────────────────────────────────────────
 
   .user-filter-section {
     display: flex;
@@ -3494,7 +3549,6 @@
     }
   }
 
-  // ─── Custom / Extra Sizes ──────────────────────────────────────────────────
   .custom-sizes-section {
     margin-top: 0.5rem;
   }
@@ -3635,7 +3689,92 @@
     }
   }
 
-// ─── Add Order Modal — Global UI Improvements ──────────────────────────────
+  .select-with-add {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    ::ng-deep p-select { flex: 1; min-width: 0; }
+
+    .btn-add-type {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      background: transparent;
+      color: #6366f1;
+      border: 1px dashed #a5b4fc;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+
+      &:hover { background: #eef2ff; border-color: #6366f1; }
+    }
+  }
+
+  .inline-add-type {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.65rem;
+    background: #f0f9ff;
+    border: 1px dashed #7dd3fc;
+    border-radius: 8px;
+
+    .add-type-input {
+      flex: 1;
+      height: 32px;
+      padding: 0 0.6rem;
+      border: 1px solid var(--surface-300);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--text-color);
+      background: var(--surface-0);
+      outline: none;
+
+      &:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.12); }
+      &::placeholder { color: var(--text-color-secondary); }
+    }
+
+    .btn-confirm-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+
+      &:hover:not(:disabled) { background: #4f46e5; }
+      &:disabled { opacity: 0.45; cursor: not-allowed; }
+    }
+
+    .btn-cancel-type {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      color: var(--text-color-secondary);
+      border: 1px solid var(--surface-300);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+
+      &:hover { background: var(--surface-100); color: var(--text-color); }
+    }
+  }
+
 .orders-management-container .add-order-dialog {
     .step-content {
       min-height: 300px;
@@ -3671,6 +3810,16 @@
       padding: 0 1.5rem 1.5rem;
       margin-bottom: 1.5rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
+      @media (max-width: 480px) {
+        padding: 0 0.75rem 1rem;
+        border-radius: 10px;
+
+        .product-card-header {
+          margin: 0 -0.75rem 1rem !important;
+          padding: 0.75rem 0.75rem !important;
+        }
+      }
 
       .product-card-header {
         background: linear-gradient(135deg, var(--surface-50) 0%, var(--surface-100) 100%);
