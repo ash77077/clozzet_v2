@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { TimelineModule } from 'primeng/timeline';
@@ -129,6 +130,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
+    private location: Location,
     private customersService: CustomersService,
     private interactionsService: InteractionsService,
     private messageService: MessageService,
@@ -532,7 +534,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/crm-dashboard']);
+    this.location.back();
   }
 
   openCreateOrderDialog(): void {
