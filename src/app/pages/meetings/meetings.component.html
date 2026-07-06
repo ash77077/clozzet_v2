@@ -1,0 +1,186 @@
+<div class="meetings-page">
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1><i class="pi pi-calendar"></i> Meetings</h1>
+      <p>Schedule and manage your customer meetings</p>
+    </div>
+    <button class="add-btn" (click)="openAddDialog()">
+      <i class="pi pi-plus"></i> New Meeting
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="search-wrap">
+      <i class="pi pi-search"></i>
+      <input type="text" [(ngModel)]="searchTerm" (input)="applyFilters()" placeholder="Search by title, company, contact…" class="search-input" />
+    </div>
+    <p-select [options]="statusFilterOptions" [(ngModel)]="selectedStatusFilter" (onChange)="applyFilters()"
+      optionLabel="label" optionValue="value" placeholder="All Statuses" styleClass="status-filter">
+    </p-select>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <i class="pi pi-calendar stat-icon"></i>
+      <div>
+        <div class="stat-value">{{ meetings.length }}</div>
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+    <div class="stat-card upcoming">
+      <i class="pi pi-clock stat-icon"></i>
+      <div>
+        <div class="stat-value">{{ scheduledCount }}</div>
+        <div class="stat-label">Upcoming</div>
+      </div>
+    </div>
+    <div class="stat-card done">
+      <i class="pi pi-check-circle stat-icon"></i>
+      <div>
+        <div class="stat-value">{{ completedCount }}</div>
+        <div class="stat-label">Completed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-state">
+    <i class="pi pi-spin pi-spinner"></i> Loading meetings…
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!isLoading && filteredMeetings.length === 0" class="empty-state">
+    <i class="pi pi-calendar-times"></i>
+    <p>No meetings found</p>
+    <button class="add-btn" (click)="openAddDialog()"><i class="pi pi-plus"></i> Schedule First Meeting</button>
+  </div>
+
+  <!-- Meetings Table -->
+  <div class="meetings-table-wrap" *ngIf="!isLoading && filteredMeetings.length > 0">
+    <p-table [value]="filteredMeetings" [paginator]="true" [rows]="15"
+      styleClass="p-datatable-gridlines" responsiveLayout="scroll" [scrollable]="true">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="min-width:200px">Title</th>
+          <th style="min-width:160px">Customer</th>
+          <th style="min-width:140px">Contact</th>
+          <th style="min-width:170px">Date &amp; Time</th>
+          <th style="min-width:100px">Duration</th>
+          <th style="min-width:120px">Status</th>
+          <th style="min-width:160px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-meeting>
+        <tr [class.row-overdue]="isOverdue(meeting)" [class.row-upcoming]="isUpcoming(meeting)">
+          <td>
+            <div class="title-cell">
+              <strong>{{ meeting.title }}</strong>
+              <span *ngIf="isOverdue(meeting)" class="overdue-badge">Overdue</span>
+            </div>
+          </td>
+          <td>{{ meeting.customerName }}</td>
+          <td>
+            <div *ngIf="meeting.contactPerson" class="contact-cell">
+              <span>{{ meeting.contactPerson }}</span>
+              <span *ngIf="meeting.phone" class="phone">{{ meeting.phone }}</span>
+            </div>
+            <span *ngIf="!meeting.contactPerson" class="text-muted">—</span>
+          </td>
+          <td>{{ formatDate(meeting.meetingDate) }}</td>
+          <td>{{ meeting.duration ? meeting.duration + ' min' : '—' }}</td>
+          <td>
+            <p-tag [value]="getStatusLabel(meeting.status)" [severity]="getStatusSeverity(meeting.status)"></p-tag>
+          </td>
+          <td>
+            <div class="action-group">
+              <p-button icon="pi pi-pencil" (onClick)="openEditDialog(meeting)" severity="info" [text]="true" [rounded]="true" pTooltip="Edit"></p-button>
+              <p-button *ngIf="meeting.status === MeetingStatus.SCHEDULED" icon="pi pi-check" (onClick)="updateStatus(meeting, MeetingStatus.COMPLETED)" severity="success" [text]="true" [rounded]="true" pTooltip="Mark Complete"></p-button>
+              <p-button *ngIf="meeting.status === MeetingStatus.SCHEDULED" icon="pi pi-times" (onClick)="updateStatus(meeting, MeetingStatus.CANCELLED)" severity="secondary" [text]="true" [rounded]="true" pTooltip="Cancel Meeting"></p-button>
+              <p-button icon="pi pi-trash" (onClick)="deleteMeeting(meeting)" severity="danger" [text]="true" [rounded]="true" pTooltip="Delete"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="7"><div class="table-empty"><i class="pi pi-calendar"></i><p>No meetings match your filter</p></div></td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Add/Edit Meeting Dialog -->
+  <p-dialog
+    [(visible)]="showDialog"
+    [header]="isEditMode ? 'Edit Meeting' : 'New Meeting'"
+    [modal]="true"
+    [style]="{width: '540px', maxWidth: '96vw'}"
+    [draggable]="false"
+    [resizable]="false">
+
+    <form [formGroup]="meetingForm" (ngSubmit)="saveMeeting()" class="meeting-form">
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label class="field-label required">Meeting Title</label>
+          <input pInputText formControlName="title" placeholder="e.g. Sales call with Acme" class="w-full" />
+          <small class="p-error" *ngIf="meetingForm.get('title')?.invalid && meetingForm.get('title')?.touched">Required</small>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label required">Customer / Company</label>
+          <input pInputText formControlName="customerName" placeholder="Company name" class="w-full" />
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Contact Person</label>
+          <input pInputText formControlName="contactPerson" placeholder="Name" class="w-full" />
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Phone</label>
+          <input pInputText formControlName="phone" placeholder="Phone number" class="w-full" />
+        </div>
+
+        <div class="form-field">
+          <label class="field-label required">Date &amp; Time</label>
+          <p-datepicker formControlName="meetingDate" [showIcon]="true" [showTime]="true" [hourFormat]="'24'"
+            dateFormat="yy-mm-dd" placeholder="Select date &amp; time" appendTo="body" class="w-full">
+          </p-datepicker>
+          <small class="p-error" *ngIf="meetingForm.get('meetingDate')?.invalid && meetingForm.get('meetingDate')?.touched">Required</small>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Duration (min)</label>
+          <input pInputText type="number" formControlName="duration" placeholder="30" class="w-full" min="5" (wheel)="onNumberWheel($event)" />
+        </div>
+
+        <div class="form-field" *ngIf="isEditMode">
+          <label class="field-label">Status</label>
+          <p-select formControlName="status" [options]="statusOptions" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+
+        <div class="form-field full-width">
+          <label class="field-label">Address / Location</label>
+          <textarea pTextarea formControlName="address" placeholder="Meeting location" rows="2" class="w-full"></textarea>
+        </div>
+
+        <div class="form-field full-width">
+          <label class="field-label">Notes</label>
+          <textarea pTextarea formControlName="notes" placeholder="Agenda, preparation notes…" rows="3" class="w-full"></textarea>
+        </div>
+      </div>
+
+      <div class="dialog-footer-row">
+        <p-button label="Cancel" icon="pi pi-times" (onClick)="showDialog = false" styleClass="p-button-text" [disabled]="isSaving"></p-button>
+        <p-button [label]="isEditMode ? 'Save Changes' : 'Create Meeting'" icon="pi pi-check" type="submit" [loading]="isSaving" [disabled]="meetingForm.invalid || isSaving"></p-button>
+      </div>
+    </form>
+  </p-dialog>
+</div>

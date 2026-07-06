@@ -12,6 +12,16 @@ export interface ContactPerson {
   linkedinPage?: string;
 }
 
+export interface AssignmentLogEntry {
+  changedBy: { _id?: string; firstName?: string; lastName?: string } | string;
+  changedByName: string;
+  fromUser: { _id?: string; firstName?: string; lastName?: string } | string | null;
+  fromUserName: string | null;
+  toUser: { _id?: string; firstName?: string; lastName?: string } | string | null;
+  toUserName: string | null;
+  changedAt: Date;
+}
+
 export interface Customer {
   _id?: string;
   companyName: string;
@@ -31,6 +41,8 @@ export interface Customer {
   scheduledMeetingAt?: Date;
   isActive: boolean;
   createdBy?: { _id?: string; firstName?: string; lastName?: string } | string;
+  assignedTo?: { _id?: string; firstName?: string; lastName?: string } | string | null;
+  assignmentLog?: AssignmentLogEntry[];
   deletedBy?: { _id?: string; firstName?: string; lastName?: string } | string;
   deleteReason?: string;
   createdAt?: Date;

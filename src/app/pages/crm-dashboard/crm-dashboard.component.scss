@@ -680,16 +680,79 @@
     grid-template-columns: repeat(2, 1fr) !important;
   }
 
+  // ── Table caption toolbar — stack vertically on mobile ──────────
+  ::ng-deep {
+    .p-datatable-header {
+      padding: 0.75rem !important;
+    }
+  }
+
+  .table-caption-container {
+    gap: 0.75rem;
+  }
+
+  // The two-column flex row becomes a vertical stack
+  .flex.justify-between.items-center.mb-3 {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+
+    // Left side: title + user chips — full width
+    > .flex.align-items-center.gap-16 {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    // Right side: date pickers + search — wrap onto multiple lines
+    > .flex.gap-2.items-center {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      width: 100%;
+
+      // Date pickers take half width each
+      ::ng-deep .date-filter-input {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-width: 0;
+
+        .p-datepicker-input {
+          width: 100% !important;
+        }
+      }
+
+      // Search input fills remaining row
+      .p-input-icon-left {
+        flex: 1 1 100%;
+        margin-left: 0 !important;
+        width: 100%;
+
+        input { width: 100% !important; }
+      }
+
+      // AI button full width
+      ::ng-deep .p-button {
+        flex: 1 1 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  // Table: horizontal scroll
   ::ng-deep {
     .p-datatable {
       table-layout: auto !important;
-      font-size: 0.875rem;
+      font-size: 0.8rem;
+
+      .p-datatable-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
 
       .p-datatable-thead > tr > th {
         width: auto !important;
         min-width: 80px;
         white-space: nowrap;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         padding: 0.5rem 0.4rem;
       }
 
@@ -702,8 +765,6 @@
 
     .p-card .p-card-body {
       padding: 0.75rem;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
     }
   }
 }
@@ -1213,7 +1274,7 @@
 .follow-up-dialog-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 
   .customer-info-section {
     background: #f8f9fa;
@@ -1232,6 +1293,141 @@
       margin: 0.25rem 0;
       color: #555;
       font-size: 0.9rem;
+    }
+  }
+
+  .conversation-history {
+    border: 1px solid var(--surface-200);
+    border-radius: 10px;
+    overflow: hidden;
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.9rem;
+      background: var(--surface-50);
+      border-bottom: 1px solid var(--surface-200);
+
+      .history-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--text-color-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+
+        i { font-size: 0.75rem; }
+      }
+
+      .history-count {
+        background: var(--primary-100);
+        color: var(--primary-700);
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        min-width: 20px;
+        text-align: center;
+      }
+    }
+
+    .history-loading,
+    .history-empty {
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: var(--text-color-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid var(--surface-100);
+      position: relative;
+
+      &:last-of-type { border-bottom: none; }
+
+      .history-item-dot {
+        flex-shrink: 0;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary-400);
+        margin-top: 0.35rem;
+      }
+
+      .history-item-body {
+        flex: 1;
+        min-width: 0;
+
+        .history-item-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          margin-bottom: 0.2rem;
+
+          .history-type {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--primary-600);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+          }
+
+          .history-date {
+            font-size: 0.72rem;
+            color: var(--text-color-secondary);
+            white-space: nowrap;
+          }
+        }
+
+        .history-subject {
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--text-color);
+          margin-bottom: 0.15rem;
+        }
+
+        .history-summary {
+          font-size: 0.82rem;
+          color: var(--text-color-secondary);
+          line-height: 1.4;
+          word-break: break-word;
+        }
+      }
+    }
+
+    .see-more-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.5rem;
+      border: none;
+      background: var(--surface-50);
+      color: var(--primary-600);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-top: 1px solid var(--surface-200);
+      transition: background 0.15s;
+
+      i { font-size: 0.75rem; }
+
+      &:hover { background: var(--primary-50); }
     }
   }
 }
@@ -1642,4 +1838,103 @@
       }
     }
   }
+}
+
+// Customer dialog footer — "Set up Meeting" on left, Cancel/Save on right
+.customer-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+}
+
+.setup-meeting-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: #6366f1;
+  border: 1px solid #a5b4fc;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  i { font-size: 0.85rem; }
+
+  &:hover { background: #eef2ff; border-color: #6366f1; }
+}
+
+.meeting-form {
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    @media (max-width: 480px) { grid-template-columns: 1fr; }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+
+      &.full-width { grid-column: 1 / -1; }
+
+      label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-color-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+
+        &.required::after { content: ' *'; color: #ef4444; }
+      }
+    }
+  }
+
+  .import-address-btn {
+    background: transparent;
+    border: 1px solid #a5b4fc;
+    color: #6366f1;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.15s;
+
+    &:hover { background: #eef2ff; }
+  }
+}
+
+.required-star {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: block;
 }

@@ -223,6 +223,12 @@ export class NavbarComponent implements OnInit {
     this.router.navigate(['/employees']);
   }
 
+  openMeetings() {
+    this.closeMobileMenu();
+    this.showUserMenu = false;
+    this.router.navigate(['/meetings']);
+  }
+
   isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
   }
