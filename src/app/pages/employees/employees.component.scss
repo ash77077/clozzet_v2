@@ -800,6 +800,109 @@ $purple-dim:  rgba(124,58,237,0.1);
   }
 }
 
+// ── Responsive visibility ─────────────────────────────────────────
+.emp-desktop-only { display: block; }
+.emp-mobile-only  { display: none;  }
+
+@media (max-width: 700px) {
+  .emp-desktop-only { display: none;  }
+  .emp-mobile-only  { display: block; }
+
+  // Tighten summary grid to 2 cols on mobile
+  .summary-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  // Summary split card full width on mobile
+  .summary-split {
+    grid-column: 1 / -1;
+  }
+}
+
+// ── Employee cards (mobile) ───────────────────────────────────────
+.emp-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.emp-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem 0.5rem;
+  }
+
+  &__name-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $text;
+    word-break: break-word;
+  }
+
+  &__position {
+    font-size: 0.78rem;
+    color: $text-muted;
+  }
+
+  &__body {
+    padding: 0 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+  }
+
+  &__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $text-dim;
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+
+  &__currency {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $text;
+
+    &--green { color: $green; }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem 0.75rem;
+    border-top: 1px solid $border;
+  }
+}
+
 // ── View Payments Summary ─────────────────────────────────────────
 .view-payments-summary {
   display: flex;

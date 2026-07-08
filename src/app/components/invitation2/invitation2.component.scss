@@ -61,15 +61,35 @@
 // Shell + ambient
 // ==========================================================================
 .invitation2 {
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at top left, rgba(244, 184, 193, 0.35) 0%, transparent 55%),
-    radial-gradient(ellipse at bottom right, rgba(212, 196, 233, 0.3) 0%, transparent 55%),
-    linear-gradient(160deg, #fff8f6 0%, #fdf0eb 50%, #fae8e0 100%);
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   color: var(--ink-dark);
+
+  // Fixed photo background
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('/assets/wedding-pic/wedd.JPG');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+  }
+
+  // Soft overlay so text stays readable over the photo
+  &::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at top left, rgba(244, 184, 193, 0.45) 0%, transparent 55%),
+      radial-gradient(ellipse at bottom right, rgba(212, 196, 233, 0.4) 0%, transparent 55%),
+      linear-gradient(160deg, rgba(255,248,246,0.72) 0%, rgba(253,240,235,0.68) 50%, rgba(250,232,224,0.72) 100%);
+    z-index: 0;
+  }
 
   // Initial curtain / reveal state
   opacity: 0;

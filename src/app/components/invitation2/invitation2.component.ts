@@ -93,15 +93,15 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
   timeline: TimelineEvent[] = [
     {
       time: '12:00',
-      title: 'Pesayi tun',
-      venue: 'Nor Nork',
-      address: 'Davit Bek 220/20',
-      mapQuery: 'David Bek Street 220 Nor Nork Yerevan Armenia',
+      title: 'Փեսայի տուն',
+      venue: 'Դավթաշեն',
+      address: 'Գրիգոր Աղաբաբյան 9',
+      mapQuery: 'Yerevan, Grigor Aghababyan 9',
       icon: 'groom'
     },
     {
       time: '12:30',
-      title: 'Harsi tun',
+      title: 'Հարսի տուն',
       venue: 'Nor Nork',
       address: 'Nanseni pogoc 50',
       mapQuery: 'Nansen Street 50 Nor Nork Yerevan Armenia',
@@ -109,18 +109,18 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     },
     {
       time: '15:00',
-      title: 'Psakadrutʻyun',
-      venue: 'Tegher Monastery',
-      address: 'Tegher, Aragacotn',
+      title: 'Պսակադրություն',
+      venue: 'Տեղերի Վանք',
+      address: 'Tegher, Monastery',
       mapQuery: 'Tegher Monastery Armenia',
       icon: 'church'
     },
     {
       time: '17:30',
-      title: 'Harsanyac handisutʻyun',
+      title: 'Խնջույքի վայրը',
       venue: 'Platinium Hall',
-      address: 'Mughni, Armenia',
-      mapQuery: 'Platinium Hall Mughni Armenia',
+      address: 'Գ․ Մուղնի',
+      mapQuery: 'Platinium Wedding Hall, Mughni, Armenia',
       icon: 'reception'
     }
   ];
@@ -143,10 +143,10 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.mapUrlCeremony = this.sanitizer.bypassSecurityTrustResourceUrl(
-      'https://maps.google.com/maps?q=Tegher+Monastery+Armenia&output=embed'
+      'https://yandex.com/maps/?text=Tegher+Monastery+Armenia&output=embed&z=14'
     );
     this.mapUrlReception = this.sanitizer.bypassSecurityTrustResourceUrl(
-      'https://maps.google.com/maps?q=Platinium+Hall+Mughni+Armenia&output=embed'
+      'https://yandex.com/maps/-/CTuyeT4R'
     );
   }
 
@@ -200,7 +200,7 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openMap(query: string): void {
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    const url = `https://yandex.com/maps/?text=${encodeURIComponent(query)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 

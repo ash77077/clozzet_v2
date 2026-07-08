@@ -3,43 +3,12 @@
   <!-- ================= HERO ================= -->
   <section class="hero" #revealSection>
     <div class="hero__inner">
-      <p class="hero__eyebrow">Save the Date</p>
-
-      <!-- Beating heart SVG -->
-      <div class="heart-wrap" aria-hidden="true">
-        <svg class="heart" viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="heartGrad" cx="50%" cy="45%" r="55%">
-              <stop offset="0%" stop-color="#F5C2C7"/>
-              <stop offset="55%" stop-color="#C9956A"/>
-              <stop offset="100%" stop-color="#6B1A2A"/>
-            </radialGradient>
-            <filter id="heartGlow" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="3" result="blur"/>
-              <feMerge>
-                <feMergeNode in="blur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          <path
-            d="M50 82 C 20 62, 5 42, 5 25 C 5 12, 15 3, 28 3 C 38 3, 46 9, 50 18 C 54 9, 62 3, 72 3 C 85 3, 95 12, 95 25 C 95 42, 80 62, 50 82 Z"
-            fill="url(#heartGrad)"
-            filter="url(#heartGlow)"
-            stroke="#D4AF6A"
-            stroke-width="0.6"
-            stroke-opacity="0.8"/>
-        </svg>
-        <span class="heart__pulse"></span>
-      </div>
 
       <h1 class="hero__names">
         <span class="hero__names-line">Աշխարհիկ</span>
-        <span class="hero__ampersand">&amp;</span>
+        <span class="hero__ampersand">և</span>
         <span class="hero__names-line">Գոհար</span>
       </h1>
-
-      <p class="hero__latin">Ashkharhik &amp; Gohar</p>
 
       <div class="hero__divider" aria-hidden="true">
         <span class="hero__divider-dot"></span>
@@ -48,7 +17,7 @@
       </div>
 
       <p class="hero__date">31 · 07 · 2026</p>
-      <p class="hero__time">17:30 · Մուղnի</p>
+      <p class="hero__time">17:30 · PLATINIUM HALL</p>
 
       <button type="button" class="hero__cta" (click)="scrollToRsvp()">
         Հաստատել ներկայությունը
@@ -61,31 +30,30 @@
   </section>
 
   <!-- ================= STORY ================= -->
-  <section class="story reveal-section" #revealSection>
-    <div class="story__frame">
-      <p class="story__mono" aria-hidden="true">Աշ &amp; Գ</p>
-      <h2 class="story__title">Наша история</h2>
-      <div class="story__ornament" aria-hidden="true">
-        <svg viewBox="0 0 120 12" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 6 Q30 -4 60 6 T120 6" fill="none" stroke="#D4AF6A" stroke-width="0.8"/>
-        </svg>
-      </div>
-      <p class="story__paragraph">
-        Когда 3 года назад мы встретились на свадьбе общего друга,
-        мы и не думали, что это судьба. Один взгляд, одна улыбка,
-        один разговор до самого рассвета — и всё изменилось навсегда.
-      </p>
-      <p class="story__paragraph">
-        Сегодня мы приглашаем самых дорогих людей разделить с нами
-        день, когда наши сердца становятся одним. Ваше присутствие —
-        самый ценный подарок для нас.
-      </p>
-    </div>
-  </section>
+<!--  <section class="story reveal-section" #revealSection>-->
+<!--    <div class="story__frame">-->
+<!--      <p class="story__mono" aria-hidden="true">Աշ &amp; Գ</p>-->
+<!--      <h2 class="story__title">Наша история</h2>-->
+<!--      <div class="story__ornament" aria-hidden="true">-->
+<!--        <svg viewBox="0 0 120 12" xmlns="http://www.w3.org/2000/svg">-->
+<!--          <path d="M0 6 Q30 -4 60 6 T120 6" fill="none" stroke="#D4AF6A" stroke-width="0.8"/>-->
+<!--        </svg>-->
+<!--      </div>-->
+<!--      <p class="story__paragraph">-->
+<!--        Когда 3 года назад мы встретились на свадьбе общего друга,-->
+<!--        мы и не думали, что это судьба. Один взгляд, одна улыбка,-->
+<!--        один разговор до самого рассвета — и всё изменилось навсегда.-->
+<!--      </p>-->
+<!--      <p class="story__paragraph">-->
+<!--        Сегодня мы приглашаем самых дорогих людей разделить с нами-->
+<!--        день, когда наши сердца становятся одним. Ваше присутствие —-->
+<!--        самый ценный подарок для нас.-->
+<!--      </p>-->
+<!--    </div>-->
+<!--  </section>-->
 
   <!-- ================= COUNTDOWN ================= -->
   <section class="countdown reveal-section" #revealSection>
-    <p class="countdown__eyebrow">До нашего дня</p>
     <h2 class="countdown__title">Հաշվարկն սկսվել է</h2>
 
     <div class="countdown__grid">
@@ -167,175 +135,125 @@
     </ol>
   </section>
 
-  <!-- ================= MAPS ================= -->
-  <section class="maps reveal-section" #revealSection>
-    <p class="section-eyebrow">Վայրերը</p>
-    <h2 class="section-title">Այցելեք մեզ</h2>
+<!--  &lt;!&ndash; ================= RSVP ================= &ndash;&gt;-->
+<!--  <section id="rsvp" class="rsvp reveal-section" #revealSection>-->
+<!--    <p class="section-eyebrow">RSVP</p>-->
+<!--    <h2 class="section-title">Հաստատե՛ք Ձեր ներկայությունը</h2>-->
+<!--    <p class="rsvp__deadline">Խնդրում ենք պատասխանել մինչև 20.08.2026</p>-->
 
-    <div class="map-card">
-      <div class="map-card__header">
-        <span class="map-card__pin" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-            <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"/>
-            <circle cx="12" cy="9" r="2.5"/>
-          </svg>
-        </span>
-        <div>
-          <h3 class="map-card__title">Harsanyac handisutʻyun</h3>
-          <p class="map-card__subtitle">Platinium Hall · Mughni</p>
-        </div>
-      </div>
-      <div class="map-card__frame">
-        <iframe
-          [src]="mapUrlReception"
-          title="Reception location"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          allowfullscreen>
-        </iframe>
-      </div>
-    </div>
-  </section>
+<!--    @if (!submitted) {-->
+<!--      <form class="rsvp__form" [formGroup]="rsvpForm" (ngSubmit)="onSubmit()" novalidate>-->
 
-  <!-- ================= DRESS CODE ================= -->
-  <section class="dresscode reveal-section" #revealSection>
-    <div class="dresscode__card">
-      <div class="dresscode__icon" aria-hidden="true">
-        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2">
-          <!-- Simple wedding dress silhouette -->
-          <path d="M18 8h12l-3 6 6 4-2 5 5 21H14l5-21-2-5 6-4-3-6z"/>
-          <path d="M24 14v30" opacity="0.4"/>
-        </svg>
-      </div>
-      <h3 class="dresscode__title">Խնդրանք հյուրերին</h3>
-      <p class="dresscode__body">
-        Խնդրում ենք հաշվի առնել, որ ՍՊԻՏԱԿը
-        <br/>
-        ՄԻԱՅՆ ՀԱՐՍՆԱՑՈՒԻ ԳՈՒՅՆՆ Է
-        <span class="dresscode__heart" aria-hidden="true">🤍</span>
-      </p>
-    </div>
-  </section>
+<!--        &lt;!&ndash; Name &ndash;&gt;-->
+<!--        <div class="field">-->
+<!--          <label class="field__label" for="rsvp-name">Ձեր անունը</label>-->
+<!--          <input-->
+<!--            id="rsvp-name"-->
+<!--            type="text"-->
+<!--            class="field__input"-->
+<!--            formControlName="name"-->
+<!--            placeholder="Ձեր անուն ազգանունը"-->
+<!--            autocomplete="name"/>-->
+<!--          @if (nameCtrl?.invalid && nameCtrl?.touched) {-->
+<!--            <p class="field__error">Խնդրում ենք լրացնել անունը</p>-->
+<!--          }-->
+<!--        </div>-->
 
-  <!-- ================= RSVP ================= -->
-  <section id="rsvp" class="rsvp reveal-section" #revealSection>
-    <p class="section-eyebrow">RSVP</p>
-    <h2 class="section-title">Հաստատե՛ք Ձեր ներկայությունը</h2>
-    <p class="rsvp__deadline">Խնդրում ենք պատասխանել մինչև 20.08.2026</p>
+<!--        &lt;!&ndash; Partner status &ndash;&gt;-->
+<!--        <fieldset class="field field&#45;&#45;radio">-->
+<!--          <legend class="field__label">Ինչպե՞ս եք գալիս</legend>-->
+<!--          <div class="radio-row">-->
+<!--            <label class="radio-pill">-->
+<!--              <input type="radio" formControlName="partner" value="couple"/>-->
+<!--              <span>Ամուսնացած</span>-->
+<!--            </label>-->
+<!--            <label class="radio-pill">-->
+<!--              <input type="radio" formControlName="partner" value="solo"/>-->
+<!--              <span>Ինձ</span>-->
+<!--            </label>-->
+<!--          </div>-->
+<!--        </fieldset>-->
 
-    @if (!submitted) {
-      <form class="rsvp__form" [formGroup]="rsvpForm" (ngSubmit)="onSubmit()" novalidate>
+<!--        &lt;!&ndash; Attending &ndash;&gt;-->
+<!--        <fieldset class="field field&#45;&#45;radio">-->
+<!--          <legend class="field__label">Կկարողանա՞ք գալ</legend>-->
+<!--          <div class="radio-row">-->
+<!--            <label class="radio-pill radio-pill&#45;&#45;yes">-->
+<!--              <input type="radio" formControlName="attending" value="yes"/>-->
+<!--              <span>Այո, անպայման 🎉</span>-->
+<!--            </label>-->
+<!--            <label class="radio-pill radio-pill&#45;&#45;no">-->
+<!--              <input type="radio" formControlName="attending" value="no"/>-->
+<!--              <span>Ցավոք, չեմ կարող 😔</span>-->
+<!--            </label>-->
+<!--          </div>-->
+<!--        </fieldset>-->
 
-        <!-- Name -->
-        <div class="field">
-          <label class="field__label" for="rsvp-name">Ձեր անունը</label>
-          <input
-            id="rsvp-name"
-            type="text"
-            class="field__input"
-            formControlName="name"
-            placeholder="Ձեր անուն ազգանունը"
-            autocomplete="name"/>
-          @if (nameCtrl?.invalid && nameCtrl?.touched) {
-            <p class="field__error">Խնդրում ենք լրացնել անունը</p>
-          }
-        </div>
+<!--        &lt;!&ndash; Guest count &ndash;&gt;-->
+<!--        @if (rsvpForm.value.partner === 'couple' && rsvpForm.value.attending === 'yes') {-->
+<!--          <div class="field">-->
+<!--            <label class="field__label">Հյուրերի քանակը</label>-->
+<!--            <div class="stepper">-->
+<!--              <button type="button" class="stepper__btn" (click)="decrementGuests()" aria-label="Նվազեցնել">−</button>-->
+<!--              <span class="stepper__value">{{ rsvpForm.value.guestCount }}</span>-->
+<!--              <button type="button" class="stepper__btn" (click)="incrementGuests()" aria-label="Ավելացնել">+</button>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        }-->
 
-        <!-- Partner status -->
-        <fieldset class="field field--radio">
-          <legend class="field__label">Ինչպե՞ս եք գալիս</legend>
-          <div class="radio-row">
-            <label class="radio-pill">
-              <input type="radio" formControlName="partner" value="couple"/>
-              <span>Ամուսնացած</span>
-            </label>
-            <label class="radio-pill">
-              <input type="radio" formControlName="partner" value="solo"/>
-              <span>Ինձ</span>
-            </label>
-          </div>
-        </fieldset>
+<!--        &lt;!&ndash; Song request &ndash;&gt;-->
+<!--        <div class="field">-->
+<!--          <label class="field__label" for="rsvp-song">Ի՞նչ երգ կնվագենք Ձեզ համար</label>-->
+<!--          <input-->
+<!--            id="rsvp-song"-->
+<!--            type="text"-->
+<!--            class="field__input"-->
+<!--            formControlName="song"-->
+<!--            placeholder="Ձեր սիրելի երգը"/>-->
+<!--        </div>-->
 
-        <!-- Attending -->
-        <fieldset class="field field--radio">
-          <legend class="field__label">Կկարողանա՞ք գալ</legend>
-          <div class="radio-row">
-            <label class="radio-pill radio-pill--yes">
-              <input type="radio" formControlName="attending" value="yes"/>
-              <span>Այո, անպայման 🎉</span>
-            </label>
-            <label class="radio-pill radio-pill--no">
-              <input type="radio" formControlName="attending" value="no"/>
-              <span>Ցավոք, չեմ կարող 😔</span>
-            </label>
-          </div>
-        </fieldset>
+<!--        &lt;!&ndash; Message &ndash;&gt;-->
+<!--        <div class="field">-->
+<!--          <label class="field__label" for="rsvp-message">Մաղթանք զույգին (ընտրովի)</label>-->
+<!--          <textarea-->
+<!--            id="rsvp-message"-->
+<!--            class="field__input field__textarea"-->
+<!--            formControlName="message"-->
+<!--            rows="3"-->
+<!--            placeholder="Գրեք մի քանի ջերմ խոսք..."></textarea>-->
+<!--        </div>-->
 
-        <!-- Guest count -->
-        @if (rsvpForm.value.partner === 'couple' && rsvpForm.value.attending === 'yes') {
-          <div class="field">
-            <label class="field__label">Հյուրերի քանակը</label>
-            <div class="stepper">
-              <button type="button" class="stepper__btn" (click)="decrementGuests()" aria-label="Նվազեցնել">−</button>
-              <span class="stepper__value">{{ rsvpForm.value.guestCount }}</span>
-              <button type="button" class="stepper__btn" (click)="incrementGuests()" aria-label="Ավելացնել">+</button>
-            </div>
-          </div>
-        }
+<!--        @if (submitError) {-->
+<!--          <p class="rsvp__error">{{ submitError }}</p>-->
+<!--        }-->
 
-        <!-- Song request -->
-        <div class="field">
-          <label class="field__label" for="rsvp-song">Ի՞նչ երգ կնվագենք Ձեզ համար</label>
-          <input
-            id="rsvp-song"
-            type="text"
-            class="field__input"
-            formControlName="song"
-            placeholder="Ձեր սիրելի երգը"/>
-        </div>
-
-        <!-- Message -->
-        <div class="field">
-          <label class="field__label" for="rsvp-message">Մաղթանք զույգին (ընտրովի)</label>
-          <textarea
-            id="rsvp-message"
-            class="field__input field__textarea"
-            formControlName="message"
-            rows="3"
-            placeholder="Գրեք մի քանի ջերմ խոսք..."></textarea>
-        </div>
-
-        @if (submitError) {
-          <p class="rsvp__error">{{ submitError }}</p>
-        }
-
-        <button type="submit" class="rsvp__submit" [disabled]="submitting">
-          @if (submitting) {
-            <span class="spinner" aria-hidden="true"></span>
-            Ուղարկվում է...
-          } @else {
-            Ուղարկել
-          }
-        </button>
-      </form>
-    } @else {
-      <div class="rsvp__success">
-        <div class="rsvp__success-heart" aria-hidden="true">
-          <svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M50 82 C 20 62, 5 42, 5 25 C 5 12, 15 3, 28 3 C 38 3, 46 9, 50 18 C 54 9, 62 3, 72 3 C 85 3, 95 12, 95 25 C 95 42, 80 62, 50 82 Z"
-              fill="url(#heartGrad)"/>
-          </svg>
-        </div>
-        <h3 class="rsvp__success-title">Շնորհակալություն! 💕</h3>
-        <p class="rsvp__success-text">
-          Ձեր պատասխանը ստացվեց։
-          <br/>
-          Անհամբեր սպասում ենք Ձեզ 10 սեպտեմբերին։
-        </p>
-      </div>
-    }
-  </section>
+<!--        <button type="submit" class="rsvp__submit" [disabled]="submitting">-->
+<!--          @if (submitting) {-->
+<!--            <span class="spinner" aria-hidden="true"></span>-->
+<!--            Ուղարկվում է...-->
+<!--          } @else {-->
+<!--            Ուղարկել-->
+<!--          }-->
+<!--        </button>-->
+<!--      </form>-->
+<!--    } @else {-->
+<!--      <div class="rsvp__success">-->
+<!--        <div class="rsvp__success-heart" aria-hidden="true">-->
+<!--          <svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">-->
+<!--            <path-->
+<!--              d="M50 82 C 20 62, 5 42, 5 25 C 5 12, 15 3, 28 3 C 38 3, 46 9, 50 18 C 54 9, 62 3, 72 3 C 85 3, 95 12, 95 25 C 95 42, 80 62, 50 82 Z"-->
+<!--              fill="url(#heartGrad)"/>-->
+<!--          </svg>-->
+<!--        </div>-->
+<!--        <h3 class="rsvp__success-title">Շնորհակալություն! 💕</h3>-->
+<!--        <p class="rsvp__success-text">-->
+<!--          Ձեր պատասխանը ստացվեց։-->
+<!--          <br/>-->
+<!--          Անհամբեր սպասում ենք Ձեզ 10 սեպտեմբերին։-->
+<!--        </p>-->
+<!--      </div>-->
+<!--    }-->
+<!--  </section>-->
 
   <!-- ================= FOOTER ================= -->
   <footer class="footer">
