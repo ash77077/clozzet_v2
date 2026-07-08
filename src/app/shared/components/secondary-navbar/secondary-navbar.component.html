@@ -37,6 +37,12 @@
               <span>CRM Dashboard</span>
             </a>
           </li>
+          <li class="nav-item">
+            <a routerLink="/meetings" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-calendar"></i>
+              <span>Meetings</span>
+            </a>
+          </li>
         </ul>
       </div>
     </div>
@@ -68,6 +74,12 @@
             <a routerLink="/crm-dashboard" class="nav-link" routerLinkActive="active">
               <i class="pi pi-sitemap"></i>
               <span>CRM Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/meetings" class="nav-link" routerLinkActive="active">
+              <i class="pi pi-calendar"></i>
+              <span>Meetings</span>
             </a>
           </li>
         </ul>
@@ -209,6 +221,10 @@
                 <button class="user-dropdown-item sub-item" routerLink="/companies" (click)="showUserMenu = false">
                   <i class="pi pi-building"></i>
                   Companies
+                </button>
+                <button class="user-dropdown-item sub-item" routerLink="/employees" (click)="showUserMenu = false">
+                  <i class="pi pi-id-card"></i>
+                  Employees
                 </button>
               </div>
             </div>

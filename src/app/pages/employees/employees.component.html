@@ -94,101 +94,108 @@
         </div>
       </div>
 
-      <p-table
-        [value]="filteredEmployees"
-        [loading]="loading"
-        [paginator]="true"
-        [rows]="15"
-        styleClass="emp-table"
-        [rowHover]="true"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th pSortableColumn="lastName">Name <p-sortIcon field="lastName" /></th>
-            <th>Position</th>
-            <th>Department</th>
-            <th pSortableColumn="monthlySalary">Monthly Salary <p-sortIcon field="monthlySalary" /></th>
-            <th>Payment Method</th>
-            <th>Cash Portion</th>
-            <th>Card Portion</th>
-            <th>Status</th>
-            <th class="col-actions">Actions</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-emp>
-          <tr>
-            <td class="cell-name">{{ getFullName(emp) }}</td>
-            <td class="cell-muted">{{ emp.position || '—' }}</td>
-            <td class="cell-muted">{{ emp.department || '—' }}</td>
-            <td class="cell-currency">{{ formatCurrency(emp.monthlySalary) }}</td>
-            <td>
-              <span class="method-badge method-{{ emp.paymentMethod }}">
-                {{ getPaymentMethodLabel(emp.paymentMethod) }}
-              </span>
-            </td>
-            <td class="cell-currency">{{ emp.cashPortion ? formatCurrency(emp.cashPortion) : '—' }}</td>
-            <td class="cell-currency">{{ emp.cardPortion ? formatCurrency(emp.cardPortion) : '—' }}</td>
-            <td>
-              <p-tag
-                [value]="getStatusLabel(emp.status)"
-                [severity]="getStatusSeverity(emp.status)"
-              />
-            </td>
-            <td>
-              <div class="action-btns">
-                <p-button
-                  icon="pi pi-pencil"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="info"
-                  pTooltip="Edit Employee"
-                  tooltipPosition="top"
-                  (onClick)="openEditEmployee(emp)"
-                />
-                <p-button
-                  icon="pi pi-dollar"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="success"
-                  pTooltip="Add Payment"
-                  tooltipPosition="top"
-                  (onClick)="openAddPayment(emp)"
-                />
-                <p-button
-                  icon="pi pi-history"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="secondary"
-                  pTooltip="View Payments"
-                  tooltipPosition="top"
-                  (onClick)="openViewPayments(emp)"
-                />
-                @if (emp.isActive) {
-                  <p-button
-                    icon="pi pi-user-minus"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="danger"
-                    pTooltip="Deactivate"
-                    tooltipPosition="top"
-                    (onClick)="deactivateEmployee(emp)"
-                  />
-                }
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="9" class="empty-cell">
-              <div class="empty-state">
-                <i class="pi pi-users"></i>
-                <p>No employees found</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+      <!-- Desktop table -->
+      <div class="emp-desktop-only">
+        <p-table
+          [value]="filteredEmployees"
+          [loading]="loading"
+          [paginator]="true"
+          [rows]="15"
+          styleClass="emp-table"
+          [rowHover]="true"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="lastName">Name <p-sortIcon field="lastName" /></th>
+              <th>Position</th>
+              <th>Department</th>
+              <th pSortableColumn="monthlySalary">Monthly Salary <p-sortIcon field="monthlySalary" /></th>
+              <th>Payment Method</th>
+              <th>Cash Portion</th>
+              <th>Card Portion</th>
+              <th>Status</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-emp>
+            <tr>
+              <td class="cell-name">{{ getFullName(emp) }}</td>
+              <td class="cell-muted">{{ emp.position || '—' }}</td>
+              <td class="cell-muted">{{ emp.department || '—' }}</td>
+              <td class="cell-currency">{{ formatCurrency(emp.monthlySalary) }}</td>
+              <td>
+                <span class="method-badge method-{{ emp.paymentMethod }}">
+                  {{ getPaymentMethodLabel(emp.paymentMethod) }}
+                </span>
+              </td>
+              <td class="cell-currency">{{ emp.cashPortion ? formatCurrency(emp.cashPortion) : '—' }}</td>
+              <td class="cell-currency">{{ emp.cardPortion ? formatCurrency(emp.cardPortion) : '—' }}</td>
+              <td>
+                <p-tag [value]="getStatusLabel(emp.status)" [severity]="getStatusSeverity(emp.status)" />
+              </td>
+              <td>
+                <div class="action-btns">
+                  <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" pTooltip="Edit Employee" tooltipPosition="top" (onClick)="openEditEmployee(emp)" />
+                  <p-button icon="pi pi-dollar" [rounded]="true" [text]="true" severity="success" pTooltip="Add Payment" tooltipPosition="top" (onClick)="openAddPayment(emp)" />
+                  <p-button icon="pi pi-history" [rounded]="true" [text]="true" severity="secondary" pTooltip="View Payments" tooltipPosition="top" (onClick)="openViewPayments(emp)" />
+                  @if (emp.isActive) {
+                    <p-button icon="pi pi-user-minus" [rounded]="true" [text]="true" severity="danger" pTooltip="Deactivate" tooltipPosition="top" (onClick)="deactivateEmployee(emp)" />
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="9" class="empty-cell"><div class="empty-state"><i class="pi pi-users"></i><p>No employees found</p></div></td></tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="emp-mobile-only emp-card-list">
+        <div *ngFor="let emp of filteredEmployees" class="emp-card">
+          <div class="emp-card__header">
+            <div class="emp-card__name-block">
+              <span class="emp-card__name">{{ getFullName(emp) }}</span>
+              <span *ngIf="emp.position" class="emp-card__position">{{ emp.position }}</span>
+            </div>
+            <p-tag [value]="getStatusLabel(emp.status)" [severity]="getStatusSeverity(emp.status)" />
+          </div>
+          <div class="emp-card__body">
+            <div class="emp-card__row" *ngIf="emp.department">
+              <span class="emp-card__label">Dept</span>
+              <span>{{ emp.department }}</span>
+            </div>
+            <div class="emp-card__row">
+              <span class="emp-card__label">Salary</span>
+              <span class="emp-card__currency">{{ formatCurrency(emp.monthlySalary) }}</span>
+            </div>
+            <div class="emp-card__row">
+              <span class="emp-card__label">Method</span>
+              <span class="method-badge method-{{ emp.paymentMethod }}">{{ getPaymentMethodLabel(emp.paymentMethod) }}</span>
+            </div>
+            <div class="emp-card__row" *ngIf="emp.cashPortion">
+              <span class="emp-card__label">Cash</span>
+              <span class="emp-card__currency">{{ formatCurrency(emp.cashPortion) }}</span>
+            </div>
+            <div class="emp-card__row" *ngIf="emp.cardPortion">
+              <span class="emp-card__label">Card</span>
+              <span class="emp-card__currency">{{ formatCurrency(emp.cardPortion) }}</span>
+            </div>
+          </div>
+          <div class="emp-card__actions">
+            <p-button icon="pi pi-pencil" label="Edit" [text]="true" severity="info" size="small" (onClick)="openEditEmployee(emp)" />
+            <p-button icon="pi pi-dollar" label="Pay" [text]="true" severity="success" size="small" (onClick)="openAddPayment(emp)" />
+            <p-button icon="pi pi-history" label="History" [text]="true" severity="secondary" size="small" (onClick)="openViewPayments(emp)" />
+            @if (emp.isActive) {
+              <p-button icon="pi pi-user-minus" [text]="true" severity="danger" size="small" [rounded]="true" pTooltip="Deactivate" (onClick)="deactivateEmployee(emp)" />
+            }
+          </div>
+        </div>
+        <div *ngIf="filteredEmployees.length === 0" class="empty-state">
+          <i class="pi pi-users"></i><p>No employees found</p>
+        </div>
+      </div>
     </p-tabpanel>
 
     <!-- TAB 2: Payroll -->
@@ -196,98 +203,88 @@
       <div class="filter-bar">
         <div class="filter-group">
           <label class="filter-label">Month</label>
-          <p-select
-            [options]="months"
-            [(ngModel)]="selectedMonth"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="emp-select"
-            (onChange)="onMonthYearChange()"
-          />
+          <p-select [options]="months" [(ngModel)]="selectedMonth" optionLabel="label" optionValue="value" styleClass="emp-select" (onChange)="onMonthYearChange()" />
         </div>
         <div class="filter-group">
           <label class="filter-label">Year</label>
-          <p-select
-            [options]="years"
-            [(ngModel)]="selectedYear"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="emp-select"
-            (onChange)="onMonthYearChange()"
-          />
+          <p-select [options]="years" [(ngModel)]="selectedYear" optionLabel="label" optionValue="value" styleClass="emp-select" (onChange)="onMonthYearChange()" />
         </div>
         <div class="filter-info">
           Showing payroll for <strong>{{ getMonthLabel(selectedMonth) }} {{ selectedYear }}</strong>
         </div>
       </div>
 
-      <p-table
-        [value]="filteredEmployees"
-        [loading]="paymentsLoading || loading"
-        styleClass="emp-table"
-        [rowHover]="true"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Employee</th>
-            <th>Position</th>
-            <th>Monthly Salary</th>
-            <th># Payments</th>
-            <th>Paid</th>
-            <th>Outstanding</th>
-            <th>Status</th>
-            <th class="col-actions">Action</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-emp>
-          <tr>
-            <td class="cell-name">{{ getFullName(emp) }}</td>
-            <td class="cell-muted">{{ emp.position || '—' }}</td>
-            <td class="cell-currency">{{ formatCurrency(emp.monthlySalary) }}</td>
-            <td class="cell-center">
-              <span class="payment-count-badge">{{ getEmployeePaymentsForMonth(emp._id).length }}</span>
-            </td>
-            <td class="cell-currency cell-green">{{ formatCurrency(getEmployeePaidAmount(emp._id)) }}</td>
-            <td>
-              @if (getEmployeePendingAmount(emp) > 0) {
-                <span class="outstanding-amount">{{ formatCurrency(getEmployeePendingAmount(emp)) }}</span>
-              } @else {
-                <span class="cell-muted">—</span>
-              }
-            </td>
-            <td>
-              <p-tag
-                [value]="getPayrollStatusLabel(getEmployeePaymentStatus(emp))"
-                [severity]="getPayrollStatusSeverity(getEmployeePaymentStatus(emp))"
-              />
-            </td>
-            <td>
-              @if (getEmployeePendingAmount(emp) > 0) {
-                <p-button
-                  icon="pi pi-dollar"
-                  [label]="'Pay ' + formatCurrency(getEmployeePendingAmount(emp))"
-                  [text]="true"
-                  severity="success"
-                  styleClass="emp-pay-btn"
-                  (onClick)="openAddPayment(emp)"
-                />
-              } @else {
-                <span class="all-paid-label"><i class="pi pi-check-circle"></i> Done</span>
-              }
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="8" class="empty-cell">
-              <div class="empty-state">
-                <i class="pi pi-wallet"></i>
-                <p>No payroll data for this period</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+      <!-- Desktop table -->
+      <div class="emp-desktop-only">
+        <p-table [value]="filteredEmployees" [loading]="paymentsLoading || loading" styleClass="emp-table" [rowHover]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Employee</th><th>Position</th><th>Monthly Salary</th>
+              <th># Payments</th><th>Paid</th><th>Outstanding</th><th>Status</th><th class="col-actions">Action</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-emp>
+            <tr>
+              <td class="cell-name">{{ getFullName(emp) }}</td>
+              <td class="cell-muted">{{ emp.position || '—' }}</td>
+              <td class="cell-currency">{{ formatCurrency(emp.monthlySalary) }}</td>
+              <td class="cell-center"><span class="payment-count-badge">{{ getEmployeePaymentsForMonth(emp._id).length }}</span></td>
+              <td class="cell-currency cell-green">{{ formatCurrency(getEmployeePaidAmount(emp._id)) }}</td>
+              <td>
+                @if (getEmployeePendingAmount(emp) > 0) {
+                  <span class="outstanding-amount">{{ formatCurrency(getEmployeePendingAmount(emp)) }}</span>
+                } @else { <span class="cell-muted">—</span> }
+              </td>
+              <td><p-tag [value]="getPayrollStatusLabel(getEmployeePaymentStatus(emp))" [severity]="getPayrollStatusSeverity(getEmployeePaymentStatus(emp))" /></td>
+              <td>
+                @if (getEmployeePendingAmount(emp) > 0) {
+                  <p-button icon="pi pi-dollar" [label]="'Pay ' + formatCurrency(getEmployeePendingAmount(emp))" [text]="true" severity="success" styleClass="emp-pay-btn" (onClick)="openAddPayment(emp)" />
+                } @else { <span class="all-paid-label"><i class="pi pi-check-circle"></i> Done</span> }
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="8" class="empty-cell"><div class="empty-state"><i class="pi pi-wallet"></i><p>No payroll data for this period</p></div></td></tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="emp-mobile-only emp-card-list">
+        <div *ngFor="let emp of filteredEmployees" class="emp-card">
+          <div class="emp-card__header">
+            <div class="emp-card__name-block">
+              <span class="emp-card__name">{{ getFullName(emp) }}</span>
+              <span *ngIf="emp.position" class="emp-card__position">{{ emp.position }}</span>
+            </div>
+            <p-tag [value]="getPayrollStatusLabel(getEmployeePaymentStatus(emp))" [severity]="getPayrollStatusSeverity(getEmployeePaymentStatus(emp))" />
+          </div>
+          <div class="emp-card__body">
+            <div class="emp-card__row">
+              <span class="emp-card__label">Salary</span>
+              <span class="emp-card__currency">{{ formatCurrency(emp.monthlySalary) }}</span>
+            </div>
+            <div class="emp-card__row">
+              <span class="emp-card__label">Paid</span>
+              <span class="emp-card__currency emp-card__currency--green">{{ formatCurrency(getEmployeePaidAmount(emp._id)) }}</span>
+            </div>
+            <div class="emp-card__row" *ngIf="getEmployeePendingAmount(emp) > 0">
+              <span class="emp-card__label">Outstanding</span>
+              <span class="outstanding-amount">{{ formatCurrency(getEmployeePendingAmount(emp)) }}</span>
+            </div>
+          </div>
+          <div class="emp-card__actions">
+            @if (getEmployeePendingAmount(emp) > 0) {
+              <p-button icon="pi pi-dollar" [label]="'Pay ' + formatCurrency(getEmployeePendingAmount(emp))" [text]="true" severity="success" size="small" styleClass="emp-pay-btn" (onClick)="openAddPayment(emp)" />
+            } @else {
+              <span class="all-paid-label"><i class="pi pi-check-circle"></i> All Paid</span>
+            }
+          </div>
+        </div>
+        <div *ngIf="filteredEmployees.length === 0" class="empty-state">
+          <i class="pi pi-wallet"></i><p>No payroll data for this period</p>
+        </div>
+      </div>
     </p-tabpanel>
 
     <!-- TAB 3: Payment History -->
@@ -295,118 +292,102 @@
       <div class="filter-bar">
         <div class="filter-group">
           <label class="filter-label">Month</label>
-          <p-select
-            [options]="months"
-            [(ngModel)]="selectedMonth"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="emp-select"
-            (onChange)="onMonthYearChange()"
-          />
+          <p-select [options]="months" [(ngModel)]="selectedMonth" optionLabel="label" optionValue="value" styleClass="emp-select" (onChange)="onMonthYearChange()" />
         </div>
         <div class="filter-group">
           <label class="filter-label">Year</label>
-          <p-select
-            [options]="years"
-            [(ngModel)]="selectedYear"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="emp-select"
-            (onChange)="onMonthYearChange()"
-          />
+          <p-select [options]="years" [(ngModel)]="selectedYear" optionLabel="label" optionValue="value" styleClass="emp-select" (onChange)="onMonthYearChange()" />
         </div>
         <div class="filter-info">
           <strong>{{ summary.paymentsCount }}</strong> payment(s) recorded
         </div>
       </div>
 
-      <p-table
-        [value]="payments"
-        [loading]="paymentsLoading"
-        [paginator]="true"
-        [rows]="20"
-        styleClass="emp-table"
-        [rowHover]="true"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th pSortableColumn="employee.lastName">Employee <p-sortIcon field="employee.lastName" /></th>
-            <th>Period</th>
-            <th pSortableColumn="amount">Amount <p-sortIcon field="amount" /></th>
-            <th>Cash</th>
-            <th>Card</th>
-            <th>Status</th>
-            <th>Paid At</th>
-            <th>Notes</th>
-            <th class="col-actions">Actions</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-payment>
-          <tr>
-            <td class="cell-name">
-              @if (payment.employee && payment.employee.firstName) {
-                {{ payment.employee.firstName }} {{ payment.employee.lastName }}
-              } @else {
-                —
-              }
-            </td>
-            <td>
-              <span class="period-badge">{{ getPeriodLabel(payment.period) }}</span>
-            </td>
-            <td class="cell-currency">{{ formatCurrency(payment.amount) }}</td>
-            <td class="cell-currency">{{ payment.cashAmount ? formatCurrency(payment.cashAmount) : '—' }}</td>
-            <td class="cell-currency">{{ payment.cardAmount ? formatCurrency(payment.cardAmount) : '—' }}</td>
-            <td>
-              <p-tag
-                [value]="payment.status | titlecase"
-                [severity]="getPaymentStatusSeverity(payment.status)"
-              />
-            </td>
-            <td class="cell-muted cell-date">
-              @if (payment.paidAt) {
-                {{ payment.paidAt | date:'dd MMM yyyy' }}
-              } @else {
-                —
-              }
-            </td>
-            <td class="cell-muted cell-notes">{{ payment.notes || '—' }}</td>
-            <td>
-              <div class="action-btns">
-                @if (payment.status !== 'paid') {
-                  <p-button
-                    icon="pi pi-check"
-                    [rounded]="true"
-                    [text]="true"
-                    severity="success"
-                    pTooltip="Mark as Paid"
-                    tooltipPosition="top"
-                    (onClick)="markAsPaid(payment)"
-                  />
-                }
-                <p-button
-                  icon="pi pi-trash"
-                  [rounded]="true"
-                  [text]="true"
-                  severity="danger"
-                  pTooltip="Delete"
-                  tooltipPosition="top"
-                  (onClick)="deletePayment(payment)"
-                />
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="9" class="empty-cell">
-              <div class="empty-state">
-                <i class="pi pi-receipt"></i>
-                <p>No payments recorded for this period</p>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+      <!-- Desktop table -->
+      <div class="emp-desktop-only">
+        <p-table [value]="payments" [loading]="paymentsLoading" [paginator]="true" [rows]="20" styleClass="emp-table" [rowHover]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="employee.lastName">Employee <p-sortIcon field="employee.lastName" /></th>
+              <th>Period</th><th pSortableColumn="amount">Amount <p-sortIcon field="amount" /></th>
+              <th>Cash</th><th>Card</th><th>Status</th><th>Paid At</th><th>Notes</th><th class="col-actions">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-payment>
+            <tr>
+              <td class="cell-name">
+                @if (payment.employee && payment.employee.firstName) { {{ payment.employee.firstName }} {{ payment.employee.lastName }} } @else { — }
+              </td>
+              <td><span class="period-badge">{{ getPeriodLabel(payment.period) }}</span></td>
+              <td class="cell-currency">{{ formatCurrency(payment.amount) }}</td>
+              <td class="cell-currency">{{ payment.cashAmount ? formatCurrency(payment.cashAmount) : '—' }}</td>
+              <td class="cell-currency">{{ payment.cardAmount ? formatCurrency(payment.cardAmount) : '—' }}</td>
+              <td><p-tag [value]="payment.status | titlecase" [severity]="getPaymentStatusSeverity(payment.status)" /></td>
+              <td class="cell-muted cell-date">
+                @if (payment.paidAt) { {{ payment.paidAt | date:'dd MMM yyyy' }} } @else { — }
+              </td>
+              <td class="cell-muted cell-notes">{{ payment.notes || '—' }}</td>
+              <td>
+                <div class="action-btns">
+                  @if (payment.status !== 'paid') {
+                    <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success" pTooltip="Mark as Paid" tooltipPosition="top" (onClick)="markAsPaid(payment)" />
+                  }
+                  <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Delete" tooltipPosition="top" (onClick)="deletePayment(payment)" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="9" class="empty-cell"><div class="empty-state"><i class="pi pi-receipt"></i><p>No payments recorded for this period</p></div></td></tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="emp-mobile-only emp-card-list">
+        <div *ngFor="let payment of payments" class="emp-card">
+          <div class="emp-card__header">
+            <div class="emp-card__name-block">
+              <span class="emp-card__name">
+                @if (payment.employee && $any(payment.employee).firstName) { {{ $any(payment.employee).firstName }} {{ $any(payment.employee).lastName }} } @else { — }
+              </span>
+              <span class="emp-card__position"><span class="period-badge">{{ getPeriodLabel(payment.period) }}</span></span>
+            </div>
+            <p-tag [value]="payment.status | titlecase" [severity]="getPaymentStatusSeverity(payment.status)" />
+          </div>
+          <div class="emp-card__body">
+            <div class="emp-card__row">
+              <span class="emp-card__label">Amount</span>
+              <span class="emp-card__currency">{{ formatCurrency(payment.amount) }}</span>
+            </div>
+            <div class="emp-card__row" *ngIf="payment.cashAmount">
+              <span class="emp-card__label">Cash</span>
+              <span class="emp-card__currency">{{ formatCurrency(payment.cashAmount) }}</span>
+            </div>
+            <div class="emp-card__row" *ngIf="payment.cardAmount">
+              <span class="emp-card__label">Card</span>
+              <span class="emp-card__currency">{{ formatCurrency(payment.cardAmount) }}</span>
+            </div>
+            <div class="emp-card__row" *ngIf="payment.paidAt">
+              <span class="emp-card__label">Paid at</span>
+              <span>{{ payment.paidAt | date:'dd MMM yyyy' }}</span>
+            </div>
+            <div class="emp-card__row" *ngIf="payment.notes">
+              <span class="emp-card__label">Notes</span>
+              <span>{{ payment.notes }}</span>
+            </div>
+          </div>
+          <div class="emp-card__actions">
+            @if (payment.status !== 'paid') {
+              <p-button icon="pi pi-check" label="Mark Paid" [text]="true" severity="success" size="small" (onClick)="markAsPaid(payment)" />
+            }
+            <p-button icon="pi pi-trash" [text]="true" severity="danger" size="small" [rounded]="true" (onClick)="deletePayment(payment)" />
+          </div>
+        </div>
+        <div *ngIf="payments.length === 0" class="empty-state">
+          <i class="pi pi-receipt"></i><p>No payments recorded for this period</p>
+        </div>
+      </div>
     </p-tabpanel>
 
     </p-tabpanels>

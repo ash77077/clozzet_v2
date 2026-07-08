@@ -112,10 +112,10 @@ export class WeddingComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.mapUrlCeremony = this.sanitizer.bypassSecurityTrustResourceUrl(
-      'https://maps.google.com/maps?q=Tegher+Monastery+Tegher+Armenia&output=embed'
+      'https://yandex.com/maps/?text=Tegher+Monastery+Armenia&output=embed&z=14'
     );
     this.mapUrlReception = this.sanitizer.bypassSecurityTrustResourceUrl(
-      'https://maps.google.com/maps?q=Platinium+Hall+Mughni+Armenia&output=embed'
+      'https://yandex.com/maps/?text=Platinium+Hall+Mughni+Armenia&output=embed&z=14'
     );
 
     this.fireflies = this.generateFireflies(24);
@@ -178,6 +178,11 @@ export class WeddingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  openMap(query: string): void {
+    const url = `https://yandex.com/maps/?text=${encodeURIComponent(query)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   incrementGuests(): void {
