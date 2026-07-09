@@ -4,33 +4,29 @@ import { FormsModule } from '@angular/forms';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
 
-// ─── Logo state ────────────────────────────────────────────────────────────────
+// ─── Logo state ───────────────────────────────────────────────────────────────
 interface LogoState {
-  mesh: THREE.Mesh;
-  // Anchor: the point on the shirt surface where the logo was placed
-  anchorPoint: THREE.Vector3;
-  anchorNormal: THREE.Vector3;
-  // Offsets from anchor in tangent/bitangent space (for move)
-  offsetX: number;
-  offsetY: number;
-  // Rotation around surface normal (radians)
-  rotation: number;
-  // Uniform scale
-  scale: number;
+  mesh:       THREE.Mesh;
+  targetMesh: THREE.Mesh;
+  hitPoint:   THREE.Vector3;
+  hitNormal:  THREE.Vector3;
+  rotation:   number;
+  scale:      number;
 }
 
-// ─── Overlay handle ────────────────────────────────────────────────────────────
+// ─── Overlay handle ───────────────────────────────────────────────────────────
 type HandleType = 'move' | 'rotate' | 'scale-tl' | 'scale-tr' | 'scale-bl' | 'scale-br';
 
 interface OverlayHandle {
-  type: HandleType;
-  x: number; // canvas-local px
-  y: number;
+  type:   HandleType;
+  x:      number;
+  y:      number;
   cursor: string;
 }
 
-// ─── Part label map ────────────────────────────────────────────────────────────
+// ─── Part label map ───────────────────────────────────────────────────────────
 const PART_LABELS: Record<string, string> = {
   Object_14: 'Front Body',
   Object_20: 'Back Body',
@@ -38,6 +34,8 @@ const PART_LABELS: Record<string, string> = {
   Object_10: 'Right Sleeve',
   Object_8:  'Collar',
 };
+
+const DECAL_BASE = 0.32;
 
 @Component({
   selector: 'app-configurator',
@@ -50,46 +48,43 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   @ViewChild('canvasContainer', { static: false }) canvasContainer!: ElementRef<HTMLDivElement>;
 
   // ─── Three.js ────────────────────────────────────────────────────────────────
-  private scene!: THREE.Scene;
-  private camera!: THREE.PerspectiveCamera;
+  private scene!:    THREE.Scene;
+  private camera!:   THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
   private controls!: OrbitControls;
-  private loader = new GLTFLoader();
+  private loader    = new GLTFLoader();
   private texLoader = new THREE.TextureLoader();
-  private rafId = 0;
+  private rafId     = 0;
 
   // ─── Model ───────────────────────────────────────────────────────────────────
-  private model: THREE.Group | null = null;
-  private modelRadius = 2;
+  private model:       THREE.Group | null = null;
+  private modelRadius  = 2;
 
   // ─── Colors ──────────────────────────────────────────────────────────────────
-  meshParts = ['Object_14', 'Object_20', 'Object_18', 'Object_10', 'Object_8'];
+  meshParts        = ['Object_14', 'Object_20', 'Object_18', 'Object_10', 'Object_8'];
   private partColors = new Map<string, string>();
-  selectedPart = '';
+  selectedPart     = '';
   globalClothColor = '#ffffff';
 
   // ─── Logo ────────────────────────────────────────────────────────────────────
   logoTexture: THREE.Texture | null = null;
   private logoAspect = 1;
   private logo: LogoState | null = null;
-
   get hasLogo() { return !!this.logo; }
 
-  // ─── Overlay (2D HTML handles over the 3D canvas) ────────────────────────────
-  // logoBox is updated every frame via projectLogo(); used for hit-testing always
-  logoBox = { cx: 0, cy: 0, hw: 0, hh: 0 }; // canvas-local px
-  logoSelected = false;
-  overlayHandles: OverlayHandle[] = [];
-  overlayBoxStyle: Record<string, string> = { display: 'none' };
-  rotateHandlePos = { x: 0, y: 0 };
-  canvasCursor = 'default';
+  // ─── Overlay ─────────────────────────────────────────────────────────────────
+  logoBox          = { cx: 0, cy: 0, hw: 0, hh: 0 };
+  logoSelected     = false;
+  overlayHandles:    OverlayHandle[] = [];
+  overlayBoxStyle:   Record<string, string> = { display: 'none' };
+  rotateHandlePos  = { x: 0, y: 0 };
+  canvasCursor     = 'default';
 
   // ─── Drag state ──────────────────────────────────────────────────────────────
+  // All coordinates are canvas-local pixels
   private activeHandle: HandleType | null = null;
-  // Stored at drag-start (client coords)
-  private dragStart = { x: 0, y: 0 };
-  // Logo state at drag-start
-  private dragOrigin = { offsetX: 0, offsetY: 0, rotation: 0, scale: 1 };
+  private dragStartCanvas = { x: 0, y: 0 };   // canvas-local px at drag start
+  private dragOrigin = { rotation: 0, scale: 1, pivotX: 0, pivotY: 0 };
 
   // ─── UI ──────────────────────────────────────────────────────────────────────
   activeStep: 'color' | 'logo' | 'export' = 'color';
@@ -109,11 +104,11 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     { name: 'Pink',       hex: '#ec4899' },
   ];
 
-  // ─── Bound handlers (stored for removeEventListener) ────────────────────────
-  private _onPointerDown!: (e: PointerEvent) => void;
-  private _onPointerMove!: (e: PointerEvent) => void;
-  private _onPointerUp!:   (e: PointerEvent) => void;
-  private _onResize!:      () => void;
+  // ─── Bound handlers ──────────────────────────────────────────────────────────
+  private _onCanvasPointerDown!: (e: PointerEvent) => void;
+  private _onPointerMove!:       (e: PointerEvent) => void;
+  private _onPointerUp!:         (e: PointerEvent) => void;
+  private _onResize!:            () => void;
 
   constructor(private ngZone: NgZone) {}
 
@@ -126,12 +121,12 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       this.initScene();
       this.loadModel();
 
-      this._onPointerDown = this.onPointerDown.bind(this);
-      this._onPointerMove = this.onPointerMove.bind(this);
-      this._onPointerUp   = this.onPointerUp.bind(this);
-      this._onResize      = this.onResize.bind(this);
+      this._onCanvasPointerDown = this.onCanvasPointerDown.bind(this);
+      this._onPointerMove       = this.onPointerMove.bind(this);
+      this._onPointerUp         = this.onPointerUp.bind(this);
+      this._onResize            = this.onResize.bind(this);
 
-      this.renderer.domElement.addEventListener('pointerdown', this._onPointerDown);
+      this.renderer.domElement.addEventListener('pointerdown', this._onCanvasPointerDown);
       window.addEventListener('pointermove', this._onPointerMove);
       window.addEventListener('pointerup',   this._onPointerUp);
       window.addEventListener('resize',      this._onResize);
@@ -142,7 +137,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.rafId);
-    this.renderer?.domElement.removeEventListener('pointerdown', this._onPointerDown);
+    this.renderer?.domElement.removeEventListener('pointerdown', this._onCanvasPointerDown);
     window.removeEventListener('pointermove', this._onPointerMove);
     window.removeEventListener('pointerup',   this._onPointerUp);
     window.removeEventListener('resize',      this._onResize);
@@ -159,8 +154,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   private initScene(): void {
     const el = this.canvasContainer.nativeElement;
 
-    this.scene = new THREE.Scene();
-
+    this.scene  = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(40, el.clientWidth / el.clientHeight, 0.01, 500);
     this.camera.position.set(0, 0, 6);
 
@@ -171,15 +165,14 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     el.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping  = true;
-    this.controls.dampingFactor  = 0.07;
-    this.controls.enablePan      = false;
-    this.controls.minDistance    = 2;
-    this.controls.maxDistance    = 14;
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.07;
+    this.controls.enablePan    = false;
+    this.controls.minDistance  = 2;
+    this.controls.maxDistance  = 14;
     this.controls.target.set(0, 0, 0);
     this.controls.update();
 
-    // Lighting
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
     const key = new THREE.DirectionalLight(0xffffff, 1.2);
     key.position.set(4, 6, 5);
@@ -197,7 +190,6 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     this.loader.load('./assets/glb/t_shirt.glb', (gltf) => {
       this.model = gltf.scene;
 
-      // Clone materials & collect colors
       this.model.traverse((child) => {
         const mesh = child as THREE.Mesh;
         if (!mesh.isMesh) return;
@@ -212,40 +204,30 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
         }
       });
 
-      // ── Fix orientation: if model is flat (lying down), rotate upright ──
       const rawBox  = new THREE.Box3().setFromObject(this.model);
       const rawSize = rawBox.getSize(new THREE.Vector3());
-      if (rawSize.y < rawSize.x * 0.8) {
-        this.model.rotation.x = -Math.PI / 2;
-      }
+      if (rawSize.y < rawSize.x * 0.8) this.model.rotation.x = -Math.PI / 2;
 
-      // ── Scale to fixed height ──
       const box1  = new THREE.Box3().setFromObject(this.model);
       const size1 = box1.getSize(new THREE.Vector3());
-      const scale = 2.4 / size1.y;
-      this.model.scale.multiplyScalar(scale);
+      this.model.scale.multiplyScalar(2.4 / size1.y);
 
-      // ── Center precisely (must recompute after scale) ──
       const box2   = new THREE.Box3().setFromObject(this.model);
       const center = box2.getCenter(new THREE.Vector3());
       this.model.position.sub(center);
 
-      // ── Bounding sphere for camera/zoom math ──
       const sphere = box2.getBoundingSphere(new THREE.Sphere());
       this.modelRadius = sphere.radius;
 
-      // ── Fit camera ──
       const fovRad = (this.camera.fov * Math.PI) / 180;
       const dist   = (this.modelRadius / Math.sin(fovRad / 2)) * 1.15;
       this.camera.position.set(0, 0, dist);
       this.camera.lookAt(0, 0, 0);
       this.controls.target.set(0, 0, 0);
-      this.controls.minDistance = dist * 0.3;
-      this.controls.maxDistance = dist * 3.5;
-
-      // ── Lock to horizontal orbit only ──
-      this.controls.minPolarAngle = Math.PI / 2;
-      this.controls.maxPolarAngle = Math.PI / 2;
+      this.controls.minDistance    = dist * 0.3;
+      this.controls.maxDistance    = dist * 3.5;
+      this.controls.minPolarAngle  = Math.PI * 0.1;
+      this.controls.maxPolarAngle  = Math.PI * 0.9;
       this.controls.update();
 
       this.scene.add(this.model);
@@ -317,8 +299,8 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     this.camera.position.set(0, 0, dist);
     this.camera.lookAt(0, 0, 0);
     this.controls.target.set(0, 0, 0);
-    this.controls.minPolarAngle = Math.PI / 2;
-    this.controls.maxPolarAngle = Math.PI / 2;
+    this.controls.minPolarAngle = Math.PI * 0.1;
+    this.controls.maxPolarAngle = Math.PI * 0.9;
     this.controls.update();
   }
 
@@ -339,6 +321,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
         this.logoTexture = tex;
         this.logoAspect  = tex.image?.width && tex.image?.height
           ? tex.image.width / tex.image.height : 1;
+        if (this.logo) this.rebuildDecal();
       });
     };
     reader.readAsDataURL(file);
@@ -356,156 +339,170 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Logo 3D mesh  (PlaneGeometry hugging the shirt surface)
+  // Decal
   // ═══════════════════════════════════════════════════════════════════════════
 
-  private buildLogoMesh(): THREE.Mesh {
-    const h    = this.modelRadius * 0.28;
-    const w    = h * this.logoAspect;
-    const geom = new THREE.PlaneGeometry(w, h);
-    const mat  = new THREE.MeshBasicMaterial({
-      map:         this.logoTexture!,
-      transparent: true,
-      depthWrite:  false,
-      side:        THREE.DoubleSide,
-      alphaTest:   0.01,
+  private buildDecalMaterial(): THREE.MeshBasicMaterial {
+    return new THREE.MeshBasicMaterial({
+      map:                 this.logoTexture!,
+      transparent:         true,
+      depthTest:           true,
+      depthWrite:          false,
+      polygonOffset:       true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits:  -4,
+      side:                THREE.FrontSide,
+      alphaTest:           0.05,
     });
-    const mesh       = new THREE.Mesh(geom, mat);
+  }
+
+  private buildDecalGeometry(
+    targetMesh:  THREE.Mesh,
+    point:       THREE.Vector3,
+    normal:      THREE.Vector3,
+    rotationRad: number,
+    scale:       number,
+  ): THREE.BufferGeometry {
+    const size = DECAL_BASE * scale;
+    const w    = size * this.logoAspect;
+    const h    = size;
+    const d    = size * 2;
+
+    const up     = Math.abs(normal.y) < 0.9
+      ? new THREE.Vector3(0, 1, 0)
+      : new THREE.Vector3(1, 0, 0);
+    const tan    = new THREE.Vector3().crossVectors(up, normal).normalize();
+    const bit    = new THREE.Vector3().crossVectors(normal, tan).normalize();
+
+    const cosR   = Math.cos(rotationRad);
+    const sinR   = Math.sin(rotationRad);
+    const rotTan = tan.clone().multiplyScalar(cosR).addScaledVector(bit, -sinR);
+    const rotBit = tan.clone().multiplyScalar(sinR).addScaledVector(bit,  cosR);
+
+    const mat   = new THREE.Matrix4().makeBasis(rotTan, rotBit, normal);
+    const euler = new THREE.Euler().setFromRotationMatrix(mat);
+
+    return new DecalGeometry(targetMesh, point, euler, new THREE.Vector3(w, h, d));
+  }
+
+  private rebuildDecal(): void {
+    if (!this.logo || !this.logoTexture) return;
+    this.scene.remove(this.logo.mesh);
+    this.logo.mesh.geometry.dispose();
+    (this.logo.mesh.material as THREE.Material).dispose();
+
+    const geom = this.buildDecalGeometry(
+      this.logo.targetMesh, this.logo.hitPoint, this.logo.hitNormal,
+      this.logo.rotation, this.logo.scale,
+    );
+    const mesh       = new THREE.Mesh(geom, this.buildDecalMaterial());
     mesh.renderOrder = 999;
-    return mesh;
+    this.scene.add(mesh);
+    this.logo.mesh = mesh;
   }
 
-  // Recomputes position/rotation/scale of logo.mesh from logo state
-  private applyLogoTransform(): void {
-    if (!this.logo) return;
-    const { anchorPoint, anchorNormal, offsetX, offsetY, rotation, scale, mesh } = this.logo;
-
-    // Build tangent frame from surface normal
-    const n   = anchorNormal.clone().normalize();
-    const up  = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
-    const tan = new THREE.Vector3().crossVectors(up, n).normalize();
-    const bit = new THREE.Vector3().crossVectors(n, tan).normalize();
-
-    // World position: anchor + offset along tangent/bitangent + small nudge outward
-    const nudge = this.modelRadius * 0.015;
-    const pos   = anchorPoint.clone()
-      .addScaledVector(tan, offsetX)
-      .addScaledVector(bit, offsetY)
-      .addScaledVector(n,   nudge);
-
-    mesh.position.copy(pos);
-
-    // Orientation: face outward along normal, then rotate around normal
-    const baseQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
-    const rotQ  = new THREE.Quaternion().setFromAxisAngle(n, rotation);
-    mesh.quaternion.copy(rotQ).multiply(baseQ);
-
-    mesh.scale.setScalar(scale);
-  }
-
-  private placeLogo(hitPoint: THREE.Vector3, hitNormal: THREE.Vector3): void {
+  private placeLogo(targetMesh: THREE.Mesh, hitPoint: THREE.Vector3, hitNormal: THREE.Vector3): void {
     if (!this.logoTexture) return;
     this.destroyLogo();
 
-    const mesh = this.buildLogoMesh();
+    const geom       = this.buildDecalGeometry(targetMesh, hitPoint, hitNormal, 0, 1);
+    const mesh       = new THREE.Mesh(geom, this.buildDecalMaterial());
+    mesh.renderOrder = 999;
     this.scene.add(mesh);
 
     this.logo = {
-      mesh,
-      anchorPoint:  hitPoint.clone(),
-      anchorNormal: hitNormal.clone(),
-      offsetX:  0,
-      offsetY:  0,
-      rotation: 0,
-      scale:    1,
+      mesh, targetMesh,
+      hitPoint:  hitPoint.clone(),
+      hitNormal: hitNormal.clone(),
+      rotation:  0,
+      scale:     1,
     };
-    this.applyLogoTransform();
-
-    // Select immediately after placing
-    this.logoSelected      = true;
-    this.controls.enabled  = false;
+    this.logoSelected     = true;
+    this.controls.enabled = false;
   }
 
   private destroyLogo(): void {
     if (!this.logo) return;
     this.scene.remove(this.logo.mesh);
     this.logo.mesh.geometry.dispose();
-    const mats = Array.isArray(this.logo.mesh.material)
-      ? this.logo.mesh.material : [this.logo.mesh.material];
-    mats.forEach((m: any) => m?.dispose());
-    this.logo         = null;
-    this.logoSelected = false;
-    this.activeHandle = null;
+    (Array.isArray(this.logo.mesh.material)
+      ? this.logo.mesh.material
+      : [this.logo.mesh.material]
+    ).forEach((m: any) => m?.dispose());
+    this.logo             = null;
+    this.logoSelected     = false;
+    this.activeHandle     = null;
     this.controls.enabled = true;
     this.overlayHandles   = [];
     this.overlayBoxStyle  = { display: 'none' };
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 2-D overlay: project logo center to screen, compute handle positions
-  // Called every frame from the render loop (outside Angular zone).
-  // Only touches plain object fields — Angular will pick up changes on next tick
-  // via zone re-entry when pointer events fire, or via markForCheck in CD.
+  // Overlay projection  (called every frame)
   // ═══════════════════════════════════════════════════════════════════════════
 
   private projectLogo(): void {
     if (!this.logo) {
-      this.logoBox.cx = this.logoBox.cy = 0;
-      this.logoBox.hw = this.logoBox.hh = 0;
+      this.logoBox.cx = this.logoBox.cy = this.logoBox.hw = this.logoBox.hh = 0;
       return;
     }
+    const { hitPoint, hitNormal, rotation, scale } = this.logo;
+    const up  = Math.abs(hitNormal.y) < 0.9 ? new THREE.Vector3(0,1,0) : new THREE.Vector3(1,0,0);
+    const tan = new THREE.Vector3().crossVectors(up, hitNormal).normalize();
+    const bit = new THREE.Vector3().crossVectors(hitNormal, tan).normalize();
 
-    const { anchorPoint, anchorNormal, offsetX, offsetY, scale } = this.logo;
-    const n   = anchorNormal.clone().normalize();
-    const up  = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
-    const tan = new THREE.Vector3().crossVectors(up, n).normalize();
-    const bit = new THREE.Vector3().crossVectors(n, tan).normalize();
-    const nudge = this.modelRadius * 0.015;
+    const cosR   = Math.cos(rotation);
+    const sinR   = Math.sin(rotation);
+    const rotTan = tan.clone().multiplyScalar(cosR).addScaledVector(bit, -sinR);
+    const rotBit = tan.clone().multiplyScalar(sinR).addScaledVector(bit,  cosR);
 
-    const center3D = anchorPoint.clone()
-      .addScaledVector(tan, offsetX)
-      .addScaledVector(bit, offsetY)
-      .addScaledVector(n,   nudge);
+    const hw3D     = DECAL_BASE * scale * this.logoAspect / 2;
+    const hh3D     = DECAL_BASE * scale / 2;
+    const center3D = hitPoint.clone().addScaledVector(hitNormal, 0.002);
 
     const cs = this.toScreen(center3D);
     this.logoBox.cx = cs.x;
     this.logoBox.cy = cs.y;
 
-    // Project edge midpoints to estimate screen extents
-    const hw3D = this.modelRadius * 0.28 * this.logoAspect * scale / 2;
-    const hh3D = this.modelRadius * 0.28 * scale / 2;
-    const rEdge = this.toScreen(center3D.clone().addScaledVector(tan, hw3D));
-    const tEdge = this.toScreen(center3D.clone().addScaledVector(bit, hh3D));
-    this.logoBox.hw = Math.max(16, Math.abs(rEdge.x - cs.x));
-    this.logoBox.hh = Math.max(16, Math.abs(tEdge.y - cs.y));
+    const rEdge = this.toScreen(center3D.clone().addScaledVector(rotTan, hw3D));
+    const tEdge = this.toScreen(center3D.clone().addScaledVector(rotBit, hh3D));
+    this.logoBox.hw = Math.max(18, Math.abs(rEdge.x - cs.x));
+    this.logoBox.hh = Math.max(18, Math.abs(tEdge.y - cs.y));
   }
 
   private toScreen(v: THREE.Vector3): { x: number; y: number } {
     const p  = v.clone().project(this.camera);
     const el = this.canvasContainer.nativeElement;
     return {
-      x: (p.x + 1) / 2 * el.clientWidth,
+      x: (p.x  + 1) / 2 * el.clientWidth,
       y: (-p.y + 1) / 2 * el.clientHeight,
     };
   }
 
-  // Sync the visible overlay divs — called from Angular zone after state changes
+  // Reproject center directly from world — always fresh, never stale
+  private getFreshCenter(): { cx: number; cy: number } {
+    if (!this.logo) return { cx: 0, cy: 0 };
+    const pt = this.logo.hitPoint.clone().addScaledVector(this.logo.hitNormal, 0.002);
+    const sc = this.toScreen(pt);
+    return { cx: sc.x, cy: sc.y };
+  }
+
   private syncOverlay(): void {
     if (!this.logo || !this.logoSelected) {
-      this.overlayBoxStyle  = { display: 'none' };
-      this.overlayHandles   = [];
+      this.overlayBoxStyle = { display: 'none' };
+      this.overlayHandles  = [];
       return;
     }
     const { cx, cy, hw, hh } = this.logoBox;
     this.overlayBoxStyle = {
       display: 'block',
-      left:   `${cx - hw}px`,
-      top:    `${cy - hh}px`,
-      width:  `${hw * 2}px`,
-      height: `${hh * 2}px`,
+      left:    `${cx - hw}px`,
+      top:     `${cy - hh}px`,
+      width:   `${hw * 2}px`,
+      height:  `${hh * 2}px`,
     };
     this.rotateHandlePos = { x: cx, y: cy - hh - 36 };
-    this.overlayHandles = [
+    this.overlayHandles  = [
       { type: 'scale-tl', x: cx - hw, y: cy - hh, cursor: 'nwse-resize' },
       { type: 'scale-tr', x: cx + hw, y: cy - hh, cursor: 'nesw-resize' },
       { type: 'scale-bl', x: cx - hw, y: cy + hh, cursor: 'nesw-resize' },
@@ -514,60 +511,98 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Hit testing (canvas-local px)
+  // Hit testing  (canvas-local px)
   // ═══════════════════════════════════════════════════════════════════════════
-
-  private hitRotate(sx: number, sy: number): boolean {
-    return Math.hypot(sx - this.rotateHandlePos.x, sy - this.rotateHandlePos.y) < 20;
-  }
-
-  private hitScale(sx: number, sy: number): OverlayHandle | null {
-    return this.overlayHandles.find(h => Math.hypot(h.x - sx, h.y - sy) < 18) ?? null;
-  }
 
   private hitBody(sx: number, sy: number): boolean {
     const { cx, cy, hw, hh } = this.logoBox;
     return Math.abs(sx - cx) <= hw && Math.abs(sy - cy) <= hh;
   }
 
+  private canvasLocal(e: PointerEvent): { sx: number; sy: number } {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    return { sx: e.clientX - rect.left, sy: e.clientY - rect.top };
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
-  // Pointer events
+  // Raycast
   // ═══════════════════════════════════════════════════════════════════════════
 
-  private onPointerDown(e: PointerEvent): void {
-    const rect = this.renderer.domElement.getBoundingClientRect();
-    const sx   = e.clientX - rect.left;
-    const sy   = e.clientY - rect.top;
+  private raycastShirt(sx: number, sy: number): { mesh: THREE.Mesh; point: THREE.Vector3; normal: THREE.Vector3 } | null {
+    if (!this.model) return null;
+    const el   = this.canvasContainer.nativeElement;
+    const ndcX =  (sx / el.clientWidth)  * 2 - 1;
+    const ndcY = -(sy / el.clientHeight) * 2 + 1;
+    const ray  = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), this.camera);
+    const hits = ray.intersectObject(this.model, true);
+    if (!hits.length || !hits[0].face) return null;
+    const hit    = hits[0];
+    const normal = hit.face!.normal.clone()
+      .transformDirection((hit.object as THREE.Mesh).matrixWorld)
+      .normalize();
+    return { mesh: hit.object as THREE.Mesh, point: hit.point.clone(), normal };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Drag bootstrap
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private beginDrag(type: HandleType, canvasSx: number, canvasSy: number): void {
+    // Reproject center fresh from world — never stale
+    const { cx, cy } = this.getFreshCenter();
+
+    this.activeHandle     = type;
+    this.dragStartCanvas  = { x: canvasSx, y: canvasSy };
+    this.dragOrigin       = {
+      rotation: this.logo!.rotation,
+      scale:    this.logo!.scale,
+      pivotX:   cx,
+      pivotY:   cy,
+    };
+    this.controls.enabled = false;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HTML handle events — called directly from the template
+  // These fire BEFORE the canvas pointerdown, so e.stopPropagation() keeps
+  // the canvas from also handling the event.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  onRotateHandleDown(e: PointerEvent): void {
+    e.stopPropagation();
+    const { sx, sy } = this.canvasLocal(e);
+    this.beginDrag('rotate', sx, sy);
+    (e.target as Element).setPointerCapture(e.pointerId);
+  }
+
+  onScaleHandleDown(e: PointerEvent, type: HandleType): void {
+    e.stopPropagation();
+    const { sx, sy } = this.canvasLocal(e);
+    this.beginDrag(type, sx, sy);
+    (e.target as Element).setPointerCapture(e.pointerId);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Canvas pointer events
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private onCanvasPointerDown(e: PointerEvent): void {
+    const { sx, sy } = this.canvasLocal(e);
 
     if (this.logo) {
-      // ── Logo selected: check handles first ──
-      if (this.logoSelected) {
-        if (this.hitRotate(sx, sy)) {
-          this.beginDrag('rotate', e);
-          e.stopPropagation();
-          return;
-        }
-        const sh = this.hitScale(sx, sy);
-        if (sh) {
-          this.beginDrag(sh.type, e);
-          e.stopPropagation();
-          return;
-        }
-      }
-
-      // ── Click inside logo body: select + start move ──
       if (this.hitBody(sx, sy)) {
         this.ngZone.run(() => {
           this.logoSelected     = true;
           this.controls.enabled = false;
           this.syncOverlay();
         });
-        this.beginDrag('move', e);
+        this.beginDrag('move', sx, sy);
         e.stopPropagation();
         return;
       }
 
-      // ── Click outside logo: deselect, let orbit run ──
+      // Click outside logo body — deselect
       if (this.logoSelected) {
         this.ngZone.run(() => {
           this.logoSelected     = false;
@@ -578,20 +613,12 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // ── No logo yet: place on shirt ──
+    // No logo yet — place on shirt
     if (this.logoTexture && this.model) {
-      const ndcX = (sx / rect.width)  *  2 - 1;
-      const ndcY = (sy / rect.height) * -2 + 1;
-      const ray  = new THREE.Raycaster();
-      ray.setFromCamera(new THREE.Vector2(ndcX, ndcY), this.camera);
-      const hits = ray.intersectObject(this.model, true);
-      if (hits.length && hits[0].face) {
-        const hit    = hits[0];
-        const normal = hit.face!.normal.clone()
-          .transformDirection((hit.object as THREE.Mesh).matrixWorld)
-          .normalize();
+      const hit = this.raycastShirt(sx, sy);
+      if (hit) {
         this.ngZone.run(() => {
-          this.placeLogo(hit.point, normal);
+          this.placeLogo(hit.mesh, hit.point, hit.normal);
           this.syncOverlay();
         });
         e.stopPropagation();
@@ -599,72 +626,49 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private beginDrag(type: HandleType, e: PointerEvent): void {
-    this.activeHandle = type;
-    this.dragStart    = { x: e.clientX, y: e.clientY };
-    this.dragOrigin   = {
-      offsetX:  this.logo!.offsetX,
-      offsetY:  this.logo!.offsetY,
-      rotation: this.logo!.rotation,
-      scale:    this.logo!.scale,
-    };
-    this.controls.enabled = false;
-  }
-
   private onPointerMove(e: PointerEvent): void {
-    const rect = this.renderer.domElement.getBoundingClientRect();
-    const sx   = e.clientX - rect.left;
-    const sy   = e.clientY - rect.top;
-
-    // ── Cursor updates (no drag active) ──
-    if (!this.activeHandle) {
-      this.updateCursor(sx, sy);
+    if (!this.activeHandle || !this.logo) {
+      // Just update cursor when not dragging
+      if (!this.activeHandle) {
+        const { sx, sy } = this.canvasLocal(e);
+        this.updateCursor(sx, sy);
+      }
       return;
     }
 
-    if (!this.logo) return;
-
-    const el     = this.canvasContainer.nativeElement;
-    // world units per screen pixel (approximate)
-    const wpp    = (this.modelRadius * 2.4) / el.clientHeight;
-    // canvas-local delta from drag start
-    const dsx    = e.clientX - this.dragStart.x;
-    const dsy    = e.clientY - this.dragStart.y;
-    // current canvas-local mouse pos
-    const curSx  = sx;
-    const curSy  = sy;
-    // drag-start in canvas-local
-    const startSx = this.dragStart.x - rect.left;
-    const startSy = this.dragStart.y - rect.top;
+    const { sx, sy } = this.canvasLocal(e);
+    const startSx    = this.dragStartCanvas.x;
+    const startSy    = this.dragStartCanvas.y;
+    const px         = this.dragOrigin.pivotX;
+    const py         = this.dragOrigin.pivotY;
 
     if (this.activeHandle === 'move') {
-      this.logo.offsetX = this.dragOrigin.offsetX + dsx * wpp;
-      this.logo.offsetY = this.dragOrigin.offsetY - dsy * wpp;
-      this.applyLogoTransform();
+      const hit = this.raycastShirt(sx, sy);
+      if (hit) {
+        this.logo.hitPoint   = hit.point;
+        this.logo.hitNormal  = hit.normal;
+        this.logo.targetMesh = hit.mesh;
+        this.rebuildDecal();
+      }
 
     } else if (this.activeHandle === 'rotate') {
-      const cx = this.logoBox.cx;
-      const cy = this.logoBox.cy;
-      const a0 = Math.atan2(startSy - cy, startSx - cx);
-      const a1 = Math.atan2(curSy  - cy, curSx  - cx);
+      const a0 = Math.atan2(startSy - py, startSx - px);
+      const a1 = Math.atan2(sy      - py, sx      - px);
       this.logo.rotation = this.dragOrigin.rotation + (a1 - a0);
-      this.applyLogoTransform();
+      this.rebuildDecal();
 
     } else if (this.activeHandle?.startsWith('scale')) {
-      const cx  = this.logoBox.cx;
-      const cy  = this.logoBox.cy;
-      const d0  = Math.hypot(startSx - cx, startSy - cy);
-      const d1  = Math.hypot(curSx   - cx, curSy   - cy);
+      const d0    = Math.hypot(startSx - px, startSy - py);
+      const d1    = Math.hypot(sx      - px, sy      - py);
       const ratio = d0 > 1 ? d1 / d0 : 1;
-      this.logo.scale = Math.max(0.05, this.dragOrigin.scale * ratio);
-      this.applyLogoTransform();
+      this.logo.scale = Math.max(0.1, Math.min(8, this.dragOrigin.scale * ratio));
+      this.rebuildDecal();
     }
   }
 
   private onPointerUp(_e: PointerEvent): void {
     if (!this.activeHandle) return;
-    this.activeHandle = null;
-    // Keep orbit disabled while logo is selected
+    this.activeHandle     = null;
     this.controls.enabled = !this.logoSelected;
   }
 
@@ -673,12 +677,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       this.canvasCursor = this.logoTexture ? 'crosshair' : 'default';
       return;
     }
-    if (this.logoSelected) {
-      if (this.hitRotate(sx, sy))           { this.canvasCursor = 'grab';       return; }
-      const sh = this.hitScale(sx, sy);
-      if (sh)                               { this.canvasCursor = sh.cursor;    return; }
-    }
-    if (this.hitBody(sx, sy))              { this.canvasCursor = 'move';       return; }
+    if (this.hitBody(sx, sy)) { this.canvasCursor = 'move';    return; }
     this.canvasCursor = 'default';
   }
 
@@ -690,11 +689,9 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
     this.rafId = requestAnimationFrame(() => this.loop());
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
-    // Always project logo so hit-testing is accurate even when deselected
     if (this.logo) {
       this.projectLogo();
       if (this.logoSelected) {
-        // Sync overlay every frame while selected so it tracks the model as it rotates
         this.ngZone.run(() => this.syncOverlay());
       }
     }
@@ -721,13 +718,13 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
       };
     });
     const logo = this.logo ? {
-      offsetX:  this.logo.offsetX,
-      offsetY:  this.logo.offsetY,
-      rotation: this.logo.rotation,
-      scale:    this.logo.scale,
+      hitPoint:  this.logo.hitPoint.toArray(),
+      hitNormal: this.logo.hitNormal.toArray(),
+      rotation:  this.logo.rotation,
+      scale:     this.logo.scale,
     } : null;
     const json = JSON.stringify(
-      { timestamp: new Date().toISOString(), version: 'v5.0', garment: { colors }, logo },
+      { timestamp: new Date().toISOString(), version: 'v6.0', garment: { colors }, logo },
       null, 2,
     );
     const a = Object.assign(document.createElement('a'), {
