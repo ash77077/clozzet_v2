@@ -55,7 +55,8 @@
       <div class="logo-handle rotate-handle"
            [style.left.px]="rotateHandlePos.x"
            [style.top.px]="rotateHandlePos.y"
-           title="Rotate">
+           title="Rotate"
+           (pointerdown)="onRotateHandleDown($event)">
         <svg width="22" height="22" viewBox="0 0 22 22">
           <path d="M4,11 A7,7 0 1,1 11,18" stroke="white" stroke-width="2.2"
                 fill="none" stroke-linecap="round"/>
@@ -68,7 +69,8 @@
            class="logo-handle scale-handle"
            [style.left.px]="h.x"
            [style.top.px]="h.y"
-           [style.cursor]="h.cursor">
+           [style.cursor]="h.cursor"
+           (pointerdown)="onScaleHandleDown($event, h.type)">
       </div>
     </div>
 
