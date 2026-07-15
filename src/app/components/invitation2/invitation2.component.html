@@ -19,10 +19,6 @@
       <p class="hero__date">31 · 07 · 2026</p>
       <p class="hero__time">17:30 · PLATINIUM HALL</p>
 
-      <button type="button" class="hero__cta" (click)="scrollToRsvp()">
-        Հաստատել ներկայությունը
-      </button>
-
       <div class="hero__scroll" aria-hidden="true">
         <span></span>
       </div>
@@ -54,7 +50,7 @@
 
   <!-- ================= COUNTDOWN ================= -->
   <section class="countdown reveal-section" #revealSection>
-    <h2 class="countdown__title">Հաշվարկն սկսվել է</h2>
+    <h2 class="countdown__title">Հաշվարկը սկսվել է</h2>
 
     <div class="countdown__grid">
       <div class="flip-card">
@@ -78,8 +74,7 @@
 
   <!-- ================= TIMELINE ================= -->
   <section class="timeline reveal-section" #revealSection>
-    <p class="section-eyebrow">Ծրագիր</p>
-    <h2 class="section-title">Օրվա ընթացքը</h2>
+    <h2 class="section-title">Օրվա Ծրագիր</h2>
 
     <ol class="timeline__list">
       @for (event of timeline; track event.time) {
