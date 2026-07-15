@@ -102,9 +102,9 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     {
       time: '12:30',
       title: 'Հարսի տուն',
-      venue: 'Nor Nork',
-      address: 'Nanseni pogoc 50',
-      mapQuery: 'Nansen Street 50 Nor Nork Yerevan Armenia',
+      venue: 'Դավթաշեն',
+      address: 'Դավթաշեն',
+      mapQuery: 'Азата Шеренца, 2/6 Yerevan Armenia',
       icon: 'bride'
     },
     {
