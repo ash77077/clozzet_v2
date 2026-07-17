@@ -184,15 +184,15 @@
 
 					<!-- Կլոր Իկոնա (Եզրագծվում է, երբ գիծը հասնում է իրեն) -->
 					<div class="event-icon-badge" [class.active]="activeProgress >= (routeStopPoints[i]?.threshold ?? 0)">
-						<span *ngIf="event.icon === 'groom'">🤵</span>
-						<span *ngIf="event.icon === 'bride'">👰</span>
-						<span *ngIf="event.icon === 'church'">⛪</span>
+						<img *ngIf="event.icon === 'groom'" src="/assets/pics/groom.png" width="22" height="22" style="object-fit:contain" alt="groom"/>
+						<img *ngIf="event.icon === 'bride'" src="/assets/pics/bride.png" width="22" height="22" style="object-fit:contain" alt="bride"/>
+						<img *ngIf="event.icon === 'church'" src="/assets/pics/church.png" width="22" height="22" style="object-fit:contain" alt="church"/>
 						<span *ngIf="event.icon === 'reception'">🥂</span>
 					</div>
 
 					<div class="event-details">
 						<span class="event-time">{{ event.time }}</span>
-						<h3 class="event-title">{{ event.title }}</h3>
+						<h3 class="event-title">{{ event.title }}</h3> 
 						<p class="event-venue">{{ event.venue }}</p>
 						<p class="event-address">{{ event.address }}</p>
 						<button class="btn-text-map" (click)="openMap(event.mapQuery)">
@@ -225,5 +225,6 @@
 		<p class="footer-quote">Սպասում ենք ձեզ՝ միասին ստեղծելու հիշողություններ, որոնք կմնան հավերժ</p>
 		<p class="footer-quote">♥</p>
 		<p class="footer-quote">Աշխարհիկ և Գոհար</p>
+		<p class="wedding-date-text">31 . 07 . 2026</p>
 	</footer>
 </div>

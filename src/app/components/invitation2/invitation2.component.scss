@@ -374,15 +374,15 @@ $color-border: #ebdcd0; // Soft boundary line color
 
     // Հետևի չներկված ոլորուն գիծը (ավելի հաստ)
     .route-path-bg {
-      stroke: rgba(255, 220, 190, 0.45);
+      stroke: rgba(12, 72, 33, 0.18);
       stroke-width: 4px;
       stroke-linecap: round;
       stroke-dasharray: 6, 6;
     }
 
-    // Ակտիվ ներկվող ոսկեգույն գիծը (շատ հաստ ու սահուն)
+    // Ակտիվ ներկվող գիծը
     .route-path-active {
-      stroke: rgba(220, 170, 110, 0.75);
+      stroke: rgba(12, 72, 33, 0.55);
       stroke-width: 5px;
       stroke-linecap: round;
       transition: stroke-dashoffset 0.1s linear;
@@ -391,13 +391,13 @@ $color-border: #ebdcd0; // Soft boundary line color
     // SVG Կլոր կետերը (Միշտ կատարյալ կլոր)
     .stop-dot {
       fill: rgba(255, 255, 255, 0.85);
-      stroke: rgba(220, 180, 140, 0.5);
+      stroke: rgba(12, 72, 33, 0.25);
       stroke-width: 3;
       transition: r 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.3s, stroke 0.3s;
 
       &.active {
-        fill: rgba(220, 170, 110, 0.85);
-        stroke: rgba(195, 140, 80, 0.6);
+        fill: rgba(12, 72, 33, 0.7);
+        stroke: rgba(12, 72, 33, 0.4);
         stroke-width: 4;
       }
     }
@@ -405,12 +405,12 @@ $color-border: #ebdcd0; // Soft boundary line color
     // Սիրտ Ինդիկատորի Փայլն ու Շարժումը
     .scrolling-indicator {
       .indicator-glow {
-        fill: rgba(220, 170, 110, 0.15);
+        fill: rgba(12, 72, 33, 0.12);
         animation: heart-glow 1.2s infinite alternate ease-in-out;
       }
 
       .indicator-heart {
-        fill: rgba(195, 140, 80, 0.7);
+        fill: rgba(12, 72, 33, 0.6);
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
       }
     }
@@ -952,11 +952,10 @@ $color-border: #ebdcd0; // Soft boundary line color
   cursor: pointer;
   transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 
-  // Երբ ամբողջությամբ բացվում է, ծրարը անհետանում է
   &.is-opened {
     opacity: 0;
     pointer-events: none;
-    transition-delay: 1.2s; // Սպասում է քարտի դուրս գալուն
+    transition-delay: 1.2s;
   }
 }
 
@@ -996,15 +995,19 @@ $color-border: #ebdcd0; // Soft boundary line color
   }
 }
 
+// Envelope sizing — responsive via CSS vars
 .envelope-container {
+  --env-w: min(290px, 82vw);
+  --env-half: calc(var(--env-w) / 2);
+  --flap-h: calc(var(--env-w) * 0.362);
+
   position: relative;
-  width: 290px;
-  height: 200px;
+  width: var(--env-w);
+  height: calc(var(--env-w) * 0.69);
   background-color: #e8e2d5;
   border-radius: 0 0 12px 12px;
   transform-style: preserve-3d;
   transition: transform 0.5s ease;
-  // Layered 3D shadow: close contact shadow + diffuse lift + blush glow
   box-shadow:
     0 2px 4px rgba(100, 75, 50, 0.18),
     0 8px 16px rgba(100, 75, 50, 0.16),
@@ -1013,7 +1016,6 @@ $color-border: #ebdcd0; // Soft boundary line color
     0 2px 0px 1px rgba(255, 255, 255, 0.35) inset,
     0 -1px 0px 0px rgba(100, 75, 50, 0.10) inset;
 
-  // Soft elliptical ground shadow for floating effect
   &::after {
     content: '';
     position: absolute;
@@ -1038,7 +1040,7 @@ $color-border: #ebdcd0; // Soft boundary line color
   border-radius: 0 0 12px 12px;
   top: 0;
   left: 0;
-  z-index: 1;
+  z-index: 4;
 }
 
 // Վերևի կափարիչը (Flap)
@@ -1048,9 +1050,9 @@ $color-border: #ebdcd0; // Soft boundary line color
   left: 0;
   width: 0;
   height: 0;
-  border-left: 145px solid transparent;
-  border-right: 145px solid transparent;
-  border-top: 105px solid #e8e2d5; // Եռանկյուն ծալք
+  border-left: var(--env-half) solid transparent;
+  border-right: var(--env-half) solid transparent;
+  border-top: var(--flap-h) solid #e8e2d5;
   transform-origin: top center;
   z-index: 5;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1058,7 +1060,7 @@ $color-border: #ebdcd0; // Soft boundary line color
 
   .is-opened & {
     transform: rotateX(180deg);
-    z-index: 2; // Բացվելուց հետո իջնում է քարտի հետևի պլան
+    z-index: 2;
     border-top-color: #e2dacb;
   }
 }
@@ -1070,7 +1072,7 @@ $color-border: #ebdcd0; // Soft boundary line color
   height: 100%;
   top: 0;
   left: 0;
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
   background-image: linear-gradient(35deg, #e3dcce 50%, transparent 50%),
   linear-gradient(-35deg, #e3dcce 50%, transparent 50%),
@@ -1084,10 +1086,10 @@ $color-border: #ebdcd0; // Soft boundary line color
   position: absolute;
   bottom: 5px;
   left: 10px;
-  width: 270px;
-  height: 185px;
+  width: calc(var(--env-w) - 20px);
+  height: calc(var(--env-w) * 0.69 - 15px);
   background-color: #ffffff;
-  z-index: 3;
+  z-index: 4;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
@@ -1109,32 +1111,31 @@ $color-border: #ebdcd0; // Soft boundary line color
 
   .monogram {
     font-family: $font-serif;
-    font-size: 1.5rem;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
     color: $color-primary;
     font-style: italic;
     margin-bottom: 5px;
   }
 
   .save-the-date {
-    font-size: 0.65rem;
+    font-size: clamp(0.55rem, 1.8vw, 0.65rem);
     letter-spacing: 3px;
     color: $color-gold;
     font-weight: 600;
   }
 
   .date {
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
     font-weight: 500;
     color: $color-text-muted;
     margin-top: 8px;
   }
 
-  // Անիմացիան՝ երբ ծրարը բացվում է, քարտը դուրս է սահում դեպի վեր
   .is-opened & {
     transform: translateY(-135px) scale(1.03);
-    z-index: 6; // Բարձրանում է ամենավերին շերտ
-    box-shadow: 0 15px 30px rgba(#8d755c, 0.12);
-    transition-delay: 0.5s; // Սպասում է մինչև Flap-ը լրիվ բացվի
+    z-index: 6;
+    box-shadow: 0 15px 30px rgba(142, 100, 60, 0.12);
+    transition-delay: 0.5s;
   }
 }
 
@@ -1159,9 +1160,9 @@ $color-border: #ebdcd0; // Soft boundary line color
 
   .is-opened & {
     opacity: 0;
-    transform: translateX(-50%) scale(0.5) translateY(16px);
+    transform: translateX(-50%) scale(0.4) translateY(20px);
     pointer-events: none;
-    transition-delay: 0.05s;
+    transition-delay: 0s;
   }
 }
 
