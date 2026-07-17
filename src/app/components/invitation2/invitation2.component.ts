@@ -65,9 +65,9 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
   envelopeHidden = false;
   tapHintVisible = false;
 
-  countdown: Countdown = { days: '000', hours: '00', minutes: '00', seconds: '00' };
+  countdown: Countdown = { days: '00', hours: '00', minutes: '00', seconds: '00' };
   flipKeys: { [k in keyof Countdown]: number } = { days: 0, hours: 0, minutes: 0, seconds: 0 };
-  private previousCountdown: Countdown = { days: '000', hours: '00', minutes: '00', seconds: '00' };
+  private previousCountdown: Countdown = { days: '00', hours: '00', minutes: '00', seconds: '00' };
 
   rsvpForm: FormGroup;
   submitting = false;
@@ -115,7 +115,7 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     },
     {
       time: '17:30',
-      title: 'Խնջույքի վայրը',
+      title: 'Տոնական խնջույք',
       venue: 'Platinium Hall',
       address: 'Գ․ Մուղնի',
       mapQuery: 'Platinium Wedding Hall, Mughni, Armenia',
@@ -252,7 +252,7 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     // Start music when envelope is opened
     const audio = this.bgAudioRef?.nativeElement;
     if (audio) {
-      audio.volume = 0.7;
+      audio.volume = 0.1;
       audio.play().catch(() => {});
     }
 
@@ -350,7 +350,7 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     const seconds = Math.floor((diff / 1000) % 60);
 
     const next: Countdown = {
-      days:    this.pad(days, 3),
+      days:    this.pad(days, 2),
       hours:   this.pad(hours, 2),
       minutes: this.pad(minutes, 2),
       seconds: this.pad(seconds, 2)

@@ -6,10 +6,10 @@ $font-sans: 'Montserrat', sans-serif;
 
 $color-bg: #f9f6f0; // Soft warm cream/beige
 $color-card-bg: #ffffff; // Clean white
-$color-primary: #8d755c; // Elegant dusty rose/bronze
+$color-primary: #482b0c; // Elegant dusty rose/bronze
 $color-gold: #c3a175; // Pastel warm gold
-$color-text-dark: #3a3530; // Deep charcoal
-$color-text-muted: #7c7267; // Soft grayish brown
+$color-text-dark: #482b0c; // Deep charcoal
+$color-text-muted: #6b4420; // Soft grayish brown
 $color-border: #ebdcd0; // Soft boundary line color
 
 // Reset defaults for chrome-less display
@@ -189,7 +189,7 @@ $color-border: #ebdcd0; // Soft boundary line color
     line-height: 1.2;
     display: flex;
     flex-direction: column;
-    color: #482b0c;
+    color: $color-primary;
 
     .ampersand {
       font-size: 1.8rem;
@@ -365,30 +365,30 @@ $color-border: #ebdcd0; // Soft boundary line color
 
     // Հետևի չներկված ոլորուն գիծը (ավելի հաստ)
     .route-path-bg {
-      stroke: rgba($color-border, 0.6);
-      stroke-width: 4px; // Հաստացված
+      stroke: rgba(255, 220, 190, 0.45);
+      stroke-width: 4px;
       stroke-linecap: round;
-      stroke-dasharray: 6, 6; // Գեղեցիկ կետագծեր
+      stroke-dasharray: 6, 6;
     }
 
     // Ակտիվ ներկվող ոսկեգույն գիծը (շատ հաստ ու սահուն)
     .route-path-active {
-      stroke: $color-gold;
-      stroke-width: 5px; // Էլ ավելի հաստ ու ընդգծված
+      stroke: rgba(220, 170, 110, 0.75);
+      stroke-width: 5px;
       stroke-linecap: round;
       transition: stroke-dashoffset 0.1s linear;
     }
 
     // SVG Կլոր կետերը (Միշտ կատարյալ կլոր)
     .stop-dot {
-      fill: #ffffff;
-      stroke: $color-border;
+      fill: rgba(255, 255, 255, 0.85);
+      stroke: rgba(220, 180, 140, 0.5);
       stroke-width: 3;
       transition: r 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.3s, stroke 0.3s;
 
       &.active {
-        fill: $color-gold;
-        stroke: $color-primary;
+        fill: rgba(220, 170, 110, 0.85);
+        stroke: rgba(195, 140, 80, 0.6);
         stroke-width: 4;
       }
     }
@@ -396,13 +396,13 @@ $color-border: #ebdcd0; // Soft boundary line color
     // Սիրտ Ինդիկատորի Փայլն ու Շարժումը
     .scrolling-indicator {
       .indicator-glow {
-        fill: rgba($color-primary, 0.18);
+        fill: rgba(220, 170, 110, 0.15);
         animation: heart-glow 1.2s infinite alternate ease-in-out;
       }
 
       .indicator-heart {
-        fill: $color-primary;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+        fill: rgba(195, 140, 80, 0.7);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
       }
     }
   }
@@ -503,20 +503,26 @@ $color-border: #ebdcd0; // Soft boundary line color
     .btn-text-map {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
+      gap: 5px;
+      background: rgba(255, 248, 240, 0.7);
+      border: 1px solid rgba($color-gold, 0.35);
       color: $color-primary;
       font-family: $font-sans;
-      font-size: 0.78rem;
-      font-weight: 600;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
       cursor: pointer;
-      padding: 0;
-      text-decoration: underline;
-      transition: color 0.2s;
+      padding: 6px 12px;
+      border-radius: 20px;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 
       &:active {
-        color: $color-gold;
+        background: rgba(220, 170, 110, 0.2);
+        border-color: rgba($color-gold, 0.6);
+        transform: scale(0.97);
       }
     }
   }

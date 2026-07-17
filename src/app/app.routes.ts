@@ -173,14 +173,9 @@ export const routes: Routes = [
     path: 'configurator',
     loadComponent: () => import('./components/configurator/configurator.component').then(m => m.ConfiguratorComponent)
   },
-  // Wedding invitation — chrome-less route
-  {
-    path: 'invitation',
-    loadComponent: () => import('./components/wedding/wedding.component').then(m => m.WeddingComponent)
-  },
   // Beating Heart — Artavazd & Ani wedding invitation
   {
-    path: 'invitation2',
+    path: 'invitation',
     loadComponent: () => import('./components/invitation2/invitation2.component').then(m => m.Invitation2Component)
   },
   // Wedding guests admin

@@ -187,7 +187,7 @@ export class ConfiguratorComponent implements AfterViewInit, OnDestroy {
   // ═══════════════════════════════════════════════════════════════════════════
 
   loadModel(): void {
-    this.loader.load('./assets/glb/t_shirt.glb', (gltf) => {
+    this.loader.load('./assets/glb/t-shirt_polo_lengan_pendek.glb', (gltf) => {
       this.model = gltf.scene;
 
       this.model.traverse((child) => {
