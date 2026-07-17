@@ -184,8 +184,8 @@
 
 					<!-- Կլոր Իկոնա (Եզրագծվում է, երբ գիծը հասնում է իրեն) -->
 					<div class="event-icon-badge" [class.active]="activeProgress >= (routeStopPoints[i]?.threshold ?? 0)">
-						<img *ngIf="event.icon === 'groom'" src="/assets/pics/groom.png" width="22" height="22" style="object-fit:contain" alt="groom"/>
-						<img *ngIf="event.icon === 'bride'" src="/assets/pics/bride.png" width="22" height="22" style="object-fit:contain" alt="bride"/>
+						<span *ngIf="event.icon === 'groom'">🤵</span>
+						<span *ngIf="event.icon === 'bride'">👰</span>
 						<img *ngIf="event.icon === 'church'" src="/assets/pics/church.png" width="22" height="22" style="object-fit:contain" alt="church"/>
 						<span *ngIf="event.icon === 'reception'">🥂</span>
 					</div>
