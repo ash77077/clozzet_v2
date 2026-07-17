@@ -1,4 +1,4 @@
-import {
+﻿import {
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -7,6 +7,7 @@ import {
   OnDestroy,
   OnInit,
   QueryList,
+  ViewChild,
   ViewChildren,
   inject
 } from '@angular/core';
@@ -43,11 +44,6 @@ interface TimelineEvent {
   icon: 'church' | 'bride' | 'groom' | 'reception';
 }
 
-/**
- * "Beating Heart" invitation — Ashkharhik & Gohar · July 31, 2026
- * Chrome-less standalone Angular route inspired by belleame.am/beating_heart.
- * White / beige / pastel palette.
- */
 @Component({
   selector: 'app-invitation2',
   standalone: true,
@@ -62,10 +58,12 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  // The big day — July 31, 2026 at 17:30 Armenia time (UTC+4)
   private readonly weddingDate = new Date('2026-07-31T17:30:00+04:00').getTime();
 
   curtainOpen = false;
+  envelopeOpened = false;
+  envelopeHidden = false;
+  tapHintVisible = false;
 
   countdown: Countdown = { days: '000', hours: '00', minutes: '00', seconds: '00' };
   flipKeys: { [k in keyof Countdown]: number } = { days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -128,7 +126,23 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
   mapUrlCeremony: SafeResourceUrl;
   mapUrlReception: SafeResourceUrl;
 
+  // Õ“Õ¸ÖƒÕ¸Õ­Õ¾Õ¡Õ® ÕÕ¥Õ¯ÖÕ«Õ¡Õ¶Õ¥Ö€Õ« Ö‡ Õ”Õ¡Ö€Õ¿Õ¥Ö€Õ« Observer-Õ¶Õ¥Ö€
   @ViewChildren('revealSection') revealSections!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChildren('revealCard') revealCards!: QueryList<ElementRef<HTMLElement>>; // Õ…Õ¸Ö‚Ö€Õ¡Ö„Õ¡Õ¶Õ¹ÕµÕ¸Ö‚Ö€ Ö„Õ¡Ö€Õ¿ Õ¡Õ¼Õ¡Õ¶Õ±Õ«Õ¶
+  @ViewChild('routePath') routePathRef?: ElementRef<SVGPathElement>;
+  @ViewChild('timelineSection') timelineSectionRef?: ElementRef<HTMLElement>;
+  @ViewChild('bgAudio') bgAudioRef?: ElementRef<HTMLAudioElement>;
+  @ViewChild('weddingVideo') weddingVideoRef?: ElementRef<HTMLVideoElement>;
+
+  isMuted = false;
+
+  indicatorX = 50;
+  indicatorY = 0;
+  pathLength = 0;      // SVG Õ£Õ®Õ« Õ¨Õ¶Õ¤Õ°Õ¡Õ¶Õ¸Ö‚Ö€ Õ¥Ö€Õ¯Õ¡Ö€Õ¸Ö‚Õ©ÕµÕ¸Ö‚Õ¶Õ¨
+  activeProgress = 0;  // Ô¸Õ¶Õ©Õ¡ÖÕ«Õ¯ Õ½Ö„Ö€Õ¸Õ¬Õ« Õ¡Õ¼Õ¡Õ»Õ¨Õ¶Õ©Õ¡ÖÕ¨ (0-Õ«Ö 1)
+  routeStopPoints: { x: number; y: number; label: string; threshold: number }[] = [];
+
+  private scrollListener?: () => void;
   private observer?: IntersectionObserver;
   private countdownTimer?: number;
 
@@ -157,22 +171,18 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
       this.cdr.markForCheck();
     }, 1000);
     document.body.classList.add('invitation2-active');
+    setTimeout(() => { this.tapHintVisible = true; this.cdr.markForCheck(); }, 3000);
   }
 
   ngAfterViewInit(): void {
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        this.curtainOpen = true;
-        this.cdr.markForCheck();
-      }, 800);
-    });
-
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduceMotion) {
       this.revealSections.forEach(s => s.nativeElement.classList.add('is-visible'));
+      this.revealCards.forEach(c => c.nativeElement.classList.add('is-visible'));
       return;
     }
 
+    // Õ•ÕºÕ¿Õ«Õ´Õ¡Õ¬ IntersectionObserver
     this.observer = new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
@@ -182,16 +192,132 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
           }
         });
       },
-      { threshold: 0.18, rootMargin: '0px 0px -8% 0px' }
+      { threshold: 0.15, rootMargin: '0px 0px -5% 0px' }
     );
 
+    // Ô´Õ«Õ¿Õ¡Ö€Õ¯Õ¸Ö‚Õ´ Õ¥Õ¶Ö„ Õ½Õ¸Õ¾Õ¸Ö€Õ¡Õ¯Õ¡Õ¶ Õ½Õ¥Õ¯ÖÕ«Õ¡Õ¶Õ¥Ö€Õ¨
     this.revealSections.forEach(section => this.observer!.observe(section.nativeElement));
+
+    // Ô´Õ«Õ¿Õ¡Ö€Õ¯Õ¸Ö‚Õ´ Õ¥Õ¶Ö„ Õ©Õ¡ÕµÕ´Õ¬Õ¡ÕµÕ¶Õ« Ö„Õ¡Ö€Õ¿Õ¥Ö€Õ¨ Õ¡Õ¼Õ¡Õ¶Õ±Õ«Õ¶-Õ¡Õ¼Õ¡Õ¶Õ±Õ«Õ¶
+    this.revealCards.forEach(card => this.observer!.observe(card.nativeElement));
+
+    requestAnimationFrame(() => {
+      this.computeStopPoints();
+      this.onWindowScroll();
+      this.cdr.markForCheck();
+    });
+
+    this.scrollListener = () => {
+      this.onWindowScroll();
+      this.cdr.markForCheck();
+    };
+
+    window.addEventListener('scroll', this.scrollListener, { passive: true });
+    window.addEventListener('resize', this.scrollListener, { passive: true });
+
+    // Play video when it enters the viewport
+    const video = this.weddingVideoRef?.nativeElement;
+    if (video) {
+      const videoObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              video.play().catch(() => {});
+            } else {
+              video.pause();
+            }
+          });
+        },
+        { threshold: 0.3 }
+      );
+      videoObserver.observe(video);
+    }
   }
 
   ngOnDestroy(): void {
     if (this.countdownTimer) clearInterval(this.countdownTimer);
     this.observer?.disconnect();
+    if (this.scrollListener) {
+      window.removeEventListener('scroll', this.scrollListener);
+      window.removeEventListener('resize', this.scrollListener);
+    }
     document.body.classList.remove('invitation2-active');
+  }
+
+  openEnvelope(): void {
+    if (this.envelopeOpened) return;
+    this.envelopeOpened = true;
+    this.cdr.markForCheck();
+
+    // Start music when envelope is opened
+    const audio = this.bgAudioRef?.nativeElement;
+    if (audio) {
+      audio.volume = 0.7;
+      audio.play().catch(() => {});
+    }
+
+    setTimeout(() => {
+      this.envelopeHidden = true;
+      this.curtainOpen = true;
+      this.cdr.markForCheck();
+    }, 1800);
+  }
+
+  toggleMute(): void {
+    const audio = this.bgAudioRef?.nativeElement;
+    if (!audio) return;
+    this.isMuted = !this.isMuted;
+    audio.muted = this.isMuted;
+    this.cdr.markForCheck();
+  }
+
+  private computeStopPoints(): void {
+    const path = this.routePathRef?.nativeElement;
+    if (!path) return;
+
+    const total = path.getTotalLength();
+    this.pathLength = total;
+
+    const startPt = path.getPointAtLength(0);
+    this.indicatorX = startPt.x;
+    this.indicatorY = startPt.y;
+
+    const itemsCount = this.timeline.length;
+    this.routeStopPoints = this.timeline.map((event, i) => {
+      // ÕˆÖ€Õ¸Õ·Õ¸Ö‚Õ´ Õ¥Õ¶Ö„ ÕµÕ¸Ö‚Ö€Õ¡Ö„Õ¡Õ¶Õ¹ÕµÕ¸Ö‚Ö€ Õ¯Õ¥Õ¿Õ« Õ¿Õ¸Õ¯Õ¸Õ½Õ¡ÕµÕ«Õ¶ Õ·Õ¥Õ´Õ¨ (threshold) Õ£Õ®Õ« Õ¾Ö€Õ¡
+      const pct = itemsCount > 0 ? (i + 0.5) / itemsCount : 0.5;
+      const pt  = path.getPointAtLength(pct * total);
+      return { x: pt.x, y: pt.y, label: event.title, threshold: pct };
+    });
+  }
+
+  private onWindowScroll(): void {
+    const path = this.routePathRef?.nativeElement;
+    const timelineSec = this.timelineSectionRef?.nativeElement;
+    if (!path || !timelineSec) return;
+
+    // Õ€Õ¡Õ·Õ¾Õ¡Ö€Õ¯Õ¸Ö‚Õ´ Õ¥Õ¶Ö„ Õ½Ö„Ö€Õ¸Õ¬Õ¨Õ Õ°Õ«Õ´Õ¶Õ¾Õ¥Õ¬Õ¸Õ¾ Õ©Õ¡ÕµÕ´Õ¬Õ¡ÕµÕ¶ Õ½Õ¥Õ¯ÖÕ«Õ¡ÕµÕ« Õ¤Õ«Ö€Ö„Õ« Õ¾Ö€Õ¡
+    const rect = timelineSec.getBoundingClientRect();
+    const viewHeight = window.innerHeight;
+
+    // Ô±Õ¶Õ«Õ´Õ¡ÖÕ«Õ¡Õ¶ Õ½Õ¯Õ½Õ¾Õ¸Ö‚Õ´ Õ§, Õ¥Ö€Õ¢ Õ©Õ¡ÕµÕ´Õ¬Õ¡ÕµÕ¶Õ« Õ£Õ¬Õ¸Ö‚Õ­Õ¨ Õ°Õ¡Õ½Õ¶Õ¸Ö‚Õ´ Õ§ Õ§Õ¯Ö€Õ¡Õ¶Õ« 80%-Õ«Õ¶
+    // Ö‡ Õ¡Õ¾Õ¡Ö€Õ¿Õ¾Õ¸Ö‚Õ´ Õ§, Õ¥Ö€Õ¢ Õ©Õ¡ÕµÕ´Õ¬Õ¡ÕµÕ¶Õ« Õ¾Õ¥Ö€Õ»Õ¨ Õ¢Õ¡Ö€Õ±Ö€Õ¡Õ¶Õ¸Ö‚Õ´ Õ§ Õ§Õ¯Ö€Õ¡Õ¶Õ« 20%-Õ«Ö
+    const startThreshold = viewHeight * 0.8;
+    const endThreshold = viewHeight * 0.2;
+
+    const totalDistance = rect.height + (startThreshold - endThreshold);
+    const currentProgress = startThreshold - rect.top;
+
+    let progress = totalDistance > 0 ? currentProgress / totalDistance : 0;
+    progress = Math.max(0, Math.min(1, progress)); // Õ½Õ¡Õ°Õ´Õ¡Õ¶Õ¡ÖƒÕ¡Õ¯Õ¸Ö‚Õ´ Õ¥Õ¶Ö„ 0-1 Õ´Õ«Õ»Õ¡Õ¯Õ¡ÕµÖ„Õ¸Ö‚Õ´
+
+    this.activeProgress = progress;
+
+    const len = path.getTotalLength();
+    const pt  = path.getPointAtLength(progress * len);
+
+    this.indicatorX = pt.x;
+    this.indicatorY = pt.y;
   }
 
   scrollToRsvp(): void {
@@ -282,3 +408,11 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     return this.rsvpForm.get('name');
   }
 }
+
+
+
+
+
+
+
+
