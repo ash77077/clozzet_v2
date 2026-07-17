@@ -952,11 +952,10 @@ $color-border: #ebdcd0; // Soft boundary line color
   cursor: pointer;
   transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1);
 
-  // Երբ ամբողջությամբ բացվում է, ծրարը անհետանում է
   &.is-opened {
     opacity: 0;
     pointer-events: none;
-    transition-delay: 1.2s; // Սպասում է քարտի դուրս գալուն
+    transition-delay: 1.2s;
   }
 }
 
@@ -996,20 +995,15 @@ $color-border: #ebdcd0; // Soft boundary line color
   }
 }
 
-// Envelope sizing — single source of truth, scales with viewport
-// --env-w drives all dependent dimensions so nothing ever mismatches
+// Envelope sizing — responsive via CSS vars
 .envelope-container {
   --env-w: min(290px, 82vw);
-  --env-h: calc(var(--env-w) * 0.69);       // ~200/290 ratio
   --env-half: calc(var(--env-w) / 2);
-  --flap-h: calc(var(--env-w) * 0.362);     // ~105/290 ratio
-  --card-w: calc(var(--env-w) - 20px);
-  --card-h: calc(var(--env-h) - 15px);
-  --card-lift: calc(var(--card-h) * -0.73); // how far card slides up
+  --flap-h: calc(var(--env-w) * 0.362);
 
   position: relative;
   width: var(--env-w);
-  height: var(--env-h);
+  height: calc(var(--env-w) * 0.69);
   background-color: #e8e2d5;
   border-radius: 0 0 12px 12px;
   transform-style: preserve-3d;
@@ -1046,10 +1040,10 @@ $color-border: #ebdcd0; // Soft boundary line color
   border-radius: 0 0 12px 12px;
   top: 0;
   left: 0;
-  z-index: 1;
+  z-index: 4;
 }
 
-// Վերևի կափարիչը (Flap) — uses CSS vars so it always matches container width
+// Վերևի կափարիչը (Flap)
 .envelope-flap {
   position: absolute;
   top: 0;
@@ -1078,7 +1072,7 @@ $color-border: #ebdcd0; // Soft boundary line color
   height: 100%;
   top: 0;
   left: 0;
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
   background-image: linear-gradient(35deg, #e3dcce 50%, transparent 50%),
   linear-gradient(-35deg, #e3dcce 50%, transparent 50%),
@@ -1092,10 +1086,10 @@ $color-border: #ebdcd0; // Soft boundary line color
   position: absolute;
   bottom: 5px;
   left: 10px;
-  width: var(--card-w);
-  height: var(--card-h);
+  width: calc(var(--env-w) - 20px);
+  height: calc(var(--env-w) * 0.69 - 15px);
   background-color: #ffffff;
-  z-index: 3;
+  z-index: 4;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
@@ -1138,7 +1132,7 @@ $color-border: #ebdcd0; // Soft boundary line color
   }
 
   .is-opened & {
-    transform: translateY(var(--card-lift)) scale(1.03);
+    transform: translateY(-135px) scale(1.03);
     z-index: 6;
     box-shadow: 0 15px 30px rgba(142, 100, 60, 0.12);
     transition-delay: 0.5s;
@@ -1166,9 +1160,9 @@ $color-border: #ebdcd0; // Soft boundary line color
 
   .is-opened & {
     opacity: 0;
-    transform: translateX(-50%) scale(0.5) translateY(16px);
+    transform: translateX(-50%) scale(0.4) translateY(20px);
     pointer-events: none;
-    transition-delay: 0.05s;
+    transition-delay: 0s;
   }
 }
 
