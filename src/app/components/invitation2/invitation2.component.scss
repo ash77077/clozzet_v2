@@ -17,14 +17,23 @@ $color-border: #ebdcd0; // Soft boundary line color
   display: block;
   font-family: $font-sans;
   background-color: transparent;
-  background-image: url('/assets/wedding-pic/wedd.JPG');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   color: $color-text-dark;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+
+  // Fixed background via pseudo-element — works on iOS Safari & Telegram WebView
+  // (background-attachment: fixed is broken on iOS)
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('/assets/wedding-pic/wedd.JPG');
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    z-index: -1;
+    will-change: transform;
+  }
 }
 
 // 1. Curtain Animation System
