@@ -1,140 +1,229 @@
-<div class="invitation2" [class.curtain-open]="curtainOpen">
+<!-- Վարագույր (Curtain Overlay) -->
+<!-- Ինտերակտիվ Ծրար (Interactive Envelope Overlay) -->
+<div class="envelope-overlay" *ngIf="!envelopeHidden" [class.is-opened]="envelopeOpened" (click)="openEnvelope()">
 
-  <!-- ================= HERO ================= -->
-  <section class="hero" #revealSection>
-    <div class="hero__inner">
+	<!-- Top label -->
+	<p class="envelope-top-label">Դուք ստացել եք հրավիրատոմս</p>
 
-      <p class="hero__eyebrow">Հարսանեկան հրավիրատոմս</p>
+	<div class="envelope-container">
 
-      <h1 class="hero__names">
-        <span class="hero__names-line">Աշխարհիկ</span>
-        <span class="hero__names-line">և</span>
-        <span class="hero__names-line">Գոհար</span>
-      </h1>
+		<!-- Ծրարի հետևի պատը -->
+		<div class="envelope-back"></div>
 
-      <div class="hero__divider" aria-hidden="true">
-        <span class="hero__divider-dot"></span>
-        <span class="hero__divider-line"></span>
-        <span class="hero__divider-dot"></span>
-        <span class="hero__divider-line"></span>
-        <span class="hero__divider-dot"></span>
-      </div>
+		<!-- Ծրարի միջի հրավիրատոմսի քարտը (որը դուրս է սահելու) -->
+		<div class="envelope-card">
+			<div class="card-inner">
+				<span class="monogram">Ա ♥ Գ</span>
+				<p class="date">31 . 07 . 2026</p>
+			</div>
+		</div>
 
-      <p class="hero__date">31 · 07 · 2026</p>
-      <p class="hero__time">17:30 &nbsp;·&nbsp; Platinium Hall</p>
+		<!-- Ծրարի կողային և ներքևի ծալքերը -->
+		<div class="envelope-front"></div>
 
-      <div class="hero__scroll" aria-hidden="true">
-        <span></span>
-      </div>
-    </div>
-  </section>
+		<!-- Ծրարի վերևի կափարիչը (Flap) -->
+		<div class="envelope-flap"></div>
 
-  <!-- ================= COUNTDOWN ================= -->
-  <section class="countdown reveal-section" #revealSection>
+		<!-- Ոսկեգույն Կնիք (Wax Seal) -->
+		<div class="wax-seal-wrapper">
+			<div class="wax-seal">
+				<div class="seal-inner">
+					<span>Ա ♥ Գ</span>
+				</div>
+			</div>
+		</div>
 
-    <p class="section-eyebrow">Մինչ հարսանիք</p>
-    <h2 class="countdown__title">Հետհաշվարկը մեկնարկել է</h2>
+	</div>
 
-    <div class="ornament" aria-hidden="true">
-      <span class="ornament__diamond"></span>
-    </div>
+	<!-- Bottom hint — appears after 3s -->
+	<p class="envelope-tap-hint" [class.visible]="tapHintVisible">Սեղմեք էկրանին բացելու համար</p>
 
-    <div class="countdown__grid">
-      <div class="flip-card">
-        <div class="flip-card__digit" [attr.data-flip]="flipKeys.days">{{ countdown.days }}</div>
-        <div class="flip-card__label">Օր</div>
-      </div>
-      <div class="flip-card">
-        <div class="flip-card__digit" [attr.data-flip]="flipKeys.hours">{{ countdown.hours }}</div>
-        <div class="flip-card__label">Ժամ</div>
-      </div>
-      <div class="flip-card">
-        <div class="flip-card__digit" [attr.data-flip]="flipKeys.minutes">{{ countdown.minutes }}</div>
-        <div class="flip-card__label">Րոպե</div>
-      </div>
-      <div class="flip-card">
-        <div class="flip-card__digit" [attr.data-flip]="flipKeys.seconds">{{ countdown.seconds }}</div>
-        <div class="flip-card__label">Վայրկյան</div>
-      </div>
-    </div>
-  </section>
+</div>
 
-  <!-- ================= TIMELINE ================= -->
-  <section class="timeline reveal-section" #revealSection>
+<!-- Background music -->
+<audio #bgAudio src="/assets/mp3/Edd_Sheeran_-_Perfect_(mp3.pm).mp3" loop preload="auto"></audio>
 
-    <p class="section-eyebrow">Ծրագիր</p>
-    <h2 class="section-title">Օրվա Ծրագիր</h2>
+<!-- Mute / unmute button -->
+<button class="music-btn" (click)="toggleMute()" [attr.aria-label]="isMuted ? 'Unmute music' : 'Mute music'">
+	<svg *ngIf="!isMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+		<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+		<path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+		<path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+	</svg>
+	<svg *ngIf="isMuted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+		<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+		<line x1="23" y1="9" x2="17" y2="15"/>
+		<line x1="17" y1="9" x2="23" y2="15"/>
+	</svg>
+</button>
 
-    <ol class="timeline__list">
-      @for (event of timeline; track event.time) {
-        <li class="timeline__item">
-          <div class="timeline__marker">
-            <span class="timeline__time">{{ event.time }}</span>
-            <span class="timeline__icon" [attr.data-icon]="event.icon" aria-hidden="true">
-              @switch (event.icon) {
-                @case ('church') {
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-                    <path d="M12 3v4M10 5h4"/>
-                    <path d="M12 7L4 12v9h5v-5h6v5h5v-9l-8-5z"/>
-                  </svg>
-                }
-                @case ('bride') {
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-                    <circle cx="12" cy="6" r="3"/>
-                    <path d="M6 21c0-4 2.7-7 6-7s6 3 6 7"/>
-                    <path d="M8 3c1 2 3 3 4 3s3-1 4-3"/>
-                  </svg>
-                }
-                @case ('groom') {
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-                    <circle cx="12" cy="6" r="3"/>
-                    <path d="M6 21v-4a6 6 0 0112 0v4"/>
-                    <path d="M10 14v7M14 14v7"/>
-                  </svg>
-                }
-                @case ('reception') {
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
-                    <path d="M6 3l1 6a5 5 0 0010 0l1-6"/>
-                    <path d="M12 15v6M8 21h8"/>
-                  </svg>
-                }
-              }
-            </span>
-          </div>
+<div class="invitation-wrapper">
+	<!-- Ծաղկաթերթիկների անիմացիա (Sakura / Petals) -->
+	<div class="petals-container">
+		<div *ngFor="let petal of petals"
+		     class="petal"
+		     [class]="'variant-' + petal.variant"
+		     [style.--left.%]="petal.left"
+		     [style.--size.px]="petal.size"
+		     [style.--delay.s]="petal.delay"
+		     [style.--duration.s]="petal.duration"
+		     [style.--drift.px]="petal.drift"
+		     [style.--opacity]="petal.opacity">
+		</div>
+	</div>
 
-          <div class="timeline__body">
-            <h3 class="timeline__event-title">{{ event.title }}</h3>
-            <p class="timeline__venue">{{ event.venue }}</p>
-            <p class="timeline__address">{{ event.address }}</p>
-            <button type="button" class="timeline__map-btn" (click)="openMap(event.mapQuery)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"/>
-                <circle cx="12" cy="9" r="2.5"/>
-              </svg>
-              Բացել քարտեզը
-            </button>
-          </div>
-        </li>
-      }
-    </ol>
-  </section>
+	<!-- HERO SECTION -->
+	<header class="hero-section" #revealSection>
+		<div class="hero-card">
+			<h1 class="couple-names">
+				<span>Աշխարհիկ</span>
+				<span class="ampersand">♥</span>
+				<span>Գոհար</span>
+			</h1>
+			<p class="wedding-date-text">31 . 07 . 2026</p>
+			<div class="heart-divider">
+				<span class="line"></span>
+				<i class="heart-icon">♥</i>
+				<span class="line"></span>
+			</div>
+			<p class="hero-message">
+				Սիրով հրավիրում ենք ձեզ մասնակցելու մեր հարսանյաց տոնակատարությանը և մասը դառնալու մեր հիշարժան օրվա
+			</p>
+		</div>
+	</header>
 
-  <!-- ================= FOOTER ================= -->
-  <footer class="footer">
-    <div class="footer__heart" aria-hidden="true">
-      <svg viewBox="0 0 100 90" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M50 82 C 20 62, 5 42, 5 25 C 5 12, 15 3, 28 3 C 38 3, 46 9, 50 18 C 54 9, 62 3, 72 3 C 85 3, 95 12, 95 25 C 95 42, 80 62, 50 82 Z"
-          fill="url(#footerHeart)"/>
-        <defs>
-          <linearGradient id="footerHeart" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#C9607A"/>
-            <stop offset="100%" stop-color="#A8832A"/>
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
-    <p class="footer__names">Աշխարհիկ և Գոհար</p>
-  </footer>
+	<!-- COUNTDOWN SECTION -->
+	<section class="countdown-section" #revealSection>
+		<h2 class="section-title">Մինչ հարսանիք մնացել է</h2>
 
+		<div class="countdown-grid">
+			<!-- Օրեր -->
+			<div class="countdown-card">
+				<div class="flip-wrapper" [attr.data-flip]="flipKeys.days">
+					<span class="number">{{ countdown.days }}</span>
+				</div>
+				<span class="label">Օր</span>
+			</div>
+
+			<!-- Ժամեր -->
+			<div class="countdown-card">
+				<div class="flip-wrapper" [attr.data-flip]="flipKeys.hours">
+					<span class="number">{{ countdown.hours }}</span>
+				</div>
+				<span class="label">Ժամ</span>
+			</div>
+
+			<!-- Րոպեներ -->
+			<div class="countdown-card">
+				<div class="flip-wrapper" [attr.data-flip]="flipKeys.minutes">
+					<span class="number">{{ countdown.minutes }}</span>
+				</div>
+				<span class="label">Րոպե</span>
+			</div>
+
+			<!-- Վայրկյաններ -->
+			<div class="countdown-card">
+				<div class="flip-wrapper" [attr.data-flip]="flipKeys.seconds">
+					<span class="number">{{ countdown.seconds }}</span>
+				</div>
+				<span class="label">Վայրկյան</span>
+			</div>
+		</div>
+	</section>
+
+	<!-- TIMELINE SECTION -->
+	<section class="timeline-section" #revealSection #timelineSection>
+		<h2 class="section-title">Օրվա ժամանակացույցը</h2>
+
+		<div class="timeline-container">
+
+			<!-- Ձախակողմյան SVG Ուղի (Մոբայլի համար օպտիմալացված) -->
+			<div class="svg-track-wrapper">
+				<svg class="timeline-svg" viewBox="0 0 60 900" preserveAspectRatio="xMidYMid meet">
+
+					<!-- 1. Հետևի չներկված ալիքաձև գիծը (հաստացված) -->
+					<path #routePath
+					      class="route-path-bg"
+					      d="M 30,0
+                 C 5,150 55,300 30,450
+                 C 5,600 55,750 30,900"
+					      fill="none" />
+
+					<!-- 2. Ակտիվ ներկվող ոսկեգույն գիծը (ավելի հաստ) -->
+					<path class="route-path-active"
+					      d="M 30,0
+                 C 5,150 55,300 30,450
+                 C 5,600 55,750 30,900"
+					      fill="none"
+					      [style.strokeDasharray]="pathLength"
+					      [style.strokeDashoffset]="pathLength * (1 - activeProgress)" />
+
+					<!-- Կատարյալ կլոր կանգառի կետեր (Մեծացված) -->
+					<circle *ngFor="let pt of routeStopPoints"
+					        [attr.cx]="pt.x"
+					        [attr.cy]="pt.y"
+					        [attr.r]="activeProgress >= pt.threshold ? 11 : 7"
+					        class="stop-dot"
+					        [class.active]="activeProgress >= pt.threshold" />
+
+					<!-- Շարժվող մեծ սիրտ-ինդիկատոր՝ ոսկեգույն փայլով -->
+					<g [attr.transform]="'translate(' + indicatorX + ', ' + indicatorY + ')'" class="scrolling-indicator">
+						<circle r="14" class="indicator-glow" />
+						<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+						      transform="translate(-12, -12) scale(0.9)"
+						      class="indicator-heart" />
+					</g>
+				</svg>
+			</div>
+
+			<!-- Բոլոր քարտերը աջ կողմում են՝ առավելագույն տարածությամբ -->
+			<div class="timeline-events-list">
+				<div *ngFor="let event of timeline; let i = index"
+             #revealCard
+				     class="timeline-event-card">
+
+					<!-- Կլոր Իկոնա (Եզրագծվում է, երբ գիծը հասնում է իրեն) -->
+					<div class="event-icon-badge" [class.active]="activeProgress >= (routeStopPoints[i]?.threshold ?? 0)">
+						<span *ngIf="event.icon === 'groom'">🤵</span>
+						<span *ngIf="event.icon === 'bride'">👰</span>
+						<span *ngIf="event.icon === 'church'">⛪</span>
+						<span *ngIf="event.icon === 'reception'">🥂</span>
+					</div>
+
+					<div class="event-details">
+						<span class="event-time">{{ event.time }}</span>
+						<h3 class="event-title">{{ event.title }}</h3>
+						<p class="event-venue">{{ event.venue }}</p>
+						<p class="event-address">{{ event.address }}</p>
+						<button class="btn-text-map" (click)="openMap(event.mapQuery)">
+							<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;margin-top:1px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> Բացել քարտեզը
+						</button>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</section>
+
+
+	<!-- VIDEO SECTION -->
+	<section class="video-section">
+		<div class="video-wrapper">
+			<video
+				#weddingVideo
+				src="/assets/video/doc_2026-07-17_18-27-43.mp4"
+				muted
+				loop
+				playsinline
+				preload="auto">
+			</video>
+		</div>
+	</section>
+
+	<!-- FOOTER -->
+	<footer class="footer-section">
+		<p class="footer-quote">Սպասում ենք ձեզ՝ միասին ստեղծելու հիշողություններ, որոնք կմնան հավերժ</p>
+		<p class="footer-quote">♥</p>
+		<p class="footer-quote">Աշխարհիկ և Գոհար</p>
+	</footer>
 </div>
