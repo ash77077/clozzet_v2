@@ -244,6 +244,7 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
     document.body.classList.remove('invitation2-active');
   }
 
+
   openEnvelope(): void {
     if (this.envelopeOpened) return;
     this.envelopeOpened = true;

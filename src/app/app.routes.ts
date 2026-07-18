@@ -175,7 +175,7 @@ export const routes: Routes = [
   },
   // Beating Heart — Artavazd & Ani wedding invitation
   {
-    path: 'invitation',
+    path: 'ash-gog-wedding-invitation',
     loadComponent: () => import('./components/invitation2/invitation2.component').then(m => m.Invitation2Component)
   },
   // Wedding guests admin
