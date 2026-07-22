@@ -90,7 +90,7 @@ export class Invitation2Component implements OnInit, AfterViewInit, OnDestroy {
 
   timeline: TimelineEvent[] = [
     {
-      time: '12:00',
+      time: '11:30',
       title: 'Փեսայի տուն',
       venue: 'Դավթաշեն',
       address: 'Գրիգոր Աղաբաբյան 9',
