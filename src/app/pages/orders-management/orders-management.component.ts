@@ -765,6 +765,15 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     return sellingPrice * quantity;
   }
 
+  // Sum of all products' selling price × quantity
+  get calculatedExpectedRevenue(): number {
+    let total = 0;
+    for (let i = 0; i < this.products.length; i++) {
+      total += this.calculateProductRevenue(i);
+    }
+    return total;
+  }
+
   // ─── Add Order dialog ──────────────────────────────────────────────────────
 
   openAddOrderDialog(): void {
@@ -825,6 +834,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   nextStep(): void {
     if (this.isCurrentStepValid() && this.currentStep < this.totalSteps) {
       this.currentStep++;
+      // Auto-fill expected revenue when entering step 4 (only if not already set)
+      if (this.currentStep === 4) {
+        const current = this.addOrderForm.get('expectedRevenue')?.value;
+        if ((!current || current === 0) && this.calculatedExpectedRevenue > 0) {
+          this.addOrderForm.patchValue({ expectedRevenue: this.calculatedExpectedRevenue });
+        }
+      }
     } else if (!this.isCurrentStepValid()) {
       this.markCurrentStepTouched();
       this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please fill all required fields.' });

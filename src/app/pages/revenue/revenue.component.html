@@ -107,11 +107,11 @@
           <th style="min-width:130px">Order #</th>
           <th style="min-width:180px">Company / Client</th>
           <th style="min-width:140px">Products</th>
-          <th style="min-width:90px">Units</th>
-          <th style="min-width:140px">Expected</th>
+          <th style="min-width:80px">Units</th>
+          <th style="min-width:150px">Expected</th>
           <th style="min-width:140px">Calculated</th>
-          <th style="min-width:140px">Paid</th>
-          <th style="min-width:160px">Payment Status</th>
+          <th style="min-width:150px">Paid</th>
+          <th style="min-width:170px">Payment Status</th>
           <th style="min-width:100px">Actions</th>
         </tr>
       </ng-template>
@@ -136,7 +136,7 @@
           <td><strong>{{ order.quantity }}</strong></td>
 
           <!-- Expected -->
-          <td>
+          <td class="editable-cell">
             <span class="currency-value" *ngIf="editingPaymentOrderId !== (order._id || order.id)">
               {{ formatCurrency(order.expectedRevenue || order.totalRevenue || 0) }}
             </span>
@@ -146,6 +146,8 @@
               [min]="0"
               suffix=" ֏"
               styleClass="inline-num"
+              [useGrouping]="true"
+              appendTo="body"
               [disabled]="isSavingPayment">
             </p-inputNumber>
           </td>
@@ -157,7 +159,7 @@
           </td>
 
           <!-- Paid -->
-          <td>
+          <td class="editable-cell">
             <div class="paid-cell" *ngIf="editingPaymentOrderId !== (order._id || order.id)">
               <span class="currency-value">{{ formatCurrency(order.paidAmount || 0) }}</span>
               <div class="progress-bar-wrap">
@@ -171,12 +173,14 @@
               [min]="0"
               suffix=" ֏"
               styleClass="inline-num"
+              [useGrouping]="true"
+              appendTo="body"
               [disabled]="isSavingPayment">
             </p-inputNumber>
           </td>
 
           <!-- Payment Status -->
-          <td>
+          <td class="editable-cell">
             <p-tag
               *ngIf="editingPaymentOrderId !== (order._id || order.id)"
               [value]="getPaymentStatusLabel(order.paymentStatus)"
@@ -188,6 +192,7 @@
               [options]="paymentStatusOptions"
               optionLabel="label"
               optionValue="value"
+              appendTo="body"
               [disabled]="isSavingPayment"
               styleClass="inline-select">
             </p-select>

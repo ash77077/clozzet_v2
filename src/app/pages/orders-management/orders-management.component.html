@@ -994,7 +994,7 @@
 
             <div class="form-field">
               <label class="field-label">Design Method</label>
-              <p-select formControlName="designMethod" [options]="designMethods" placeholder="Select design method (optional)" styleClass="full-width" appendTo="body"></p-select>
+              <p-select formControlName="designMethod" [options]="designMethods" placeholder="Select design method (optional)" styleClass="full-width" appendTo="body" [showClear]="true"></p-select>
             </div>
 
             <div class="form-field">
@@ -1321,6 +1321,9 @@
                 placeholder="Total order value" styleClass="full-width" suffix=" ֏" appendTo="body">
               </p-inputNumber>
             </div>
+            <span class="field-hint" *ngIf="calculatedExpectedRevenue > 0">
+              <i class="pi pi-calculator"></i> Auto-calculated: {{ calculatedExpectedRevenue | number }} ֏
+            </span>
           </div>
           <div class="form-field">
             <label class="field-label">Amount Already Paid (֏)</label>

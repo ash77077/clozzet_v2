@@ -1268,6 +1268,15 @@
       margin-top: 0.1rem;
     }
 
+    .field-hint {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 0.75rem;
+      color: #0369a1;
+      font-style: italic;
+      i { margin-right: 0.25rem; }
+    }
+
     .full-width { width: 100%; }
 
     .date-input {
