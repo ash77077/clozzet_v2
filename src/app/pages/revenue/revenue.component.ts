@@ -90,6 +90,7 @@ export class RevenueComponent implements OnInit, OnDestroy {
   editingPaymentStatus: string = 'not_paid';
   editingPaidAmount: number | null = null;
   editingExpectedRevenue: number | null = null;
+  private originalPaidAmount: number | null = null;
 
   get costScenarios() { return this.financialService.costScenarios$(); }
   get scenarioOptions() {
@@ -281,11 +282,22 @@ export class RevenueComponent implements OnInit, OnDestroy {
     this.editingPaymentOrderId = (order._id || order.id) as string;
     this.editingPaymentStatus  = order.paymentStatus || 'not_paid';
     this.editingPaidAmount     = order.paidAmount || null;
+    this.originalPaidAmount    = order.paidAmount || null;
     this.editingExpectedRevenue = order.expectedRevenue || order.totalRevenue || null;
   }
 
   cancelEditingPayment(): void {
     this.editingPaymentOrderId = null;
+  }
+
+  onPaymentStatusChange(status: string, order: OrderFinancial): void {
+    if (status === 'paid') {
+      this.editingPaidAmount = this.editingExpectedRevenue ?? order.totalRevenue ?? null;
+    } else if (status === 'not_paid') {
+      this.editingPaidAmount = 0;
+    } else {
+      this.editingPaidAmount = this.originalPaidAmount;
+    }
   }
 
   savePayment(order: OrderFinancial): void {

@@ -194,7 +194,8 @@
               optionValue="value"
               appendTo="body"
               [disabled]="isSavingPayment"
-              styleClass="inline-select">
+              styleClass="inline-select"
+              (onChange)="onPaymentStatusChange($event.value, order)">
             </p-select>
           </td>
 
