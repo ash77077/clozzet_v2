@@ -5,6 +5,7 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { SecondaryNavbarComponent } from './shared/components/secondary-navbar/secondary-navbar.component';
 import { AiChatWidgetComponent } from './shared/components/ai-chat-widget/ai-chat-widget.component';
+import { KpiBadgeComponent } from './shared/components/kpi-badge/kpi-badge.component';
 import { AuthService } from './services/auth.service';
 import { AiService } from './services/ai.service';
 import { Observable } from 'rxjs';
@@ -13,7 +14,7 @@ import { map, filter } from 'rxjs/operators';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, NavbarComponent, FooterComponent, SecondaryNavbarComponent, AiChatWidgetComponent],
+  imports: [CommonModule, RouterOutlet, NavbarComponent, FooterComponent, SecondaryNavbarComponent, AiChatWidgetComponent, KpiBadgeComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

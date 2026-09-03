@@ -209,6 +209,8 @@ export interface ProductDetails {
     comments?: string;
     costPricePerUnit?: number;
     sellingPricePerUnit?: number;
+    adultSellingPricePerUnit?: number;
+    childrenSellingPricePerUnit?: number;
     sizes?: {
       xs?: { men?: number; women?: number; uni?: number };
       s?: { men?: number; women?: number; uni?: number };

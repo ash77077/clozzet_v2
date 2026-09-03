@@ -443,6 +443,87 @@
               </div>
             </div>
 
+            <!-- Payment Section -->
+            <div class="jira-section payment-section">
+              <div class="payment-section-header">
+                <h4 class="jira-section-label"><i class="pi pi-wallet"></i> Payment</h4>
+                <button class="edit-payment-btn" (click)="startEditingPayment()" *ngIf="!isEditingPayment && isAdminOrManager()">
+                  <i class="pi pi-pencil"></i> Edit
+                </button>
+              </div>
+
+              <!-- View mode -->
+              <ng-container *ngIf="!isEditingPayment">
+                <div class="payment-view-grid">
+                  <div class="pv-item">
+                    <span class="pv-label">Status</span>
+                    <p-tag [value]="getPaymentStatusLabel(selectedOrder.paymentStatus)"
+                           [severity]="getPaymentStatusSeverity(selectedOrder.paymentStatus)">
+                    </p-tag>
+                  </div>
+                  <div class="pv-item">
+                    <span class="pv-label">Expected Revenue</span>
+                    <span class="pv-value">{{ selectedOrder.expectedRevenue != null ? (selectedOrder.expectedRevenue | number) + ' ֏' : '—' }}</span>
+                  </div>
+                  <div class="pv-item">
+                    <span class="pv-label">Paid Amount</span>
+                    <span class="pv-value paid">{{ (selectedOrder.paidAmount || 0) | number }} ֏</span>
+                  </div>
+                  <div class="pv-item">
+                    <span class="pv-label">Remaining</span>
+                    <span class="pv-value remaining">{{ ((selectedOrder.expectedRevenue || 0) - (selectedOrder.paidAmount || 0)) | number }} ֏</span>
+                  </div>
+                </div>
+                <div class="payment-progress-wrap" *ngIf="selectedOrder.expectedRevenue">
+                  <div class="payment-progress-bar" [style.width.%]="paidPercent()"></div>
+                </div>
+                <span class="payment-progress-label" *ngIf="selectedOrder.expectedRevenue">{{ paidPercent() }}% paid</span>
+              </ng-container>
+
+              <!-- Edit mode -->
+              <ng-container *ngIf="isEditingPayment">
+                <div class="payment-edit-grid">
+                  <div class="pe-field">
+                    <label class="pe-label">Payment Status</label>
+                    <p-select
+                      [(ngModel)]="editPaymentStatus"
+                      [options]="paymentStatusOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      appendTo="body"
+                      styleClass="full-width"
+                      (onChange)="onModalPaymentStatusChange($event.value)"
+                      [disabled]="isSavingPayment">
+                    </p-select>
+                  </div>
+                  <div class="pe-field">
+                    <label class="pe-label">Expected Revenue (֏)</label>
+                    <div (wheel)="onNumberWheel($event)">
+                      <p-inputNumber [(ngModel)]="editExpectedRevenue" [min]="0" [useGrouping]="true"
+                        suffix=" ֏" styleClass="full-width" appendTo="body" [disabled]="isSavingPayment">
+                      </p-inputNumber>
+                    </div>
+                  </div>
+                  <div class="pe-field">
+                    <label class="pe-label">Paid Amount (֏)</label>
+                    <div (wheel)="onNumberWheel($event)">
+                      <p-inputNumber [(ngModel)]="editPaidAmount" [min]="0" [useGrouping]="true"
+                        suffix=" ֏" styleClass="full-width" appendTo="body" [disabled]="isSavingPayment">
+                      </p-inputNumber>
+                    </div>
+                  </div>
+                </div>
+                <div class="payment-edit-actions">
+                  <button class="pe-save-btn" (click)="savePaymentFromModal()" [disabled]="isSavingPayment">
+                    <i class="pi pi-check"></i> {{ isSavingPayment ? 'Saving…' : 'Save' }}
+                  </button>
+                  <button class="pe-cancel-btn" (click)="cancelEditingPayment()" [disabled]="isSavingPayment">
+                    <i class="pi pi-times"></i> Cancel
+                  </button>
+                </div>
+              </ng-container>
+            </div>
+
             <!-- Products Section -->
             <div class="jira-section" *ngIf="selectedOrder.products && selectedOrder.products.length > 0">
               <h4 class="jira-section-label"><i class="pi pi-box"></i> Products ({{ selectedOrder.products.length }})</h4>
@@ -485,9 +566,33 @@
                       <span class="pdk">Color Details</span>
                       <span class="pdv">{{ product.customColorDetails }}</span>
                     </div>
-                    <div class="product-detail-row" *ngIf="product.sellingPricePerUnit">
+                    <!-- New split pricing -->
+                    <ng-container *ngIf="product.adultSellingPricePerUnit || product.childrenSellingPricePerUnit">
+                      <div class="product-detail-row" *ngIf="product.adultSellingPricePerUnit">
+                        <span class="pdk">Adult Price / Unit</span>
+                        <span class="pdv">{{ product.adultSellingPricePerUnit | number }} ֏</span>
+                      </div>
+                      <div class="product-detail-row" *ngIf="product.childrenSellingPricePerUnit">
+                        <span class="pdk">Children Price / Unit</span>
+                        <span class="pdv">{{ product.childrenSellingPricePerUnit | number }} ֏</span>
+                      </div>
+                      <div class="product-detail-row" *ngIf="product.adultSellingPricePerUnit && getProductAdultQuantity(product) > 0">
+                        <span class="pdk">Adult Total</span>
+                        <span class="pdv revenue-highlight">{{ (product.adultSellingPricePerUnit * getProductAdultQuantity(product)) | number }} ֏
+                          <small>({{ getProductAdultQuantity(product) }} units)</small>
+                        </span>
+                      </div>
+                      <div class="product-detail-row" *ngIf="product.childrenSellingPricePerUnit && getProductChildrenQuantity(product) > 0">
+                        <span class="pdk">Children Total</span>
+                        <span class="pdv revenue-highlight">{{ (product.childrenSellingPricePerUnit * getProductChildrenQuantity(product)) | number }} ֏
+                          <small>({{ getProductChildrenQuantity(product) }} units)</small>
+                        </span>
+                      </div>
+                    </ng-container>
+                    <!-- Legacy single price (old orders) -->
+                    <div class="product-detail-row" *ngIf="product.sellingPricePerUnit && !product.adultSellingPricePerUnit && !product.childrenSellingPricePerUnit">
                       <span class="pdk">Price per Unit</span>
-                      <span class="pdv">{{ product.sellingPricePerUnit }}</span>
+                      <span class="pdv">{{ product.sellingPricePerUnit | number }} ֏</span>
                     </div>
                     <div class="product-detail-row full-width" *ngIf="product.comments">
                       <span class="pdk">Comments</span>
@@ -737,6 +842,12 @@
                 <div class="act-content act-file" *ngIf="item.type === 'file_upload'">
                   <i class="pi pi-paperclip"></i>
                   <span>{{ item.content }}</span>
+                </div>
+
+                <!-- Payment change -->
+                <div class="act-content act-payment" *ngIf="item.type === 'payment_change'">
+                  <i class="pi pi-wallet"></i>
+                  <span [innerHTML]="item.content"></span>
                 </div>
               </div>
             </div>
@@ -1018,30 +1129,57 @@
             <textarea pTextarea formControlName="customColorDetails" rows="2" placeholder="Describe custom colors…" class="full-width"></textarea>
           </div>
 
-          <!-- Selling Price (Optional) -->
+          <!-- Pricing (Optional) -->
           <div class="pricing-section">
             <h5 class="pricing-section-title">
               <i class="pi pi-dollar"></i> Pricing <span class="optional-badge">Optional</span>
             </h5>
-            <div class="form-field">
-              <label class="field-label">Selling Price per Unit</label>
-              <input
-                pInputText
-                type="number"
-                formControlName="sellingPricePerUnit"
-                placeholder="Selling price (e.g. 15.00)"
-                class="full-width"
-                min="0"
-                step="0.01"
-                (wheel)="onNumberWheel($event)" />
-              <small class="field-hint">Price charged to customer per unit</small>
+            <div class="pricing-fields-row">
+              <div class="form-field">
+                <label class="field-label"><i class="pi pi-user"></i> Adult Price per Unit (֏)</label>
+                <input
+                  pInputText
+                  type="number"
+                  formControlName="adultSellingPricePerUnit"
+                  placeholder="e.g. 5000"
+                  class="full-width"
+                  min="0"
+                  step="1"
+                  (wheel)="onNumberWheel($event)" />
+                <small class="field-hint" *ngIf="calculateAdultTotal(i) > 0">
+                  {{ calculateAdultTotal(i) }} adult units
+                </small>
+              </div>
+              <div class="form-field">
+                <label class="field-label"><i class="pi pi-star"></i> Children Price per Unit (֏)</label>
+                <input
+                  pInputText
+                  type="number"
+                  formControlName="childrenSellingPricePerUnit"
+                  placeholder="e.g. 3500"
+                  class="full-width"
+                  min="0"
+                  step="1"
+                  (wheel)="onNumberWheel($event)" />
+                <small class="field-hint" *ngIf="calculateChildrenTotal(i) > 0">
+                  {{ calculateChildrenTotal(i) }} children units
+                </small>
+              </div>
             </div>
 
-            <!-- Revenue Preview -->
+            <!-- Revenue Preview breakdown -->
             <div class="revenue-preview-card" *ngIf="hasSellingPrice(i)">
-              <div class="revenue-item">
-                <span class="revenue-label"><i class="pi pi-shopping-cart"></i> Total Revenue:</span>
-                <span class="revenue-value">{{ calculateProductRevenue(i).toFixed(2) }}</span>
+              <div class="revenue-item" *ngIf="calculateAdultRevenue(i) > 0">
+                <span class="revenue-label"><i class="pi pi-user"></i> Adult Total:</span>
+                <span class="revenue-value">{{ calculateAdultRevenue(i) | number }} ֏</span>
+              </div>
+              <div class="revenue-item" *ngIf="calculateChildrenRevenue(i) > 0">
+                <span class="revenue-label"><i class="pi pi-star"></i> Children Total:</span>
+                <span class="revenue-value">{{ calculateChildrenRevenue(i) | number }} ֏</span>
+              </div>
+              <div class="revenue-item revenue-item-total" *ngIf="calculateAdultRevenue(i) > 0 && calculateChildrenRevenue(i) > 0">
+                <span class="revenue-label"><i class="pi pi-wallet"></i> Product Total:</span>
+                <span class="revenue-value">{{ calculateProductRevenue(i) | number }} ֏</span>
               </div>
             </div>
           </div>
@@ -1050,85 +1188,132 @@
           <div formGroupName="sizes" class="sizes-section">
             <div class="sizes-header-row">
               <label class="sizes-label">Size Breakdown</label>
-              <div class="sizes-toggles">
-                <div class="size-category-toggle">
-                  <button type="button" class="size-cat-btn" [class.active]="!isChildSizes" (click)="isChildSizes = false">Adult</button>
-                  <button type="button" class="size-cat-btn" [class.active]="isChildSizes" (click)="isChildSizes = true">Children</button>
-                </div>
-                <div class="size-mode-toggle">
-                  <label class="toggle-label">Split by Gender</label>
-                  <p-toggleswitch [(ngModel)]="sizeBreakdownMode" [ngModelOptions]="{standalone: true}"
-                    [trueValue]="'split'" [falseValue]="'uni'"
-                    pTooltip="Toggle between Uni-only mode and Men/Women/Uni split mode"
-                    tooltipPosition="top">
-                  </p-toggleswitch>
+              <div class="size-mode-toggle">
+	              <div class="size-category-switch">
+		              <button type="button" class="size-cat-btn"
+		                      [class.active]="sizeCategory[i] === 'adult'"
+		                      (click)="sizeCategory[i] = 'adult'">
+			              <i class="pi pi-user"></i> Adult
+			              <span class="size-cat-count" *ngIf="calculateAdultTotal(i) > 0">{{ calculateAdultTotal(i) }}</span>
+		              </button>
+		              <button type="button" class="size-cat-btn"
+		                      [class.active]="sizeCategory[i] === 'children'"
+		                      (click)="sizeCategory[i] = 'children'">
+			              <i class="pi pi-star"></i> Children
+			              <span class="size-cat-count" *ngIf="calculateChildrenTotal(i) > 0">{{ calculateChildrenTotal(i) }}</span>
+		              </button>
+	              </div>
+                <div class="split-by-gender">
+	                <label class="toggle-label">Split by Gender</label>
+                <p-toggleswitch [(ngModel)]="sizeBreakdownMode" [ngModelOptions]="{standalone: true}"
+                  [trueValue]="'split'" [falseValue]="'uni'"
+                  pTooltip="Toggle between Uni-only mode and Men/Women/Uni split mode"
+                  tooltipPosition="top">
+                </p-toggleswitch>
                 </div>
               </div>
             </div>
 
-            <!-- UNI-ONLY MODE -->
-            <div class="sizes-table" *ngIf="sizeBreakdownMode === 'uni'">
-              <div class="sizes-header">
-                <div class="size-col-uni">Size</div>
-                <div class="size-col-uni">Quantity</div>
-              </div>
-              <div class="size-row" *ngFor="let size of activeSizeKeys" [formGroupName]="size">
-                <div class="size-col-uni size-label">{{ getSizeLabelForKey(size) }}</div>
-                <div class="size-col-uni">
-                  <input type="number" formControlName="uni" min="0" class="size-input"
-                    [attr.data-product]="i"
-                    [attr.data-size]="size"
-                    [attr.data-gender]="'uni'"
-                    (keydown)="onSizeInputKeydown($event, size, 'uni', i)"
-                    (wheel)="onNumberWheel($event)" />
+            <!-- ── Adult / Children switch with live counts ── -->
+
+
+            <!-- ── ADULT table (hidden but still in DOM so form values persist) ── -->
+            <div [style.display]="sizeCategory[i] === 'adult' ? 'block' : 'none'">
+              <!-- UNI-ONLY MODE — Adult -->
+              <div class="sizes-table" *ngIf="sizeBreakdownMode === 'uni'">
+                <div class="sizes-header">
+                  <div class="size-col-uni">Size</div>
+                  <div class="size-col-uni">Quantity</div>
+                </div>
+                <div class="size-row" *ngFor="let size of ADULT_SIZE_KEYS" [formGroupName]="size">
+                  <div class="size-col-uni size-label">{{ getSizeLabelForKey(size) }}</div>
+                  <div class="size-col-uni">
+                    <input type="number" formControlName="uni" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'uni'"
+                      (keydown)="onSizeInputKeydown($event, size, 'uni', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
                 </div>
               </div>
-              <div class="size-row size-total-row">
-                <div class="size-col-uni"><strong>Total</strong></div>
-                <div class="size-col-uni"><strong>{{ calculateProductTotal('uni', i) }}</strong></div>
+              <!-- SPLIT MODE — Adult -->
+              <div class="sizes-table" *ngIf="sizeBreakdownMode === 'split'">
+                <div class="sizes-header">
+                  <div class="size-col">Size</div>
+                  <div class="size-col">Men</div>
+                  <div class="size-col">Women</div>
+                  <div class="size-col">Uni</div>
+                </div>
+                <div class="size-row" *ngFor="let size of ADULT_SIZE_KEYS" [formGroupName]="size">
+                  <div class="size-col size-label">{{ getSizeLabelForKey(size) }}</div>
+                  <div class="size-col">
+                    <input type="number" formControlName="men" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'men'"
+                      (keydown)="onSizeInputKeydown($event, size, 'men', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
+                  <div class="size-col">
+                    <input type="number" formControlName="women" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'women'"
+                      (keydown)="onSizeInputKeydown($event, size, 'women', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
+                  <div class="size-col">
+                    <input type="number" formControlName="uni" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'uni'"
+                      (keydown)="onSizeInputKeydown($event, size, 'uni', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- SPLIT MODE (Men/Women/Uni) -->
-            <div class="sizes-table" *ngIf="sizeBreakdownMode === 'split'">
-              <div class="sizes-header">
-                <div class="size-col">Size</div>
-                <div class="size-col">Men</div>
-                <div class="size-col">Women</div>
-                <div class="size-col">Uni</div>
-              </div>
-              <div class="size-row" *ngFor="let size of activeSizeKeys" [formGroupName]="size">
-                <div class="size-col size-label">{{ getSizeLabelForKey(size) }}</div>
-                <div class="size-col">
-                  <input type="number" formControlName="men" min="0" class="size-input"
-                    [attr.data-product]="i"
-                    [attr.data-size]="size"
-                    [attr.data-gender]="'men'"
-                    (keydown)="onSizeInputKeydown($event, size, 'men', i)"
-                    (wheel)="onNumberWheel($event)" />
+            <!-- ── CHILDREN table (hidden but still in DOM so form values persist) ── -->
+            <div [style.display]="sizeCategory[i] === 'children' ? 'block' : 'none'">
+              <!-- UNI-ONLY MODE — Children -->
+              <div class="sizes-table" *ngIf="sizeBreakdownMode === 'uni'">
+                <div class="sizes-header">
+                  <div class="size-col-uni">Size</div>
+                  <div class="size-col-uni">Quantity</div>
                 </div>
-                <div class="size-col">
-                  <input type="number" formControlName="women" min="0" class="size-input"
-                    [attr.data-product]="i"
-                    [attr.data-size]="size"
-                    [attr.data-gender]="'women'"
-                    (keydown)="onSizeInputKeydown($event, size, 'women', i)"
-                    (wheel)="onNumberWheel($event)" />
-                </div>
-                <div class="size-col">
-                  <input type="number" formControlName="uni" min="0" class="size-input"
-                    [attr.data-product]="i"
-                    [attr.data-size]="size"
-                    [attr.data-gender]="'uni'"
-                    (keydown)="onSizeInputKeydown($event, size, 'uni', i)"
-                    (wheel)="onNumberWheel($event)" />
+                <div class="size-row" *ngFor="let size of CHILD_SIZE_KEYS" [formGroupName]="size">
+                  <div class="size-col-uni size-label">{{ getSizeLabelForKey(size) }}</div>
+                  <div class="size-col-uni">
+                    <input type="number" formControlName="uni" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'uni'"
+                      (keydown)="onSizeInputKeydown($event, size, 'uni', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
                 </div>
               </div>
-              <div class="size-row size-total-row">
-                <div class="size-col"><strong>Total</strong></div>
-                <div class="size-col"><strong>{{ calculateProductTotal('men', i) }}</strong></div>
-                <div class="size-col"><strong>{{ calculateProductTotal('women', i) }}</strong></div>
-                <div class="size-col"><strong>{{ calculateProductTotal('uni', i) }}</strong></div>
+              <!-- SPLIT MODE — Children -->
+              <div class="sizes-table" *ngIf="sizeBreakdownMode === 'split'">
+                <div class="sizes-header">
+                  <div class="size-col">Size</div>
+                  <div class="size-col">Men</div>
+                  <div class="size-col">Women</div>
+                  <div class="size-col">Uni</div>
+                </div>
+                <div class="size-row" *ngFor="let size of CHILD_SIZE_KEYS" [formGroupName]="size">
+                  <div class="size-col size-label">{{ getSizeLabelForKey(size) }}</div>
+                  <div class="size-col">
+                    <input type="number" formControlName="men" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'men'"
+                      (keydown)="onSizeInputKeydown($event, size, 'men', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
+                  <div class="size-col">
+                    <input type="number" formControlName="women" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'women'"
+                      (keydown)="onSizeInputKeydown($event, size, 'women', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
+                  <div class="size-col">
+                    <input type="number" formControlName="uni" min="0" class="size-input"
+                      [attr.data-product]="i" [attr.data-size]="size" [attr.data-gender]="'uni'"
+                      (keydown)="onSizeInputKeydown($event, size, 'uni', i)"
+                      (wheel)="onNumberWheel($event)" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1306,7 +1491,7 @@
         </div>
 
         <!-- Payment -->
-        <div class="form-section-divider">Payment</div>
+        <div class="form-section-divider step-title">Payment</div>
         <div class="form-grid">
           <div class="form-field">
             <label class="field-label">Payment Status</label>
@@ -1323,6 +1508,9 @@
             </div>
             <span class="field-hint" *ngIf="calculatedExpectedRevenue > 0">
               <i class="pi pi-calculator"></i> Auto-calculated: {{ calculatedExpectedRevenue | number }} ֏
+              <ng-container *ngIf="calculatedAdultRevenue > 0 && calculatedChildrenRevenue > 0">
+                &nbsp;(Adult: {{ calculatedAdultRevenue | number }} ֏ + Children: {{ calculatedChildrenRevenue | number }} ֏)
+              </ng-container>
             </span>
           </div>
           <div class="form-field">

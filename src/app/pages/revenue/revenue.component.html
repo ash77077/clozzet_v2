@@ -432,6 +432,36 @@
             <span class="total-value margin">{{ selectedOrder.averageMargin.toFixed(1) }}%</span>
           </div>
         </div>
+
+        <!-- Payment Summary -->
+        <div class="payment-summary">
+          <h4 class="section-title" style="margin-top:1.25rem"><i class="pi pi-wallet"></i> Payment Summary</h4>
+          <div class="payment-summary-grid">
+            <div class="payment-summary-item">
+              <span class="ps-label">Payment Status</span>
+              <p-tag
+                [value]="getPaymentStatusLabel(selectedOrder.paymentStatus)"
+                [severity]="getPaymentStatusSeverity(selectedOrder.paymentStatus)">
+              </p-tag>
+            </div>
+            <div class="payment-summary-item">
+              <span class="ps-label">Expected Revenue</span>
+              <span class="ps-value">{{ formatCurrency(selectedOrder.expectedRevenue || selectedOrder.totalRevenue || 0) }}</span>
+            </div>
+            <div class="payment-summary-item">
+              <span class="ps-label">Amount Paid</span>
+              <span class="ps-value paid">{{ formatCurrency(selectedOrder.paidAmount || 0) }}</span>
+            </div>
+            <div class="payment-summary-item">
+              <span class="ps-label">Remaining</span>
+              <span class="ps-value remaining">{{ formatCurrency((selectedOrder.expectedRevenue || selectedOrder.totalRevenue || 0) - (selectedOrder.paidAmount || 0)) }}</span>
+            </div>
+          </div>
+          <div class="payment-progress-wrap">
+            <div class="payment-progress-bar" [style.width.%]="paidPercent(selectedOrder)"></div>
+          </div>
+          <span class="payment-progress-label">{{ paidPercent(selectedOrder) }}% paid</span>
+        </div>
       </div>
     </div>
 

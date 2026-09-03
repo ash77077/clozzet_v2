@@ -173,21 +173,16 @@ export const routes: Routes = [
     path: 'configurator',
     loadComponent: () => import('./components/configurator/configurator.component').then(m => m.ConfiguratorComponent)
   },
-  // Beating Heart — Artavazd & Ani wedding invitation
-  {
-    path: 'ash-gog-wedding-invitation',
-    loadComponent: () => import('./components/invitation2/invitation2.component').then(m => m.Invitation2Component)
-  },
-  // Wedding guests admin
-  {
-    path: 'wedding-guests',
-    loadComponent: () => import('./pages/wedding-guests/wedding-guests.component').then(m => m.WeddingGuestsComponent),
-    canActivate: [ManagerGuard]
-  },
   // Employee Salary Management
   {
     path: 'employees',
     loadComponent: () => import('./pages/employees/employees.component').then(m => m.EmployeesComponent),
+    canActivate: [AdminGuard]
+  },
+  // Manager KPI
+  {
+    path: 'manager-kpi',
+    loadComponent: () => import('./pages/manager-kpi/manager-kpi.component').then(m => m.ManagerKpiComponent),
     canActivate: [AdminGuard]
   },
   // Wildcard route - must be last

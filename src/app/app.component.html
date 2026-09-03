@@ -3,3 +3,4 @@
 <router-outlet></router-outlet>
 <app-footer *ngIf="!hideNavbars"></app-footer>
 <app-ai-chat-widget *ngIf="(aiEnabled$ | async) && (isAuthenticated$ | async) && !hideNavbars"></app-ai-chat-widget>
+<app-kpi-badge *ngIf="(isAuthenticated$ | async) && !hideNavbars"></app-kpi-badge>

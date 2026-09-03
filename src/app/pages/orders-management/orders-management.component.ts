@@ -38,7 +38,7 @@ export interface KanbanColumn {
 }
 
 export interface ActivityItem {
-  type: 'comment' | 'status_change' | 'created' | 'file_upload';
+  type: 'comment' | 'status_change' | 'created' | 'file_upload' | 'payment_change';
   date: Date | string;
   author: string;
   content: string;
@@ -130,8 +130,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // Size breakdown mode: 'uni' (default) or 'split' (men/women/uni)
   sizeBreakdownMode: 'uni' | 'split' = 'uni';
 
-  // Size category toggle
-  isChildSizes = false;
+  // Size category toggle — per product: 'adult' | 'children'
+  sizeCategory: ('adult' | 'children')[] = ['adult'];
   readonly ADULT_SIZE_KEYS = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
   readonly CHILD_SIZE_KEYS = ['s1_2', 's3_4', 's5_6', 's7_8', 's9_10', 's11_12', 's13_14', 's15_16'];
   readonly CHILD_SIZE_LABELS: Record<string, string> = {
@@ -145,10 +145,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // State for the "add custom size" inline form per product
   showAddCustomSize: boolean[] = [false];
   newCustomSizeLabel: string[] = [''];
-
-  get activeSizeKeys(): string[] {
-    return this.isChildSizes ? this.CHILD_SIZE_KEYS : this.ADULT_SIZE_KEYS;
-  }
 
   getSizeLabelForKey(key: string): string {
     return this.CHILD_SIZE_LABELS[key] ?? key.toUpperCase();
@@ -261,6 +257,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Add Order Modal — File uploads ────────────────────────────────────────
   addOrderPendingFiles: File[] = [];
+
+  // ─── Jira Modal — Payment inline edit ─────────────────────────────────────
+  isEditingPayment = false;
+  editPaymentStatus = 'not_paid';
+  editPaidAmount: number | null = null;
+  editExpectedRevenue: number | null = null;
+  isSavingPayment = false;
 
   // ─── Image preview modal ───────────────────────────────────────────────────
   showImagePreview = false;
@@ -528,8 +531,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       logoPosition:        [''],
       logoSize:            [''],
       comments:            [''],
-      costPricePerUnit:    [null],
-      sellingPricePerUnit: [null],
+      costPricePerUnit:             [null],
+      sellingPricePerUnit:          [null],
+      adultSellingPricePerUnit:     [null],
+      childrenSellingPricePerUnit:  [null],
       sizes:               this.fb.group({
         xs:     this.fb.group({ men: [0], women: [0], uni: [0] }),
         s:      this.fb.group({ men: [0], women: [0], uni: [0] }),
@@ -566,6 +571,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newClothTypeLabel.push('');
     this.showAddTextileType.push(false);
     this.newTextileTypeLabel.push('');
+    this.sizeCategory.push('adult');
   }
 
   // Remove a product from the array
@@ -579,6 +585,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.newClothTypeLabel.splice(index, 1);
       this.showAddTextileType.splice(index, 1);
       this.newTextileTypeLabel.splice(index, 1);
+      this.sizeCategory.splice(index, 1);
     }
   }
 
@@ -587,26 +594,56 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     return this.products.at(productIndex).get('sizes') as FormGroup;
   }
 
-  // Calculate total for a specific gender across all sizes for a product
+  // All size keys — adult + children combined
+  readonly ALL_SIZE_KEYS = [...this.ADULT_SIZE_KEYS, ...this.CHILD_SIZE_KEYS];
+
+  // Calculate total for a specific gender across ALL sizes (adult + children) for a product
   calculateProductTotal(gender: 'men' | 'women' | 'uni', productIndex: number): number {
     const product = this.products.at(productIndex);
     const sizes = product.get('sizes') as FormGroup;
     if (!sizes) return 0;
 
     let total = 0;
-
-    this.activeSizeKeys.forEach(sizeKey => {
+    this.ALL_SIZE_KEYS.forEach(sizeKey => {
       const sizeGroup = sizes.get(sizeKey) as FormGroup;
       if (sizeGroup) {
-        const value = sizeGroup.get(gender)?.value || 0;
-        total += Number(value);
+        total += Number(sizeGroup.get(gender)?.value || 0);
       }
     });
-
     return total;
   }
 
-  // Calculate total quantity for a specific product
+  // Calculate adult-only quantity for a product (for revenue split)
+  calculateAdultTotal(productIndex: number): number {
+    const product = this.products.at(productIndex);
+    const sizes = product.get('sizes') as FormGroup;
+    if (!sizes) return 0;
+    let total = 0;
+    this.ADULT_SIZE_KEYS.forEach(key => {
+      const g = sizes.get(key) as FormGroup;
+      if (g) total += Number(g.get('men')?.value || 0) + Number(g.get('women')?.value || 0) + Number(g.get('uni')?.value || 0);
+    });
+    return total;
+  }
+
+  // Calculate children-only quantity for a product (for revenue split)
+  calculateChildrenTotal(productIndex: number): number {
+    const product = this.products.at(productIndex);
+    const sizes = product.get('sizes') as FormGroup;
+    if (!sizes) return 0;
+    let total = 0;
+    this.CHILD_SIZE_KEYS.forEach(key => {
+      const g = sizes.get(key) as FormGroup;
+      if (g) total += Number(g.get('men')?.value || 0) + Number(g.get('women')?.value || 0) + Number(g.get('uni')?.value || 0);
+    });
+    // Also count custom sizes as children if child mode was active — custom sizes go under general count
+    total += this.calculateCustomSizeTotal('men', productIndex) +
+             this.calculateCustomSizeTotal('women', productIndex) +
+             this.calculateCustomSizeTotal('uni', productIndex);
+    return total;
+  }
+
+  // Calculate total quantity for a specific product (all sizes + custom sizes)
   calculateSingleProductTotal(productIndex: number): number {
     return this.calculateProductTotal('men', productIndex) +
            this.calculateProductTotal('women', productIndex) +
@@ -632,18 +669,37 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
    */
   getProductTotalQuantity(product: any): number {
     if (!product || !product.sizes) return 0;
-
     let total = 0;
-    const sizes = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
-
-    sizes.forEach(size => {
-      if (product.sizes[size]) {
-        total += (product.sizes[size].men || 0) +
-                 (product.sizes[size].women || 0) +
-                 (product.sizes[size].uni || 0);
+    Object.values(product.sizes).forEach((sizeObj: any) => {
+      if (sizeObj && typeof sizeObj === 'object') {
+        total += (sizeObj.men || 0) + (sizeObj.women || 0) + (sizeObj.uni || 0);
       }
     });
+    return total;
+  }
 
+  // Adult-only quantity from a saved product object (for view modal revenue breakdown)
+  getProductAdultQuantity(product: any): number {
+    if (!product || !product.sizes) return 0;
+    let total = 0;
+    this.ADULT_SIZE_KEYS.forEach(key => {
+      const s = product.sizes[key];
+      if (s) total += (s.men || 0) + (s.women || 0) + (s.uni || 0);
+    });
+    return total;
+  }
+
+  // Children-only quantity from a saved product object (for view modal revenue breakdown)
+  getProductChildrenQuantity(product: any): number {
+    if (!product || !product.sizes) return 0;
+    let total = 0;
+    // All keys that are NOT in the adult list count as children
+    Object.keys(product.sizes).forEach(key => {
+      if (!this.ADULT_SIZE_KEYS.includes(key)) {
+        const s = product.sizes[key];
+        if (s) total += (s.men || 0) + (s.women || 0) + (s.uni || 0);
+      }
+    });
     return total;
   }
 
@@ -703,7 +759,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
     event.preventDefault();
 
-    const sizes = this.activeSizeKeys;
+    const sizes = this.sizeCategory[productIndex] === 'children' ? this.CHILD_SIZE_KEYS : this.ADULT_SIZE_KEYS;
     const genders = this.sizeBreakdownMode === 'uni' ? ['uni'] : ['men', 'women', 'uni'];
 
     const currentSizeIndex = sizes.indexOf(currentSize);
@@ -750,27 +806,53 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Financial Calculations ───────────────────────────────────────────────
 
-  // Check if a product has selling price
+  // True if a product has any price declared (adult or children)
   hasSellingPrice(productIndex: number): boolean {
-    const product = this.products.at(productIndex);
-    const sellingPrice = product.get('sellingPricePerUnit')?.value;
-    return sellingPrice !== null && sellingPrice !== undefined && sellingPrice > 0;
+    const p = this.products.at(productIndex);
+    const adult    = p.get('adultSellingPricePerUnit')?.value;
+    const children = p.get('childrenSellingPricePerUnit')?.value;
+    return (adult != null && adult > 0) || (children != null && children > 0);
   }
 
-  // Calculate total revenue for a product
+  // Adult revenue for one product
+  calculateAdultRevenue(productIndex: number): number {
+    const p = this.products.at(productIndex);
+    const price = Number(p.get('adultSellingPricePerUnit')?.value || 0);
+    return price * this.calculateAdultTotal(productIndex);
+  }
+
+  // Children revenue for one product
+  calculateChildrenRevenue(productIndex: number): number {
+    const p = this.products.at(productIndex);
+    const price = Number(p.get('childrenSellingPricePerUnit')?.value || 0);
+    return price * this.calculateChildrenTotal(productIndex);
+  }
+
+  // Total revenue for one product (adult + children)
   calculateProductRevenue(productIndex: number): number {
-    const product = this.products.at(productIndex);
-    const sellingPrice = product.get('sellingPricePerUnit')?.value || 0;
-    const quantity = this.calculateSingleProductTotal(productIndex);
-    return sellingPrice * quantity;
+    return this.calculateAdultRevenue(productIndex) + this.calculateChildrenRevenue(productIndex);
   }
 
-  // Sum of all products' selling price × quantity
+  // Sum of all products' revenue
   get calculatedExpectedRevenue(): number {
     let total = 0;
     for (let i = 0; i < this.products.length; i++) {
       total += this.calculateProductRevenue(i);
     }
+    return total;
+  }
+
+  // Grand adult revenue across all products
+  get calculatedAdultRevenue(): number {
+    let total = 0;
+    for (let i = 0; i < this.products.length; i++) total += this.calculateAdultRevenue(i);
+    return total;
+  }
+
+  // Grand children revenue across all products
+  get calculatedChildrenRevenue(): number {
+    let total = 0;
+    for (let i = 0; i < this.products.length; i++) total += this.calculateChildrenRevenue(i);
     return total;
   }
 
@@ -802,6 +884,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newClothTypeLabel = [''];
     this.showAddTextileType = [false];
     this.newTextileTypeLabel = [''];
+    this.sizeCategory = ['adult'];
 
     this.showAddOrderDialog = true;
   }
@@ -821,6 +904,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newClothTypeLabel = [''];
     this.showAddTextileType = [false];
     this.newTextileTypeLabel = [''];
+    this.sizeCategory = ['adult'];
   }
 
   generateOrderNumber(): string {
@@ -1191,6 +1275,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.showOrderDetails = false;
     this.selectedOrder = null;
     this.isEditMode = false;
+    this.isEditingPayment = false;
     this.orderActivity = [];
     this.pendingFiles = [];
     this.commentText = '';
@@ -1200,6 +1285,108 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {},
       replaceUrl: true
+    });
+  }
+
+  // ─── Payment inline edit (Jira modal) ─────────────────────────────────────
+
+  startEditingPayment(): void {
+    if (!this.selectedOrder) return;
+    const o = this.selectedOrder as any;
+    this.editPaymentStatus  = o.paymentStatus || 'not_paid';
+    this.editPaidAmount     = o.paidAmount ?? null;
+    this.editExpectedRevenue = o.expectedRevenue ?? null;
+    this.isEditingPayment   = true;
+  }
+
+  cancelEditingPayment(): void {
+    this.isEditingPayment = false;
+  }
+
+  onModalPaymentStatusChange(status: string): void {
+    if (status === 'paid') {
+      this.editPaidAmount = this.editExpectedRevenue ?? (this.selectedOrder as any)?.totalRevenue ?? null;
+    } else if (status === 'not_paid') {
+      this.editPaidAmount = 0;
+    }
+  }
+
+  getPaymentStatusLabel(status: string | undefined): string {
+    return this.paymentStatusOptions.find(o => o.value === status)?.label ?? 'Not Paid';
+  }
+
+  getPaymentStatusSeverity(status: string | undefined): 'success' | 'warn' | 'danger' | 'info' | 'secondary' {
+    switch (status) {
+      case 'paid':    return 'success';
+      case 'partial': return 'warn';
+      case 'deposit': return 'info';
+      default:        return 'danger';
+    }
+  }
+
+  paidPercent(): number {
+    const o = this.selectedOrder as any;
+    if (!o) return 0;
+    const expected = o.expectedRevenue || 0;
+    if (!expected) return 0;
+    return Math.min(100, Math.round(((o.paidAmount || 0) / expected) * 100));
+  }
+
+  savePaymentFromModal(): void {
+    if (!this.selectedOrder) return;
+    const id = (this.selectedOrder as any)._id || this.selectedOrder.id;
+    if (!id) return;
+
+    const o = this.selectedOrder as any;
+    const oldStatus = this.getPaymentStatusLabel(o.paymentStatus);
+    const newStatus = this.getPaymentStatusLabel(this.editPaymentStatus);
+    const oldPaid   = o.paidAmount ?? 0;
+    const newPaid   = this.editPaidAmount ?? 0;
+    const oldExp    = o.expectedRevenue ?? null;
+    const newExp    = this.editExpectedRevenue ?? null;
+
+    const author = this.currentUser
+      ? `${this.currentUser.firstName} ${this.currentUser.lastName}`.trim()
+      : 'System';
+
+    this.isSavingPayment = true;
+
+    this.productDetailsService.updateProductDetails(id, {
+      paymentStatus:   this.editPaymentStatus as any,
+      paidAmount:      newPaid,
+      expectedRevenue: newExp ?? undefined,
+    } as any).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        // Patch local order object
+        o.paymentStatus   = this.editPaymentStatus;
+        o.paidAmount      = newPaid;
+        o.expectedRevenue = newExp ?? undefined;
+
+        // Build activity note
+        const lines: string[] = [];
+        if (oldStatus !== newStatus)
+          lines.push(`Payment status: <strong>${oldStatus}</strong> → <strong>${newStatus}</strong>`);
+        if (oldPaid !== newPaid)
+          lines.push(`Paid amount: <strong>${oldPaid.toLocaleString()} ֏</strong> → <strong>${newPaid.toLocaleString()} ֏</strong>`);
+        if (oldExp !== newExp)
+          lines.push(`Expected revenue: <strong>${(oldExp ?? 0).toLocaleString()} ֏</strong> → <strong>${(newExp ?? 0).toLocaleString()} ֏</strong>`);
+
+        if (lines.length > 0) {
+          const noteContent = `PAYMENT: ${lines.join(' | ')}`;
+          this.productDetailsService.addManufacturingNotes(id, noteContent, author)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({ next: () => this.loadOrderActivityForCurrent() });
+        }
+
+        this.isSavingPayment = false;
+        this.isEditingPayment = false;
+        this.loadOrders();
+        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Payment updated.' });
+      },
+      error: () => {
+        this.isSavingPayment = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save payment.' });
+      },
     });
   }
 
@@ -1256,13 +1443,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     });
 
     notes.forEach((note: any) => {
-      const isStatus = note.content?.startsWith('STATUS:');
-      const isFile   = note.content?.startsWith('Attached files:');
+      const isStatus  = note.content?.startsWith('STATUS:');
+      const isFile    = note.content?.startsWith('Attached files:');
+      const isPayment = note.content?.startsWith('PAYMENT:');
       this.orderActivity.push({
-        type: isStatus ? 'status_change' : isFile ? 'file_upload' : 'comment',
+        type: isStatus ? 'status_change' : isFile ? 'file_upload' : isPayment ? 'payment_change' : 'comment',
         date: note.date,
         author: note.author,
-        content: isStatus ? note.content.replace('STATUS:', '').trim() : note.content,
+        content: isStatus  ? note.content.replace('STATUS:', '').trim()
+               : isPayment ? note.content.replace('PAYMENT:', '').trim()
+               : note.content,
         avatarColor: this.getAvatarColor(note.author),
       });
     });
