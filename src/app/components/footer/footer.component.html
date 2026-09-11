@@ -37,7 +37,7 @@
         <h4 class="section-title">{{ 'footer.quickLinks.title' | translate }}</h4>
         <ul class="footer-links">
           <li *ngFor="let link of quickLinks">
-            <a (click)="navigateToLink(link)" class="footer-link" style="cursor: pointer;">{{ link.translationKey | translate }}</a>
+            <a [routerLink]="link.route" class="footer-link">{{ link.translationKey | translate }}</a>
           </li>
         </ul>
       </div>
@@ -75,11 +75,10 @@
         <div class="copyright">
           <p>{{ 'footer.copyright' | translate:{ year: currentYear, company: companyInfo.name } }}</p>
         </div>
-<!--	      TODO-->
         <div class="legal-links">
-          <a class="legal-link">{{ 'footer.legal.privacy' | translate }}</a>
-          <a class="legal-link">{{ 'footer.legal.terms' | translate }}</a>
-          <a class="legal-link">{{ 'footer.legal.cookies' | translate }}</a>
+          <a *ngFor="let link of legalLinks" [routerLink]="link.route" class="legal-link">
+            {{ link.translationKey | translate }}
+          </a>
         </div>
       </div>
     </div>

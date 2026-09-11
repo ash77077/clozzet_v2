@@ -1,0 +1,120 @@
+$navy: #0B132B;
+$orange: #FF7A00;
+$white: #ffffff;
+$muted: #A0AABF;
+$border: rgba(255, 255, 255, 0.07);
+
+.not-found-page {
+  background: $navy;
+  color: $white;
+  font-family: 'Inter', system-ui, sans-serif;
+  padding-top: 70px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.not-found-inner {
+  text-align: center;
+  padding: 80px 0;
+}
+
+.error-code {
+  font-size: clamp(6rem, 15vw, 10rem);
+  font-weight: 900;
+  line-height: 1;
+  color: transparent;
+  background: linear-gradient(135deg, $orange 0%, rgba(255, 122, 0, 0.3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  margin-bottom: 16px;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 800;
+  color: $white;
+  margin-bottom: 12px;
+}
+
+p {
+  font-size: 1.05rem;
+  color: $muted;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 56px;
+
+  .btn-primary {
+    padding: 14px 32px;
+    background: $orange;
+    color: $white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background 0.2s, transform 0.2s;
+
+    &:hover {
+      background: #e66a00;
+      transform: translateY(-2px);
+    }
+  }
+
+  .btn-secondary {
+    padding: 14px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: $white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: border-color 0.2s, background 0.2s;
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+}
+
+.helpful-links {
+  border-top: 1px solid $border;
+  padding-top: 32px;
+
+  p {
+    font-size: 0.9rem;
+    color: $muted;
+    margin-bottom: 16px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    li a {
+      color: $muted;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+
+      &:hover { color: $orange; }
+    }
+  }
+}

@@ -49,35 +49,15 @@ export class NavbarComponent implements OnInit {
     this.currentLanguage = this.translationService.getCurrentLanguage();
   }
 
+  productsLoading = false;
+
   navItems: NavItem[] = [
     { label: 'Home', route: '/' },
     { label: 'About', route: '/about' },
     // {
     //   label: 'Products',
     //   route: '/products',
-    //   children: [] // Will be populated dynamically from the database
-    // },
-    // {
-    //   label: 'Services',
-    //   route: '/services',
-    //   children: [
-    //     { label: 'Bulk Orders', route: '/services/bulk-orders' },
-    //     { label: 'Custom Design', route: '/services/design' },
-    //     { label: 'Embroidery', route: '/services/embroidery' },
-    //     { label: 'Screen Printing', route: '/services/printing' }
-    //   ]
-    // },
-    // {
-    //   label: 'Special Collection',
-    //   route: '/special-collection',
-    //   special: true,
-    //   children: [
-    //     { label: 'Hoodies', route: '/special-collection/hoodies' },
-    //     { label: 'Sweatshirts', route: '/special-collection/sweatshirts' },
-    //     { label: 'T-shirts', route: '/special-collection/t-shirts' },
-    //     { label: 'Tote Bags', route: '/special-collection/tote-bags' },
-    //     { label: 'Caps', route: '/special-collection/caps' }
-    //   ]
+    //   children: []
     // },
     // { label: 'Portfolio', route: '/portfolio' },
     { label: 'Contact', route: '/contact' }
@@ -88,26 +68,28 @@ export class NavbarComponent implements OnInit {
   }
 
   loadProductsForNavbar(): void {
+    this.productsLoading = false;
     this.productsService.getAllProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (products: Product[]) => {
-          // Filter only active products and map them to nav items
+          this.productsLoading = false;
           const activeProducts = products.filter(p => p.isActive);
           const productNavItems: NavItem[] = activeProducts.map(product => ({
             label: product.name,
             route: `/products/${product.id}`
           }));
-
-          // Update the Products dropdown with dynamic items
           const productsNav = this.navItems.find(item => item.label === 'Products');
           if (productsNav) {
-            productsNav.children = productNavItems;
+            productsNav.children = productNavItems.length ? productNavItems : undefined;
           }
         },
-        error: (err) => {
-          console.error('Failed to load products for navbar:', err);
-          // Keep the dropdown empty if loading fails
+        error: () => {
+          this.productsLoading = false;
+          console.warn('[Navbar] Products API unavailable — showing static link.');
+          // On failure: clear children so Products renders as a plain link, not an empty dropdown
+          const productsNav = this.navItems.find(item => item.label === 'Products');
+          if (productsNav) productsNav.children = undefined;
         }
       });
   }

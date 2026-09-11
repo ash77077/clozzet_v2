@@ -7,6 +7,7 @@ import { SecondaryNavbarComponent } from './shared/components/secondary-navbar/s
 import { AiChatWidgetComponent } from './shared/components/ai-chat-widget/ai-chat-widget.component';
 import { AuthService } from './services/auth.service';
 import { AiService } from './services/ai.service';
+import { SeoService } from './services/seo.service';
 import { Observable } from 'rxjs';
 import { map, filter, startWith } from 'rxjs/operators';
 
@@ -26,7 +27,8 @@ export class AppComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private aiService: AiService
+    private aiService: AiService,
+    private seoService: SeoService
   ) {
     this.isAuthenticated$ = this.authService.currentUser$.pipe(
       map(user => !!user)
@@ -35,6 +37,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.seoService.init();
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       startWith(null)

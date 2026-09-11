@@ -11,7 +11,7 @@ import { QuoteFormComponent } from '../../components/quote-form/quote-form.compo
   styleUrls: ['./contact.component.scss']
 })
 export class ContactComponent {
-  contactInfo = [
+  contactInfo: any = [
     {
       titleKey: 'contact.info.email.title',
       value: 'sales@clozzet.am',

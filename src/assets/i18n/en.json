@@ -401,6 +401,10 @@
     }
   },
   "services": {
+    "page": {
+      "title": "Our Services",
+      "subtitle": "Comprehensive B2B textile solutions designed to elevate your brand"
+    },
     "title": "Why Choose CLOZZET?",
     "mostPopular": "Most Popular",
     "items": {
@@ -732,6 +736,9 @@
     "ERROR_RETRY": "Retry"
   },
   "portfolio": {
+    "grid": {
+      "heading": "Portfolio Projects"
+    },
     "hero": {
       "title": "Our <strong>Portfolio</strong>",
       "subtitle": "Discover how we've partnered with leading businesses to deliver exceptional branded textile solutions"

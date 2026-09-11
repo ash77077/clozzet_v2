@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxGoogleAnalyticsModule } from 'ngx-google-analytics';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -16,7 +17,7 @@ export class HeroComponent implements OnInit, OnDestroy {
   isDesktop = true;
   private bpSub?: Subscription;
 
-  constructor(private bp: BreakpointObserver) {}
+  constructor(private bp: BreakpointObserver, private router: Router) {}
 
   ngOnInit(): void {
     this.bpSub = this.bp.observe('(min-width: 993px)').subscribe(result => {
@@ -34,7 +35,11 @@ export class HeroComponent implements OnInit, OnDestroy {
   }
 
   scrollToProducts(): void {
-    const element = document.getElementById('products-section');
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
+    const el = document.getElementById('products-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      this.router.navigate(['/products']);
+    }
   }
 }

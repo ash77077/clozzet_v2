@@ -401,6 +401,10 @@
     }
   },
   "services": {
+    "page": {
+      "title": "TODO: Our Services",
+      "subtitle": "TODO: Comprehensive B2B textile solutions designed to elevate your brand"
+    },
     "title": "Ինչու՞ ընտրել մեզ",
     "mostPopular": "Ամենահայտնի",
     "items": {
@@ -638,7 +642,7 @@
     "hero": {
       "eyebrow": "Կապ հաստատեք",
       "title": "Եկեք ստեղծենք",
-      "titleAccent": "ձեր ընկերության աշխատակիցների հագուստը",
+      "titleAccent": "լավագույնը ձեր ընկերության աշխատակիցների համար",
       "subtitle": "Պատրա՞ստ եք սկսել: Կապվեք մեր թիմի հետ անվճար խորհրդատվության և գնառաջարկի համար"
     },
     "info": {
@@ -668,6 +672,9 @@
     }
   },
   "portfolio": {
+    "grid": {
+      "heading": "TODO: Portfolio Projects"
+    },
     "hero": {
       "title": "Մեր <strong>Պորտֆոլիոն</strong>",
       "subtitle": "Բացահայտեք, թե ինչպես ենք մենք համագործակցել առաջատար բիզնեսների հետ՝ առաքելով բացառիկ բրենդավորված տեքստիլ լուծումներ"
