@@ -4,7 +4,12 @@
     <div class="navbar-brand">
       <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
         <div class="logo">
-          <img src="/images/logo-black.png" alt="CLOZZET" class="logo-image">
+          <picture>
+            <source type="image/webp" srcset="/images/logo-black.webp">
+            <img src="/images/logo-black.png" alt="CLOZZET" class="logo-image"
+              width="206" height="40"
+              fetchpriority="high" decoding="async">
+          </picture>
         </div>
       </a>
     </div>
@@ -185,7 +190,14 @@
   <div class="mobile-menu" [class.active]="isMobileMenuOpen">
     <div class="mobile-menu-header">
       <div class="mobile-logo">
-        <img src="/images/logo-white.png" alt="CLOZZET" class="mobile-logo-image">
+        @if (isMobileMenuOpen) {
+          <picture>
+            <source type="image/webp" srcset="/images/logo-white.webp">
+            <img src="/images/logo-white.png" alt="CLOZZET" class="mobile-logo-image"
+              width="206" height="40"
+              decoding="async">
+          </picture>
+        }
       </div>
       <button class="mobile-close-btn" (click)="closeMobileMenu()">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -4,7 +4,12 @@
       <!-- Company Info -->
       <div class="footer-section company-info">
         <div class="footer-logo">
-          <img src="/images/logo-white.png" alt="{{ companyInfo.name }}" class="footer-logo-image">
+          <picture>
+            <source type="image/webp" srcset="/images/logo-white.webp">
+            <img src="/images/logo-white.png" alt="{{ companyInfo.name }}" class="footer-logo-image"
+              width="206" height="40"
+              loading="lazy" decoding="async">
+          </picture>
         </div>
         <p class="company-description">{{ companyInfo.description | translate }}</p>
 

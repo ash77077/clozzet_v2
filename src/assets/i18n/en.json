@@ -670,7 +670,9 @@
   },
   "contact": {
     "hero": {
-      "title": "Contact Us",
+      "eyebrow": "Get In Touch",
+      "title": "Let's build something",
+      "titleAccent": "great together",
       "subtitle": "Ready to get started? Get in touch with our team for a free consultation and quote"
     },
     "info": {
