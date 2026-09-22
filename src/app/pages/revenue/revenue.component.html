@@ -107,11 +107,11 @@
           <th style="min-width:130px">Order #</th>
           <th style="min-width:180px">Company / Client</th>
           <th style="min-width:140px">Products</th>
-          <th style="min-width:90px">Units</th>
-          <th style="min-width:140px">Expected</th>
+          <th style="min-width:80px">Units</th>
+          <th style="min-width:150px">Expected</th>
           <th style="min-width:140px">Calculated</th>
-          <th style="min-width:140px">Paid</th>
-          <th style="min-width:160px">Payment Status</th>
+          <th style="min-width:150px">Paid</th>
+          <th style="min-width:170px">Payment Status</th>
           <th style="min-width:100px">Actions</th>
         </tr>
       </ng-template>
@@ -136,7 +136,7 @@
           <td><strong>{{ order.quantity }}</strong></td>
 
           <!-- Expected -->
-          <td>
+          <td class="editable-cell">
             <span class="currency-value" *ngIf="editingPaymentOrderId !== (order._id || order.id)">
               {{ formatCurrency(order.expectedRevenue || order.totalRevenue || 0) }}
             </span>
@@ -146,6 +146,8 @@
               [min]="0"
               suffix=" ֏"
               styleClass="inline-num"
+              [useGrouping]="true"
+              appendTo="body"
               [disabled]="isSavingPayment">
             </p-inputNumber>
           </td>
@@ -157,7 +159,7 @@
           </td>
 
           <!-- Paid -->
-          <td>
+          <td class="editable-cell">
             <div class="paid-cell" *ngIf="editingPaymentOrderId !== (order._id || order.id)">
               <span class="currency-value">{{ formatCurrency(order.paidAmount || 0) }}</span>
               <div class="progress-bar-wrap">
@@ -171,12 +173,14 @@
               [min]="0"
               suffix=" ֏"
               styleClass="inline-num"
+              [useGrouping]="true"
+              appendTo="body"
               [disabled]="isSavingPayment">
             </p-inputNumber>
           </td>
 
           <!-- Payment Status -->
-          <td>
+          <td class="editable-cell">
             <p-tag
               *ngIf="editingPaymentOrderId !== (order._id || order.id)"
               [value]="getPaymentStatusLabel(order.paymentStatus)"
@@ -188,8 +192,10 @@
               [options]="paymentStatusOptions"
               optionLabel="label"
               optionValue="value"
+              appendTo="body"
               [disabled]="isSavingPayment"
-              styleClass="inline-select">
+              styleClass="inline-select"
+              (onChange)="onPaymentStatusChange($event.value, order)">
             </p-select>
           </td>
 
@@ -425,6 +431,36 @@
             <span class="total-label">Avg Margin:</span>
             <span class="total-value margin">{{ selectedOrder.averageMargin.toFixed(1) }}%</span>
           </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="payment-summary">
+          <h4 class="section-title" style="margin-top:1.25rem"><i class="pi pi-wallet"></i> Payment Summary</h4>
+          <div class="payment-summary-grid">
+            <div class="payment-summary-item">
+              <span class="ps-label">Payment Status</span>
+              <p-tag
+                [value]="getPaymentStatusLabel(selectedOrder.paymentStatus)"
+                [severity]="getPaymentStatusSeverity(selectedOrder.paymentStatus)">
+              </p-tag>
+            </div>
+            <div class="payment-summary-item">
+              <span class="ps-label">Expected Revenue</span>
+              <span class="ps-value">{{ formatCurrency(selectedOrder.expectedRevenue || selectedOrder.totalRevenue || 0) }}</span>
+            </div>
+            <div class="payment-summary-item">
+              <span class="ps-label">Amount Paid</span>
+              <span class="ps-value paid">{{ formatCurrency(selectedOrder.paidAmount || 0) }}</span>
+            </div>
+            <div class="payment-summary-item">
+              <span class="ps-label">Remaining</span>
+              <span class="ps-value remaining">{{ formatCurrency((selectedOrder.expectedRevenue || selectedOrder.totalRevenue || 0) - (selectedOrder.paidAmount || 0)) }}</span>
+            </div>
+          </div>
+          <div class="payment-progress-wrap">
+            <div class="payment-progress-bar" [style.width.%]="paidPercent(selectedOrder)"></div>
+          </div>
+          <span class="payment-progress-label">{{ paidPercent(selectedOrder) }}% paid</span>
         </div>
       </div>
     </div>

@@ -1,0 +1,426 @@
+// ── Outer container (anchors both the badge and the reveal tab) ───────────────
+.kpi-badge-outer {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+}
+
+// ── Reveal tab (visible only when badge is hidden) ────────────────────────────
+.kpi-reveal-tab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 0;
+  width: 22px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: -3px 0 12px rgba(0,0,0,0.18);
+  z-index: 9001;
+  transition: width 0.2s, background 0.2s;
+
+  i {
+    font-size: 0.7rem;
+    color: white;
+  }
+
+  &:hover {
+    width: 28px;
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+  }
+}
+
+// ── Badge wrapper (slides in/out) ─────────────────────────────────────────────
+.kpi-badge-wrapper {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 5.5rem;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+
+  &.is-hidden {
+    transform: translateX(calc(100% + 6rem));
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+// ── Collapsed pill ────────────────────────────────────────────────────────────
+.kpi-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem 0.5rem 0.625rem;
+  border-radius: 99px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  transition: all 0.25s;
+  user-select: none;
+  color: white;
+
+  &:hover { transform: translateY(0.1px); box-shadow: 0 6px 24px rgba(0,0,0,0.22); }
+  &.expanded { border-radius: 20px 20px 0 0; }
+
+  .pill-icon {
+    width: 28px;
+    height: 28px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    i { font-size: 0.85rem; }
+  }
+
+  .pill-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    line-height: 1.1;
+
+    .pill-tier {
+      font-size: 0.72rem;
+      font-weight: 700;
+      opacity: 0.85;
+    }
+
+    .pill-month {
+      font-size: 0.72rem;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+  }
+
+  .pill-loading {
+    display: flex;
+    align-items: center;
+    padding: 0 0.25rem;
+  }
+
+  .pill-chevron {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    transition: transform 0.25s;
+  }
+
+  .pill-hide-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.15rem;
+    transition: background 0.2s;
+
+    i { font-size: 0.6rem; }
+
+    &:hover { background: rgba(255,255,255,0.38); }
+  }
+}
+
+// ── Expanded panel ────────────────────────────────────────────────────────────
+.kpi-panel {
+  width: 300px;
+  background: white;
+  border-radius: 14px 0 14px 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+  overflow: hidden;
+  transform-origin: bottom right;
+  animation: panel-in 0.22s ease;
+
+  @keyframes panel-in {
+    from { opacity: 0; transform: scale(0.92) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .panel-header {
+    padding: 1rem 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+
+    .ph-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+
+      .ph-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .ph-month {
+        font-size: 0.72rem;
+        opacity: 0.8;
+      }
+    }
+
+    .ph-tier-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      i { font-size: 0.7rem; }
+    }
+  }
+
+  .panel-body {
+    padding: 1rem;
+
+    .kpi-row {
+      margin-bottom: 0.875rem;
+
+      &:last-of-type { margin-bottom: 0; }
+
+      .kr-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.3rem;
+
+        .kr-label {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-color-secondary);
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          i { font-size: 0.72rem; }
+        }
+
+        .kr-count {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--text-color);
+
+          .kr-target {
+            color: var(--text-color-secondary);
+            font-weight: 400;
+          }
+        }
+      }
+
+      .kr-bar-wrap {
+        height: 6px;
+        background: var(--surface-200);
+        border-radius: 99px;
+        overflow: hidden;
+        margin-bottom: 0.2rem;
+
+        .kr-bar {
+          height: 100%;
+          border-radius: 99px;
+          transition: width 0.5s ease;
+
+          &.interactions { background: linear-gradient(90deg, #6366f1, #4f46e5); }
+          &.meetings      { background: linear-gradient(90deg, #10b981, #059669); }
+        }
+      }
+
+      .kr-pct {
+        font-size: 0.68rem;
+        color: var(--text-color-secondary);
+        font-weight: 600;
+      }
+    }
+
+    .commission-row {
+      margin-top: 1rem;
+      padding: 0.65rem 0.875rem;
+      border-radius: 8px;
+      border: 2px solid;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+
+      .cr-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .cr-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--text-color-secondary);
+      }
+
+      .cr-amount {
+        font-size: 1rem;
+        font-weight: 800;
+      }
+
+      .cr-formula {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-color);
+        padding-top: 0.35rem;
+        border-top: 1px solid rgba(0,0,0,0.07);
+
+        .cr-op {
+          color: var(--text-color-secondary);
+          font-weight: 700;
+        }
+
+        strong { font-weight: 800; }
+      }
+    }
+
+    // ── Compact tier track (floating panel) ──
+    .tier-track-mini {
+      margin-top: 0.85rem;
+      padding: 0.65rem 0.75rem 0.75rem;
+      background: var(--surface-50);
+      border: 1px solid var(--surface-200);
+      border-radius: 8px;
+
+      .ttm-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.55rem;
+
+        .ttm-title {
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          font-size: 0.65rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: var(--text-color-secondary);
+          i { font-size: 0.65rem; color: var(--primary-color); }
+        }
+
+        .ttm-max {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.68rem;
+          font-weight: 800;
+          i { font-size: 0.7rem; }
+        }
+      }
+
+      .ttm-pills {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-bottom: 0.55rem;
+
+        .ttm-pill {
+          padding: 0.2rem 0.5rem;
+          border-radius: 99px;
+          font-size: 0.62rem;
+          font-weight: 700;
+          background: var(--surface-200);
+          color: var(--text-color-secondary);
+          border: 1.5px solid transparent;
+          opacity: 0.55;
+          transition: all 0.25s;
+          white-space: nowrap;
+
+          &.reached {
+            opacity: 1;
+            background: color-mix(in srgb, var(--pill-color) 15%, white);
+            color: var(--pill-color);
+            border-color: color-mix(in srgb, var(--pill-color) 40%, transparent);
+          }
+
+          &.current {
+            background: var(--pill-color);
+            color: white;
+            border-color: var(--pill-color);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--pill-color) 22%, transparent);
+          }
+        }
+
+        .ttm-sep {
+          flex: 1;
+          height: 2px;
+          min-width: 4px;
+          background: var(--surface-300);
+          border-radius: 99px;
+          transition: background 0.25s;
+
+          &.reached { background: var(--sep-color); }
+        }
+      }
+
+      .ttm-next {
+        .ttm-next-bar-wrap {
+          height: 5px;
+          background: var(--surface-200);
+          border-radius: 99px;
+          overflow: hidden;
+          margin-bottom: 0.25rem;
+
+          .ttm-next-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.6s ease;
+          }
+        }
+
+        .ttm-next-label {
+          display: block;
+          font-size: 0.65rem;
+          font-weight: 700;
+          text-align: right;
+          strong { font-weight: 800; }
+        }
+      }
+    }
+  }
+
+  .panel-loading {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-color-secondary);
+    font-size: 0.82rem;
+  }
+}
+
+// ── Spinner ───────────────────────────────────────────────────────────────────
+.mini-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  &.dark {
+    border-color: var(--surface-300);
+    border-top-color: var(--primary-color);
+  }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

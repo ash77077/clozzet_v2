@@ -1,0 +1,134 @@
+<div class="kpi-badge-outer" *ngIf="currentUser && currentUser.role === 'manager'">
+
+  <!-- Reveal tab shown on the right edge when badge is hidden -->
+  <div class="kpi-reveal-tab" *ngIf="isHidden" (click)="show()">
+    <i class="pi pi-chevron-left"></i>
+  </div>
+
+  <!-- Badge wrapper (slides off to the right when hidden) -->
+  <div class="kpi-badge-wrapper" [class.is-hidden]="isHidden">
+
+    <!-- Collapsed pill -->
+    <div class="kpi-pill" (click)="toggle()"
+         [style.background]="tierStyle.gradient"
+         [class.expanded]="isExpanded">
+      <div class="pill-icon">
+        <i class="pi pi-chart-bar"></i>
+      </div>
+      <div class="pill-content" *ngIf="kpi && !isLoading">
+        <span class="pill-tier">{{ kpi.tier.name }}</span>
+        <span class="pill-month">{{ monthLabel }}</span>
+      </div>
+      <div class="pill-loading" *ngIf="isLoading">
+        <div class="mini-spinner"></div>
+      </div>
+      <div class="pill-content" *ngIf="!kpi && !isLoading">
+        <span class="pill-tier">My KPI</span>
+      </div>
+      <i class="pi pill-chevron" [class.pi-chevron-up]="isExpanded" [class.pi-chevron-down]="!isExpanded"></i>
+
+      <!-- Hide button -->
+      <button class="pill-hide-btn" (click)="$event.stopPropagation(); hide()" title="Hide">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Expanded panel -->
+    <div class="kpi-panel" [class.open]="isExpanded" *ngIf="isExpanded">
+      <div class="panel-header" [style.background]="tierStyle.gradient">
+        <div class="ph-left">
+          <span class="ph-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</span>
+          <span class="ph-month">{{ monthLabel }}</span>
+        </div>
+        <div class="ph-tier-badge" [style.background]="tierStyle.bg" [style.color]="tierStyle.color">
+          <i class="pi pi-trophy"></i> {{ kpi?.tier?.name ?? '—' }}
+        </div>
+      </div>
+
+      <div class="panel-body" *ngIf="kpi && !isLoading">
+
+        <!-- Interactions -->
+        <div class="kpi-row">
+          <div class="kr-top">
+            <span class="kr-label"><i class="pi pi-phone"></i> Interactions</span>
+            <span class="kr-count">{{ kpi.interactions }}<span class="kr-target" *ngIf="kpi.goal"> / {{ kpi.goal.targetInteractions }}</span></span>
+          </div>
+          <div class="kr-bar-wrap">
+            <div class="kr-bar interactions"
+                 [style.width.%]="pct(kpi.interactions, kpi.goal?.targetInteractions ?? 0)"></div>
+          </div>
+          <span class="kr-pct">{{ pct(kpi.interactions, kpi.goal?.targetInteractions ?? 0) }}%</span>
+        </div>
+
+        <!-- Meetings -->
+        <div class="kpi-row">
+          <div class="kr-top">
+            <span class="kr-label"><i class="pi pi-calendar"></i> Meetings</span>
+            <span class="kr-count">{{ kpi.meetings }}<span class="kr-target" *ngIf="kpi.goal"> / {{ kpi.goal.targetMeetings }}</span></span>
+          </div>
+          <div class="kr-bar-wrap">
+            <div class="kr-bar meetings"
+                 [style.width.%]="pct(kpi.meetings, kpi.goal?.targetMeetings ?? 0)"></div>
+          </div>
+          <span class="kr-pct">{{ pct(kpi.meetings, kpi.goal?.targetMeetings ?? 0) }}%</span>
+        </div>
+
+        <!-- Commission (flat rate on entire revenue) -->
+        <div class="commission-row" [style.border-color]="tierStyle.color" [style.background]="tierStyle.bg">
+          <div class="cr-top">
+            <span class="cr-label">Est. Commission · {{ kpi.tier.name }}</span>
+            <span class="cr-amount" [style.color]="tierStyle.color">{{ formatCurrency(kpi.commission) }}</span>
+          </div>
+          <div class="cr-formula">
+            {{ formatCurrency(kpi.revenue) }}
+            <span class="cr-op">×</span>
+            <strong [style.color]="tierStyle.color">{{ (kpi.tier.rate * 100).toFixed(0) }}%</strong>
+            <span class="cr-op">=</span>
+            <strong [style.color]="tierStyle.color">{{ formatCurrency(kpi.commission) }}</strong>
+          </div>
+        </div>
+
+        <!-- Tier progression (compact) -->
+        <div class="tier-track-mini">
+          <div class="ttm-header">
+            <span class="ttm-title"><i class="pi pi-flag"></i> Progression</span>
+            <span class="ttm-max" *ngIf="isAtMaxTier" [style.color]="kpi.tier.color">
+              <i class="pi pi-crown"></i> Max
+            </span>
+          </div>
+
+          <div class="ttm-pills">
+            <ng-container *ngFor="let t of kpi.tiers; let i = index; let last = last">
+              <span class="ttm-pill"
+                    [class.reached]="i <= activeTierIndex"
+                    [class.current]="i === activeTierIndex"
+                    [style.--pill-color]="t.color">
+                {{ t.name }}
+              </span>
+              <span class="ttm-sep" *ngIf="!last"
+                    [class.reached]="i < activeTierIndex"
+                    [style.--sep-color]="t.color"></span>
+            </ng-container>
+          </div>
+
+          <div class="ttm-next" *ngIf="kpi.nextTier as next">
+            <div class="ttm-next-bar-wrap">
+              <div class="ttm-next-bar-fill"
+                   [style.width.%]="nextTierProgress"
+                   [style.background]="'linear-gradient(90deg, ' + kpi.tier.color + ', ' + next.color + ')'"></div>
+            </div>
+            <span class="ttm-next-label" [style.color]="next.color">
+              {{ formatCurrency(amountToNextTier) }} to <strong>{{ next.name }}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-loading" *ngIf="isLoading">
+        <div class="mini-spinner dark"></div>
+        <span>Loading...</span>
+      </div>
+    </div>
+
+  </div>
+</div>

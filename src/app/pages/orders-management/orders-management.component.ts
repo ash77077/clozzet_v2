@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { Subject, ReplaySubject, takeUntil } from 'rxjs';
+import { Subject, ReplaySubject, takeUntil, take } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -38,7 +38,7 @@ export interface KanbanColumn {
 }
 
 export interface ActivityItem {
-  type: 'comment' | 'status_change' | 'created' | 'file_upload';
+  type: 'comment' | 'status_change' | 'created' | 'file_upload' | 'payment_change';
   date: Date | string;
   author: string;
   content: string;
@@ -117,6 +117,65 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   showAddOrderDialog = false;
   viewMode: 'kanban' | 'table' = 'kanban';
   isSaving = false;
+  mobileModalTab: 'details' | 'activity' = 'details';
+
+  // ─── Sprint month filter ───────────────────────────────────────────────────
+  sprintMonth: Date = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  showMonthPicker = false;
+
+  get sprintMonthLabel(): string {
+    return this.sprintMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  prevMonth(): void {
+    this.sprintMonth = new Date(this.sprintMonth.getFullYear(), this.sprintMonth.getMonth() - 1, 1);
+    this.applyFilters();
+  }
+
+  nextMonth(): void {
+    this.sprintMonth = new Date(this.sprintMonth.getFullYear(), this.sprintMonth.getMonth() + 1, 1);
+    this.applyFilters();
+  }
+
+  onMonthPickerSelect(date: Date): void {
+    if (!date) return;
+    this.sprintMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    this.showMonthPicker = false;
+    this.applyFilters();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.showMonthPicker) return;
+    const target = event.target as HTMLElement;
+    if (!target.closest('.sprint-label-wrap')) {
+      this.showMonthPicker = false;
+    }
+  }
+
+  isInSprintMonth(order: ProductDetails): boolean {
+    const sm = this.sprintMonth;
+    const smYear = sm.getFullYear();
+    const smMonth = sm.getMonth();
+
+    const now = new Date();
+    const isCurrentMonth = smYear === now.getFullYear() && smMonth === now.getMonth();
+
+    const isClosedStatus = order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.CANCELLED ||
+      order.status === OrderStatus.RETURNED;
+
+    // In current month: show all unclosed orders regardless of deadline (overdue carry-overs)
+    if (isCurrentMonth && !isClosedStatus) return true;
+
+    const deadline = order.deadline ? new Date(order.deadline) : null;
+
+    // No deadline on a closed order — only show in current month
+    if (!deadline) return isCurrentMonth;
+
+    // All other cases: show only if deadline is in the selected month
+    return deadline.getFullYear() === smYear && deadline.getMonth() === smMonth;
+  }
 
   // ─── Add-order stepper ─────────────────────────────────────────────────────
   currentStep = 1;
@@ -130,8 +189,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // Size breakdown mode: 'uni' (default) or 'split' (men/women/uni)
   sizeBreakdownMode: 'uni' | 'split' = 'uni';
 
-  // Size category toggle
-  isChildSizes = false;
+  // Size category toggle — per product: 'adult' | 'children'
+  sizeCategory: ('adult' | 'children')[] = ['adult'];
   readonly ADULT_SIZE_KEYS = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
   readonly CHILD_SIZE_KEYS = ['s1_2', 's3_4', 's5_6', 's7_8', 's9_10', 's11_12', 's13_14', 's15_16'];
   readonly CHILD_SIZE_LABELS: Record<string, string> = {
@@ -145,10 +204,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // State for the "add custom size" inline form per product
   showAddCustomSize: boolean[] = [false];
   newCustomSizeLabel: string[] = [''];
-
-  get activeSizeKeys(): string[] {
-    return this.isChildSizes ? this.CHILD_SIZE_KEYS : this.ADULT_SIZE_KEYS;
-  }
 
   getSizeLabelForKey(key: string): string {
     return this.CHILD_SIZE_LABELS[key] ?? key.toUpperCase();
@@ -233,7 +288,12 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   searchTerm = '';
   selectedStatusFilter = '';
   selectedUserIds: Set<string> = new Set();
-  maxVisibleUsers = 5;
+  maxVisibleUsers = window.innerWidth <= 768 ? 2 : 5;
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.maxVisibleUsers = window.innerWidth <= 768 ? 2 : 5;
+  }
 
   // ─── Jira Modal — Edit mode ─────────────────────────────────────────────────
   isEditMode = false;
@@ -261,6 +321,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Add Order Modal — File uploads ────────────────────────────────────────
   addOrderPendingFiles: File[] = [];
+
+  // ─── Jira Modal — Payment inline edit ─────────────────────────────────────
+  isEditingPayment = false;
+  editPaymentStatus = 'not_paid';
+  editPaidAmount: number | null = null;
+  editExpectedRevenue: number | null = null;
+  isSavingPayment = false;
 
   // ─── Image preview modal ───────────────────────────────────────────────────
   showImagePreview = false;
@@ -347,13 +414,21 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // Handle navigation from notification
   handleNavigationFromNotification(): void {
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+    this.route.queryParams.pipe(take(1)).subscribe(params => {
       const orderId = params['order'];
-      if (orderId) {
-        this.ordersLoaded$.pipe(takeUntil(this.destroy$)).subscribe(() => {
-          this.openOrderById(orderId);
-        });
-      }
+      if (!orderId) return;
+
+      // Clear the query param immediately so reloads don't re-trigger this
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true,
+      });
+
+      // Wait for orders to load once, then open the target order
+      this.ordersLoaded$.pipe(take(1)).subscribe(() => {
+        this.openOrderById(orderId);
+      });
     });
   }
 
@@ -500,7 +575,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   initForm(): void {
     this.addOrderForm = this.fb.group({
       orderNumber:         ['', Validators.required],
-      companyName:         [''],
+      companyName:         ['', Validators.required],
       clientName:          ['', Validators.required],
       salesPerson:         ['', Validators.required],
       priority:            ['normal', Validators.required],
@@ -528,8 +603,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       logoPosition:        [''],
       logoSize:            [''],
       comments:            [''],
-      costPricePerUnit:    [null],
-      sellingPricePerUnit: [null],
+      costPricePerUnit:             [null],
+      sellingPricePerUnit:          [null],
+      adultSellingPricePerUnit:     [null],
+      childrenSellingPricePerUnit:  [null],
       sizes:               this.fb.group({
         xs:     this.fb.group({ men: [0], women: [0], uni: [0] }),
         s:      this.fb.group({ men: [0], women: [0], uni: [0] }),
@@ -566,6 +643,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newClothTypeLabel.push('');
     this.showAddTextileType.push(false);
     this.newTextileTypeLabel.push('');
+    this.sizeCategory.push('adult');
   }
 
   // Remove a product from the array
@@ -579,6 +657,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.newClothTypeLabel.splice(index, 1);
       this.showAddTextileType.splice(index, 1);
       this.newTextileTypeLabel.splice(index, 1);
+      this.sizeCategory.splice(index, 1);
     }
   }
 
@@ -587,26 +666,56 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     return this.products.at(productIndex).get('sizes') as FormGroup;
   }
 
-  // Calculate total for a specific gender across all sizes for a product
+  // All size keys — adult + children combined
+  readonly ALL_SIZE_KEYS = [...this.ADULT_SIZE_KEYS, ...this.CHILD_SIZE_KEYS];
+
+  // Calculate total for a specific gender across ALL sizes (adult + children) for a product
   calculateProductTotal(gender: 'men' | 'women' | 'uni', productIndex: number): number {
     const product = this.products.at(productIndex);
     const sizes = product.get('sizes') as FormGroup;
     if (!sizes) return 0;
 
     let total = 0;
-
-    this.activeSizeKeys.forEach(sizeKey => {
+    this.ALL_SIZE_KEYS.forEach(sizeKey => {
       const sizeGroup = sizes.get(sizeKey) as FormGroup;
       if (sizeGroup) {
-        const value = sizeGroup.get(gender)?.value || 0;
-        total += Number(value);
+        total += Number(sizeGroup.get(gender)?.value || 0);
       }
     });
-
     return total;
   }
 
-  // Calculate total quantity for a specific product
+  // Calculate adult-only quantity for a product (for revenue split)
+  calculateAdultTotal(productIndex: number): number {
+    const product = this.products.at(productIndex);
+    const sizes = product.get('sizes') as FormGroup;
+    if (!sizes) return 0;
+    let total = 0;
+    this.ADULT_SIZE_KEYS.forEach(key => {
+      const g = sizes.get(key) as FormGroup;
+      if (g) total += Number(g.get('men')?.value || 0) + Number(g.get('women')?.value || 0) + Number(g.get('uni')?.value || 0);
+    });
+    return total;
+  }
+
+  // Calculate children-only quantity for a product (for revenue split)
+  calculateChildrenTotal(productIndex: number): number {
+    const product = this.products.at(productIndex);
+    const sizes = product.get('sizes') as FormGroup;
+    if (!sizes) return 0;
+    let total = 0;
+    this.CHILD_SIZE_KEYS.forEach(key => {
+      const g = sizes.get(key) as FormGroup;
+      if (g) total += Number(g.get('men')?.value || 0) + Number(g.get('women')?.value || 0) + Number(g.get('uni')?.value || 0);
+    });
+    // Also count custom sizes as children if child mode was active — custom sizes go under general count
+    total += this.calculateCustomSizeTotal('men', productIndex) +
+             this.calculateCustomSizeTotal('women', productIndex) +
+             this.calculateCustomSizeTotal('uni', productIndex);
+    return total;
+  }
+
+  // Calculate total quantity for a specific product (all sizes + custom sizes)
   calculateSingleProductTotal(productIndex: number): number {
     return this.calculateProductTotal('men', productIndex) +
            this.calculateProductTotal('women', productIndex) +
@@ -632,18 +741,37 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
    */
   getProductTotalQuantity(product: any): number {
     if (!product || !product.sizes) return 0;
-
     let total = 0;
-    const sizes = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl'];
-
-    sizes.forEach(size => {
-      if (product.sizes[size]) {
-        total += (product.sizes[size].men || 0) +
-                 (product.sizes[size].women || 0) +
-                 (product.sizes[size].uni || 0);
+    Object.values(product.sizes).forEach((sizeObj: any) => {
+      if (sizeObj && typeof sizeObj === 'object') {
+        total += (sizeObj.men || 0) + (sizeObj.women || 0) + (sizeObj.uni || 0);
       }
     });
+    return total;
+  }
 
+  // Adult-only quantity from a saved product object (for view modal revenue breakdown)
+  getProductAdultQuantity(product: any): number {
+    if (!product || !product.sizes) return 0;
+    let total = 0;
+    this.ADULT_SIZE_KEYS.forEach(key => {
+      const s = product.sizes[key];
+      if (s) total += (s.men || 0) + (s.women || 0) + (s.uni || 0);
+    });
+    return total;
+  }
+
+  // Children-only quantity from a saved product object (for view modal revenue breakdown)
+  getProductChildrenQuantity(product: any): number {
+    if (!product || !product.sizes) return 0;
+    let total = 0;
+    // All keys that are NOT in the adult list count as children
+    Object.keys(product.sizes).forEach(key => {
+      if (!this.ADULT_SIZE_KEYS.includes(key)) {
+        const s = product.sizes[key];
+        if (s) total += (s.men || 0) + (s.women || 0) + (s.uni || 0);
+      }
+    });
     return total;
   }
 
@@ -703,7 +831,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
     event.preventDefault();
 
-    const sizes = this.activeSizeKeys;
+    const sizes = this.sizeCategory[productIndex] === 'children' ? this.CHILD_SIZE_KEYS : this.ADULT_SIZE_KEYS;
     const genders = this.sizeBreakdownMode === 'uni' ? ['uni'] : ['men', 'women', 'uni'];
 
     const currentSizeIndex = sizes.indexOf(currentSize);
@@ -750,19 +878,54 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Financial Calculations ───────────────────────────────────────────────
 
-  // Check if a product has selling price
+  // True if a product has any price declared (adult or children)
   hasSellingPrice(productIndex: number): boolean {
-    const product = this.products.at(productIndex);
-    const sellingPrice = product.get('sellingPricePerUnit')?.value;
-    return sellingPrice !== null && sellingPrice !== undefined && sellingPrice > 0;
+    const p = this.products.at(productIndex);
+    const adult    = p.get('adultSellingPricePerUnit')?.value;
+    const children = p.get('childrenSellingPricePerUnit')?.value;
+    return (adult != null && adult > 0) || (children != null && children > 0);
   }
 
-  // Calculate total revenue for a product
+  // Adult revenue for one product
+  calculateAdultRevenue(productIndex: number): number {
+    const p = this.products.at(productIndex);
+    const price = Number(p.get('adultSellingPricePerUnit')?.value || 0);
+    return price * this.calculateAdultTotal(productIndex);
+  }
+
+  // Children revenue for one product
+  calculateChildrenRevenue(productIndex: number): number {
+    const p = this.products.at(productIndex);
+    const price = Number(p.get('childrenSellingPricePerUnit')?.value || 0);
+    return price * this.calculateChildrenTotal(productIndex);
+  }
+
+  // Total revenue for one product (adult + children)
   calculateProductRevenue(productIndex: number): number {
-    const product = this.products.at(productIndex);
-    const sellingPrice = product.get('sellingPricePerUnit')?.value || 0;
-    const quantity = this.calculateSingleProductTotal(productIndex);
-    return sellingPrice * quantity;
+    return this.calculateAdultRevenue(productIndex) + this.calculateChildrenRevenue(productIndex);
+  }
+
+  // Sum of all products' revenue
+  get calculatedExpectedRevenue(): number {
+    let total = 0;
+    for (let i = 0; i < this.products.length; i++) {
+      total += this.calculateProductRevenue(i);
+    }
+    return total;
+  }
+
+  // Grand adult revenue across all products
+  get calculatedAdultRevenue(): number {
+    let total = 0;
+    for (let i = 0; i < this.products.length; i++) total += this.calculateAdultRevenue(i);
+    return total;
+  }
+
+  // Grand children revenue across all products
+  get calculatedChildrenRevenue(): number {
+    let total = 0;
+    for (let i = 0; i < this.products.length; i++) total += this.calculateChildrenRevenue(i);
+    return total;
   }
 
   // ─── Add Order dialog ──────────────────────────────────────────────────────
@@ -793,6 +956,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newClothTypeLabel = [''];
     this.showAddTextileType = [false];
     this.newTextileTypeLabel = [''];
+    this.sizeCategory = ['adult'];
 
     this.showAddOrderDialog = true;
   }
@@ -812,6 +976,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newClothTypeLabel = [''];
     this.showAddTextileType = [false];
     this.newTextileTypeLabel = [''];
+    this.sizeCategory = ['adult'];
   }
 
   generateOrderNumber(): string {
@@ -825,6 +990,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   nextStep(): void {
     if (this.isCurrentStepValid() && this.currentStep < this.totalSteps) {
       this.currentStep++;
+      // Auto-fill expected revenue when entering step 4 (only if not already set)
+      if (this.currentStep === 4) {
+        const current = this.addOrderForm.get('expectedRevenue')?.value;
+        if ((!current || current === 0) && this.calculatedExpectedRevenue > 0) {
+          this.addOrderForm.patchValue({ expectedRevenue: this.calculatedExpectedRevenue });
+        }
+      }
     } else if (!this.isCurrentStepValid()) {
       this.markCurrentStepTouched();
       this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please fill all required fields.' });
@@ -1013,8 +1185,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Load & filter ─────────────────────────────────────────────────────────
 
-  protected loadOrders(): void {
-    this.isLoading = true;
+  protected loadOrders(silent = false): void {
+    if (!silent) this.isLoading = true;
     this.productDetailsService.getAllProductDetails().pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         this.allOrders = response.data || [];
@@ -1071,6 +1243,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   applyFilters(): void {
     let filtered = [...this.allOrders];
 
+    // Sprint month filter (applied first)
+    filtered = filtered.filter(o => this.isInSprintMonth(o));
+
     // Search filter
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
@@ -1112,6 +1287,11 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   get deliveredCount(): number { return this.allOrders.filter(o => o.status === OrderStatus.DELIVERED).length; }
   get urgentCount(): number { return this.allOrders.filter(o => (o as any).priority === 'urgent').length; }
 
+  isDeliveredUnpaid(order: ProductDetails): boolean {
+    return order.status === OrderStatus.DELIVERED &&
+      order.paymentStatus !== 'paid';
+  }
+
   // ─── Order details (Jira modal) ────────────────────────────────────────────
 
   // Copy order link to clipboard
@@ -1146,6 +1326,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.pendingFiles = [];
     this.showMentionDropdown = false;
     this.detailStatus = (order.status as OrderStatus) || OrderStatus.PENDING;
+    this.mobileModalTab = 'details';
     this.loadOrderActivity(order);
     this.showOrderDetails = true;
 
@@ -1175,6 +1356,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.showOrderDetails = false;
     this.selectedOrder = null;
     this.isEditMode = false;
+    this.isEditingPayment = false;
     this.orderActivity = [];
     this.pendingFiles = [];
     this.commentText = '';
@@ -1184,6 +1366,108 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {},
       replaceUrl: true
+    });
+  }
+
+  // ─── Payment inline edit (Jira modal) ─────────────────────────────────────
+
+  startEditingPayment(): void {
+    if (!this.selectedOrder) return;
+    const o = this.selectedOrder as any;
+    this.editPaymentStatus  = o.paymentStatus || 'not_paid';
+    this.editPaidAmount     = o.paidAmount ?? null;
+    this.editExpectedRevenue = o.expectedRevenue ?? null;
+    this.isEditingPayment   = true;
+  }
+
+  cancelEditingPayment(): void {
+    this.isEditingPayment = false;
+  }
+
+  onModalPaymentStatusChange(status: string): void {
+    if (status === 'paid') {
+      this.editPaidAmount = this.editExpectedRevenue ?? (this.selectedOrder as any)?.totalRevenue ?? null;
+    } else if (status === 'not_paid') {
+      this.editPaidAmount = 0;
+    }
+  }
+
+  getPaymentStatusLabel(status: string | undefined): string {
+    return this.paymentStatusOptions.find(o => o.value === status)?.label ?? 'Not Paid';
+  }
+
+  getPaymentStatusSeverity(status: string | undefined): 'success' | 'warn' | 'danger' | 'info' | 'secondary' {
+    switch (status) {
+      case 'paid':    return 'success';
+      case 'partial': return 'warn';
+      case 'deposit': return 'info';
+      default:        return 'danger';
+    }
+  }
+
+  paidPercent(): number {
+    const o = this.selectedOrder as any;
+    if (!o) return 0;
+    const expected = o.expectedRevenue || 0;
+    if (!expected) return 0;
+    return Math.min(100, Math.round(((o.paidAmount || 0) / expected) * 100));
+  }
+
+  savePaymentFromModal(): void {
+    if (!this.selectedOrder) return;
+    const id = (this.selectedOrder as any)._id || this.selectedOrder.id;
+    if (!id) return;
+
+    const o = this.selectedOrder as any;
+    const oldStatus = this.getPaymentStatusLabel(o.paymentStatus);
+    const newStatus = this.getPaymentStatusLabel(this.editPaymentStatus);
+    const oldPaid   = o.paidAmount ?? 0;
+    const newPaid   = this.editPaidAmount ?? 0;
+    const oldExp    = o.expectedRevenue ?? null;
+    const newExp    = this.editExpectedRevenue ?? null;
+
+    const author = this.currentUser
+      ? `${this.currentUser.firstName} ${this.currentUser.lastName}`.trim()
+      : 'System';
+
+    this.isSavingPayment = true;
+
+    this.productDetailsService.updateProductDetails(id, {
+      paymentStatus:   this.editPaymentStatus as any,
+      paidAmount:      newPaid,
+      expectedRevenue: newExp ?? undefined,
+    } as any).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        // Patch local order object
+        o.paymentStatus   = this.editPaymentStatus;
+        o.paidAmount      = newPaid;
+        o.expectedRevenue = newExp ?? undefined;
+
+        // Build activity note
+        const lines: string[] = [];
+        if (oldStatus !== newStatus)
+          lines.push(`Payment status: <strong>${oldStatus}</strong> → <strong>${newStatus}</strong>`);
+        if (oldPaid !== newPaid)
+          lines.push(`Paid amount: <strong>${oldPaid.toLocaleString()} ֏</strong> → <strong>${newPaid.toLocaleString()} ֏</strong>`);
+        if (oldExp !== newExp)
+          lines.push(`Expected revenue: <strong>${(oldExp ?? 0).toLocaleString()} ֏</strong> → <strong>${(newExp ?? 0).toLocaleString()} ֏</strong>`);
+
+        if (lines.length > 0) {
+          const noteContent = `PAYMENT: ${lines.join(' | ')}`;
+          this.productDetailsService.addManufacturingNotes(id, noteContent, author)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({ next: () => this.loadOrderActivityForCurrent() });
+        }
+
+        this.isSavingPayment = false;
+        this.isEditingPayment = false;
+        this.loadOrders();
+        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Payment updated.' });
+      },
+      error: () => {
+        this.isSavingPayment = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save payment.' });
+      },
     });
   }
 
@@ -1240,13 +1524,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     });
 
     notes.forEach((note: any) => {
-      const isStatus = note.content?.startsWith('STATUS:');
-      const isFile   = note.content?.startsWith('Attached files:');
+      const isStatus  = note.content?.startsWith('STATUS:');
+      const isFile    = note.content?.startsWith('Attached files:');
+      const isPayment = note.content?.startsWith('PAYMENT:');
       this.orderActivity.push({
-        type: isStatus ? 'status_change' : isFile ? 'file_upload' : 'comment',
+        type: isStatus ? 'status_change' : isFile ? 'file_upload' : isPayment ? 'payment_change' : 'comment',
         date: note.date,
         author: note.author,
-        content: isStatus ? note.content.replace('STATUS:', '').trim() : note.content,
+        content: isStatus  ? note.content.replace('STATUS:', '').trim()
+               : isPayment ? note.content.replace('PAYMENT:', '').trim()
+               : note.content,
         avatarColor: this.getAvatarColor(note.author),
       });
     });
@@ -1476,7 +1763,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       paymentStatus:        formValue.paymentStatus || 'not_paid',
       paidAmount:           formValue.paidAmount || undefined,
       expectedRevenue:      formValue.expectedRevenue || undefined,
-      products:             formValue.products
+      products:             formValue.products,
+      quantity:             this.calculateGrandTotal(),
     };
 
     this.isEditSaving = true;
@@ -1944,6 +2232,49 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   }
 
   // ─── Drag and Drop Handler ─────────────────────────────────────────────────
+  private _cardDragged = false;
+
+  onCardDragStarted(): void {
+    this._cardDragged = false;
+  }
+
+  onCardDragMoved(): void {
+    this._cardDragged = true;
+  }
+
+  onCardDragEnded(): void {
+    if (!this._cardDragged) return;
+    // Intercept and cancel the click that the browser fires after drag-release.
+    // Using capture phase so it runs before any Angular click handler.
+    const cancelNextClick = (e: MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      document.removeEventListener('click', cancelNextClick, true);
+    };
+    document.addEventListener('click', cancelNextClick, true);
+    // Safety cleanup in case no click fires (e.g. keyboard drop)
+    setTimeout(() => {
+      document.removeEventListener('click', cancelNextClick, true);
+      this._cardDragged = false;
+    }, 500);
+  }
+
+  cardViewDetails(order: ProductDetails): void {
+    this.viewOrderDetails(order);
+  }
+
+  cardOpenStatusDialog(order: ProductDetails): void {
+    this.openStatusDialog(order);
+  }
+
+  cardQuickStatusChange(order: ProductDetails, status: OrderStatus): void {
+    this.quickStatusChange(order, status);
+  }
+
+  cardDeleteOrder(order: ProductDetails): void {
+    this.deleteOrder(order);
+  }
+
   getConnectedLists(currentIndex: number): string[] {
     // Return IDs of all other drop lists to enable cross-column dragging
     return this.kanbanColumns
@@ -1953,13 +2284,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   onCardDrop(event: CdkDragDrop<ProductDetails[]>, targetStatus: OrderStatus): void {
     if (event.previousContainer === event.container) {
-      // Reordering within the same column
+      // Reordering within the same column — keep position as-is
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       // Moving to a different column
       const order = event.previousContainer.data[event.previousIndex];
 
-      // Transfer the item between arrays
+      // Move in the kanban arrays immediately so the UI stays in place
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -1967,7 +2298,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         event.currentIndex
       );
 
-      // Update the order status in the backend
+      // Update status locally so filters/stats stay consistent without a reload
+      order.status = targetStatus;
+
+      // Persist to backend
       if (order && order._id) {
         this.productDetailsService.updateStatus(order._id, targetStatus).subscribe({
           next: () => {
@@ -1977,8 +2311,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
               detail: `Order ${order.orderNumber} moved to ${this.getStatusLabel(targetStatus)}`,
               life: 3000
             });
-            // Refresh the order to get updated data
-            this.loadOrders();
+            // No reload — position is already correct in the UI
           },
           error: (error: any) => {
             console.error('Error updating status:', error);
@@ -1988,7 +2321,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
               detail: 'Failed to update order status',
               life: 3000
             });
-            // Revert the move on error
+            // Revert local status and move on error
+            order.status = event.previousContainer.id as any;
             transferArrayItem(
               event.container.data,
               event.previousContainer.data,

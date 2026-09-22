@@ -3,7 +3,11 @@
   <!-- Header -->
   <div class="print-header">
     <div class="brand-name">
-	    <img src="/images/logo-black.png" [width]="50" alt="CLOZZET" class="logo-image">
+	    <picture>
+        <source type="image/webp" srcset="/images/logo-black.webp">
+        <img src="/images/logo-black.png" alt="CLOZZET" class="logo-image"
+          width="50" decoding="async">
+      </picture>
     </div>
     <div class="header-center">
       <div class="doc-title">ԱՐՏԱԴՐԱԿԱՆ ՊԱՏՎԵՐ</div>

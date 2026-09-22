@@ -22,13 +22,41 @@
   "navbar": {
     "home": "Home",
     "products": "Products",
+    "services": "Services",
+    "portfolio": "Portfolio",
     "about": "About",
     "contact": "Contact",
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
     "dashboard": "Dashboard",
-    "language": "Language"
+    "language": "Language",
+    "openMobileMenu": "Open navigation menu",
+    "closeMobileMenu": "Close navigation menu",
+    "mobileMenu": "Navigation menu"
+  },
+  "secondaryNav": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "crmDashboard": "CRM Dashboard",
+    "revenue": "Revenue",
+    "financialProduction": "Financial Production",
+    "costConfigurator": "Cost Configurator",
+    "manufacturing": "Manufacturing",
+    "myAccount": "My Account",
+    "myOrders": "My Orders",
+    "newOrder": "New Order",
+    "other": "Other",
+    "products": "Products",
+    "retailSales": "Retail Sales",
+    "expoSales": "Expo Sales",
+    "users": "Users",
+    "companies": "Companies",
+    "logout": "Logout",
+    "salesSection": "Sales",
+    "manufacturingSection": "Manufacturing",
+    "managerKpi": "Manager KPI",
+    "employees": "Employees"
   },
   "auth": {
     "login": {
@@ -371,13 +399,15 @@
   },
   "hero": {
     "badge": "Trusted by 150+ Businesses",
-    "title": "Elevate Your Brand with",
-    "titleHighlight": "Premium Custom Apparel",
-    "description": "Transform your business identity with high-quality branded textiles. From corporate uniforms to promotional merchandise, we deliver professional custom apparel that strengthens your brand presence and builds team unity.",
+    "title": "Your Team Deserve The Best",
+    "titleHighlight": "",
+    "description": "High-quality corporate clothing with personalized solutions that help express brand identity and create team cultures.",
+    "subDescription": "From design to manufacturing, we take care of every detail.",
     "features": {
-      "bulkDiscount": "Bulk Order Discounts",
-      "fastTurnaround": "Production time is up to 20 days (depends on cloth type and details)",
-      "qualityGuarantee": "Premium Quality Guarantee"
+      "bulkDiscount": "Logo-branded apparel for teams and events",
+      "fastTurnaround": "A to Z design and production",
+      "qualityGuarantee": "Private label and White label manufacturing",
+      "ecoFriendly": "Modern solutions and high-quality materials"
     },
     "cta": {
       "getQuote": "Get Free Quote",
@@ -399,8 +429,11 @@
     }
   },
   "services": {
+    "page": {
+      "title": "Our Services",
+      "subtitle": "Comprehensive B2B textile solutions designed to elevate your brand"
+    },
     "title": "Why Choose CLOZZET?",
-    "subtitle": "We deliver exceptional value through our comprehensive B2B textile solutions",
     "mostPopular": "Most Popular",
     "items": {
       "bulkDiscount": {
@@ -459,8 +492,7 @@
         "features": {
           "worldwide": "Worldwide delivery",
           "options": "Multiple shipping options",
-          "tracking": "Order tracking included",
-          "insurance": "Shipping insurance available"
+          "tracking": "Order tracking included"
         }
       }
     },
@@ -551,7 +583,7 @@
     },
     "cta": {
       "title": "Ready to Work With Us?",
-      "description": "Let's discuss how we can help elevate your brand with premium custom apparel.",
+      "description": "Your Team Deserve The Best",
       "button": "Get Your Free Quote"
     }
   },
@@ -637,6 +669,7 @@
         "packaging": "Custom Packaging",
         "shipping": "Shipping Coordination"
       },
+      "required": "(required)",
       "submit": "Get Free Quote",
       "submitting": "Submitting...",
       "submitted": "Quote Submitted!",
@@ -651,6 +684,8 @@
         "browse": "browse to upload",
         "supportedFormats": "PNG, JPG, GIF up to 5MB each",
         "button": "Choose Files",
+        "dropzoneLabel": "Upload files: drag and drop or click to browse",
+        "filesLabel": "{{count}} files uploaded",
         "info": "{{count}} of {{max}} files uploaded",
         "remove": "Remove file",
         "maxFilesError": "Maximum {{max}} files allowed",
@@ -670,7 +705,9 @@
   },
   "contact": {
     "hero": {
-      "title": "Contact Us",
+      "eyebrow": "Get In Touch",
+      "title": "Let's build something",
+      "titleAccent": "great together",
       "subtitle": "Ready to get started? Get in touch with our team for a free consultation and quote"
     },
     "info": {
@@ -730,6 +767,9 @@
     "ERROR_RETRY": "Retry"
   },
   "portfolio": {
+    "grid": {
+      "heading": "Portfolio Projects"
+    },
     "hero": {
       "title": "Our <strong>Portfolio</strong>",
       "subtitle": "Discover how we've partnered with leading businesses to deliver exceptional branded textile solutions"

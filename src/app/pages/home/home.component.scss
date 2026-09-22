@@ -82,6 +82,12 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .christmas-icon {
+    animation: none;
+  }
+}
+
 .christmas-text {
   color: white;
   font-size: 1.25rem;

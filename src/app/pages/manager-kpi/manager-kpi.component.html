@@ -1,0 +1,311 @@
+<div class="kpi-page">
+
+  <!-- Header -->
+  <header class="kpi-header">
+    <div class="kpi-header-left">
+      <h1 class="kpi-title"><i class="pi pi-chart-bar"></i> Manager KPI</h1>
+      <p class="kpi-subtitle">Monthly performance tracking & commission calculator</p>
+    </div>
+  </header>
+
+  <!-- Month Navigation -->
+  <div class="month-nav">
+    <button class="month-btn" (click)="prevMonth()"><i class="pi pi-chevron-left"></i></button>
+    <span class="month-label">{{ monthLabel }}</span>
+    <button class="month-btn" (click)="nextMonth()"><i class="pi pi-chevron-right"></i></button>
+  </div>
+
+  <!-- General Goals Panel -->
+  <div class="general-panel">
+    <button class="general-panel-toggle" (click)="toggleGeneralPanel()">
+      <i class="pi pi-users"></i>
+      <span>General Goals</span>
+      <span class="gp-subtitle">Set the same targets & commission for all managers at once</span>
+      <i class="pi" [class.pi-chevron-down]="!isGeneralPanelOpen" [class.pi-chevron-up]="isGeneralPanelOpen" style="margin-left:auto"></i>
+    </button>
+
+    <div class="general-panel-body" *ngIf="isGeneralPanelOpen">
+      <div class="gp-fields">
+        <div class="ge-field">
+          <label>Target Interactions / month</label>
+          <p-inputNumber [(ngModel)]="generalGoal.targetInteractions" [min]="0" styleClass="full-width"></p-inputNumber>
+        </div>
+        <div class="ge-field">
+          <label>Target Meetings / month</label>
+          <p-inputNumber [(ngModel)]="generalGoal.targetMeetings" [min]="0" styleClass="full-width"></p-inputNumber>
+        </div>
+      </div>
+
+      <!-- Commission Tiers -->
+      <div class="ge-tiers-header">
+        <span class="ge-tiers-title"><i class="pi pi-percentage"></i> Commission Tiers</span>
+        <button class="ge-reset-tiers" (click)="resetGeneralTiersToDefault()">
+          <i class="pi pi-refresh"></i> Reset to default
+        </button>
+      </div>
+      <div class="ge-tier-row" *ngFor="let tier of generalTiers; let i = index">
+        <div class="ge-tier-dot" [style.background]="PALETTE[i] || '#6b7280'"></div>
+        <span class="ge-tier-name">{{ tier.name }}</span>
+        <div class="ge-tier-bounds">
+          <span class="ge-bound-label">{{ tier.min | number }} ֏ –</span>
+          <span class="ge-bound-infinity" *ngIf="i === generalTiers.length - 1">∞</span>
+          <p-inputNumber *ngIf="i < generalTiers.length - 1"
+            [(ngModel)]="generalTiers[i].max"
+            (ngModelChange)="onGeneralTierMaxChange(i)"
+            [min]="tier.min + 1" [useGrouping]="true"
+            styleClass="tier-bound-input"></p-inputNumber>
+          <span class="ge-bound-currency" *ngIf="i < generalTiers.length - 1">֏</span>
+        </div>
+        <div class="ge-tier-rate-wrap">
+          <p-inputNumber [(ngModel)]="generalTiers[i].rate"
+            [min]="0" [max]="100" [maxFractionDigits]="1"
+            suffix="%" styleClass="tier-rate-input"></p-inputNumber>
+        </div>
+      </div>
+
+      <div class="gp-actions">
+        <button class="gp-apply-btn" (click)="applyToAllManagers()" [disabled]="isSavingGeneral">
+          <i class="pi pi-check-circle"></i>
+          {{ isSavingGeneral ? 'Applying...' : 'Apply to All Managers' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading KPI data...</p>
+  </div>
+
+  <!-- Manager Cards -->
+  <div class="managers-grid" *ngIf="!isLoading">
+    <div class="manager-card" *ngFor="let manager of managers">
+      <div class="mc-header">
+        <div class="mc-avatar" [style.background]="getKpiFor(manager._id)?.tier?.color ?? '#f59e0b'">
+          {{ manager.firstName[0] }}{{ manager.lastName[0] }}
+        </div>
+        <div class="mc-info">
+          <span class="mc-name">{{ manager.firstName }} {{ manager.lastName }}</span>
+          <span class="mc-role">{{ manager.role }}</span>
+        </div>
+        <!-- Tier badge -->
+        <div class="mc-tier-badge"
+             *ngIf="getKpiFor(manager._id) as kpi"
+             [style.background]="kpiTierBg(kpi.tier.color)"
+             [style.color]="kpi.tier.color"
+             [style.border-color]="kpi.tier.color">
+          {{ kpi.tier.name }}
+        </div>
+      </div>
+
+      <!-- KPI Progress (view mode) -->
+      <ng-container *ngIf="getKpiFor(manager._id) as kpi">
+        <div class="kpi-stats">
+
+          <!-- Interactions -->
+          <div class="kpi-stat">
+            <div class="ks-header">
+              <span class="ks-label"><i class="pi pi-phone"></i> Interactions</span>
+              <span class="ks-values">{{ kpi.interactions }} / {{ kpi.goal?.targetInteractions ?? '—' }}</span>
+            </div>
+            <div class="ks-bar-wrap">
+              <div class="ks-bar-fill interactions"
+                   [style.width.%]="pct(kpi.interactions, kpi.goal?.targetInteractions ?? 0)"></div>
+            </div>
+            <span class="ks-pct">{{ pct(kpi.interactions, kpi.goal?.targetInteractions ?? 0) }}%</span>
+          </div>
+
+          <!-- Meetings -->
+          <div class="kpi-stat">
+            <div class="ks-header">
+              <span class="ks-label"><i class="pi pi-calendar"></i> Meetings</span>
+              <span class="ks-values">{{ kpi.meetings }} / {{ kpi.goal?.targetMeetings ?? '—' }}</span>
+            </div>
+            <div class="ks-bar-wrap">
+              <div class="ks-bar-fill meetings"
+                   [style.width.%]="pct(kpi.meetings, kpi.goal?.targetMeetings ?? 0)"></div>
+            </div>
+            <span class="ks-pct">{{ pct(kpi.meetings, kpi.goal?.targetMeetings ?? 0) }}%</span>
+          </div>
+
+          <!-- Revenue -->
+          <div class="kpi-stat">
+            <div class="ks-header">
+              <span class="ks-label"><i class="pi pi-wallet"></i> Revenue</span>
+              <span class="ks-values">{{ formatCurrency(kpi.revenue) }} / {{ kpi.goal?.targetRevenue ? formatCurrency(kpi.goal!.targetRevenue) : '—' }}</span>
+            </div>
+            <div class="ks-bar-wrap">
+              <div class="ks-bar-fill revenue"
+                   [style.width.%]="pct(kpi.revenue, kpi.goal?.targetRevenue ?? 0)"
+                   [style.background]="kpi.tier.color"></div>
+            </div>
+            <span class="ks-pct">{{ pct(kpi.revenue, kpi.goal?.targetRevenue ?? 0) }}%</span>
+          </div>
+
+          <!-- Commission (flat-rate on entire revenue) -->
+          <div class="commission-box" [style.border-color]="kpi.tier.color" [style.background]="kpiTierBg(kpi.tier.color)">
+            <div class="cb-top">
+              <div class="cb-left">
+                <span class="cb-label">Commission · <strong>{{ kpi.tier.name }}</strong></span>
+                <span class="cb-amount" [style.color]="kpi.tier.color">{{ formatCurrency(kpi.commission) }}</span>
+              </div>
+              <i class="pi pi-trophy cb-icon" [style.color]="kpi.tier.color"></i>
+            </div>
+            <!-- Flat-rate formula -->
+            <div class="cb-formula">
+              <span class="cb-formula-text">
+                {{ formatCurrency(kpi.revenue) }}
+                <span class="cb-op">×</span>
+                <strong [style.color]="kpi.tier.color">{{ (kpi.tier.rate * 100).toFixed(0) }}%</strong>
+                <span class="cb-op">=</span>
+                <strong [style.color]="kpi.tier.color">{{ formatCurrency(kpi.commission) }}</strong>
+              </span>
+            </div>
+          </div>
+
+          <!-- Tier progression track (level ladder) -->
+          <div class="tier-track">
+            <div class="tt-header">
+              <span class="tt-title"><i class="pi pi-flag"></i> Tier Progression</span>
+              <span class="tt-max" *ngIf="isAtMaxTier(manager._id)" [style.color]="kpi.tier.color">
+                <i class="pi pi-crown"></i> Max Level Reached
+              </span>
+            </div>
+
+            <div class="tt-nodes">
+              <ng-container *ngFor="let t of kpi.tiers; let i = index; let last = last">
+                <div class="tt-node"
+                     [class.reached]="i <= activeTierIndex(manager._id)"
+                     [class.current]="i === activeTierIndex(manager._id)"
+                     [style.--node-color]="t.color">
+                  <div class="tt-node-dot">
+                    <i class="pi" [class.pi-check]="i < activeTierIndex(manager._id)"
+                                  [class.pi-star-fill]="i === activeTierIndex(manager._id)"></i>
+                  </div>
+                  <span class="tt-node-name">{{ t.name }}</span>
+                  <span class="tt-node-rate">{{ (t.rate * 100).toFixed(0) }}%</span>
+                </div>
+                <div class="tt-connector" *ngIf="!last"
+                     [class.reached]="i < activeTierIndex(manager._id)"
+                     [style.--conn-color]="t.color"></div>
+              </ng-container>
+            </div>
+
+            <!-- Progress bar to next tier -->
+            <div class="tt-next" *ngIf="kpi.nextTier as next">
+              <div class="tt-next-labels">
+                <span class="tt-next-current" [style.color]="kpi.tier.color">{{ kpi.tier.name }}</span>
+                <span class="tt-next-remain" [style.color]="next.color">
+                  {{ formatCurrency(amountToNextTier(manager._id)) }} to <strong>{{ next.name }}</strong>
+                </span>
+              </div>
+              <div class="tt-next-bar-wrap">
+                <div class="tt-next-bar-fill"
+                     [style.width.%]="nextTierProgress(manager._id)"
+                     [style.background]="'linear-gradient(90deg, ' + kpi.tier.color + ', ' + next.color + ')'"></div>
+              </div>
+              <span class="tt-next-pct">{{ nextTierProgress(manager._id) }}%</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- No KPI data yet -->
+      <div class="no-kpi" *ngIf="!getKpiFor(manager._id)">
+        <i class="pi pi-info-circle"></i>
+        <span>No KPI data for this month</span>
+      </div>
+
+      <!-- Goal Edit Section -->
+      <div class="goal-section">
+        <div class="goal-divider"></div>
+
+        <!-- View goals -->
+        <ng-container *ngIf="editingManagerId !== manager._id">
+          <div class="goal-view">
+            <span class="goal-view-title">Monthly Targets</span>
+            <div class="goal-chips" *ngIf="getGoalFor(manager._id) as goal">
+              <span class="goal-chip"><i class="pi pi-phone"></i> {{ goal.targetInteractions }} interactions</span>
+              <span class="goal-chip"><i class="pi pi-calendar"></i> {{ goal.targetMeetings }} meetings</span>
+            </div>
+            <span class="no-goals" *ngIf="!getGoalFor(manager._id)">No goals set yet</span>
+
+            <!-- Show commission rates (custom if set, else default) -->
+            <div class="goal-tiers-view" *ngIf="getKpiFor(manager._id) as kpi">
+              <span class="goal-tiers-label">Commission rates:</span>
+              <div class="goal-tier-chips">
+                <span class="goal-tier-chip"
+                  *ngFor="let t of kpi.tiers"
+                  [style.color]="t.color"
+                  [style.border-color]="t.color"
+                  [style.background]="kpiTierBg(t.color)">
+                  {{ t.name }} {{ (t.rate * 100).toFixed(0) }}%
+                </span>
+              </div>
+            </div>
+
+            <button class="edit-goal-btn" (click)="startEditGoal(manager)">
+              <i class="pi pi-pencil"></i> {{ getGoalFor(manager._id) ? 'Edit Goals' : 'Set Goals' }}
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- Edit goals -->
+        <ng-container *ngIf="editingManagerId === manager._id">
+          <div class="goal-edit">
+            <div class="ge-field">
+              <label>Target Interactions / month</label>
+              <p-inputNumber [(ngModel)]="editingGoal[manager._id].targetInteractions"
+                [min]="0" styleClass="full-width"></p-inputNumber>
+            </div>
+            <div class="ge-field">
+              <label>Target Meetings / month</label>
+              <p-inputNumber [(ngModel)]="editingGoal[manager._id].targetMeetings"
+                [min]="0" styleClass="full-width"></p-inputNumber>
+            </div>
+            <!-- Commission tiers override -->
+            <div class="ge-tiers-header">
+              <span class="ge-tiers-title"><i class="pi pi-percentage"></i> Commission Tiers</span>
+              <button class="ge-reset-tiers" (click)="resetTiersToDefault(manager._id)">
+                <i class="pi pi-refresh"></i> Reset to default
+              </button>
+            </div>
+            <div class="ge-tier-row" *ngFor="let tier of editingTiers[manager._id]; let i = index">
+              <div class="ge-tier-dot" [style.background]="PALETTE[i] || '#6b7280'"></div>
+              <span class="ge-tier-name">{{ tier.name }}</span>
+              <div class="ge-tier-bounds">
+                <span class="ge-bound-label">{{ tier.min | number }} ֏ –</span>
+                <!-- Last tier is always open-ended -->
+                <span class="ge-bound-infinity" *ngIf="i === editingTiers[manager._id].length - 1">∞</span>
+                <p-inputNumber *ngIf="i < editingTiers[manager._id].length - 1"
+                  [(ngModel)]="editingTiers[manager._id][i].max"
+                  (ngModelChange)="onTierMaxChange(manager._id, i)"
+                  [min]="tier.min + 1" [useGrouping]="true"
+                  styleClass="tier-bound-input"></p-inputNumber>
+                <span class="ge-bound-currency" *ngIf="i < editingTiers[manager._id].length - 1">֏</span>
+              </div>
+              <div class="ge-tier-rate-wrap">
+                <p-inputNumber [(ngModel)]="editingTiers[manager._id][i].rate"
+                  [min]="0" [max]="100" [maxFractionDigits]="1"
+                  suffix="%" styleClass="tier-rate-input"></p-inputNumber>
+              </div>
+            </div>
+
+            <div class="ge-actions">
+              <button class="ge-save" (click)="saveGoal(manager)" [disabled]="isSavingGoal">
+                <i class="pi pi-check"></i> Save
+              </button>
+              <button class="ge-cancel" (click)="cancelEdit()">
+                <i class="pi pi-times"></i> Cancel
+              </button>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+    </div>
+  </div>
+
+  <p-toast></p-toast>
+</div>

@@ -22,12 +22,10 @@ export class TrustedBrandsComponent {
     { name: 'UWC', logo: 'https://resources.finalsite.net/images/v1695647157/uwcdilijanorg/zgr5ydn6oqnoyghprchl/UWCD-logo.svg' },
     { name: 'UATE', logo: 'https://uate.org/wp-content/uploads/2024/05/UATE-LogoType-Main-1024x574.png' },
     { name: 'Fastshift', logo: 'https://static.ucraft.net/fs/ucraft/userFiles/fastshif/images/logo.png?v=1678703970' },
-    { name: 'Valan Group', logo: 'https://www.valangroup.am/image/logo/logo.png' },
+    { name: 'Valan Group', logo: 'https://www.valangroup.am/image/logo/logo-25.webp' },
     { name: 'Drive Motors', logo: 'https://drivemotors.am/wp-content/uploads/2021/02/Drive_logo-01-e1613744824999.png' },
-    { name: 'Lebanon Shawarma', logo: 'https://lebanonshawarma.am/wp-content/themes/shawarma/assets/images/lebanon_logo.svg' },
     { name: 'Courtyard By Marriott', logo: 'https://cache.marriott.com/content/dam/marriott-digital/cy/global-property-shared/en_us/logo/assets/cy_logo_L.png' },
     { name: 'Armenian Game Changers', logo: 'https://www.f6s.com/content-resource/media/1244013_large.jpeg' },
-    { name: 'Ampere', logo: 'https://ampere.am/wp-content/uploads/2026/02/Frame-39-300x108-1.png' },
     { name: 'Turboline', logo: 'https://static.tildacdn.com/tild3264-6663-4239-a661-643231323933/Turboline2jpg_.png' },
     { name: 'Ceramica', logo: 'https://ceramica.fra1.digitaloceanspaces.com/2025/01/LOGONER-02-280x102.png' }
   ];

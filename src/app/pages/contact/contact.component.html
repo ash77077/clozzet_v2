@@ -1,44 +1,40 @@
-<div class="contact-page page-wrapper">
-  <!-- Page Header -->
-  <section class="page-header">
-    <div class="container">
-      <h1 class="page-title">{{ 'contact.hero.title' | translate }}</h1>
-      <p class="page-subtitle">
-        {{ 'contact.hero.subtitle' | translate }}
-      </p>
-    </div>
-  </section>
+<div class="contact-page">
 
-  <!-- Contact Information -->
-  <section class="contact-info-section">
+  <!-- Hero -->
+  <section class="contact-hero">
     <div class="container">
-      <div class="contact-grid">
-        <div *ngFor="let info of contactInfo" class="contact-card">
-          <div class="contact-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="info.icon"></path>
-            </svg>
-          </div>
-          <div class="contact-details">
-            <h3 class="contact-title">{{ info.titleKey | translate }}</h3>
-            <p class="contact-value">{{ info.valueKey ? (info.valueKey | translate) : info.value }}</p>
-            <p class="contact-description">{{ info.descriptionKey | translate }}</p>
+      <div class="hero-inner">
+        <div class="hero-text">
+          <span class="eyebrow">{{ 'contact.hero.eyebrow' | translate }}</span>
+          <h1>{{ 'contact.hero.title' | translate }}<br><span class="accent">{{ 'contact.hero.titleAccent' | translate }}</span></h1>
+          <p class="hero-sub">{{ 'contact.hero.subtitle' | translate }}</p>
+        </div>
+        <div class="contact-cards">
+          <div *ngFor="let info of contactInfo" class="contact-card">
+            <div class="card-icon">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" [attr.d]="info.icon"></path>
+              </svg>
+            </div>
+            <div class="card-body">
+              <h3>{{ info.titleKey | translate }}</h3>
+              <p class="card-value">{{ info.valueKey ? (info.valueKey | translate) : info.value }}</p>
+              <span class="card-desc">{{ info.descriptionKey | translate }}</span>
+            </div>
           </div>
         </div>
       </div>
-
-<!--      <div class="office-hours-card">-->
-<!--        <h3 class="office-hours-title">Office Hours</h3>-->
-<!--        <div class="hours-list">-->
-<!--          <div *ngFor="let schedule of officeHours" class="hours-item">-->
-<!--            <span class="hours-day">{{ schedule.day }}</span>-->
-<!--            <span class="hours-time">{{ schedule.hours }}</span>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
     </div>
   </section>
 
+  <!-- Divider -->
+  <div class="section-divider">
+    <div class="container">
+      <div class="divider-line"></div>
+    </div>
+  </div>
+
   <!-- Quote Form -->
   <app-quote-form></app-quote-form>
+
 </div>

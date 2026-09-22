@@ -314,22 +314,44 @@
   }
 }
 
+// Editable cell — contains inline inputs without overflow
+td.editable-cell {
+  overflow: visible;
+  vertical-align: middle;
+}
+
 // Inline editing inputs
 ::ng-deep .inline-num {
-  width: 120px;
+  display: block;
+  width: 100%;
+
+  .p-inputnumber {
+    width: 100%;
+  }
 
   .p-inputnumber-input {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.85rem;
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.82rem;
+    min-width: 0;
   }
 }
 
 ::ng-deep .inline-select {
-  width: 140px;
+  display: block;
+  width: 100%;
+
+  .p-select {
+    width: 100%;
+    min-width: 130px;
+  }
 
   .p-select-label {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.85rem;
+    padding: 0.35rem 2rem 0.35rem 0.6rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -611,6 +633,69 @@
           &.profit { color: #10b981; }
           &.margin { color: #8b5cf6; }
         }
+      }
+    }
+
+    .payment-summary {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px dashed #93c5fd;
+
+      .payment-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+
+        .payment-summary-item {
+          background: white;
+          border-radius: 8px;
+          padding: 0.75rem 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+
+          .ps-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-color-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+          }
+
+          .ps-value {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-color);
+
+            &.paid { color: #10b981; }
+            &.remaining { color: #f59e0b; }
+          }
+        }
+      }
+
+      .payment-progress-wrap {
+        height: 8px;
+        background: #dbeafe;
+        border-radius: 99px;
+        overflow: hidden;
+
+        .payment-progress-bar {
+          height: 100%;
+          background: linear-gradient(90deg, #10b981, #059669);
+          border-radius: 99px;
+          transition: width 0.4s ease;
+        }
+      }
+
+      .payment-progress-label {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-color-secondary);
+        text-align: right;
       }
     }
   }

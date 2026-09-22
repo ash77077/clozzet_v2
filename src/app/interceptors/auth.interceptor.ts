@@ -11,6 +11,7 @@ const PUBLIC_ENDPOINTS = [
   '/auth/refresh',
   '/products',
   '/quotes',
+  '/assets/',
 ];
 
 function isPublic(url: string): boolean {

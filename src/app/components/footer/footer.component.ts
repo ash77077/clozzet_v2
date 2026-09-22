@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, RouterModule, TranslateModule],
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss']
 })
@@ -15,10 +15,9 @@ export class FooterComponent {
   currentYear = new Date().getFullYear();
   shouldHideFooter = false;
 
-  constructor(private router: Router, private authService: AuthService) {
-    // Hide footer when user is logged in
+  constructor(private authService: AuthService) {
     this.authService.currentUser$.subscribe(user => {
-      this.shouldHideFooter = !!user; // Hide footer if user is logged in
+      this.shouldHideFooter = !!user;
     });
   }
 
@@ -33,17 +32,14 @@ export class FooterComponent {
 
   quickLinks = [
     { translationKey: 'footer.quickLinks.aboutUs', route: '/about' },
-    { translationKey: 'footer.quickLinks.products', route: '/' },
-    { translationKey: 'footer.quickLinks.services', route: '/' },
-    { translationKey: 'footer.quickLinks.getQuote', route: '/contact' },
     { translationKey: 'footer.quickLinks.contact', route: '/contact' }
   ];
 
-  navigateToLink(link: any): void {
-    if (link.route) {
-      this.router.navigate([link.route]);
-    }
-  }
+  legalLinks = [
+    { translationKey: 'footer.legal.privacy', route: '/privacy' },
+    { translationKey: 'footer.legal.terms', route: '/terms' },
+    { translationKey: 'footer.legal.cookies', route: '/cookies' }
+  ];
 
   productCategories = [
     { translationKey: 'footer.products.tshirts', href: '#tshirts' },
