@@ -7,8 +7,6 @@ export type SupportedLang = typeof SUPPORTED_LANGS[number];
 
 /** ISO 639-1 code used in hreflang / html[lang] — maps internal code → BCP 47 */
 export const LANG_TO_BCP47: Record<SupportedLang, string> = { en: 'en', am: 'hy' };
-/** URL path prefix for non-default locales */
-export const LOCALE_PREFIX: Record<SupportedLang, string> = { en: '', am: '/hy' };
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {

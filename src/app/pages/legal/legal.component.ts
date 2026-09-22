@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { LocaleRoutePipe } from '../../shared/pipes/locale-route.pipe';
 
 type LegalDoc = 'privacy' | 'terms' | 'cookies';
 
@@ -120,7 +119,7 @@ const DOCS: Record<LegalDoc, Doc> = {
 @Component({
   selector: 'app-legal',
   standalone: true,
-  imports: [CommonModule, RouterModule, LocaleRoutePipe],
+  imports: [CommonModule, RouterModule],
   templateUrl: './legal.component.html',
   styleUrls: ['./legal.component.scss']
 })

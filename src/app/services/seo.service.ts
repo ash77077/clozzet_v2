@@ -3,7 +3,7 @@ import { Title, Meta } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter, map } from 'rxjs/operators';
-import { TranslationService, LANG_TO_BCP47, SupportedLang } from './translation.service';
+import { TranslationService, LANG_TO_BCP47 } from './translation.service';
 
 export interface SeoData {
   title: string;
@@ -109,32 +109,27 @@ export class SeoService {
     this.upsertMeta('name', 'twitter:image', image);
 
     // ── JSON-LD ───────────────────────────────────────────────────────────
-    this.upsertJsonLd(canonical, bcp47, lang);
+    this.upsertJsonLd(canonical, bcp47);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   private upsertHreflang(seo: SeoData | undefined, rawPath: string): void {
-    // Derive the canonical page path without locale prefix
-    const pagePath = rawPath.startsWith('/hy') ? rawPath.slice(3) || '/' : rawPath;
     const isPublic = PUBLIC_PATHS.some(p => {
       const full = p ? `/${p}` : '/';
-      return pagePath === full || pagePath.startsWith(`/${p}/`);
+      return rawPath === full || rawPath.startsWith(`/${p}/`);
     });
 
     if (!isPublic || seo?.noIndex) {
-      // Remove hreflang tags from non-public pages
       Object.values(HREFLANG_IDS).forEach(id => this.doc.getElementById(id)?.remove());
       return;
     }
 
-    const enPath = pagePath === '/' ? '' : pagePath;
-    const enUrl = `${BASE_URL}${enPath}`;
-    const hyUrl = `${BASE_URL}/hy${enPath || '/'}`;
-
-    this.upsertLinkById(HREFLANG_IDS.en, 'alternate', enUrl, 'en');
-    this.upsertLinkById(HREFLANG_IDS.hy, 'alternate', hyUrl, 'hy');
-    this.upsertLinkById(HREFLANG_IDS.xd, 'alternate', enUrl, 'x-default');
+    const url = `${BASE_URL}${rawPath === '/' ? '' : rawPath}`;
+    this.upsertLinkById(HREFLANG_IDS.en, 'alternate', url, 'en');
+    this.upsertLinkById(HREFLANG_IDS.xd, 'alternate', url, 'x-default');
+    // Remove the /hy hreflang — no longer using locale-prefixed URLs
+    this.doc.getElementById(HREFLANG_IDS.hy)?.remove();
   }
 
   private upsertMeta(attrName: 'name' | 'property', attrValue: string, content: string): void {
@@ -168,17 +163,14 @@ export class SeoService {
     el.setAttribute('href', href);
   }
 
-  private upsertJsonLd(canonical: string, bcp47: string, lang: SupportedLang): void {
-    // Armenian fields are TODO — team will supply translations
-    const isArmenian = lang === 'am';
-
+  private upsertJsonLd(canonical: string, bcp47: string): void {
     const schema = {
       '@context': 'https://schema.org',
       '@graph': [
         {
           '@type': ['Organization', 'LocalBusiness'],
           '@id': `${BASE_URL}/#organization`,
-          name: isArmenian ? 'TODO: Clozzet (Armenian)' : ORG_NAME,
+          name: ORG_NAME,
           url: BASE_URL,
           inLanguage: bcp47,
           logo: {
@@ -188,15 +180,13 @@ export class SeoService {
             height: 80
           },
           image: DEFAULT_IMAGE,
-          description: isArmenian
-            ? 'TODO: Armenian description'
-            : 'Custom branded apparel, private label and white label manufacturing for businesses in Armenia.',
+          description: 'Custom branded apparel, private label and white label manufacturing for businesses in Armenia.',
           telephone: PHONE,
           email: EMAIL,
           address: {
             '@type': 'PostalAddress',
-            streetAddress: isArmenian ? 'TODO: Sebastia 3/10 (Armenian)' : 'Sebastia 3/10',
-            addressLocality: isArmenian ? 'TODO: Yerevan (Armenian)' : 'Yerevan',
+            streetAddress: 'Sebastia 3/10',
+            addressLocality: 'Yerevan',
             addressCountry: 'AM'
           },
           geo: {

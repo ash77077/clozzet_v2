@@ -54,7 +54,9 @@
     "companies": "Companies",
     "logout": "Logout",
     "salesSection": "Sales",
-    "manufacturingSection": "Manufacturing"
+    "manufacturingSection": "Manufacturing",
+    "managerKpi": "Manager KPI",
+    "employees": "Employees"
   },
   "auth": {
     "login": {

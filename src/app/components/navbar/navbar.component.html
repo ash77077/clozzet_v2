@@ -2,7 +2,7 @@
   <div class="navbar-container">
     <!-- Logo -->
     <div class="navbar-brand">
-      <a [routerLink]="'/' | localeRoute" class="brand-link" (click)="closeMobileMenu()" aria-label="{{ 'navbar.home' | translate }} — Clozzet">
+      <a routerLink="/" class="brand-link" (click)="closeMobileMenu()" aria-label="{{ 'navbar.home' | translate }} — Clozzet">
         <div class="logo">
           <picture>
             <source type="image/webp" srcset="/images/logo-black.webp">
@@ -31,7 +31,7 @@
 
           <a
             *ngIf="!item.children"
-            [routerLink]="item.route | localeRoute"
+            [routerLink]="item.route"
             class="nav-link"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{exact: item.route === '/'}">
@@ -54,7 +54,7 @@
             <div class="dropdown-content">
               <a
                 *ngFor="let child of item.children"
-                [routerLink]="child.route | localeRoute"
+                [routerLink]="child.route"
                 class="dropdown-link"
                 routerLinkActive="active">
                 {{ child.labelKey }}
@@ -255,7 +255,7 @@
           
           <a
             *ngIf="!item.children"
-            [routerLink]="item.route | localeRoute"
+            [routerLink]="item.route"
             class="mobile-nav-link"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{exact: item.route === '/'}"
@@ -276,7 +276,7 @@
             <div class="mobile-dropdown-content" [class.active]="activeDropdown === item.labelKey">
               <a
                 *ngFor="let child of item.children"
-                [routerLink]="child.route | localeRoute"
+                [routerLink]="child.route"
                 class="mobile-dropdown-link"
                 routerLinkActive="active"
                 (click)="closeMobileMenu()">

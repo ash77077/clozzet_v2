@@ -3,9 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth.service';
 import { ProductsService, Product } from '../../services/products.service';
-import { TranslationService, LOCALE_PREFIX, SupportedLang } from '../../services/translation.service';
+import { TranslationService, SupportedLang } from '../../services/translation.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { LocaleRoutePipe } from '../../shared/pipes/locale-route.pipe';
 import { Observable } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {NgxGoogleAnalyticsModule} from "ngx-google-analytics";
@@ -21,7 +20,7 @@ interface NavItem {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule, NgxGoogleAnalyticsModule, LocaleRoutePipe],
+  imports: [CommonModule, RouterModule, TranslateModule, NgxGoogleAnalyticsModule],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })
@@ -233,14 +232,6 @@ export class NavbarComponent implements OnInit {
     this.currentLanguage = languageCode;
     this.showLanguageMenu = false;
     this.closeMobileMenu();
-
-    // Navigate to the locale-prefixed equivalent of the current page
-    const currentUrl = this.router.url.split('?')[0];
-    const isHy = currentUrl.startsWith('/hy');
-    const pagePath = isHy ? (currentUrl.slice(3) || '/') : currentUrl;
-    const prefix = LOCALE_PREFIX[languageCode as SupportedLang];
-    const target = prefix ? `${prefix}${pagePath === '/' ? '' : pagePath}` || prefix : pagePath;
-    this.router.navigateByUrl(target || '/');
   }
 
   getCurrentLanguageData() {

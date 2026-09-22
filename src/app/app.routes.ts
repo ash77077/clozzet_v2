@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { ManagerGuard } from './guards/manager.guard';
-import { localeGuard } from './guards/locale.guard';
 
 // ─── Shared SEO data per public page ────────────────────────────────────────
 const HOME_SEO   = { title: 'Corporate Clothing & Branded Workwear in Yerevan | Clozzet', description: 'Custom branded apparel for teams and businesses in Armenia. Design, private label and white label manufacturing, from 7-day production. Free quote in 24 hours.' };
@@ -17,139 +16,74 @@ const COOKIES_SEO  = { title: 'Cookie Policy | Clozzet', description: 'How Clozz
 
 export const routes: Routes = [
 
-  // ── English (default) public routes ─────────────────────────────────────
+  // ── Public routes ────────────────────────────────────────────────────────
   {
     path: '',
-    canActivate: [localeGuard],
-    data: { locale: 'en' },
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
-        data: { seo: { ...HOME_SEO, path: '/' } }
-      },
-      {
-        path: 'about',
-        loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent),
-        data: { seo: { ...ABOUT_SEO, path: '/about' } }
-      },
-      {
-        path: 'products',
-        loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent),
-        data: { seo: { ...PRODUCTS_SEO, path: '/products' } }
-      },
-      {
-        path: 'products/:id',
-        loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
-      },
-      {
-        path: 'services',
-        loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent),
-        data: { seo: { ...SERVICES_SEO, path: '/services' } }
-      },
-      {
-        path: 'services/bulk-orders',
-        loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
-      },
-      {
-        path: 'services/design',
-        loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
-      },
-      {
-        path: 'services/embroidery',
-        loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
-      },
-      {
-        path: 'services/printing',
-        loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
-      },
-      {
-        path: 'portfolio',
-        loadComponent: () => import('./pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
-        data: { seo: { ...PORTFOLIO_SEO, path: '/portfolio' } }
-      },
-      {
-        path: 'contact',
-        loadComponent: () => import('./pages/contact/contact.component').then(m => m.ContactComponent),
-        data: { seo: { ...CONTACT_SEO, path: '/contact' } }
-      },
-      {
-        path: 'privacy',
-        loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
-        data: { doc: 'privacy', seo: { ...PRIVACY_SEO, path: '/privacy' } }
-      },
-      {
-        path: 'terms',
-        loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
-        data: { doc: 'terms', seo: { ...TERMS_SEO, path: '/terms' } }
-      },
-      {
-        path: 'cookies',
-        loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
-        data: { doc: 'cookies', seo: { ...COOKIES_SEO, path: '/cookies' } }
-      }
-    ]
+    loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
+    data: { seo: { ...HOME_SEO, path: '/' } }
   },
-
-  // ── Armenian (/hy/…) public routes ───────────────────────────────────────
   {
-    path: 'hy',
-    canActivate: [localeGuard],
-    data: { locale: 'am' },
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
-        data: { seo: { ...HOME_SEO, path: '/hy/' } }
-      },
-      {
-        path: 'about',
-        loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent),
-        data: { seo: { ...ABOUT_SEO, path: '/hy/about' } }
-      },
-      {
-        path: 'products',
-        loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent),
-        data: { seo: { ...PRODUCTS_SEO, path: '/hy/products' } }
-      },
-      {
-        path: 'products/:id',
-        loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
-      },
-      {
-        path: 'services',
-        loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent),
-        data: { seo: { ...SERVICES_SEO, path: '/hy/services' } }
-      },
-      {
-        path: 'portfolio',
-        loadComponent: () => import('./pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
-        data: { seo: { ...PORTFOLIO_SEO, path: '/hy/portfolio' } }
-      },
-      {
-        path: 'contact',
-        loadComponent: () => import('./pages/contact/contact.component').then(m => m.ContactComponent),
-        data: { seo: { ...CONTACT_SEO, path: '/hy/contact' } }
-      },
-      {
-        path: 'privacy',
-        loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
-        data: { doc: 'privacy', seo: { ...PRIVACY_SEO, path: '/hy/privacy' } }
-      },
-      {
-        path: 'terms',
-        loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
-        data: { doc: 'terms', seo: { ...TERMS_SEO, path: '/hy/terms' } }
-      },
-      {
-        path: 'cookies',
-        loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
-        data: { doc: 'cookies', seo: { ...COOKIES_SEO, path: '/hy/cookies' } }
-      }
-    ]
+    path: 'about',
+    loadComponent: () => import('./pages/about/about.component').then(m => m.AboutComponent),
+    data: { seo: { ...ABOUT_SEO, path: '/about' } }
+  },
+  {
+    path: 'products',
+    loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent),
+    data: { seo: { ...PRODUCTS_SEO, path: '/products' } }
+  },
+  {
+    path: 'products/:id',
+    loadComponent: () => import('./pages/products/products.component').then(m => m.ProductsPageComponent)
+  },
+  {
+    path: 'services',
+    loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent),
+    data: { seo: { ...SERVICES_SEO, path: '/services' } }
+  },
+  {
+    path: 'services/bulk-orders',
+    loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
+  },
+  {
+    path: 'services/design',
+    loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
+  },
+  {
+    path: 'services/embroidery',
+    loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
+  },
+  {
+    path: 'services/printing',
+    loadComponent: () => import('./pages/services/services.component').then(m => m.ServicesPageComponent)
+  },
+  {
+    path: 'portfolio',
+    loadComponent: () => import('./pages/portfolio/portfolio.component').then(m => m.PortfolioComponent),
+    data: { seo: { ...PORTFOLIO_SEO, path: '/portfolio' } }
+  },
+  {
+    path: 'contact',
+    loadComponent: () => import('./pages/contact/contact.component').then(m => m.ContactComponent),
+    data: { seo: { ...CONTACT_SEO, path: '/contact' } }
+  },
+  {
+    path: 'privacy',
+    loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
+    data: { doc: 'privacy', seo: { ...PRIVACY_SEO, path: '/privacy' } }
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
+    data: { doc: 'terms', seo: { ...TERMS_SEO, path: '/terms' } }
+  },
+  {
+    path: 'cookies',
+    loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
+    data: { doc: 'cookies', seo: { ...COOKIES_SEO, path: '/cookies' } }
   },
 
-  // ── Authenticated & admin routes (locale-agnostic) ───────────────────────
+  // ── Authenticated & admin routes ─────────────────────────────────────────
   {
     path: 'dashboard',
     loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
@@ -236,7 +170,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/meetings/meetings.component').then(m => m.MeetingsComponent),
     canActivate: [ManagerGuard]
   },
-  // Order Blank routes
   {
     path: 'order-blank',
     loadComponent: () => import('./components/order-blank/order-blank.component').then(m => m.OrderBlankComponent)
@@ -272,19 +205,16 @@ export const routes: Routes = [
     path: 'configurator',
     loadComponent: () => import('./components/configurator/configurator.component').then(m => m.ConfiguratorComponent)
   },
-  // Employee Salary Management
   {
     path: 'employees',
     loadComponent: () => import('./pages/employees/employees.component').then(m => m.EmployeesComponent),
     canActivate: [AdminGuard]
   },
-  // Manager KPI
   {
     path: 'manager-kpi',
     loadComponent: () => import('./pages/manager-kpi/manager-kpi.component').then(m => m.ManagerKpiComponent),
     canActivate: [AdminGuard]
   },
-  // Wildcard route - must be last
 
   // ── 404 — must be last ────────────────────────────────────────────────────
   {

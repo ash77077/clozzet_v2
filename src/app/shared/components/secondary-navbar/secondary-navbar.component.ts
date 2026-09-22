@@ -177,7 +177,6 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   switchLanguage(langCode: string): void {
     this.translationService.switchLanguage(langCode as SupportedLang);
     this.currentLanguage = langCode;
-    // Admin routes are locale-agnostic — no URL navigation needed
   }
 
   onAiToggle(enabled: boolean): void {
