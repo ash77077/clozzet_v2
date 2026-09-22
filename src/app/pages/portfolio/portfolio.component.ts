@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { LocaleRoutePipe } from '../../shared/pipes/locale-route.pipe';
 
 interface PortfolioItem {
   titleKey: string;
@@ -29,7 +30,7 @@ interface PortfolioItem {
 @Component({
   selector: 'app-portfolio',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule],
+  imports: [CommonModule, RouterModule, TranslateModule, LocaleRoutePipe],
   templateUrl: './portfolio.component.html',
   styleUrls: ['./portfolio.component.scss']
 })

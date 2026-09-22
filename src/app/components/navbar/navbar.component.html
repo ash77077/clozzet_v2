@@ -2,11 +2,11 @@
   <div class="navbar-container">
     <!-- Logo -->
     <div class="navbar-brand">
-      <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
+      <a [routerLink]="'/' | localeRoute" class="brand-link" (click)="closeMobileMenu()" aria-label="{{ 'navbar.home' | translate }} — Clozzet">
         <div class="logo">
           <picture>
             <source type="image/webp" srcset="/images/logo-black.webp">
-            <img src="/images/logo-black.png" alt="CLOZZET" class="logo-image"
+            <img src="/images/logo-black.png" alt="Clozzet" class="logo-image"
               width="206" height="40"
               fetchpriority="high" decoding="async">
           </picture>
@@ -21,24 +21,24 @@
           *ngFor="let item of navItems"
           class="nav-item"
           [class.has-dropdown]="item.children"
-          [class.dropdown-open]="activeDropdown === item.label"
+          [class.dropdown-open]="activeDropdown === item.labelKey"
           [class.special-nav-item]="item.special">
 
           <a
             *ngIf="!item.children"
-            [routerLink]="item.route"
+            [routerLink]="item.route | localeRoute"
             class="nav-link"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{exact: item.route === '/'}">
-            {{ item.label }}
+            {{ item.labelKey | translate }}
           </a>
 
           <span
             *ngIf="item.children"
             class="nav-link dropdown-trigger"
             [class.special-trigger]="item.special"
-            (click)="toggleDropdown(item.label, $event)">
-            {{ item.label }}
+            (click)="toggleDropdown(item.labelKey, $event)">
+            {{ item.labelKey | translate }}
             <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
             </svg>
@@ -47,12 +47,12 @@
           <!-- Dropdown Menu -->
           <div *ngIf="item.children" class="nav-dropdown">
             <div class="dropdown-content">
-              <a 
+              <a
                 *ngFor="let child of item.children"
-                [routerLink]="child.route"
+                [routerLink]="child.route | localeRoute"
                 class="dropdown-link"
                 routerLinkActive="active">
-                {{ child.label }}
+                {{ child.labelKey }}
               </a>
             </div>
           </div>
@@ -64,9 +64,12 @@
     <div class="navbar-actions desktop-actions">
       <!-- Language Dropdown -->
       <div class="language-dropdown-container">
-        <button class="language-btn" (click)="toggleLanguageMenu($event)">
-          <span class="flag">{{ getCurrentLanguageData().flag }}</span>
-          <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button class="language-btn" (click)="toggleLanguageMenu($event)"
+          [attr.aria-label]="('navbar.language' | translate) + ': ' + getCurrentLanguageData().name"
+          [attr.aria-expanded]="showLanguageMenu"
+          aria-haspopup="listbox">
+          <span class="flag" aria-hidden="true">{{ getCurrentLanguageData().flag }}</span>
+          <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         </button>
@@ -173,13 +176,16 @@
     </div>
 
     <!-- Mobile Menu Button -->
-    <button 
-      class="mobile-menu-btn" 
+    <button
+      class="mobile-menu-btn"
       (click)="toggleMobileMenu()"
-      [class.active]="isMobileMenuOpen">
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
+      [class.active]="isMobileMenuOpen"
+      [attr.aria-label]="(isMobileMenuOpen ? 'navbar.closeMobileMenu' : 'navbar.openMobileMenu') | translate"
+      [attr.aria-expanded]="isMobileMenuOpen"
+      aria-controls="mobile-menu">
+      <span class="hamburger-line" aria-hidden="true"></span>
+      <span class="hamburger-line" aria-hidden="true"></span>
+      <span class="hamburger-line" aria-hidden="true"></span>
     </button>
   </div>
 
@@ -187,7 +193,7 @@
   <div class="mobile-menu-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
 
   <!-- Mobile Menu -->
-  <div class="mobile-menu" [class.active]="isMobileMenuOpen">
+  <div class="mobile-menu" id="mobile-menu" [class.active]="isMobileMenuOpen" role="dialog" [attr.aria-label]="'navbar.mobileMenu' | translate" [attr.aria-modal]="isMobileMenuOpen ? 'true' : null">
     <div class="mobile-menu-header">
       <div class="mobile-logo">
         @if (isMobileMenuOpen) {
@@ -199,8 +205,8 @@
           </picture>
         }
       </div>
-      <button class="mobile-close-btn" (click)="closeMobileMenu()">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button class="mobile-close-btn" (click)="closeMobileMenu()" [attr.aria-label]="'navbar.closeMobileMenu' | translate">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
       </button>
@@ -213,34 +219,34 @@
           class="mobile-nav-item"
           [class.has-dropdown]="item.children">
           
-          <a 
+          <a
             *ngIf="!item.children"
-            [routerLink]="item.route"
+            [routerLink]="item.route | localeRoute"
             class="mobile-nav-link"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{exact: item.route === '/'}"
             (click)="closeMobileMenu()">
-            {{ item.label }}
+            {{ item.labelKey | translate }}
           </a>
 
           <div *ngIf="item.children" class="mobile-dropdown">
-            <span 
+            <span
               class="mobile-nav-link dropdown-trigger"
-              (click)="toggleDropdown(item.label, $event)">
-              {{ item.label }}
+              (click)="toggleDropdown(item.labelKey, $event)">
+              {{ item.labelKey | translate }}
               <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
               </svg>
             </span>
             
-            <div class="mobile-dropdown-content" [class.active]="activeDropdown === item.label">
-              <a 
+            <div class="mobile-dropdown-content" [class.active]="activeDropdown === item.labelKey">
+              <a
                 *ngFor="let child of item.children"
-                [routerLink]="child.route"
+                [routerLink]="child.route | localeRoute"
                 class="mobile-dropdown-link"
                 routerLinkActive="active"
                 (click)="closeMobileMenu()">
-                {{ child.label }}
+                {{ child.labelKey }}
               </a>
             </div>
           </div>

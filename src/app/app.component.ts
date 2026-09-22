@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
@@ -8,6 +8,7 @@ import { AiChatWidgetComponent } from './shared/components/ai-chat-widget/ai-cha
 import { AuthService } from './services/auth.service';
 import { AiService } from './services/ai.service';
 import { SeoService } from './services/seo.service';
+import { TranslationService, LANG_TO_BCP47 } from './services/translation.service';
 import { Observable } from 'rxjs';
 import { map, filter, startWith } from 'rxjs/operators';
 
@@ -24,20 +25,32 @@ export class AppComponent implements OnInit {
   hideNavbars: boolean = false;
   get aiEnabled$() { return this.aiService.aiEnabled$; }
 
+  private doc = inject(DOCUMENT);
+
   constructor(
     private authService: AuthService,
     private router: Router,
     private aiService: AiService,
-    private seoService: SeoService
+    private seoService: SeoService,
+    private translationService: TranslationService
   ) {
     this.isAuthenticated$ = this.authService.currentUser$.pipe(
       map(user => !!user)
     );
-    // Translation service is automatically initialized
+
+    // Set html[lang] immediately from persisted language (before first NavigationEnd)
+    const lang = this.translationService.getCurrentLanguage();
+    this.doc.documentElement.lang = LANG_TO_BCP47[lang];
   }
 
   ngOnInit() {
     this.seoService.init();
+
+    // Keep html[lang] in sync whenever language is switched outside of route navigation
+    this.translationService.langChange$.subscribe(lang => {
+      this.doc.documentElement.lang = LANG_TO_BCP47[lang];
+    });
+
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       startWith(null)

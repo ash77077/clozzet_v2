@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { LocaleRoutePipe } from '../../shared/pipes/locale-route.pipe';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule],
+  imports: [CommonModule, RouterModule, TranslateModule, LocaleRoutePipe],
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss']
 })
@@ -16,9 +17,8 @@ export class FooterComponent {
   shouldHideFooter = false;
 
   constructor(private authService: AuthService) {
-    // Hide footer when user is logged in
     this.authService.currentUser$.subscribe(user => {
-      this.shouldHideFooter = !!user; // Hide footer if user is logged in
+      this.shouldHideFooter = !!user;
     });
   }
 

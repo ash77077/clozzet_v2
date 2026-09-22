@@ -184,7 +184,11 @@
           <span>No orders</span>
         </div>
 
-        <div class="order-card" *ngFor="let order of col.orders" cdkDrag>
+        <div class="order-card" *ngFor="let order of col.orders" cdkDrag
+             [class.card-delivered-unpaid]="isDeliveredUnpaid(order)"
+             (cdkDragStarted)="onCardDragStarted()"
+             (cdkDragMoved)="onCardDragMoved()"
+             (cdkDragEnded)="onCardDragEnded()">
           <!-- Custom placeholder to maintain exact card dimensions -->
           <div class="drag-placeholder" *cdkDragPlaceholder></div>
 
@@ -219,20 +223,20 @@
           </div>
 
           <div class="card-actions">
-            <button class="card-btn btn-view" (click)="viewOrderDetails(order)" pTooltip="View Details">
+            <button class="card-btn btn-view" (click)="cardViewDetails(order)" pTooltip="View Details">
               <i class="pi pi-eye"></i>
             </button>
-            <button class="card-btn btn-status" (click)="openStatusDialog(order)" pTooltip="Change Status" *ngIf="isAdminOrManager()">
+            <button class="card-btn btn-status" (click)="cardOpenStatusDialog(order)" pTooltip="Change Status" *ngIf="isAdminOrManager()">
               <i class="pi pi-arrows-h"></i>
             </button>
             <button
               class="card-btn btn-next"
               *ngIf="isAdminOrManager() && getNextStatus(col.status)"
-              (click)="quickStatusChange(order, getNextStatus(col.status)!)"
+              (click)="cardQuickStatusChange(order, getNextStatus(col.status)!)"
               [pTooltip]="'Move to ' + getStatusLabel(getNextStatus(col.status)!)">
               <i class="pi pi-arrow-right"></i>
             </button>
-            <button class="card-btn btn-delete" (click)="deleteOrder(order)" pTooltip="Delete" *ngIf="isAdminOrManager()">
+            <button class="card-btn btn-delete" (click)="cardDeleteOrder(order)" pTooltip="Delete" *ngIf="isAdminOrManager()">
               <i class="pi pi-trash"></i>
             </button>
           </div>

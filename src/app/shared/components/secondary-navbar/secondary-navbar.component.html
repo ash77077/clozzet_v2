@@ -22,19 +22,19 @@
           <li class="nav-item">
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <i class="pi pi-home"></i>
-              <span>Dashboard</span>
+              <span>{{ 'secondaryNav.dashboard' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/orders" class="nav-link" routerLinkActive="active">
               <i class="pi pi-list"></i>
-              <span>Orders</span>
+              <span>{{ 'secondaryNav.orders' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/crm-dashboard" class="nav-link" routerLinkActive="active">
               <i class="pi pi-sitemap"></i>
-              <span>CRM Dashboard</span>
+              <span>{{ 'secondaryNav.crmDashboard' | translate }}</span>
             </a>
           </li>
         </ul>
@@ -49,25 +49,25 @@
           <li class="nav-item">
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <i class="pi pi-home"></i>
-              <span>Dashboard</span>
+              <span>{{ 'secondaryNav.dashboard' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/orders" class="nav-link" routerLinkActive="active">
               <i class="pi pi-list"></i>
-              <span>Orders</span>
+              <span>{{ 'secondaryNav.orders' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/revenue" class="nav-link" routerLinkActive="active">
               <i class="pi pi-chart-line"></i>
-              <span>Revenue</span>
+              <span>{{ 'secondaryNav.revenue' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/crm-dashboard" class="nav-link" routerLinkActive="active">
               <i class="pi pi-sitemap"></i>
-              <span>CRM Dashboard</span>
+              <span>{{ 'secondaryNav.crmDashboard' | translate }}</span>
             </a>
           </li>
         </ul>
@@ -77,19 +77,19 @@
           <li class="nav-item">
             <a routerLink="/financial-production" class="nav-link" routerLinkActive="active">
               <i class="pi pi-chart-bar"></i>
-              <span>Financial Production</span>
+              <span>{{ 'secondaryNav.financialProduction' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/cost-configurator" class="nav-link" routerLinkActive="active">
               <i class="pi pi-calculator"></i>
-              <span>Cost Configurator</span>
+              <span>{{ 'secondaryNav.costConfigurator' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/manufacturing" class="nav-link" routerLinkActive="active">
               <i class="pi pi-cog"></i>
-              <span>Manufacturing</span>
+              <span>{{ 'secondaryNav.manufacturing' | translate }}</span>
               <span class="badge urgent" *ngIf="orderStats && orderStats.inProgress > 0">{{ orderStats.inProgress }}</span>
             </a>
           </li>
@@ -100,25 +100,25 @@
     <!-- Customer/User Navigation -->
     <div class="nav-section" *ngIf="isCustomerOrUser()">
       <div class="nav-group">
-        <h4 class="nav-group-title">My Account</h4>
+        <h4 class="nav-group-title">{{ 'secondaryNav.myAccount' | translate }}</h4>
         <ul class="nav-list">
           <li class="nav-item">
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <i class="pi pi-home"></i>
-              <span>Dashboard</span>
+              <span>{{ 'secondaryNav.dashboard' | translate }}</span>
             </a>
           </li>
           <li class="nav-item">
             <a routerLink="/my-orders" class="nav-link" routerLinkActive="active">
               <i class="pi pi-shopping-bag"></i>
-              <span>My Orders</span>
+              <span>{{ 'secondaryNav.myOrders' | translate }}</span>
               <span class="badge" *ngIf="userOrderStats && userOrderStats.total > 0">{{ userOrderStats.total }}</span>
             </a>
           </li>
           <li class="nav-item" *ngIf="!isBusinessUser()">
             <a routerLink="/order-blank" class="nav-link" routerLinkActive="active">
               <i class="pi pi-file-plus"></i>
-              <span>New Order</span>
+              <span>{{ 'secondaryNav.newOrder' | translate }}</span>
             </a>
           </li>
         </ul>
@@ -133,18 +133,10 @@
             *ngIf="isAdmin()"
             class="btn btn-sm btn-primary"
             routerLink="/order-blank"
-            pTooltip="Create new order">
+            pTooltip="{{ 'secondaryNav.newOrder' | translate }}">
             <i class="pi pi-plus"></i>
-            New Order
+            {{ 'secondaryNav.newOrder' | translate }}
           </button>
-<!--          <button-->
-<!--            *ngIf="isAdmin()"-->
-<!--            class="btn btn-sm btn-secondary"-->
-<!--            (click)="exportData()"-->
-<!--            pTooltip="Export reports">-->
-<!--            <i class="pi pi-download"></i>-->
-<!--            Export-->
-<!--          </button>-->
         </div>
       </div>
     </div>
@@ -155,7 +147,7 @@
       <app-notification-bell></app-notification-bell>
 
       <div class="user-dropdown-container" *ngIf="currentUser">
-        <button class="user-icon-btn" (click)="toggleUserMenu($event)" pTooltip="User menu" style="position:relative">
+        <button class="user-icon-btn" (click)="toggleUserMenu($event)" pTooltip="{{ 'secondaryNav.myAccount' | translate }}" style="position:relative">
           <i class="pi pi-user"></i>
           <span *ngIf="aiEnabled$ | async"
                 style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:#4ade80;border-radius:50%;border:2px solid white;">
@@ -177,7 +169,7 @@
           <div class="user-dropdown-divider"></div>
           <button class="user-dropdown-item" routerLink="/dashboard" (click)="showUserMenu = false">
             <i class="pi pi-home"></i>
-            Dashboard
+            {{ 'secondaryNav.dashboard' | translate }}
           </button>
 
           <!-- Other Section (Admin only) -->
@@ -186,29 +178,29 @@
             <div class="user-dropdown-section">
               <button class="user-dropdown-section-title dropdown-toggle" (click)="toggleOtherSection($event)">
                 <i class="pi pi-th-large"></i>
-                Other
+                {{ 'secondaryNav.other' | translate }}
                 <i class="pi pi-chevron-down chevron-icon" [class.rotated]="showOtherSection"></i>
               </button>
               <div class="user-dropdown-subsection" [class.expanded]="showOtherSection">
                 <button class="user-dropdown-item sub-item" routerLink="/product-management" (click)="showUserMenu = false">
                   <i class="pi pi-box"></i>
-                  Products
+                  {{ 'secondaryNav.products' | translate }}
                 </button>
                 <button class="user-dropdown-item sub-item" routerLink="/retail-sales" (click)="showUserMenu = false">
                   <i class="pi pi-shopping-bag"></i>
-                  Retail Sales
+                  {{ 'secondaryNav.retailSales' | translate }}
                 </button>
                 <button class="user-dropdown-item sub-item" routerLink="/expo-sales" (click)="showUserMenu = false">
                   <i class="pi pi-shop"></i>
-                  Expo Sales
+                  {{ 'secondaryNav.expoSales' | translate }}
                 </button>
                 <button class="user-dropdown-item sub-item" routerLink="/users" (click)="showUserMenu = false">
                   <i class="pi pi-users"></i>
-                  Users
+                  {{ 'secondaryNav.users' | translate }}
                 </button>
                 <button class="user-dropdown-item sub-item" routerLink="/companies" (click)="showUserMenu = false">
                   <i class="pi pi-building"></i>
-                  Companies
+                  {{ 'secondaryNav.companies' | translate }}
                 </button>
               </div>
             </div>
@@ -245,7 +237,7 @@
           <div class="user-dropdown-divider"></div>
           <button class="user-dropdown-item logout" (click)="logout()">
             <i class="pi pi-sign-out"></i>
-            Logout
+            {{ 'secondaryNav.logout' | translate }}
           </button>
         </div>
       </div>

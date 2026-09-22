@@ -297,3 +297,22 @@ $text-muted: #A0AABF;
     opacity: 0.5;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in-right,
+  .hero-visual {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .photo-cell img,
+  .photo-cell .photo-overlay {
+    transition: none;
+  }
+
+  .hero-actions button {
+    transition: none;
+  }
+}

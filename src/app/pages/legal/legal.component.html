@@ -2,7 +2,7 @@
   <div class="container" *ngIf="doc">
 
     <div class="legal-hero">
-      <a routerLink="/" class="back-link">
+      <a [routerLink]="'/' | localeRoute" class="back-link">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>

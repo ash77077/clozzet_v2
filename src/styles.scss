@@ -458,6 +458,26 @@ body {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .fade-in,
+  .slide-in-up,
+  .slide-in-left,
+  .slide-in-right {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .btn,
+  .card {
+    transition: none;
+  }
+}
+
 .full-width {
   width: 100%;
 }

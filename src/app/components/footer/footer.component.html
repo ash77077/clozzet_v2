@@ -37,7 +37,7 @@
         <h4 class="section-title">{{ 'footer.quickLinks.title' | translate }}</h4>
         <ul class="footer-links">
           <li *ngFor="let link of quickLinks">
-            <a [routerLink]="link.route" class="footer-link">{{ link.translationKey | translate }}</a>
+            <a [routerLink]="link.route | localeRoute" class="footer-link">{{ link.translationKey | translate }}</a>
           </li>
         </ul>
       </div>
@@ -76,7 +76,7 @@
           <p>{{ 'footer.copyright' | translate:{ year: currentYear, company: companyInfo.name } }}</p>
         </div>
         <div class="legal-links">
-          <a *ngFor="let link of legalLinks" [routerLink]="link.route" class="legal-link">
+          <a *ngFor="let link of legalLinks" [routerLink]="link.route | localeRoute" class="legal-link">
             {{ link.translationKey | translate }}
           </a>
         </div>

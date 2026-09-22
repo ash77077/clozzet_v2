@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ProductDetails } from '../../../models/dashboard.models';
 
 const KNOWN_SIZE_KEYS = [
-  'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl',
   's1_2', 's3_4', 's5_6', 's7_8', 's9_10', 's11_12', 's13_14', 's15_16',
+  'xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', 'xxxxl',
 ];
 
 const SIZE_LABELS: Record<string, string> = {

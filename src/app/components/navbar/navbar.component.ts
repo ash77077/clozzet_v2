@@ -3,14 +3,15 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService, User } from '../../services/auth.service';
 import { ProductsService, Product } from '../../services/products.service';
-import { TranslationService } from '../../services/translation.service';
+import { TranslationService, LOCALE_PREFIX, SupportedLang } from '../../services/translation.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { LocaleRoutePipe } from '../../shared/pipes/locale-route.pipe';
 import { Observable } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {NgxGoogleAnalyticsModule} from "ngx-google-analytics";
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   route: string;
   icon?: string;
   children?: NavItem[];
@@ -20,7 +21,7 @@ interface NavItem {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule, NgxGoogleAnalyticsModule],
+  imports: [CommonModule, RouterModule, TranslateModule, NgxGoogleAnalyticsModule, LocaleRoutePipe],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })
@@ -52,19 +53,22 @@ export class NavbarComponent implements OnInit {
   productsLoading = false;
 
   navItems: NavItem[] = [
-    { label: 'Home', route: '/' },
-    { label: 'About', route: '/about' },
+    { labelKey: 'navbar.home', route: '/' },
+    { labelKey: 'navbar.about', route: '/about' },
     // {
-    //   label: 'Products',
+    //   labelKey: 'navbar.products',
     //   route: '/products',
     //   children: []
     // },
-    // { label: 'Portfolio', route: '/portfolio' },
-    { label: 'Contact', route: '/contact' }
+    // { labelKey: 'navbar.portfolio', route: '/portfolio' },
+    { labelKey: 'navbar.contact', route: '/contact' }
   ];
 
   ngOnInit(): void {
     this.loadProductsForNavbar();
+    this.translationService.langChange$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(lang => { this.currentLanguage = lang; });
   }
 
   loadProductsForNavbar(): void {
@@ -76,10 +80,10 @@ export class NavbarComponent implements OnInit {
           this.productsLoading = false;
           const activeProducts = products.filter(p => p.isActive);
           const productNavItems: NavItem[] = activeProducts.map(product => ({
-            label: product.name,
+            labelKey: product.name,
             route: `/products/${product.id}`
           }));
-          const productsNav = this.navItems.find(item => item.label === 'Products');
+          const productsNav = this.navItems.find(item => item.labelKey === 'navbar.products');
           if (productsNav) {
             productsNav.children = productNavItems.length ? productNavItems : undefined;
           }
@@ -87,8 +91,7 @@ export class NavbarComponent implements OnInit {
         error: () => {
           this.productsLoading = false;
           console.warn('[Navbar] Products API unavailable — showing static link.');
-          // On failure: clear children so Products renders as a plain link, not an empty dropdown
-          const productsNav = this.navItems.find(item => item.label === 'Products');
+          const productsNav = this.navItems.find(item => item.labelKey === 'navbar.products');
           if (productsNav) productsNav.children = undefined;
         }
       });
@@ -203,10 +206,18 @@ export class NavbarComponent implements OnInit {
   }
 
   switchLanguage(languageCode: string) {
-    this.translationService.switchLanguage(languageCode);
+    this.translationService.switchLanguage(languageCode as SupportedLang);
     this.currentLanguage = languageCode;
     this.showLanguageMenu = false;
     this.closeMobileMenu();
+
+    // Navigate to the locale-prefixed equivalent of the current page
+    const currentUrl = this.router.url.split('?')[0];
+    const isHy = currentUrl.startsWith('/hy');
+    const pagePath = isHy ? (currentUrl.slice(3) || '/') : currentUrl;
+    const prefix = LOCALE_PREFIX[languageCode as SupportedLang];
+    const target = prefix ? `${prefix}${pagePath === '/' ? '' : pagePath}` || prefix : pagePath;
+    this.router.navigateByUrl(target || '/');
   }
 
   getCurrentLanguageData() {

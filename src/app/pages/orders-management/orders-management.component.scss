@@ -545,6 +545,22 @@
       transform: scale(0.97);
     }
 
+    // Delivered but not fully paid — amber warning
+    &.card-delivered-unpaid {
+      background: #fffbeb;
+      border-color: #f59e0b;
+      border-left: 4px solid #f59e0b;
+
+      &:hover {
+        border-color: #d97706;
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+      }
+
+      .order-number {
+        color: #b45309;
+      }
+    }
+
     .card-top {
       display: flex;
       justify-content: space-between;

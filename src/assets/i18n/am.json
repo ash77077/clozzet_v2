@@ -22,13 +22,39 @@
   "navbar": {
     "home": "Գլխավոր",
     "products": "Արտադրանք",
+    "services": "TODO: Services",
+    "portfolio": "TODO: Portfolio",
     "about": "Մեր մասին",
     "contact": "Կապ",
     "login": "Մուտք",
     "register": "Գրանցում",
     "logout": "Ելք",
     "dashboard": "Վահանակ",
-    "language": "Լեզու"
+    "language": "Լեզու",
+    "openMobileMenu": "TODO: Open navigation menu",
+    "closeMobileMenu": "TODO: Close navigation menu",
+    "mobileMenu": "TODO: Navigation menu"
+  },
+  "secondaryNav": {
+    "dashboard": "TODO: Dashboard",
+    "orders": "TODO: Orders",
+    "crmDashboard": "TODO: CRM Dashboard",
+    "revenue": "TODO: Revenue",
+    "financialProduction": "TODO: Financial Production",
+    "costConfigurator": "TODO: Cost Configurator",
+    "manufacturing": "TODO: Manufacturing",
+    "myAccount": "TODO: My Account",
+    "myOrders": "TODO: My Orders",
+    "newOrder": "TODO: New Order",
+    "other": "TODO: Other",
+    "products": "TODO: Products",
+    "retailSales": "TODO: Retail Sales",
+    "expoSales": "TODO: Expo Sales",
+    "users": "TODO: Users",
+    "companies": "TODO: Companies",
+    "logout": "TODO: Logout",
+    "salesSection": "TODO: Sales",
+    "manufacturingSection": "TODO: Manufacturing"
   },
   "auth": {
     "login": {
@@ -607,6 +633,7 @@
         "packaging": "Հատուկ փաթեթավորում",
         "shipping": "Առաքման համակարգում"
       },
+      "required": "",
       "submit": "Ստանալ Գնառաջարկ",
       "submitting": "Ուղարկվում է...",
       "submitted": "Գնառաջարկը ուղարկվեց:",
@@ -621,6 +648,8 @@
         "browse": "ընտրեք ֆայլեր",
         "supportedFormats": "PNG, JPG, GIF առավելագույնը 5MB",
         "button": "Ընտրել Ֆայլեր",
+        "dropzoneLabel": "TODO: Upload files: drag and drop or click to browse",
+        "filesLabel": "TODO: {{count}} files uploaded",
         "info": "{{count}} / {{max}} ֆայլ վերբեռնված է",
         "remove": "Հեռացնել ֆայլը",
         "maxFilesError": "Թույլատրվում է առավելագույնը {{max}} ֆայլ",

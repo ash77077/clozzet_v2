@@ -784,3 +784,17 @@
     transform: rotate(360deg);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+
+  .filter-btn,
+  .product-card,
+  .modal-overlay,
+  .modal-content {
+    transition: none;
+    animation: none;
+  }
+}

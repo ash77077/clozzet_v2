@@ -22,13 +22,39 @@
   "navbar": {
     "home": "Home",
     "products": "Products",
+    "services": "Services",
+    "portfolio": "Portfolio",
     "about": "About",
     "contact": "Contact",
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
     "dashboard": "Dashboard",
-    "language": "Language"
+    "language": "Language",
+    "openMobileMenu": "Open navigation menu",
+    "closeMobileMenu": "Close navigation menu",
+    "mobileMenu": "Navigation menu"
+  },
+  "secondaryNav": {
+    "dashboard": "Dashboard",
+    "orders": "Orders",
+    "crmDashboard": "CRM Dashboard",
+    "revenue": "Revenue",
+    "financialProduction": "Financial Production",
+    "costConfigurator": "Cost Configurator",
+    "manufacturing": "Manufacturing",
+    "myAccount": "My Account",
+    "myOrders": "My Orders",
+    "newOrder": "New Order",
+    "other": "Other",
+    "products": "Products",
+    "retailSales": "Retail Sales",
+    "expoSales": "Expo Sales",
+    "users": "Users",
+    "companies": "Companies",
+    "logout": "Logout",
+    "salesSection": "Sales",
+    "manufacturingSection": "Manufacturing"
   },
   "auth": {
     "login": {
@@ -641,6 +667,7 @@
         "packaging": "Custom Packaging",
         "shipping": "Shipping Coordination"
       },
+      "required": "(required)",
       "submit": "Get Free Quote",
       "submitting": "Submitting...",
       "submitted": "Quote Submitted!",
@@ -655,6 +682,8 @@
         "browse": "browse to upload",
         "supportedFormats": "PNG, JPG, GIF up to 5MB each",
         "button": "Choose Files",
+        "dropzoneLabel": "Upload files: drag and drop or click to browse",
+        "filesLabel": "{{count}} files uploaded",
         "info": "{{count}} of {{max}} files uploaded",
         "remove": "Remove file",
         "maxFilesError": "Maximum {{max}} files allowed",
