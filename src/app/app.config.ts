@@ -1,10 +1,10 @@
-import { ApplicationConfig, provideZoneChangeDetection, Injectable, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, Injectable, importProvidersFrom, APP_INITIALIZER } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import Aura from '@primeuix/themes/aura';
-import { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { provideTranslateService, TranslateLoader, TranslateService } from '@ngx-translate/core';
+import { Observable, firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
 import {providePrimeNG} from "primeng/config";
@@ -28,6 +28,16 @@ export class CustomTranslateLoader implements TranslateLoader {
 const httpLoaderFactory: (http: HttpClient) => CustomTranslateLoader = (http: HttpClient) =>
   new CustomTranslateLoader(http);
 
+// Preload translations before the app renders so no component ever sees raw keys
+function preloadTranslations(translate: TranslateService): () => Promise<void> {
+  return async () => {
+    translate.setDefaultLang('en');
+    const saved = localStorage.getItem('language');
+    const lang = (saved === 'en' || saved === 'am') ? saved : 'en';
+    await firstValueFrom(translate.use(lang));
+  };
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
@@ -50,6 +60,12 @@ export const appConfig: ApplicationConfig = {
         deps: [HttpClient]
       }
     }),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: preloadTranslations,
+      deps: [TranslateService],
+      multi: true
+    },
     // Google Analytics 4 Configuration
     // NgxGoogleAnalyticsModule: Core GA4 functionality
     // NgxGoogleAnalyticsRouterModule: Automatically tracks route changes as page views

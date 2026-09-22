@@ -18,20 +18,15 @@ export class TranslationService {
   readonly langChange$: Observable<SupportedLang> = this.currentLang$.asObservable();
 
   constructor(private translate: TranslateService) {
-    this.translate.setDefaultLang('en');
-    this.translate.use(this.resolveInitialLang());
-    this.currentLang$.next(this.translate.currentLang as SupportedLang);
-  }
+    // APP_INITIALIZER in app.config.ts already called setDefaultLang + use() and awaited
+    // the HTTP load. We just sync the BehaviorSubject to whatever is active now.
+    const active = this.translate.currentLang as SupportedLang;
+    this.currentLang$.next(this.isValid(active) ? active : 'en');
 
-  private resolveInitialLang(): SupportedLang {
-    const saved = localStorage.getItem('language');
-    if (saved && this.isValid(saved)) return saved as SupportedLang;
-
-    // Map BCP47 browser language → internal code
-    const browser = (navigator.language || '').toLowerCase();
-    if (browser.startsWith('hy')) return 'am';
-    const base = this.translate.getBrowserLang() ?? '';
-    return this.isValid(base) ? (base as SupportedLang) : 'en';
+    // Keep BehaviorSubject in sync if language is switched later
+    this.translate.onLangChange.subscribe(e => {
+      if (this.isValid(e.lang)) this.currentLang$.next(e.lang as SupportedLang);
+    });
   }
 
   switchLanguage(lang: SupportedLang | string): void {
