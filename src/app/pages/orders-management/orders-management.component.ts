@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { Subject, ReplaySubject, takeUntil } from 'rxjs';
+import { Subject, ReplaySubject, takeUntil, take } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -350,13 +350,21 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // Handle navigation from notification
   handleNavigationFromNotification(): void {
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+    this.route.queryParams.pipe(take(1)).subscribe(params => {
       const orderId = params['order'];
-      if (orderId) {
-        this.ordersLoaded$.pipe(takeUntil(this.destroy$)).subscribe(() => {
-          this.openOrderById(orderId);
-        });
-      }
+      if (!orderId) return;
+
+      // Clear the query param immediately so reloads don't re-trigger this
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true,
+      });
+
+      // Wait for orders to load once, then open the target order
+      this.ordersLoaded$.pipe(take(1)).subscribe(() => {
+        this.openOrderById(orderId);
+      });
     });
   }
 
@@ -503,7 +511,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   initForm(): void {
     this.addOrderForm = this.fb.group({
       orderNumber:         ['', Validators.required],
-      companyName:         [''],
+      companyName:         ['', Validators.required],
       clientName:          ['', Validators.required],
       salesPerson:         ['', Validators.required],
       priority:            ['normal', Validators.required],
@@ -1113,8 +1121,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   // ─── Load & filter ─────────────────────────────────────────────────────────
 
-  protected loadOrders(): void {
-    this.isLoading = true;
+  protected loadOrders(silent = false): void {
+    if (!silent) this.isLoading = true;
     this.productDetailsService.getAllProductDetails().pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         this.allOrders = response.data || [];
@@ -1211,6 +1219,11 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   get inProgressCount(): number { return this.allOrders.filter(o => o.status === OrderStatus.IN_PROGRESS || o.status === OrderStatus.CONFIRMED).length; }
   get deliveredCount(): number { return this.allOrders.filter(o => o.status === OrderStatus.DELIVERED).length; }
   get urgentCount(): number { return this.allOrders.filter(o => (o as any).priority === 'urgent').length; }
+
+  isDeliveredUnpaid(order: ProductDetails): boolean {
+    return order.status === OrderStatus.DELIVERED &&
+      order.paymentStatus !== 'paid';
+  }
 
   // ─── Order details (Jira modal) ────────────────────────────────────────────
 
@@ -1682,7 +1695,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       paymentStatus:        formValue.paymentStatus || 'not_paid',
       paidAmount:           formValue.paidAmount || undefined,
       expectedRevenue:      formValue.expectedRevenue || undefined,
-      products:             formValue.products
+      products:             formValue.products,
+      quantity:             this.calculateGrandTotal(),
     };
 
     this.isEditSaving = true;
@@ -2150,6 +2164,49 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   }
 
   // ─── Drag and Drop Handler ─────────────────────────────────────────────────
+  private _cardDragged = false;
+
+  onCardDragStarted(): void {
+    this._cardDragged = false;
+  }
+
+  onCardDragMoved(): void {
+    this._cardDragged = true;
+  }
+
+  onCardDragEnded(): void {
+    if (!this._cardDragged) return;
+    // Intercept and cancel the click that the browser fires after drag-release.
+    // Using capture phase so it runs before any Angular click handler.
+    const cancelNextClick = (e: MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      document.removeEventListener('click', cancelNextClick, true);
+    };
+    document.addEventListener('click', cancelNextClick, true);
+    // Safety cleanup in case no click fires (e.g. keyboard drop)
+    setTimeout(() => {
+      document.removeEventListener('click', cancelNextClick, true);
+      this._cardDragged = false;
+    }, 500);
+  }
+
+  cardViewDetails(order: ProductDetails): void {
+    this.viewOrderDetails(order);
+  }
+
+  cardOpenStatusDialog(order: ProductDetails): void {
+    this.openStatusDialog(order);
+  }
+
+  cardQuickStatusChange(order: ProductDetails, status: OrderStatus): void {
+    this.quickStatusChange(order, status);
+  }
+
+  cardDeleteOrder(order: ProductDetails): void {
+    this.deleteOrder(order);
+  }
+
   getConnectedLists(currentIndex: number): string[] {
     // Return IDs of all other drop lists to enable cross-column dragging
     return this.kanbanColumns
@@ -2183,8 +2240,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
               detail: `Order ${order.orderNumber} moved to ${this.getStatusLabel(targetStatus)}`,
               life: 3000
             });
-            // Refresh the order to get updated data
-            this.loadOrders();
+            // Refresh the order to get updated data (silent = no loading spinner/flicker)
+            this.loadOrders(true);
           },
           error: (error: any) => {
             console.error('Error updating status:', error);

@@ -184,12 +184,17 @@
           <span>No orders</span>
         </div>
 
-        <div class="order-card" *ngFor="let order of col.orders" cdkDrag>
+        <div class="order-card" *ngFor="let order of col.orders" cdkDrag
+             [class.card-delivered-unpaid]="isDeliveredUnpaid(order)"
+             (cdkDragStarted)="onCardDragStarted()"
+             (cdkDragMoved)="onCardDragMoved()"
+             (cdkDragEnded)="onCardDragEnded()">
           <!-- Custom placeholder to maintain exact card dimensions -->
           <div class="drag-placeholder" *cdkDragPlaceholder></div>
 
-          <div class="card-top">
-            <span class="order-number">{{ order.orderNumber }}</span>
+          <div class="card-company">
+            <i class="pi pi-building"></i>
+            <span>{{ order.companyName }}</span>
           </div>
 
           <div class="card-client">
@@ -197,9 +202,8 @@
             <span>{{ order.clientName }}</span>
           </div>
 
-          <div class="card-company" *ngIf="order.companyName">
-            <i class="pi pi-building"></i>
-            <span>{{ order.companyName }}</span>
+          <div class="card-top">
+            <span class="order-number card-order-id">{{ order.orderNumber }}</span>
           </div>
 
           <div class="card-meta">
@@ -219,20 +223,20 @@
           </div>
 
           <div class="card-actions">
-            <button class="card-btn btn-view" (click)="viewOrderDetails(order)" pTooltip="View Details">
+            <button class="card-btn btn-view" (click)="cardViewDetails(order)" pTooltip="View Details">
               <i class="pi pi-eye"></i>
             </button>
-            <button class="card-btn btn-status" (click)="openStatusDialog(order)" pTooltip="Change Status" *ngIf="isAdminOrManager()">
+            <button class="card-btn btn-status" (click)="cardOpenStatusDialog(order)" pTooltip="Change Status" *ngIf="isAdminOrManager()">
               <i class="pi pi-arrows-h"></i>
             </button>
             <button
               class="card-btn btn-next"
               *ngIf="isAdminOrManager() && getNextStatus(col.status)"
-              (click)="quickStatusChange(order, getNextStatus(col.status)!)"
+              (click)="cardQuickStatusChange(order, getNextStatus(col.status)!)"
               [pTooltip]="'Move to ' + getStatusLabel(getNextStatus(col.status)!)">
               <i class="pi pi-arrow-right"></i>
             </button>
-            <button class="card-btn btn-delete" (click)="deleteOrder(order)" pTooltip="Delete" *ngIf="isAdminOrManager()">
+            <button class="card-btn btn-delete" (click)="cardDeleteOrder(order)" pTooltip="Delete" *ngIf="isAdminOrManager()">
               <i class="pi pi-trash"></i>
             </button>
           </div>
@@ -363,7 +367,7 @@
           <button class="jira-hdr-btn btn-save-edit" (click)="saveEdit()" *ngIf="isEditMode" [disabled]="isEditSaving">
             <i class="pi pi-check"></i> {{ isEditSaving ? 'Saving…' : 'Save' }}
           </button>
-          <button class="jira-hdr-btn btn-delete" (click)="closeOrderDetails(); deleteOrder(selectedOrder!)" *ngIf="isAdminOrManager()" pTooltip="Delete order">
+          <button class="jira-hdr-btn btn-delete" (click)="deleteOrder(selectedOrder!); closeOrderDetails()" *ngIf="isAdminOrManager()" pTooltip="Delete order">
             <i class="pi pi-trash"></i>
           </button>
           <button class="jira-close-btn" (click)="closeOrderDetails()" pTooltip="Close">
@@ -1017,8 +1021,9 @@
           </div>
 
           <div class="form-field">
-            <label class="field-label">Company Name</label>
-            <input pInputText formControlName="companyName" placeholder="Company name (optional)" class="full-width" />
+            <label class="field-label required">Company Name</label>
+            <input pInputText formControlName="companyName" placeholder="Company name" class="full-width" />
+            <span class="field-error" *ngIf="isFieldInvalid('companyName')">Company name is required</span>
           </div>
 
           <div class="form-field">

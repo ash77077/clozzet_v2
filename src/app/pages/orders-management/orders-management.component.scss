@@ -538,35 +538,52 @@
       transform: scale(0.97);
     }
 
+    // Delivered but not fully paid — amber warning
+    &.card-delivered-unpaid {
+      background: #fffbeb;
+      border-color: #f59e0b;
+      border-left: 4px solid #f59e0b;
+
+      &:hover {
+        border-color: #d97706;
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+      }
+
+      .card-order-id {
+        color: #b45309;
+      }
+    }
+
     .card-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.4rem;
+      margin-top: 0.2rem;
 
-      .order-number { font-weight: 700; font-size: 0.85rem; color: var(--primary-color); }
-    }
-
-    .card-client {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--text-color);
-      margin-bottom: 0.6rem;
-      i { color: var(--text-color-secondary); font-size: 0.8rem; }
+      .card-order-id { font-weight: 500; font-size: 0.72rem; color: var(--text-color-secondary); }
     }
 
     .card-company {
       display: flex;
       align-items: center;
       gap: 0.4rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 0.3rem;
+      i { color: #6366f1; font-size: 0.8rem; }
+    }
+
+    .card-client {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       font-size: 0.8rem;
-      font-weight: 500;
-      color: #6366f1;
-      margin-bottom: 0.6rem;
-      i { color: #6366f1; font-size: 0.75rem; }
+      font-weight: 400;
+      color: var(--text-color-secondary);
+      margin-bottom: 0.5rem;
+      i { color: var(--text-color-secondary); font-size: 0.75rem; }
     }
 
     .card-meta {

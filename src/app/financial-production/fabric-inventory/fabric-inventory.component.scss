@@ -1250,3 +1250,8 @@
     }
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay { animation: none; }
+  .modal-content { animation: none; transform: none; }
+}

@@ -629,6 +629,23 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .dropzone,
+  .uploaded-file-card,
+  .info-card,
+  .submit-btn {
+    transition: none;
+  }
+
+  .dropzone.dragging .dropzone-icon svg {
+    animation: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}
+
 // Responsive Design
 @media (max-width: 1200px) {
   .quote-section {

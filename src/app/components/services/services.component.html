@@ -3,9 +3,6 @@
 		<!-- Services Header -->
 		<div class="section-header">
 			<h2 class="section-title">{{ 'services.title' | translate }}</h2>
-			<p class="section-subtitle">
-				{{ 'services.subtitle' | translate }}
-			</p>
 		</div>
 
 		<!-- Services Grid -->
@@ -41,31 +38,6 @@
 
 				<div *ngIf="service.highlight" class="highlight-badge">
 					{{ 'services.mostPopular' | translate }}
-				</div>
-			</div>
-		</div>
-
-		<!-- Stats Section -->
-		<div class="stats-section">
-			<h3 class="stats-title">{{ 'services.stats.title' | translate }}</h3>
-			<div class="stats-grid">
-				<div
-						*ngFor="let stat of stats; trackBy: trackByStatLabel"
-						class="stat-card">
-					<div class="stat-icon">
-						<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									[attr.d]="getIconPath(stat.icon)">
-							</path>
-						</svg>
-					</div>
-					<div class="stat-content">
-						<span class="stat-number">{{ stat.number }}</span>
-						<span class="stat-label">{{ stat.labelKey | translate }}</span>
-					</div>
 				</div>
 			</div>
 		</div>

@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard
+Disallow: /orders
+Disallow: /revenue
+Disallow: /companies
+Disallow: /manufacturing
+Disallow: /product-management
+Disallow: /user-management
+Disallow: /retail-sales
+Disallow: /sales-history
+Disallow: /crm-dashboard
+Disallow: /customer-profile/
+Disallow: /order-blank
+Disallow: /cost-configurator
+Disallow: /expo-sales
+Disallow: /my-orders
+Disallow: /financial-production
+Disallow: /3d-preview
+Disallow: /configurator
+Disallow: /register
+Disallow: /reset-password
+
+Sitemap: https://clozzet.am/sitemap.xml

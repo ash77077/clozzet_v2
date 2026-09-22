@@ -8,6 +8,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService, User } from '../../../services/auth.service';
+import { TranslationService, SupportedLang } from '../../../services/translation.service';
 import { UserRole } from '../../../models/dashboard.models';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { AiService } from '../../../services/ai.service';
@@ -68,12 +69,11 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private translate: TranslateService,
+    private translationService: TranslationService,
     private aiService: AiService
   ) {
-    // Initialize current language
-    this.currentLanguage = this.translate.currentLang || 'en';
+    this.currentLanguage = this.translationService.getCurrentLanguage();
 
-    // Initialize section from localStorage
     const savedSection = localStorage.getItem('selectedSection') as 'sales' | 'manufacturing';
     if (savedSection) {
       this.currentSection = savedSection;
@@ -175,9 +175,9 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   }
 
   switchLanguage(langCode: string): void {
+    this.translationService.switchLanguage(langCode as SupportedLang);
     this.currentLanguage = langCode;
-    this.translate.use(langCode);
-    localStorage.setItem('selectedLanguage', langCode);
+    // Admin routes are locale-agnostic — no URL navigation needed
   }
 
   onAiToggle(enabled: boolean): void {
