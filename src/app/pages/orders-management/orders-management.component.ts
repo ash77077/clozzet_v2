@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -117,6 +117,65 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   showAddOrderDialog = false;
   viewMode: 'kanban' | 'table' = 'kanban';
   isSaving = false;
+  mobileModalTab: 'details' | 'activity' = 'details';
+
+  // ─── Sprint month filter ───────────────────────────────────────────────────
+  sprintMonth: Date = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  showMonthPicker = false;
+
+  get sprintMonthLabel(): string {
+    return this.sprintMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  prevMonth(): void {
+    this.sprintMonth = new Date(this.sprintMonth.getFullYear(), this.sprintMonth.getMonth() - 1, 1);
+    this.applyFilters();
+  }
+
+  nextMonth(): void {
+    this.sprintMonth = new Date(this.sprintMonth.getFullYear(), this.sprintMonth.getMonth() + 1, 1);
+    this.applyFilters();
+  }
+
+  onMonthPickerSelect(date: Date): void {
+    if (!date) return;
+    this.sprintMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    this.showMonthPicker = false;
+    this.applyFilters();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.showMonthPicker) return;
+    const target = event.target as HTMLElement;
+    if (!target.closest('.sprint-label-wrap')) {
+      this.showMonthPicker = false;
+    }
+  }
+
+  isInSprintMonth(order: ProductDetails): boolean {
+    const sm = this.sprintMonth;
+    const smYear = sm.getFullYear();
+    const smMonth = sm.getMonth();
+
+    const now = new Date();
+    const isCurrentMonth = smYear === now.getFullYear() && smMonth === now.getMonth();
+
+    const isClosedStatus = order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.CANCELLED ||
+      order.status === OrderStatus.RETURNED;
+
+    // In current month: show all unclosed orders regardless of deadline (overdue carry-overs)
+    if (isCurrentMonth && !isClosedStatus) return true;
+
+    const deadline = order.deadline ? new Date(order.deadline) : null;
+
+    // No deadline on a closed order — only show in current month
+    if (!deadline) return isCurrentMonth;
+
+    // All other cases: show only if deadline is in the selected month
+    return deadline.getFullYear() === smYear && deadline.getMonth() === smMonth;
+  }
 
   // ─── Add-order stepper ─────────────────────────────────────────────────────
   currentStep = 1;
@@ -229,7 +288,12 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   searchTerm = '';
   selectedStatusFilter = '';
   selectedUserIds: Set<string> = new Set();
-  maxVisibleUsers = 5;
+  maxVisibleUsers = window.innerWidth <= 768 ? 2 : 5;
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.maxVisibleUsers = window.innerWidth <= 768 ? 2 : 5;
+  }
 
   // ─── Jira Modal — Edit mode ─────────────────────────────────────────────────
   isEditMode = false;
@@ -1179,6 +1243,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   applyFilters(): void {
     let filtered = [...this.allOrders];
 
+    // Sprint month filter (applied first)
+    filtered = filtered.filter(o => this.isInSprintMonth(o));
+
     // Search filter
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
@@ -1259,6 +1326,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.pendingFiles = [];
     this.showMentionDropdown = false;
     this.detailStatus = (order.status as OrderStatus) || OrderStatus.PENDING;
+    this.mobileModalTab = 'details';
     this.loadOrderActivity(order);
     this.showOrderDetails = true;
 
@@ -2216,13 +2284,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   onCardDrop(event: CdkDragDrop<ProductDetails[]>, targetStatus: OrderStatus): void {
     if (event.previousContainer === event.container) {
-      // Reordering within the same column
+      // Reordering within the same column — keep position as-is
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       // Moving to a different column
       const order = event.previousContainer.data[event.previousIndex];
 
-      // Transfer the item between arrays
+      // Move in the kanban arrays immediately so the UI stays in place
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -2230,7 +2298,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         event.currentIndex
       );
 
-      // Update the order status in the backend
+      // Update status locally so filters/stats stay consistent without a reload
+      order.status = targetStatus;
+
+      // Persist to backend
       if (order && order._id) {
         this.productDetailsService.updateStatus(order._id, targetStatus).subscribe({
           next: () => {
@@ -2240,8 +2311,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
               detail: `Order ${order.orderNumber} moved to ${this.getStatusLabel(targetStatus)}`,
               life: 3000
             });
-            // Refresh the order to get updated data (silent = no loading spinner/flicker)
-            this.loadOrders(true);
+            // No reload — position is already correct in the UI
           },
           error: (error: any) => {
             console.error('Error updating status:', error);
@@ -2251,7 +2321,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
               detail: 'Failed to update order status',
               life: 3000
             });
-            // Revert the move on error
+            // Revert local status and move on error
+            order.status = event.previousContainer.id as any;
             transferArrayItem(
               event.container.data,
               event.previousContainer.data,

@@ -38,7 +38,7 @@
     </div>
   </header>
 
-  <!-- Stats Row -->
+  <!-- Stats Row (hidden on mobile) -->
   <div class="stats-row" *ngIf="!isLoading && !error">
     <div class="stat-card stat-total">
       <div class="stat-icon"><i class="pi pi-shopping-bag"></i></div>
@@ -91,8 +91,10 @@
     <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadOrders()" severity="secondary"></p-button>
   </div>
 
-  <!-- Filters -->
+  <!-- Filters + Sprint nav — single row -->
   <div class="filters-bar" *ngIf="!isLoading && !error">
+
+    <!-- Search -->
     <div class="search-wrap">
       <i class="pi pi-search search-icon"></i>
       <input
@@ -100,14 +102,13 @@
         pInputText
         [(ngModel)]="searchTerm"
         (input)="onSearchChange()"
-        placeholder="Search by order number, client, sales person…"
+        placeholder="Search orders…"
         class="search-input" />
     </div>
 
     <!-- User Filter Icons -->
     <div class="user-filter-section" *ngIf="allUsers.length > 0">
       <div class="user-filter-chips">
-        <!-- First 5 users as icons -->
         <div
           *ngFor="let user of visibleUsers"
           class="user-chip"
@@ -115,12 +116,8 @@
           (click)="toggleUserFilter(user._id!)"
           [pTooltip]="getUserFullName(user)"
           tooltipPosition="top">
-          <div class="user-avatar">
-            {{ getUserInitials(user) }}
-          </div>
+          <div class="user-avatar">{{ getUserInitials(user) }}</div>
         </div>
-
-        <!-- More users dropdown (if more than 5 users) -->
         <div class="user-dropdown-wrapper" *ngIf="hasDropdownUsers">
           <p-select
             [options]="dropdownUsers"
@@ -130,9 +127,7 @@
             appendTo="body">
             <ng-template let-user pTemplate="item">
               <div class="dropdown-user-item" (click)="toggleUserFilter(user._id!); $event.stopPropagation()">
-                <div class="user-avatar-small">
-                  {{ getUserInitials(user) }}
-                </div>
+                <div class="user-avatar-small">{{ getUserInitials(user) }}</div>
                 <span class="user-name">{{ getUserFullName(user) }}</span>
                 <i class="pi pi-check" *ngIf="isUserSelected(user._id!)"></i>
               </div>
@@ -148,6 +143,7 @@
       </div>
     </div>
 
+    <!-- Status filter -->
     <div class="filter-wrap">
       <p-select
         [options]="availableStatuses"
@@ -156,9 +152,48 @@
         optionLabel="label"
         optionValue="value"
         placeholder="All Statuses"
-        styleClass="status-filter">
+        styleClass="status-filter"
+        appendTo="body">
+        <ng-template pTemplate="selectedItem" let-item>
+          <div class="status-selected-item" *ngIf="item">
+            <span class="status-dot" [ngClass]="'dot-' + item.value"></span>
+            <span>{{ item.label }}</span>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="item" let-item>
+          <div class="status-option-item">
+            <span class="status-dot" [ngClass]="'dot-' + item.value"></span>
+            <span>{{ item.label }}</span>
+          </div>
+        </ng-template>
       </p-select>
     </div>
+
+    <!-- Sprint month navigator -->
+    <div class="sprint-nav">
+      <button class="sprint-arrow" (click)="prevMonth()" pTooltip="Previous month">
+        <i class="pi pi-chevron-left"></i>
+      </button>
+      <div class="sprint-label-wrap">
+        <button class="sprint-label" (click)="showMonthPicker = !showMonthPicker" pTooltip="Pick month">
+          <i class="pi pi-calendar"></i>
+          <span>{{ sprintMonthLabel }}</span>
+        </button>
+        <p-datepicker
+          *ngIf="showMonthPicker"
+          [(ngModel)]="sprintMonth"
+          view="month"
+          dateFormat="mm/yy"
+          [inline]="true"
+          (onSelect)="onMonthPickerSelect($event)"
+          styleClass="sprint-month-picker">
+        </p-datepicker>
+      </div>
+      <button class="sprint-arrow" (click)="nextMonth()" pTooltip="Next month">
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+
   </div>
 
   <!-- ════════════ KANBAN VIEW ════════════ -->
@@ -192,53 +227,45 @@
           <!-- Custom placeholder to maintain exact card dimensions -->
           <div class="drag-placeholder" *cdkDragPlaceholder></div>
 
-          <div class="card-company">
-            <i class="pi pi-building"></i>
-            <span>{{ order.companyName }}</span>
-          </div>
+          <!-- Card is fully clickable -->
+          <div class="card-body" (click)="cardViewDetails(order)">
 
-          <div class="card-client">
-            <i class="pi pi-user"></i>
-            <span>{{ order.clientName }}</span>
-          </div>
+            <!-- Row 1: company + priority -->
+            <div class="card-header-row">
+              <span class="card-company-name">{{ order.companyName }}</span>
+              <app-priority-badge [priority]="order.priority || 'normal'" [showText]="false"></app-priority-badge>
+            </div>
 
-          <div class="card-top">
-            <span class="order-number card-order-id">{{ order.orderNumber }}</span>
-          </div>
+            <!-- Row 2: client -->
+            <div class="card-client-name">
+              <i class="pi pi-user"></i>
+              <span>{{ order.clientName }}</span>
+            </div>
 
-          <div class="card-meta">
-            <span class="meta-pill">
-              <i class="pi pi-box"></i>
-              {{ order.quantity }} units
-            </span>
-            <span class="meta-pill" [class.pill-urgent]="isDeadlineUrgent(order.deadline)">
-              <i class="pi pi-calendar"></i>
-              {{ formatDate(order.deadline) }}
-            </span>
-          </div>
+            <!-- Divider -->
+            <div class="card-divider"></div>
 
-          <div class="card-type" *ngIf="order.clothType">
-            <i class="pi pi-tag"></i>
-            {{ order.clothType }}
-          </div>
+            <!-- Row 3: qty + deadline -->
+            <div class="card-meta">
+              <span class="meta-pill">
+                <i class="pi pi-box"></i>
+                {{ order.quantity }} units
+              </span>
+              <span class="meta-pill" [class.pill-urgent]="isDeadlineUrgent(order.deadline)">
+                <i class="pi pi-calendar"></i>
+                {{ formatDate(order.deadline) }}
+              </span>
+              <span class="meta-pill" *ngIf="order.clothType">
+                <i class="pi pi-tag"></i>
+                {{ order.clothType }}
+              </span>
+            </div>
 
-          <div class="card-actions">
-            <button class="card-btn btn-view" (click)="cardViewDetails(order)" pTooltip="View Details">
-              <i class="pi pi-eye"></i>
-            </button>
-            <button class="card-btn btn-status" (click)="cardOpenStatusDialog(order)" pTooltip="Change Status" *ngIf="isAdminOrManager()">
-              <i class="pi pi-arrows-h"></i>
-            </button>
-            <button
-              class="card-btn btn-next"
-              *ngIf="isAdminOrManager() && getNextStatus(col.status)"
-              (click)="cardQuickStatusChange(order, getNextStatus(col.status)!)"
-              [pTooltip]="'Move to ' + getStatusLabel(getNextStatus(col.status)!)">
-              <i class="pi pi-arrow-right"></i>
-            </button>
-            <button class="card-btn btn-delete" (click)="cardDeleteOrder(order)" pTooltip="Delete" *ngIf="isAdminOrManager()">
-              <i class="pi pi-trash"></i>
-            </button>
+            <!-- Row 4: order ID -->
+            <div class="card-footer-row">
+              <span class="card-order-id">{{ order.orderNumber }}</span>
+            </div>
+
           </div>
         </div>
       </div>
@@ -322,7 +349,7 @@
     [draggable]="false"
     [resizable]="false"
     [showHeader]="false"
-    styleClass="jira-order-modal"
+    styleClass="jira-order-modal mobile-bottom-sheet"
     *ngIf="selectedOrder">
 
     <div class="jira-modal-wrapper">
@@ -370,14 +397,26 @@
           <button class="jira-hdr-btn btn-delete" (click)="deleteOrder(selectedOrder!); closeOrderDetails()" *ngIf="isAdminOrManager()" pTooltip="Delete order">
             <i class="pi pi-trash"></i>
           </button>
-          <button class="jira-close-btn" (click)="closeOrderDetails()" pTooltip="Close">
-            <i class="pi pi-times"></i>
-          </button>
         </div>
+        <!-- Close button is a direct child of jira-modal-header so it can be absolutely positioned independently -->
+        <button class="jira-close-btn" (click)="closeOrderDetails()" pTooltip="Close">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <!-- ── Mobile tab bar (hidden on desktop) ── -->
+      <div class="modal-tab-bar">
+        <button class="modal-tab" [class.active]="mobileModalTab === 'details'" (click)="mobileModalTab = 'details'">
+          <i class="pi pi-info-circle"></i> Details
+        </button>
+        <button class="modal-tab" [class.active]="mobileModalTab === 'activity'" (click)="mobileModalTab = 'activity'">
+          <i class="pi pi-comments"></i> Activity
+          <span class="tab-badge" *ngIf="orderActivity.length">{{ orderActivity.length }}</span>
+        </button>
       </div>
 
       <!-- ── Two-column body ── -->
-      <div class="jira-body">
+      <div class="jira-body" [class.show-details]="mobileModalTab === 'details'" [class.show-activity]="mobileModalTab === 'activity'">
 
         <!-- ═══════ LEFT PANEL ═══════ -->
         <div class="jira-left">
