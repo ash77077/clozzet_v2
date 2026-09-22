@@ -22,8 +22,8 @@
   "navbar": {
     "home": "Գլխավոր",
     "products": "Արտադրանք",
-    "services": "TODO: Services",
-    "portfolio": "TODO: Portfolio",
+    "services": "Ծառայություններ",
+    "portfolio": "Պորտֆոլիո",
     "about": "Մեր մասին",
     "contact": "Կապ",
     "login": "Մուտք",
@@ -31,9 +31,9 @@
     "logout": "Ելք",
     "dashboard": "Վահանակ",
     "language": "Լեզու",
-    "openMobileMenu": "TODO: Open navigation menu",
-    "closeMobileMenu": "TODO: Close navigation menu",
-    "mobileMenu": "TODO: Navigation menu"
+    "openMobileMenu": "Բացել նավիգացիայի մենյուն",
+    "closeMobileMenu": "Փակել նավիգացիայի մենյուն",
+    "mobileMenu": "Նավիգացիայի մենյու"
   },
   "secondaryNav": {
     "dashboard": "Վահանակ",

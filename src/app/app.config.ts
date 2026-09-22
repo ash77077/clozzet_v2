@@ -1,32 +1,23 @@
-import { ApplicationConfig, provideZoneChangeDetection, Injectable, importProvidersFrom, APP_INITIALIZER } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom, APP_INITIALIZER } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import Aura from '@primeuix/themes/aura';
-import { provideTranslateService, TranslateLoader, TranslateService } from '@ngx-translate/core';
-import { Observable, firstValueFrom } from 'rxjs';
+import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
-import {providePrimeNG} from "primeng/config";
-import {provideAnimations} from "@angular/platform-browser/animations";
+import { providePrimeNG } from 'primeng/config';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 // Google Analytics 4 Integration
 import { NgxGoogleAnalyticsModule, NgxGoogleAnalyticsRouterModule } from 'ngx-google-analytics';
 import { environment } from '../environments/environment';
 
-// Custom Translation Loader
-@Injectable()
-export class CustomTranslateLoader implements TranslateLoader {
-  constructor(private http: HttpClient) {}
-
-  getTranslation(lang: string): Observable<any> {
-    return this.http.get(`/assets/i18n/${lang}.json`);
-  }
+export function httpLoaderFactory(): TranslateHttpLoader {
+  return new TranslateHttpLoader();
 }
-
-// Translation loader factory
-const httpLoaderFactory: (http: HttpClient) => CustomTranslateLoader = (http: HttpClient) =>
-  new CustomTranslateLoader(http);
 
 // Preload translations before the app renders so no component ever sees raw keys
 function preloadTranslations(translate: TranslateService): () => Promise<void> {
@@ -52,14 +43,15 @@ export const appConfig: ApplicationConfig = {
         options: { darkModeSelector: '.app-dark' },
       },
     }),
-    provideTranslateService({
-      fallbackLang: 'en',
-      loader: {
-        provide: TranslateLoader,
-        useFactory: httpLoaderFactory,
-        deps: [HttpClient]
-      }
-    }),
+    importProvidersFrom(
+      TranslateModule.forRoot({
+        defaultLanguage: 'en',
+        loader: {
+          provide: TranslateLoader,
+          useFactory: httpLoaderFactory
+        }
+      })
+    ),
     {
       provide: APP_INITIALIZER,
       useFactory: preloadTranslations,
@@ -67,9 +59,6 @@ export const appConfig: ApplicationConfig = {
       multi: true
     },
     // Google Analytics 4 Configuration
-    // NgxGoogleAnalyticsModule: Core GA4 functionality
-    // NgxGoogleAnalyticsRouterModule: Automatically tracks route changes as page views
-    // Securely pulls GA Measurement ID from environment.ts
     importProvidersFrom([
       NgxGoogleAnalyticsModule.forRoot(environment.googleAnalyticsId),
       NgxGoogleAnalyticsRouterModule
