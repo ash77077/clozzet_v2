@@ -739,3 +739,53 @@ td.editable-cell {
     }
   }
 }
+
+// ═══ Row tinting by payment status ═══════════════════════════════════════
+// Table rows change background color based on `paymentStatus`:
+//   paid     → soft green    (bill fully collected)
+//   partial  → soft amber    (money owed)
+//   deposit  → soft blue     (down payment received)
+//   not_paid → soft red      (nothing collected yet)
+::ng-deep .p-datatable .p-datatable-tbody > tr {
+
+  &.pay-row {
+    transition: background-color 0.2s ease;
+
+    // one shared left accent bar per row
+    > td:first-child {
+      border-left: 4px solid transparent;
+    }
+  }
+
+  // ── Paid ────────────────────────────────────────────────────────────
+  &.pay-paid {
+    background: #f0fdf4 !important;
+    > td:first-child { border-left-color: #22c55e; }
+
+    &:hover { background: #dcfce7 !important; }
+  }
+
+  // ── Partial ─────────────────────────────────────────────────────────
+  &.pay-partial {
+    background: #fffbeb !important;
+    > td:first-child { border-left-color: #f59e0b; }
+
+    &:hover { background: #fef3c7 !important; }
+  }
+
+  // ── Deposit ─────────────────────────────────────────────────────────
+  &.pay-deposit {
+    background: #eff6ff !important;
+    > td:first-child { border-left-color: #3b82f6; }
+
+    &:hover { background: #dbeafe !important; }
+  }
+
+  // ── Not paid ────────────────────────────────────────────────────────
+  &.pay-not_paid {
+    background: #fecaca !important;
+    > td:first-child { border-left-color: #b91c1c; }
+
+    &:hover { background: #fca5a5 !important; }
+  }
+}
