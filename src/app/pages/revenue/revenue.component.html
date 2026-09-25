@@ -117,7 +117,7 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-order>
-        <tr>
+        <tr [class]="'pay-row pay-' + (order.paymentStatus || 'not_paid')">
           <!-- Order # -->
           <td><strong>{{ order.orderNumber }}</strong></td>
 
