@@ -220,6 +220,15 @@ export interface ProductDetails {
       xxl?: { men?: number; women?: number; uni?: number };
       xxxl?: { men?: number; women?: number; uni?: number };
       xxxxl?: { men?: number; women?: number; uni?: number };
+      s1_2?: { men?: number; women?: number; uni?: number };
+      s3_4?: { men?: number; women?: number; uni?: number };
+      s5_6?: { men?: number; women?: number; uni?: number };
+      s7_8?: { men?: number; women?: number; uni?: number };
+      s9_10?: { men?: number; women?: number; uni?: number };
+      s11_12?: { men?: number; women?: number; uni?: number };
+      s13_14?: { men?: number; women?: number; uni?: number };
+      s15_16?: { men?: number; women?: number; uni?: number };
+      [key: string]: { men?: number; women?: number; uni?: number } | undefined;
     };
   }>;
 
