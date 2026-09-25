@@ -38,7 +38,7 @@ export interface KanbanColumn {
 }
 
 export interface ActivityItem {
-  type: 'comment' | 'status_change' | 'created' | 'file_upload' | 'payment_change';
+  type: 'comment' | 'status_change' | 'created' | 'file_upload' | 'payment_change' | 'changes';
   date: Date | string;
   author: string;
   content: string;
@@ -770,6 +770,49 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       if (!this.ADULT_SIZE_KEYS.includes(key)) {
         const s = product.sizes[key];
         if (s) total += (s.men || 0) + (s.women || 0) + (s.uni || 0);
+      }
+    });
+    return total;
+  }
+
+  // ─── Order-level aggregate helpers (single source of truth for display) ───
+
+  // Total quantity across every product on an order. Always sums the products
+  // array; falls back to the stored quantity only for legacy orders that have
+  // no products array at all.
+  getOrderTotalQuantity(order: any): number {
+    if (!order) return 0;
+    const products = order.products;
+    if (Array.isArray(products) && products.length > 0) {
+      return products.reduce(
+        (sum: number, p: any) => sum + this.getProductTotalQuantity(p),
+        0
+      );
+    }
+    return Number(order.quantity) || 0;
+  }
+
+  // Expected revenue computed from each product's adult/children prices ×
+  // matching quantities. Falls back to legacy sellingPricePerUnit × total qty
+  // when adult/children prices aren't set on a product.
+  getOrderTotalRevenue(order: any): number {
+    if (!order) return 0;
+    const products = order.products;
+    if (!Array.isArray(products) || products.length === 0) {
+      return Number(order.expectedRevenue) || 0;
+    }
+    let total = 0;
+    products.forEach((p: any) => {
+      const adultQty    = this.getProductAdultQuantity(p);
+      const childrenQty = this.getProductChildrenQuantity(p);
+      const adultPrice    = Number(p.adultSellingPricePerUnit) || 0;
+      const childrenPrice = Number(p.childrenSellingPricePerUnit) || 0;
+      const legacyPrice   = Number(p.sellingPricePerUnit) || 0;
+
+      if (adultPrice > 0 || childrenPrice > 0) {
+        total += adultQty * adultPrice + childrenQty * childrenPrice;
+      } else if (legacyPrice > 0) {
+        total += (adultQty + childrenQty) * legacyPrice;
       }
     });
     return total;
@@ -1527,13 +1570,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       const isStatus  = note.content?.startsWith('STATUS:');
       const isFile    = note.content?.startsWith('Attached files:');
       const isPayment = note.content?.startsWith('PAYMENT:');
+      const isChanges = note.content?.startsWith('CHANGES:');
+      let content = note.content;
+      if (isStatus)  content = content.replace('STATUS:', '').trim();
+      if (isPayment) content = content.replace('PAYMENT:', '').trim();
+      if (isChanges) content = this.formatChangesNote(content.replace('CHANGES:', '').trim());
       this.orderActivity.push({
-        type: isStatus ? 'status_change' : isFile ? 'file_upload' : isPayment ? 'payment_change' : 'comment',
+        type: isStatus ? 'status_change' : isFile ? 'file_upload' : isPayment ? 'payment_change' : isChanges ? 'changes' : 'comment',
         date: note.date,
         author: note.author,
-        content: isStatus  ? note.content.replace('STATUS:', '').trim()
-               : isPayment ? note.content.replace('PAYMENT:', '').trim()
-               : note.content,
+        content,
         avatarColor: this.getAvatarColor(note.author),
       });
     });
@@ -1544,6 +1590,33 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
     // Auto-scroll to bottom after loading
     setTimeout(() => this.scrollActivityToBottom(), 100);
+  }
+
+  private formatChangesNote(raw: string): string {
+    return raw.split('\n')
+      .filter(l => l.trim())
+      .map(line => {
+        if (line.startsWith('ADDED:')) {
+          const parts = line.slice('ADDED:'.length).split(':');
+          const productName = parts[0] || '';
+          const qty = parts[1] || '0';
+          return `<div class="change-line change-added"><span>Added <span class="change-product">${productName}</span> — qty <strong>${qty}</strong></span></div>`;
+        }
+        if (line.startsWith('REMOVED:')) {
+          const parts = line.slice('REMOVED:'.length).split(':');
+          const productName = parts[0] || '';
+          const qty = parts[1] || '0';
+          const price = parts[2] || '0';
+          const priceText = Number(price) > 0 ? ` — price <strong>${Number(price).toLocaleString()} ֏</strong>` : '';
+          return `<div class="change-line change-removed"><span>Removed <span class="change-product">${productName}</span> — qty <strong>${qty}</strong>${priceText}</span></div>`;
+        }
+        const formatted = line
+          .replace(/changed from (.+?) to (.+?)( ֏)?$/, (_m, from, to, currency) =>
+            `changed from <strong>${from}</strong> → <strong>${to}</strong>${currency || ''}`)
+          .replace(/^(.+?):/, '<span class="change-product">$1</span>:');
+        return `<div class="change-line change-edit"><span>${formatted}</span></div>`;
+      })
+      .join('');
   }
 
   loadOrderActivityForCurrent(): void {
@@ -1618,6 +1691,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newClothTypeLabel = [];
     this.showAddTextileType = [];
     this.newTextileTypeLabel = [];
+    this.sizeCategory = [];
 
     const knownSizeKeys = new Set([
       ...this.ADULT_SIZE_KEYS,
@@ -1629,35 +1703,20 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       o.products.forEach((product: any, productIdx: number) => {
         const productGroup = this.createProductGroup();
 
-        productGroup.patchValue({
-          clothType:           product.clothType || '',
-          textileType:         product.textileType || '',
-          designMethod:        product.designMethod || '',
-          colors:              product.colors || '',
-          customColorDetails:  product.customColorDetails || '',
-          logoPosition:        product.logoPosition || '',
-          logoSize:            product.logoSize || '',
-          comments:            product.comments || '',
-          sellingPricePerUnit: product.sellingPricePerUnit || null,
-          costPricePerUnit:    product.costPricePerUnit || null
-        });
+        // Ensure cloth/textile values exist in the dropdown option lists —
+        // custom types saved on the order that aren't in defaults would leave
+        // the p-select empty.
+        if (product.clothType && !this.clothTypes.includes(product.clothType)) {
+          this.clothTypes = [...this.clothTypes, product.clothType];
+        }
+        if (product.textileType && !this.textileTypes.includes(product.textileType)) {
+          this.textileTypes = [...this.textileTypes, product.textileType];
+        }
 
-        // Set all known sizes (adult + child)
+        // Restore custom sizes on the sizes group BEFORE patching values
+        const sizesGroup = productGroup.get('sizes') as FormGroup;
+        const customKeys: { label: string; key: string }[] = [];
         if (product.sizes) {
-          const sizesGroup = productGroup.get('sizes') as FormGroup;
-
-          [...this.ADULT_SIZE_KEYS, ...this.CHILD_SIZE_KEYS].forEach(size => {
-            if (product.sizes[size]) {
-              sizesGroup.get(size)?.patchValue({
-                men:   product.sizes[size].men || 0,
-                women: product.sizes[size].women || 0,
-                uni:   product.sizes[size].uni || 0
-              });
-            }
-          });
-
-          // Restore custom sizes
-          const customKeys: { label: string; key: string }[] = [];
           Object.keys(product.sizes).forEach(key => {
             if (!knownSizeKeys.has(key)) {
               const label = key.startsWith('custom_')
@@ -1671,11 +1730,12 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
               }));
             }
           });
-          this.customSizeKeys.push(customKeys);
-        } else {
-          this.customSizeKeys.push([]);
         }
+        this.customSizeKeys.push(customKeys);
 
+        // Push the group FIRST so it's attached to the FormArray, THEN patch
+        // — PrimeNG p-select needs the ControlValueAccessor bound to a live
+        //   FormControl before receiving its initial value.
         this.showAddCustomSize.push(false);
         this.newCustomSizeLabel.push('');
         this.showAddClothType.push(false);
@@ -1683,10 +1743,56 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         this.showAddTextileType.push(false);
         this.newTextileTypeLabel.push('');
         this.products.push(productGroup);
+
+        productGroup.patchValue({
+          clothType:                    product.clothType || '',
+          textileType:                  product.textileType || '',
+          designMethod:                 product.designMethod || '',
+          colors:                       product.colors || '',
+          customColorDetails:           product.customColorDetails || '',
+          logoPosition:                 product.logoPosition || '',
+          logoSize:                     product.logoSize || '',
+          comments:                     product.comments || '',
+          sellingPricePerUnit:          product.sellingPricePerUnit || null,
+          costPricePerUnit:             product.costPricePerUnit || null,
+          adultSellingPricePerUnit:     product.adultSellingPricePerUnit || null,
+          childrenSellingPricePerUnit:  product.childrenSellingPricePerUnit || null,
+        });
+
+        // Set all known sizes (adult + child) after attach
+        if (product.sizes) {
+          [...this.ADULT_SIZE_KEYS, ...this.CHILD_SIZE_KEYS].forEach(size => {
+            if (product.sizes[size]) {
+              sizesGroup.get(size)?.patchValue({
+                men:   product.sizes[size].men || 0,
+                women: product.sizes[size].women || 0,
+                uni:   product.sizes[size].uni || 0
+              });
+            }
+          });
+        }
+
+        // Auto-select the tab that has data: children-only → 'children', otherwise 'adult'
+        const hasSizeValue = (sizes: any, keys: string[]) =>
+          !!sizes && keys.some(k => {
+            const g = sizes[k];
+            return g && (Number(g.men) > 0 || Number(g.women) > 0 || Number(g.uni) > 0);
+          });
+        const sizes = (product as any).sizes;
+        const hasAdult    = hasSizeValue(sizes, this.ADULT_SIZE_KEYS);
+        const hasChildren = hasSizeValue(sizes, this.CHILD_SIZE_KEYS);
+        this.sizeCategory.push(!hasAdult && hasChildren ? 'children' : 'adult');
       });
     } else if (o.clothType) {
       // Legacy single product order - convert to products array format
+      if (o.clothType && !this.clothTypes.includes(o.clothType)) {
+        this.clothTypes = [...this.clothTypes, o.clothType];
+      }
+      if (o.textileType && !this.textileTypes.includes(o.textileType)) {
+        this.textileTypes = [...this.textileTypes, o.textileType];
+      }
       const productGroup = this.createProductGroup();
+      this.products.push(productGroup);
       productGroup.patchValue({
         clothType:           o.clothType || '',
         textileType:         o.textileType || '',
@@ -1699,7 +1805,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         sellingPricePerUnit: null,
         costPricePerUnit:    null
       });
-      this.products.push(productGroup);
       this.customSizeKeys.push([]);
       this.showAddCustomSize.push(false);
       this.newCustomSizeLabel.push('');
@@ -1707,6 +1812,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.newClothTypeLabel.push('');
       this.showAddTextileType.push(false);
       this.newTextileTypeLabel.push('');
+      this.sizeCategory.push('adult');
     } else {
       // No products at all — provide one empty product
       this.products.push(this.createProductGroup());
@@ -1717,6 +1823,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.newClothTypeLabel.push('');
       this.showAddTextileType.push(false);
       this.newTextileTypeLabel.push('');
+      this.sizeCategory.push('adult');
     }
 
     // Switch to edit mode and show the add dialog
@@ -1729,6 +1836,103 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.isEditMode = false;
     this.showAddOrderDialog = false;
     this.currentStep = 1;
+  }
+
+  private buildChangeNotes(oldOrder: any, updates: any): string[] {
+    const notes: string[] = [];
+    const oldProducts: any[] = oldOrder.products || [];
+    const newProducts: any[] = updates.products || [];
+
+    const sizeLabel = (key: string) => this.CHILD_SIZE_LABELS[key] ?? key.toUpperCase();
+    const genderLabel = (g: string) => g === 'men' ? 'Men' : g === 'women' ? 'Women' : 'Uni';
+    const genders = ['men', 'women', 'uni'];
+
+    newProducts.forEach((newP: any, idx: number) => {
+      const oldP = oldProducts[idx];
+      const productLabel = newP.clothType
+        ? `${newP.clothType}${newProducts.length > 1 ? ` (product ${idx + 1})` : ''}`
+        : `Product ${idx + 1}`;
+
+      // New product added
+      if (!oldP) {
+        const qty = newP.sizes
+          ? Object.values(newP.sizes as Record<string, any>).reduce((sum: number, g: any) =>
+              sum + (g ? (Number(g.men || 0) + Number(g.women || 0) + Number(g.uni || 0)) : 0), 0)
+          : (Number(newP.quantity) || 0);
+        notes.push(`ADDED:${productLabel}:${qty}`);
+        return;
+      }
+
+      // Size changes
+      const allKeys = [...this.ADULT_SIZE_KEYS, ...this.CHILD_SIZE_KEYS,
+        ...Object.keys(newP.sizes || {}).filter((k: string) =>
+          !this.ADULT_SIZE_KEYS.includes(k) && !this.CHILD_SIZE_KEYS.includes(k))];
+
+      allKeys.forEach(sizeKey => {
+        const oldSizeGrp = oldP?.sizes?.[sizeKey] || {};
+        const newSizeGrp = newP?.sizes?.[sizeKey] || {};
+        genders.forEach(g => {
+          const oldVal = Number(oldSizeGrp[g] || 0);
+          const newVal = Number(newSizeGrp[g] || 0);
+          if (oldVal !== newVal) {
+            const gPart = updates.sizeBreakdownMode !== 'split' ? '' : ` (${genderLabel(g)})`;
+            notes.push(`${productLabel}: ${sizeLabel(sizeKey)}${gPart} changed from ${oldVal} to ${newVal}`);
+          }
+        });
+      });
+
+      // Quantity-only products with no sizes breakdown
+      if (!newP.sizes && oldP?.quantity !== newP?.quantity && newP?.quantity) {
+        notes.push(`${productLabel}: quantity changed from ${oldP?.quantity || 0} to ${newP.quantity}`);
+      }
+
+      // Price changes
+      const priceFields: { key: string; label: string }[] = [
+        { key: 'adultSellingPricePerUnit',    label: 'Adult price/unit' },
+        { key: 'childrenSellingPricePerUnit', label: 'Children price/unit' },
+        { key: 'sellingPricePerUnit',         label: 'Selling price/unit' },
+        { key: 'costPricePerUnit',            label: 'Cost price/unit' },
+      ];
+      priceFields.forEach(({ key, label }) => {
+        const oldVal = Number(oldP?.[key] || 0);
+        const newVal = Number(newP?.[key] || 0);
+        if (oldVal !== newVal) {
+          notes.push(`${productLabel}: ${label} changed from ${oldVal} to ${newVal} ֏`);
+        }
+      });
+    });
+
+    // Removed products (old had more products than new)
+    for (let idx = newProducts.length; idx < oldProducts.length; idx++) {
+      const oldP = oldProducts[idx];
+      const productLabel = oldP.clothType
+        ? `${oldP.clothType}${oldProducts.length > 1 ? ` (product ${idx + 1})` : ''}`
+        : `Product ${idx + 1}`;
+      const qty = oldP.sizes
+        ? Object.values(oldP.sizes as Record<string, any>).reduce((sum: number, g: any) =>
+            sum + (g ? (Number(g.men || 0) + Number(g.women || 0) + Number(g.uni || 0)) : 0), 0)
+        : (Number(oldP.quantity) || 0);
+      const price = oldP.adultSellingPricePerUnit || oldP.sellingPricePerUnit || 0;
+      notes.push(`REMOVED:${productLabel}:${qty}:${price}`);
+    }
+
+    // Top-level field changes
+    const fieldLabels: { key: string; label: string }[] = [
+      { key: 'clientName',   label: 'Client name' },
+      { key: 'companyName',  label: 'Company' },
+      { key: 'salesPerson',  label: 'Sales person' },
+      { key: 'priority',     label: 'Priority' },
+      { key: 'deadline',     label: 'Deadline' },
+    ];
+    fieldLabels.forEach(({ key, label }) => {
+      const oldVal = (oldOrder[key] || '').toString().trim();
+      const newVal = (updates[key] || '').toString().trim();
+      if (oldVal !== newVal && newVal) {
+        notes.push(`${label} changed from "${oldVal}" to "${newVal}"`);
+      }
+    });
+
+    return notes;
   }
 
   saveEdit(): void {
@@ -1767,12 +1971,15 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       quantity:             this.calculateGrandTotal(),
     };
 
+    const changeNotes = this.buildChangeNotes(this.selectedOrder, updates);
+
     this.isEditSaving = true;
 
     this.productDetailsService.updateProductDetails(id, updates).subscribe({
       next: () => {
         const author = this.currentUser ? `${this.currentUser.firstName} ${this.currentUser.lastName}`.trim() : 'System';
-        this.productDetailsService.addManufacturingNotes(id, 'Order details were updated', author).subscribe();
+        const noteText = changeNotes.length > 0 ? `CHANGES:\n${changeNotes.join('\n')}` : 'Order details were updated';
+        this.productDetailsService.addManufacturingNotes(id, noteText, author).subscribe();
         this.isEditSaving = false;
         this.isEditMode = false;
         this.showAddOrderDialog = false;

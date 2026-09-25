@@ -249,7 +249,7 @@
             <div class="card-meta">
               <span class="meta-pill">
                 <i class="pi pi-box"></i>
-                {{ order.quantity }} units
+                {{ getOrderTotalQuantity(order) }} units
               </span>
               <span class="meta-pill" [class.pill-urgent]="isDeadlineUrgent(order.deadline)">
                 <i class="pi pi-calendar"></i>
@@ -308,7 +308,7 @@
             </div>
           </td>
           <td>{{ order.salesPerson }}</td>
-          <td><strong>{{ order.quantity }}</strong></td>
+          <td><strong>{{ getOrderTotalQuantity(order) }}</strong></td>
           <td><app-priority-badge [priority]="order.priority"></app-priority-badge></td>
           <td>
             <p-tag [value]="getStatusLabel(order.status)" [severity]="getStatusSeverity(order.status)"></p-tag>
@@ -450,7 +450,7 @@
                 <div class="date-chip">
                   <i class="pi pi-box"></i>
                   <span class="dc-label">Qty</span>
-                  <span class="dc-value">{{ selectedOrder.quantity }} units</span>
+                  <span class="dc-value">{{ getOrderTotalQuantity(selectedOrder) }} units</span>
                 </div>
               </div>
             </div>
@@ -855,42 +855,65 @@
             <div class="activity-item"
                  *ngFor="let item of orderActivity"
                  [class]="'act-' + item.type">
-              <div class="act-avatar" [style.background]="item.avatarColor">
-                {{ getInitials(item.author) }}
+
+              <!-- Type icon badge -->
+              <div class="act-icon">
+                <i class="pi" [ngClass]="{
+                  'pi-plus-circle': item.type === 'created',
+                  'pi-arrow-right-arrow-left': item.type === 'status_change',
+                  'pi-comment': item.type === 'comment',
+                  'pi-paperclip': item.type === 'file_upload',
+                  'pi-wallet': item.type === 'payment_change',
+                  'pi-pencil': item.type === 'changes'
+                }"></i>
               </div>
-              <div class="act-body">
-                <div class="act-meta">
-                  <span class="act-author">{{ item.author }}</span>
+
+              <!-- Card body -->
+              <div class="act-card">
+                <div class="act-head">
+                  <div class="act-author-info">
+                    <div class="act-avatar-sm" [style.background]="item.avatarColor">
+                      {{ getInitials(item.author) }}
+                    </div>
+                    <span class="act-author">{{ item.author }}</span>
+                    <span class="act-label">{{
+                      item.type === 'created'        ? 'created order'    :
+                      item.type === 'status_change'  ? 'changed status'   :
+                      item.type === 'comment'        ? 'commented'        :
+                      item.type === 'file_upload'    ? 'uploaded files'   :
+                      item.type === 'payment_change' ? 'updated payment'  :
+                      item.type === 'changes'        ? 'edited order'     : ''
+                    }}</span>
+                  </div>
                   <span class="act-date">{{ formatActivityDate(item.date) }}</span>
                 </div>
 
-                <!-- Created -->
-                <div class="act-content act-created" *ngIf="item.type === 'created'">
-                  <i class="pi pi-plus-circle"></i>
-                  <span [innerHTML]="item.content"></span>
-                </div>
+                <div class="act-body">
+                  <!-- Created -->
+                  <div class="act-text" *ngIf="item.type === 'created'"
+                       [innerHTML]="item.content"></div>
 
-                <!-- Status change -->
-                <div class="act-content act-status" *ngIf="item.type === 'status_change'">
-                  <i class="pi pi-arrows-h"></i>
-                  <span>{{ item.content }}</span>
-                </div>
+                  <!-- Status change -->
+                  <div class="act-text" *ngIf="item.type === 'status_change'">
+                    {{ item.content }}
+                  </div>
 
-                <!-- Comment -->
-                <div class="act-content act-comment" *ngIf="item.type === 'comment'">
-                  <div class="comment-bubble" [innerHTML]="renderMentions(item.content)"></div>
-                </div>
+                  <!-- Comment -->
+                  <div class="act-comment-body" *ngIf="item.type === 'comment'"
+                       [innerHTML]="renderMentions(item.content)"></div>
 
-                <!-- File upload -->
-                <div class="act-content act-file" *ngIf="item.type === 'file_upload'">
-                  <i class="pi pi-paperclip"></i>
-                  <span>{{ item.content }}</span>
-                </div>
+                  <!-- File upload -->
+                  <div class="act-text" *ngIf="item.type === 'file_upload'">
+                    {{ item.content }}
+                  </div>
 
-                <!-- Payment change -->
-                <div class="act-content act-payment" *ngIf="item.type === 'payment_change'">
-                  <i class="pi pi-wallet"></i>
-                  <span [innerHTML]="item.content"></span>
+                  <!-- Payment change -->
+                  <div class="act-text" *ngIf="item.type === 'payment_change'"
+                       [innerHTML]="item.content"></div>
+
+                  <!-- Order changes (size / price / field diffs) -->
+                  <div class="act-changes-list" *ngIf="item.type === 'changes'"
+                       [innerHTML]="item.content"></div>
                 </div>
               </div>
             </div>
@@ -1194,7 +1217,7 @@
                   {{ calculateAdultTotal(i) }} adult units
                 </small>
               </div>
-              <div class="form-field">
+              <div class="form-field" *ngIf="calculateChildrenTotal(i) > 0">
                 <label class="field-label"><i class="pi pi-star"></i> Children Price per Unit (֏)</label>
                 <input
                   pInputText
@@ -1205,7 +1228,7 @@
                   min="0"
                   step="1"
                   (wheel)="onNumberWheel($event)" />
-                <small class="field-hint" *ngIf="calculateChildrenTotal(i) > 0">
+                <small class="field-hint">
                   {{ calculateChildrenTotal(i) }} children units
                 </small>
               </div>
