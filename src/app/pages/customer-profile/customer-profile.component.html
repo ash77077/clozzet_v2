@@ -1,5 +1,6 @@
 <div class="customer-profile">
   <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
 
   <!-- Header with Back Button and Create Order -->
   <div class="mb-4 flex justify-between items-center">
@@ -12,6 +13,32 @@
 
     <div class="flex gap-2 items-center">
       <p-button
+        *ngIf="!isEditingProfile"
+        label="Edit"
+        icon="pi pi-pencil"
+        styleClass="p-button-outlined"
+        (onClick)="startEditProfile()"
+        pTooltip="Edit customer details"
+        tooltipPosition="left">
+      </p-button>
+      <p-button
+        *ngIf="isEditingProfile"
+        label="Cancel"
+        icon="pi pi-times"
+        styleClass="p-button-outlined p-button-secondary"
+        [disabled]="isSavingProfile"
+        (onClick)="cancelEditProfile()">
+      </p-button>
+      <p-button
+        *ngIf="isEditingProfile"
+        label="Save"
+        icon="pi pi-check"
+        severity="success"
+        [loading]="isSavingProfile"
+        (onClick)="saveProfile()">
+      </p-button>
+      <p-button
+        *ngIf="!isEditingProfile"
         label="Set up Meeting"
         icon="pi pi-calendar-plus"
         severity="warn"
@@ -20,6 +47,7 @@
         tooltipPosition="left">
       </p-button>
       <p-button
+        *ngIf="!isEditingProfile"
         label="Create Order"
         icon="pi pi-plus"
         severity="primary"
@@ -39,17 +67,40 @@
   <!-- Customer Profile Content -->
   <div *ngIf="!isLoading && customer">
     <!-- Customer Details Card -->
-    <p-card styleClass="customer-details-card mb-8">
-      <div class="customer-header">
+    <p-card styleClass="customer-details-card mb-8" [class.editing-profile]="isEditingProfile">
+      <div class="customer-header" [formGroup]="profileEditForm">
         <div class="customer-info">
           <div class="customer-title-row">
-            <div>
-              <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                {{ customer.companyName }}
-              </h1>
-              <p class="text-lg text-gray-600 mb-3 flex gap-3 align-items-center">
-                <i class="pi pi-user mr-2"></i>{{ customer.contactPerson }}
-              </p>
+            <div class="customer-title-left">
+              <!-- View mode: title + contact -->
+              <ng-container *ngIf="!isEditingProfile">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                  {{ customer.companyName }}
+                </h1>
+                <p class="text-lg text-gray-600 mb-3 flex gap-3 align-items-center">
+                  <i class="pi pi-user mr-2"></i>{{ customer.contactPerson }}
+                </p>
+              </ng-container>
+
+              <!-- Edit mode: inline inputs -->
+              <ng-container *ngIf="isEditingProfile">
+                <div class="edit-inline-field mb-2">
+                  <label class="edit-inline-label">Company Name</label>
+                  <input
+                    pInputText
+                    formControlName="companyName"
+                    placeholder="Company name"
+                    class="edit-inline-input edit-inline-title" />
+                </div>
+                <div class="edit-inline-field mb-3">
+                  <label class="edit-inline-label">Primary Contact</label>
+                  <input
+                    pInputText
+                    formControlName="contactPerson"
+                    placeholder="Primary contact person"
+                    class="edit-inline-input" />
+                </div>
+              </ng-container>
             </div>
             <div class="customer-title-right">
               <!-- Assignee badge -->
@@ -60,6 +111,7 @@
                   <p-select
                     [options]="assignableUsers"
                     [(ngModel)]="selectedAssigneeId"
+                    [ngModelOptions]="{standalone: true}"
                     optionValue="_id"
                     optionLabel="firstName"
                     [filter]="true"
@@ -83,53 +135,160 @@
                   <i class="pi pi-history"></i>
                 </button>
               </div>
-	            <p-tag
-			            [value]="customer.status"
-			            [severity]="getStatusSeverity(customer.status)">
-	            </p-tag>
+
+              <!-- Status: view or edit -->
+              <p-tag
+                *ngIf="!isEditingProfile"
+                [value]="customer.status"
+                [severity]="getStatusSeverity(customer.status)">
+              </p-tag>
+              <p-select
+                *ngIf="isEditingProfile"
+                formControlName="status"
+                [options]="customerStatusOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Status"
+                styleClass="status-edit-select">
+              </p-select>
             </div>
           </div>
 
           <!-- Contact Persons Section -->
           <div class="contacts-section mb-4">
             <div class="contacts-section-header">
-              <h3 class="text-sm font-semibold text-gray-600">Contact Persons</h3>
+              <div class="contacts-section-title">
+                <h3>Contact Persons</h3>
+                <span class="contacts-count" *ngIf="(customer.contacts?.length || 0) > 0">
+                  {{ customer.contacts?.length }}
+                </span>
+              </div>
               <button class="add-contact-btn" type="button" (click)="openAddContactDialog()">
                 <i class="pi pi-plus"></i> Add Contact
               </button>
             </div>
-            <div class="contacts-grid grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div *ngFor="let contact of customer.contacts" class="contact-card">
-                <div class="contact-card-header">
-                  <i class="pi pi-user text-blue-600 mr-2"></i>
-                  <span class="font-semibold">{{ contact.contactPerson }}</span>
-                </div>
-                <div class="contact-card-body">
-                  <div *ngIf="contact.position" class="contact-detail">
-                    <i class="pi pi-briefcase text-gray-500"></i>
-                    <span>{{ contact.position }}</span>
+
+            <!-- Empty state -->
+            <div class="contacts-empty" *ngIf="!(customer.contacts?.length)">
+              <div class="contacts-empty-icon"><i class="pi pi-users"></i></div>
+              <h4>No contact persons yet</h4>
+              <p>Add your first contact person to start tracking who you talk to at this company.</p>
+              <button class="btn-primary-sm" type="button" (click)="openAddContactDialog()">
+                <i class="pi pi-plus"></i> Add First Contact
+              </button>
+            </div>
+
+            <div class="contacts-grid" *ngIf="(customer.contacts?.length || 0) > 0">
+              <div *ngFor="let contact of customer.contacts; let ci = index"
+                   class="contact-card"
+                   [class.is-editing]="editingContactIndex === ci">
+
+                <!-- VIEW mode -->
+                <ng-container *ngIf="editingContactIndex !== ci">
+                  <div class="contact-card-header">
+                    <div class="contact-card-title">
+                      <div class="contact-avatar"
+                           [style.background]="getContactAvatarColor(contact.contactPerson)">
+                        {{ getContactInitials(contact.contactPerson) }}
+                      </div>
+                      <div class="contact-identity">
+                        <span class="contact-name">{{ contact.contactPerson }}</span>
+                        <span class="contact-position" *ngIf="contact.position">{{ contact.position }}</span>
+                      </div>
+                    </div>
+                    <div class="contact-card-actions">
+                      <button
+                        type="button"
+                        class="contact-action-btn edit"
+                        pTooltip="Edit contact"
+                        tooltipPosition="top"
+                        [disabled]="deletingContactIndex === ci"
+                        (click)="startEditContact(ci)">
+                        <i class="pi pi-pencil"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="contact-action-btn delete"
+                        pTooltip="Delete contact"
+                        tooltipPosition="top"
+                        [disabled]="deletingContactIndex === ci"
+                        (click)="deleteContact(ci)">
+                        <i class="pi" [ngClass]="deletingContactIndex === ci ? 'pi-spin pi-spinner' : 'pi-trash'"></i>
+                      </button>
+                    </div>
                   </div>
-                  <div *ngIf="contact.phone" class="contact-detail">
-                    <i class="pi pi-phone text-gray-500"></i>
-                    <span>{{ contact.phone }}</span>
-                  </div>
-                  <div *ngIf="contact.email" class="contact-detail">
-                    <i class="pi pi-envelope text-gray-500"></i>
-                    <span>{{ contact.email }}</span>
-                  </div>
-                  <div *ngIf="contact.linkedinPage" class="contact-detail">
-                    <i class="pi pi-linkedin text-gray-500"></i>
-                    <a [href]="contact.linkedinPage | externalLink" target="_blank" class="text-blue-600 hover:underline">
-                      LinkedIn Profile
+                  <div class="contact-card-body" *ngIf="contact.phone || contact.email || contact.linkedinPage">
+                    <a *ngIf="contact.phone" [href]="'tel:' + contact.phone" class="contact-detail contact-link">
+                      <i class="pi pi-phone"></i>
+                      <span>{{ contact.phone }}</span>
+                    </a>
+                    <a *ngIf="contact.email" [href]="'mailto:' + contact.email" class="contact-detail contact-link">
+                      <i class="pi pi-envelope"></i>
+                      <span>{{ contact.email }}</span>
+                    </a>
+                    <a *ngIf="contact.linkedinPage" [href]="contact.linkedinPage | externalLink" target="_blank" class="contact-detail contact-link">
+                      <i class="pi pi-linkedin"></i>
+                      <span>LinkedIn Profile</span>
                     </a>
                   </div>
-                </div>
+                  <div class="contact-card-empty-body" *ngIf="!contact.phone && !contact.email && !contact.linkedinPage">
+                    <span>No contact channels — click <i class="pi pi-pencil"></i> to add.</span>
+                  </div>
+                </ng-container>
+
+                <!-- EDIT mode -->
+                <ng-container *ngIf="editingContactIndex === ci">
+                  <form [formGroup]="editingContactForm" class="contact-edit-form">
+                    <div class="edit-row-2">
+                      <div class="edit-inline-field">
+                        <label class="edit-inline-label"><i class="pi pi-user"></i> Name</label>
+                        <input pInputText formControlName="contactPerson" placeholder="Full name" class="edit-inline-input" />
+                      </div>
+                      <div class="edit-inline-field">
+                        <label class="edit-inline-label"><i class="pi pi-briefcase"></i> Position</label>
+                        <input pInputText formControlName="position" placeholder="Role / title" class="edit-inline-input" />
+                      </div>
+                    </div>
+                    <div class="edit-row-2">
+                      <div class="edit-inline-field">
+                        <label class="edit-inline-label"><i class="pi pi-phone"></i> Phone</label>
+                        <input pInputText formControlName="phone" placeholder="+374 …" class="edit-inline-input" />
+                      </div>
+                      <div class="edit-inline-field">
+                        <label class="edit-inline-label"><i class="pi pi-envelope"></i> Email</label>
+                        <input pInputText formControlName="email" placeholder="name@example.com" class="edit-inline-input" />
+                      </div>
+                    </div>
+                    <div class="edit-inline-field">
+                      <label class="edit-inline-label"><i class="pi pi-linkedin"></i> LinkedIn</label>
+                      <input pInputText formControlName="linkedinPage" placeholder="https://linkedin.com/…" class="edit-inline-input" />
+                    </div>
+
+                    <div class="contact-edit-actions">
+                      <p-button
+                        label="Cancel"
+                        icon="pi pi-times"
+                        styleClass="p-button-outlined p-button-secondary p-button-sm"
+                        [disabled]="isSavingContactEdit"
+                        (onClick)="cancelEditContact()">
+                      </p-button>
+                      <p-button
+                        label="Save"
+                        icon="pi pi-check"
+                        severity="success"
+                        styleClass="p-button-sm"
+                        [loading]="isSavingContactEdit"
+                        (onClick)="saveEditContact()">
+                      </p-button>
+                    </div>
+                  </form>
+                </ng-container>
               </div>
             </div>
           </div>
 
-          <!-- Company Details -->
-          <div class="contact-details grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Company Details — VIEW mode -->
+          <div class="contact-details grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="!isEditingProfile">
             <div class="contact-item" *ngIf="customer.phone">
               <i class="pi pi-phone text-blue-600"></i>
               <span>{{ customer.phone }}</span>
@@ -156,7 +315,36 @@
             </div>
           </div>
 
-          <div class="customer-meta grid grid-cols-1 md:grid-cols-3 gap-4 mt-0">
+          <!-- Company Details — EDIT mode -->
+          <div class="edit-grid grid grid-cols-1 md:grid-cols-2 gap-4" *ngIf="isEditingProfile">
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-phone"></i> Phone</label>
+              <input pInputText formControlName="phone" placeholder="+374 …" class="edit-inline-input" />
+            </div>
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-envelope"></i> Email</label>
+              <input pInputText formControlName="email" placeholder="name@example.com" class="edit-inline-input" />
+            </div>
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-globe"></i> Website</label>
+              <input pInputText formControlName="website" placeholder="https://…" class="edit-inline-input" />
+            </div>
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-linkedin"></i> LinkedIn</label>
+              <input pInputText formControlName="linkedinPage" placeholder="https://linkedin.com/…" class="edit-inline-input" />
+            </div>
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-briefcase"></i> Industry</label>
+              <input pInputText formControlName="industry" placeholder="e.g. Manufacturing" class="edit-inline-input" />
+            </div>
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-map-marker"></i> Address</label>
+              <input pInputText formControlName="address" placeholder="Street, City" class="edit-inline-input" />
+            </div>
+          </div>
+
+          <!-- Meta row — VIEW mode -->
+          <div class="customer-meta grid grid-cols-1 md:grid-cols-3 gap-4 mt-0" *ngIf="!isEditingProfile">
             <div class="meta-item">
               <span class="meta-label">Last Contacted</span>
               <span class="meta-value">{{ formatDate(customer.lastContactedAt) }}</span>
@@ -168,6 +356,32 @@
             <div class="meta-item" *ngIf="customer.address">
               <span class="meta-label">Address</span>
               <span class="meta-value">{{ customer.address }}</span>
+            </div>
+          </div>
+
+          <!-- Meta row — EDIT mode: date pickers -->
+          <div class="edit-grid grid grid-cols-1 md:grid-cols-2 gap-4 mt-3" *ngIf="isEditingProfile">
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-clock"></i> Last Contacted</label>
+              <p-datepicker
+                formControlName="lastContactedAt"
+                dateFormat="M dd, yy"
+                [showIcon]="true"
+                placeholder="Select date"
+                appendTo="body"
+                styleClass="edit-inline-datepicker">
+              </p-datepicker>
+            </div>
+            <div class="edit-inline-field">
+              <label class="edit-inline-label"><i class="pi pi-calendar"></i> Next Follow-up</label>
+              <p-datepicker
+                formControlName="nextFollowUpAt"
+                dateFormat="M dd, yy"
+                [showIcon]="true"
+                placeholder="Select date"
+                appendTo="body"
+                styleClass="edit-inline-datepicker">
+              </p-datepicker>
             </div>
           </div>
 

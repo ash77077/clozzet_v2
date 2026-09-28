@@ -19,7 +19,8 @@ import { ToastModule } from 'primeng/toast';
 import { ChipModule } from 'primeng/chip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CustomersService } from '../../services/customers.service';
 import { InteractionsService } from '../../services/interactions.service';
 import { AiService } from '../../services/ai.service';
@@ -54,11 +55,12 @@ import { Tooltip } from 'primeng/tooltip';
     ChipModule,
     SkeletonModule,
     MessageModule,
+    ConfirmDialogModule,
     ExternalLinkPipe,
     TranslateModule,
     Tooltip,
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './customer-profile.component.html',
   styleUrl: './customer-profile.component.scss',
   animations: [
@@ -88,6 +90,22 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   editedNotes = '';
   isEditMode = false;
   editingInteractionId: string | null = null;
+
+  // Profile edit mode
+  isEditingProfile = false;
+  isSavingProfile = false;
+  profileEditForm!: FormGroup;
+  customerStatusOptions = [
+    { label: 'Lead',     value: CustomerStatus.LEAD },
+    { label: 'Active',   value: CustomerStatus.ACTIVE },
+    { label: 'Inactive', value: CustomerStatus.INACTIVE },
+  ];
+
+  // Contact-person inline edit
+  editingContactIndex: number | null = null;
+  editingContactForm!: FormGroup;
+  isSavingContactEdit = false;
+  deletingContactIndex: number | null = null;
 
   // Assignment
   assignableUsers: AppUser[] = [];
@@ -134,6 +152,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     private customersService: CustomersService,
     private interactionsService: InteractionsService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private aiService: AiService,
     private usersService: UsersService,
     private meetingsService: MeetingsService,
@@ -153,6 +172,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
 
     this.initializeForm();
     this.initializeAddContactForm();
+    this.initializeProfileEditForm();
     this.initializeMeetingForm();
     this.loadCustomerData();
     this.loadAssignableUsers();
@@ -229,6 +249,100 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ─── Customer profile edit ───────────────────────────────────────────────
+
+  private initializeProfileEditForm(): void {
+    this.profileEditForm = this.fb.group({
+      companyName:      ['', [Validators.required, Validators.minLength(2)]],
+      contactPerson:    ['', [Validators.required, Validators.minLength(2)]],
+      status:           [CustomerStatus.LEAD, Validators.required],
+      phone:            [''],
+      email:            ['', [Validators.email]],
+      website:          [''],
+      linkedinPage:     [''],
+      industry:         [''],
+      address:          [''],
+      lastContactedAt:  [null],
+      nextFollowUpAt:   [null],
+    });
+  }
+
+  startEditProfile(): void {
+    if (!this.customer) return;
+    if (!this.profileEditForm) this.initializeProfileEditForm();
+    this.profileEditForm.reset({
+      companyName:      this.customer.companyName || '',
+      contactPerson:    this.customer.contactPerson || '',
+      status:           this.customer.status || CustomerStatus.LEAD,
+      phone:            this.customer.phone || '',
+      email:            this.customer.email || '',
+      website:          this.customer.website || '',
+      linkedinPage:     this.customer.linkedinPage || '',
+      industry:         this.customer.industry || '',
+      address:          this.customer.address || '',
+      lastContactedAt:  this.customer.lastContactedAt ? new Date(this.customer.lastContactedAt) : null,
+      nextFollowUpAt:   this.customer.nextFollowUpAt ? new Date(this.customer.nextFollowUpAt) : null,
+    });
+    this.isEditingProfile = true;
+  }
+
+  cancelEditProfile(): void {
+    this.isEditingProfile = false;
+    this.profileEditForm?.reset();
+  }
+
+  saveProfile(): void {
+    if (!this.customer || !this.profileEditForm) return;
+    if (this.profileEditForm.invalid) {
+      this.markFormGroupTouched(this.profileEditForm);
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Validation',
+        detail: 'Please fill required fields correctly.',
+      });
+      return;
+    }
+
+    this.isSavingProfile = true;
+    const v = this.profileEditForm.value;
+    const dto: any = {
+      companyName:     v.companyName?.trim(),
+      contactPerson:   v.contactPerson?.trim(),
+      status:          v.status,
+      phone:           v.phone || undefined,
+      email:           v.email || undefined,
+      website:         v.website || undefined,
+      linkedinPage:    v.linkedinPage || undefined,
+      industry:        v.industry || undefined,
+      address:         v.address || undefined,
+      lastContactedAt: v.lastContactedAt instanceof Date ? v.lastContactedAt.toISOString() : (v.lastContactedAt || null),
+      nextFollowUpAt:  v.nextFollowUpAt  instanceof Date ? v.nextFollowUpAt.toISOString()  : (v.nextFollowUpAt || null),
+    };
+
+    this.customersService.update(this.customerId, dto)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (customer) => {
+          this.customer = customer;
+          this.isEditingProfile = false;
+          this.isSavingProfile = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Saved',
+            detail: 'Customer profile updated.',
+          });
+        },
+        error: (err) => {
+          this.isSavingProfile = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: err.error?.message || 'Failed to update profile.',
+          });
+        },
+      });
+  }
+
   openInteractionDialog(type?: InteractionType): void {
     if (type) {
       this.interactionForm.patchValue({ type });
@@ -272,6 +386,88 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
           this.isSavingContact = false;
         },
       });
+  }
+
+  // ─── Per-contact inline edit / delete ────────────────────────────────────
+
+  startEditContact(index: number): void {
+    const contact = this.customer?.contacts?.[index];
+    if (!contact) return;
+    this.editingContactForm = this.fb.group({
+      contactPerson: [contact.contactPerson || '', [Validators.required, Validators.minLength(2)]],
+      position:      [contact.position || ''],
+      phone:         [contact.phone || ''],
+      email:         [contact.email || '', [Validators.email]],
+      linkedinPage:  [contact.linkedinPage || ''],
+    });
+    this.editingContactIndex = index;
+  }
+
+  cancelEditContact(): void {
+    this.editingContactIndex = null;
+    this.editingContactForm?.reset();
+  }
+
+  saveEditContact(): void {
+    if (!this.customer || this.editingContactIndex === null || !this.editingContactForm) return;
+    if (this.editingContactForm.invalid) {
+      this.markFormGroupTouched(this.editingContactForm);
+      return;
+    }
+
+    const idx = this.editingContactIndex;
+    const updated = { ...this.editingContactForm.value };
+    const contacts = [...(this.customer.contacts || [])];
+    contacts[idx] = updated;
+
+    this.isSavingContactEdit = true;
+    this.customersService.update(this.customerId, { contacts } as any)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (customer) => {
+          this.customer = customer;
+          this.isSavingContactEdit = false;
+          this.editingContactIndex = null;
+          this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Contact updated.' });
+        },
+        error: () => {
+          this.isSavingContactEdit = false;
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update contact.' });
+        },
+      });
+  }
+
+  deleteContact(index: number): void {
+    const contact = this.customer?.contacts?.[index];
+    if (!contact || !this.customer) return;
+
+    this.confirmationService.confirm({
+      header: 'Delete Contact',
+      message: `Remove <strong>${contact.contactPerson}</strong> from this customer?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      accept: () => {
+        const contacts = [...(this.customer!.contacts || [])];
+        contacts.splice(index, 1);
+        this.deletingContactIndex = index;
+        this.customersService.update(this.customerId, { contacts } as any)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (customer) => {
+              this.customer = customer;
+              this.deletingContactIndex = null;
+              if (this.editingContactIndex === index) this.editingContactIndex = null;
+              this.messageService.add({ severity: 'success', summary: 'Deleted', detail: 'Contact removed.' });
+            },
+            error: () => {
+              this.deletingContactIndex = null;
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete contact.' });
+            },
+          });
+      },
+    });
   }
 
   onSubmitInteraction(): void {
@@ -614,6 +810,22 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     if (!id) return 'Unassigned';
     const user = this.assignableUsers.find(u => u._id === id);
     return user ? `${user.firstName} ${user.lastName}` : 'Unassigned';
+  }
+
+  getContactInitials(name: string | undefined): string {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    const first = parts[0]?.[0] ?? '';
+    const last  = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (first + last).toUpperCase() || '?';
+  }
+
+  getContactAvatarColor(name: string | undefined): string {
+    const palette = ['#6366f1', '#f59e0b', '#10b981', '#3b82f6', '#a855f7', '#ef4444', '#ec4899', '#14b8a6'];
+    if (!name) return palette[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    return palette[hash % palette.length];
   }
 
   getOwnerInitials(customer: Customer): string {
