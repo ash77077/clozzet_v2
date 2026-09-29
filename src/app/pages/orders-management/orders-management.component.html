@@ -1204,30 +1204,34 @@
             <div class="pricing-fields-row">
               <div class="form-field">
                 <label class="field-label"><i class="pi pi-user"></i> Adult Price per Unit (֏)</label>
-                <input
-                  pInputText
-                  type="number"
-                  formControlName="adultSellingPricePerUnit"
-                  placeholder="e.g. 5000"
-                  class="full-width"
-                  min="0"
-                  step="1"
-                  (wheel)="onNumberWheel($event)" />
+                <div (wheel)="onNumberWheel($event)">
+                  <p-inputNumber
+                    formControlName="adultSellingPricePerUnit"
+                    [min]="0"
+                    [useGrouping]="true"
+                    placeholder="e.g. 5000"
+                    styleClass="full-width"
+                    suffix=" ֏"
+                    appendTo="body">
+                  </p-inputNumber>
+                </div>
                 <small class="field-hint" *ngIf="calculateAdultTotal(i) > 0">
                   {{ calculateAdultTotal(i) }} adult units
                 </small>
               </div>
               <div class="form-field" *ngIf="calculateChildrenTotal(i) > 0">
                 <label class="field-label"><i class="pi pi-star"></i> Children Price per Unit (֏)</label>
-                <input
-                  pInputText
-                  type="number"
-                  formControlName="childrenSellingPricePerUnit"
-                  placeholder="e.g. 3500"
-                  class="full-width"
-                  min="0"
-                  step="1"
-                  (wheel)="onNumberWheel($event)" />
+                <div (wheel)="onNumberWheel($event)">
+                  <p-inputNumber
+                    formControlName="childrenSellingPricePerUnit"
+                    [min]="0"
+                    [useGrouping]="true"
+                    placeholder="e.g. 3500"
+                    styleClass="full-width"
+                    suffix=" ֏"
+                    appendTo="body">
+                  </p-inputNumber>
+                </div>
                 <small class="field-hint">
                   {{ calculateChildrenTotal(i) }} children units
                 </small>
@@ -1568,10 +1572,21 @@
           </div>
           <div class="form-field">
             <label class="field-label">Expected Revenue (֏)</label>
-            <div (wheel)="onNumberWheel($event)">
-              <p-inputNumber formControlName="expectedRevenue" [min]="0" [useGrouping]="true"
-                placeholder="Total order value" styleClass="full-width" suffix=" ֏" appendTo="body">
-              </p-inputNumber>
+            <div class="revenue-input-row">
+              <div class="revenue-input-wrap" (wheel)="onNumberWheel($event)">
+                <p-inputNumber formControlName="expectedRevenue" [min]="0" [useGrouping]="true"
+                  placeholder="Total order value" styleClass="full-width" suffix=" ֏" appendTo="body">
+                </p-inputNumber>
+              </div>
+              <button
+                type="button"
+                class="btn-recalc"
+                *ngIf="calculatedExpectedRevenue > 0 && Number(f('expectedRevenue').value) !== calculatedExpectedRevenue"
+                (click)="syncExpectedRevenue()"
+                pTooltip="Sync with calculated total"
+                tooltipPosition="top">
+                <i class="pi pi-refresh"></i>
+              </button>
             </div>
             <span class="field-hint" *ngIf="calculatedExpectedRevenue > 0">
               <i class="pi pi-calculator"></i> Auto-calculated: {{ calculatedExpectedRevenue | number }} ֏
