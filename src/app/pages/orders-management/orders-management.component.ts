@@ -1033,10 +1033,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   nextStep(): void {
     if (this.isCurrentStepValid() && this.currentStep < this.totalSteps) {
       this.currentStep++;
-      // Auto-fill expected revenue when entering step 4 (only if not already set)
-      if (this.currentStep === 4) {
+      // Sync expected revenue when entering step 4.
+      //  • Create mode: fill it only if empty.
+      //  • Edit mode: always refresh from the current quantities × prices so the
+      //    user sees the recomputed total after they change items.
+      if (this.currentStep === 4 && this.calculatedExpectedRevenue > 0) {
         const current = this.addOrderForm.get('expectedRevenue')?.value;
-        if ((!current || current === 0) && this.calculatedExpectedRevenue > 0) {
+        const shouldSync = this.isEditMode
+          ? Number(current) !== this.calculatedExpectedRevenue
+          : (!current || current === 0);
+        if (shouldSync) {
           this.addOrderForm.patchValue({ expectedRevenue: this.calculatedExpectedRevenue });
         }
       }
@@ -1744,6 +1750,12 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         this.newTextileTypeLabel.push('');
         this.products.push(productGroup);
 
+        // If the order only had the legacy sellingPricePerUnit (no split adult/children),
+        // migrate it into adult so the edit UI shows the price the user actually set.
+        const legacyPrice = product.sellingPricePerUnit ?? null;
+        const adultPrice    = product.adultSellingPricePerUnit ?? (legacyPrice != null ? legacyPrice : null);
+        const childrenPrice = product.childrenSellingPricePerUnit ?? null;
+
         productGroup.patchValue({
           clothType:                    product.clothType || '',
           textileType:                  product.textileType || '',
@@ -1753,10 +1765,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
           logoPosition:                 product.logoPosition || '',
           logoSize:                     product.logoSize || '',
           comments:                     product.comments || '',
-          sellingPricePerUnit:          product.sellingPricePerUnit || null,
-          costPricePerUnit:             product.costPricePerUnit || null,
-          adultSellingPricePerUnit:     product.adultSellingPricePerUnit || null,
-          childrenSellingPricePerUnit:  product.childrenSellingPricePerUnit || null,
+          sellingPricePerUnit:          legacyPrice,
+          costPricePerUnit:             product.costPricePerUnit ?? null,
+          adultSellingPricePerUnit:     adultPrice,
+          childrenSellingPricePerUnit:  childrenPrice,
         });
 
         // Set all known sizes (adult + child) after attach
@@ -2543,6 +2555,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   }
 
   f(name: string): AbstractControl { return this.addOrderForm.get(name)!; }
+
+  // Exposed for template comparisons (e.g. checking if current revenue matches calc)
+  Number = Number;
+
+  // Refresh Expected Revenue from the live products × prices total
+  syncExpectedRevenue(): void {
+    if (this.calculatedExpectedRevenue > 0) {
+      this.addOrderForm.patchValue({ expectedRevenue: this.calculatedExpectedRevenue });
+    }
+  }
 
   onNumberWheel(event: WheelEvent): void {
     (event.target as HTMLElement).blur();
