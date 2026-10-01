@@ -217,6 +217,13 @@
         <span>No KPI data for this month</span>
       </div>
 
+      <!-- Sales History Button -->
+      <div class="sales-history-btn-wrap">
+        <button class="sales-history-btn" (click)="openSalesHistory(manager)">
+          <i class="pi pi-history"></i> Sales History
+        </button>
+      </div>
+
       <!-- Goal Edit Section -->
       <div class="goal-section">
         <div class="goal-divider"></div>
@@ -306,6 +313,89 @@
 
     </div>
   </div>
+
+  <!-- Sales History Dialog -->
+  <p-dialog
+    [(visible)]="showSalesHistory"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{width: '90vw', maxWidth: '860px'}"
+    styleClass="sales-history-modal">
+
+    <ng-template pTemplate="header">
+      <div class="sh-dialog-header" *ngIf="salesHistoryManager">
+        <div class="sh-avatar" [style.background]="getKpiFor(salesHistoryManager._id)?.tier?.color ?? '#f59e0b'">
+          {{ salesHistoryManager.firstName[0] }}{{ salesHistoryManager.lastName[0] }}
+        </div>
+        <div>
+          <div class="sh-name">{{ salesHistoryManager.firstName }} {{ salesHistoryManager.lastName }}</div>
+          <div class="sh-subtitle">Sales History · {{ monthLabel }}</div>
+        </div>
+      </div>
+    </ng-template>
+
+    <div class="sh-loading" *ngIf="isLoadingSalesHistory">
+      <div class="spinner"></div>
+      <p>Loading sales history...</p>
+    </div>
+
+    <ng-container *ngIf="!isLoadingSalesHistory">
+      <p-table
+        [value]="salesHistoryOrders"
+        [paginator]="salesHistoryOrders.length > 10"
+        [rows]="10"
+        styleClass="p-datatable-gridlines p-datatable-sm"
+        responsiveLayout="scroll">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="min-width:130px">Order #</th>
+            <th style="min-width:180px">Company</th>
+            <th style="min-width:160px">Client</th>
+            <th style="min-width:120px">Date</th>
+            <th style="min-width:150px; text-align:right">Amount</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-order>
+          <tr>
+            <td><strong>{{ order.orderNumber }}</strong></td>
+            <td>{{ order.companyName || '—' }}</td>
+            <td>{{ order.clientName }}</td>
+            <td>{{ formatDate(order.createdAt) }}</td>
+            <td style="text-align:right">
+              <span class="sh-amount">{{ formatCurrency(order.expectedRevenue || 0) }}</span>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="sh-empty">
+                <i class="pi pi-inbox"></i>
+                <span>No sales found for {{ monthLabel }}</span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="footer" *ngIf="salesHistoryOrders.length > 0">
+          <tr>
+            <td colspan="4" style="text-align:right; font-weight:700">Total</td>
+            <td style="text-align:right">
+              <span class="sh-total">{{ formatCurrency(salesHistoryTotal) }}</span>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </ng-container>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Close" icon="pi pi-times" (onClick)="showSalesHistory = false" severity="secondary"></p-button>
+    </ng-template>
+  </p-dialog>
 
   <p-toast></p-toast>
 </div>

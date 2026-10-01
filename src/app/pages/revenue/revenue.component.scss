@@ -224,6 +224,14 @@
       &:focus { border-color: var(--primary-color); }
     }
   }
+
+  ::ng-deep .manager-filter-select {
+    min-width: 200px;
+
+    .p-select {
+      border-radius: 6px;
+    }
+  }
 }
 
 // Table Section

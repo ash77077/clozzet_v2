@@ -88,6 +88,15 @@
         placeholder="Search by order #, company, client..."
         class="search-input" />
     </div>
+    <p-select
+      [(ngModel)]="selectedManager"
+      [options]="managerOptions"
+      optionLabel="label"
+      optionValue="value"
+      (onChange)="onManagerChange()"
+      placeholder="All Managers"
+      styleClass="manager-filter-select">
+    </p-select>
   </div>
 
   <!-- Revenue Table -->

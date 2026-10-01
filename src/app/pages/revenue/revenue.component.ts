@@ -152,6 +152,18 @@ export class RevenueComponent implements OnInit, OnDestroy {
   // Month filter — default to current month
   selectedMonth: Date = new Date();
 
+  // Manager filter
+  selectedManager: string | null = null;
+  get managerOptions(): { label: string; value: string | null }[] {
+    const names = [...new Set(
+      this.allFinancialOrders.map(o => o.salesPerson).filter(Boolean)
+    )].sort();
+    return [
+      { label: 'All Managers', value: null },
+      ...names.map(n => ({ label: n, value: n })),
+    ];
+  }
+
   // Search
   searchTerm = '';
 
@@ -259,16 +271,18 @@ export class RevenueComponent implements OnInit, OnDestroy {
     const year = this.selectedMonth.getFullYear();
 
     this.filteredOrders = this.allFinancialOrders.filter(order => {
-      // Match by the order's deadline month (or createdAt as fallback)
-      const date = new Date((order.deadline || order.createdAt) as string);
+      const date = new Date(order.createdAt as string);
       const monthMatch = date.getMonth() === month && date.getFullYear() === year;
+
+      const managerMatch = !this.selectedManager ||
+        (order.salesPerson?.toLowerCase() === this.selectedManager.toLowerCase());
 
       const searchMatch = !this.searchTerm ||
         order.orderNumber?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         order.clientName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         order.companyName?.toLowerCase().includes(this.searchTerm.toLowerCase());
 
-      return monthMatch && searchMatch;
+      return monthMatch && managerMatch && searchMatch;
     });
 
     this.calculateCards();
@@ -276,6 +290,7 @@ export class RevenueComponent implements OnInit, OnDestroy {
 
   onMonthChange(): void { this.selectedRows.clear(); this.applyFilters(); }
   onSearchChange(): void { this.selectedRows.clear(); this.applyFilters(); }
+  onManagerChange(): void { this.selectedRows.clear(); this.applyFilters(); }
 
   prevMonth(): void {
     const d = new Date(this.selectedMonth);
