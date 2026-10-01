@@ -224,6 +224,14 @@
       &:focus { border-color: var(--primary-color); }
     }
   }
+
+  ::ng-deep .manager-filter-select {
+    min-width: 200px;
+
+    .p-select {
+      border-radius: 6px;
+    }
+  }
 }
 
 // Table Section
@@ -258,6 +266,10 @@
     font-weight: 700;
     color: var(--text-color);
     font-size: 0.875rem;
+
+    &.remaining-value {
+      color: var(--orange-500);
+    }
   }
 
   .no-data {
@@ -750,6 +762,7 @@ td.editable-cell {
 
   &.pay-row {
     transition: background-color 0.2s ease;
+    cursor: pointer;
 
     // one shared left accent bar per row
     > td:first-child {
@@ -787,5 +800,99 @@ td.editable-cell {
     > td:first-child { border-left-color: #b91c1c; }
 
     &:hover { background: #fca5a5 !important; }
+  }
+
+  // ── Selected ────────────────────────────────────────────────────────
+  &.row-selected {
+    background: #ede9fe !important;
+    > td:first-child { border-left-color: #7c3aed !important; }
+
+    &:hover { background: #ddd6fe !important; }
+  }
+}
+
+// Selection Summary Panel
+.selection-summary {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  animation: slide-up 0.2s ease;
+
+  @keyframes slide-up {
+    from { transform: translateY(12px); }
+    to   { transform: translateY(0); }
+  }
+}
+
+.selection-summary-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+  .selection-count {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #7c3aed;
+
+    i { font-size: 1rem; }
+  }
+
+  .selection-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--surface-border);
+  }
+
+  .selection-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 90px;
+
+    .selection-stat-label {
+      font-size: 0.72rem;
+      color: var(--text-color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .selection-stat-value {
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: var(--text-color);
+
+      &.paid    { color: #22c55e; }
+      &.remaining { color: var(--orange-500); }
+    }
+  }
+
+  .selection-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: var(--surface-hover);
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    margin-left: 0.25rem;
+
+    &:hover {
+      background: #fee2e2;
+      color: #dc2626;
+    }
   }
 }

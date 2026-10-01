@@ -885,3 +885,95 @@
   .managers-grid { grid-template-columns: 1fr; }
   .tier-cards { flex-direction: column; }
 }
+
+// ── Sales History Button ───────────────────────────────────────────────────────
+.sales-history-btn-wrap {
+  padding: 0.75rem 1.25rem 0;
+
+  .sales-history-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--primary-color);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    justify-content: center;
+
+    &:hover {
+      background: var(--primary-color);
+      color: #fff;
+    }
+  }
+}
+
+// ── Sales History Dialog ───────────────────────────────────────────────────────
+.sh-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .sh-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+
+  .sh-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-color);
+  }
+
+  .sh-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-color-secondary);
+  }
+}
+
+.sh-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+}
+
+.sh-amount {
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.sh-total {
+  font-weight: 800;
+  color: var(--primary-color);
+  font-size: 0.9rem;
+}
+
+.sh-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+
+  i { font-size: 1.25rem; }
+}
+

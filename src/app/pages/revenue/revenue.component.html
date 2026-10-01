@@ -88,6 +88,15 @@
         placeholder="Search by order #, company, client..."
         class="search-input" />
     </div>
+    <p-select
+      [(ngModel)]="selectedManager"
+      [options]="managerOptions"
+      optionLabel="label"
+      optionValue="value"
+      (onChange)="onManagerChange()"
+      placeholder="All Managers"
+      styleClass="manager-filter-select">
+    </p-select>
   </div>
 
   <!-- Revenue Table -->
@@ -109,15 +118,17 @@
           <th style="min-width:140px">Products</th>
           <th style="min-width:80px">Units</th>
           <th style="min-width:150px">Expected</th>
-          <th style="min-width:140px">Calculated</th>
           <th style="min-width:150px">Paid</th>
+          <th style="min-width:150px">Remaining</th>
           <th style="min-width:170px">Payment Status</th>
           <th style="min-width:100px">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-order>
-        <tr [class]="'pay-row pay-' + (order.paymentStatus || 'not_paid')">
+        <tr
+          [class]="'pay-row pay-' + (order.paymentStatus || 'not_paid') + (isSelected(order) ? ' row-selected' : '')"
+          (click)="toggleRowSelection(order, $event)">
           <!-- Order # -->
           <td><strong>{{ order.orderNumber }}</strong></td>
 
@@ -152,12 +163,6 @@
             </p-inputNumber>
           </td>
 
-          <!-- Calculated -->
-          <td>
-            <span class="currency-value" *ngIf="order.totalRevenue > 0">{{ formatCurrency(order.totalRevenue) }}</span>
-            <span class="no-data" *ngIf="order.totalRevenue === 0">—</span>
-          </td>
-
           <!-- Paid -->
           <td class="editable-cell">
             <div class="paid-cell" *ngIf="editingPaymentOrderId !== (order._id || order.id)">
@@ -177,6 +182,15 @@
               appendTo="body"
               [disabled]="isSavingPayment">
             </p-inputNumber>
+          </td>
+
+          <!-- Remaining -->
+          <td>
+            <ng-container *ngIf="editingPaymentOrderId !== (order._id || order.id)">
+              <span class="currency-value remaining-value">
+                {{ formatCurrency((order.expectedRevenue || order.totalRevenue || 0) - (order.paidAmount || 0)) }}
+              </span>
+            </ng-container>
           </td>
 
           <!-- Payment Status -->
@@ -253,6 +267,32 @@
         </tr>
       </ng-template>
     </p-table>
+  </div>
+
+  <!-- Selection Summary -->
+  <div class="selection-summary" *ngIf="selectedRows.size > 0">
+    <div class="selection-summary-inner">
+      <div class="selection-count">
+        <i class="pi pi-check-square"></i>
+        <span>{{ selectedRows.size }} selected</span>
+      </div>
+      <div class="selection-divider"></div>
+      <div class="selection-stat">
+        <span class="selection-stat-label">Expected</span>
+        <span class="selection-stat-value">{{ formatCurrency(selectionExpected) }}</span>
+      </div>
+      <div class="selection-stat">
+        <span class="selection-stat-label">Paid</span>
+        <span class="selection-stat-value paid">{{ formatCurrency(selectionPaid) }}</span>
+      </div>
+      <div class="selection-stat">
+        <span class="selection-stat-label">Remaining</span>
+        <span class="selection-stat-value remaining">{{ formatCurrency(selectionRemaining) }}</span>
+      </div>
+      <button class="selection-clear" (click)="clearSelection()" pTooltip="Clear selection">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
   </div>
 
   <!-- Order Details Modal -->

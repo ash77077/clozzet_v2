@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, finalize } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
@@ -9,8 +9,9 @@ import { ToastModule } from 'primeng/toast';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
-import { ManagerKpiService, ManagerUser, ManagerGoal, MonthlyKpi, KpiTier } from '../../services/manager-kpi.service';
+import { ManagerKpiService, ManagerUser, ManagerGoal, MonthlyKpi, KpiTier, ManagerSaleOrder } from '../../services/manager-kpi.service';
 
 @Component({
   selector: 'app-manager-kpi',
@@ -18,7 +19,7 @@ import { ManagerKpiService, ManagerUser, ManagerGoal, MonthlyKpi, KpiTier } from
   imports: [
     CommonModule, FormsModule,
     SelectModule, InputNumberModule, ButtonModule,
-    ToastModule, TableModule, TagModule, TooltipModule,
+    ToastModule, TableModule, TagModule, TooltipModule, DialogModule,
   ],
   providers: [MessageService],
   templateUrl: './manager-kpi.component.html',
@@ -47,6 +48,12 @@ export class ManagerKpiComponent implements OnInit, OnDestroy {
   editingGoal: { [userId: string]: Partial<ManagerGoal> } = {};
   editingManagerId: string | null = null;
   editingTiers: { [userId: string]: { name: string; min: number; max: number; rate: number }[] } = {};
+
+  // Sales history dialog
+  showSalesHistory = false;
+  salesHistoryManager: ManagerUser | null = null;
+  salesHistoryOrders: ManagerSaleOrder[] = [];
+  isLoadingSalesHistory = false;
 
   // General goal panel
   isGeneralPanelOpen = false;
@@ -246,6 +253,25 @@ export class ManagerKpiComponent implements OnInit, OnDestroy {
 
   formatCurrency(n: number): string {
     return new Intl.NumberFormat('de-DE').format(n) + ' ֏';
+  }
+
+  openSalesHistory(manager: ManagerUser): void {
+    this.salesHistoryManager = manager;
+    this.salesHistoryOrders  = [];
+    this.showSalesHistory    = true;
+    this.isLoadingSalesHistory = true;
+    const managerName = `${manager.firstName} ${manager.lastName}`;
+    this.kpiService.getSalesHistory(managerName, this.selectedYear, this.selectedMonth)
+      .pipe(takeUntil(this.destroy$), finalize(() => this.isLoadingSalesHistory = false))
+      .subscribe({ next: orders => this.salesHistoryOrders = orders });
+  }
+
+  get salesHistoryTotal(): number {
+    return this.salesHistoryOrders.reduce((s, o) => s + (o.expectedRevenue || 0), 0);
+  }
+
+  formatDate(d: string): string {
+    return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
   toggleGeneralPanel(): void {

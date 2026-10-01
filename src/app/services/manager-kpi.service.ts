@@ -42,6 +42,15 @@ export interface MonthlyKpi {
   } | null;
 }
 
+export interface ManagerSaleOrder {
+  _id: string;
+  orderNumber: string;
+  companyName?: string;
+  clientName: string;
+  expectedRevenue?: number;
+  createdAt: string;
+}
+
 export interface ManagerUser {
   _id: string;
   firstName: string;
@@ -80,6 +89,13 @@ export class ManagerKpiService {
     return this.http.get<MonthlyKpi[]>(`${this.api}/monthly`, {
       params: { year: String(year), month: String(month) },
     });
+  }
+
+  getSalesHistory(managerName: string, year: number, month: number): Observable<ManagerSaleOrder[]> {
+    return this.http.get<ManagerSaleOrder[]>(
+      `${this.api}/sales-history/${encodeURIComponent(managerName)}`,
+      { params: { year: String(year), month: String(month) } },
+    );
   }
 
   getMyMonthlyKpi(userId: string, year: number, month: number): Observable<MonthlyKpi> {
