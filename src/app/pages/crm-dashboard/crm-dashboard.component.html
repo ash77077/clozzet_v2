@@ -1183,12 +1183,12 @@
 		<div class="pending-meeting-warning" *ngIf="crmPendingMeeting">
 			<div class="pmw-icon"><i class="pi pi-exclamation-triangle"></i></div>
 			<p class="pmw-message">
-				<strong>{{ crmPendingMeeting.customerName }}</strong> already has a scheduled meeting that hasn't been completed yet.
+				<strong>{{ crmPendingMeeting!.customerName }}</strong> already has a scheduled meeting that hasn't been completed yet.
 			</p>
 			<div class="pmw-details">
-				<div class="pmw-row"><i class="pi pi-calendar"></i><span>{{ formatMeetingDate(crmPendingMeeting.meetingDate) }}</span></div>
-				<div class="pmw-row"><i class="pi pi-tag"></i><span>{{ crmPendingMeeting.title }}</span></div>
-				<div class="pmw-row" *ngIf="crmPendingMeeting.contactPerson"><i class="pi pi-user"></i><span>{{ crmPendingMeeting.contactPerson }}</span></div>
+				<div class="pmw-row"><i class="pi pi-calendar"></i><span>{{ formatMeetingDate(crmPendingMeeting!.meetingDate) }}</span></div>
+				<div class="pmw-row"><i class="pi pi-tag"></i><span>{{ crmPendingMeeting!.title }}</span></div>
+				<div class="pmw-row" *ngIf="crmPendingMeeting!.contactPerson"><i class="pi pi-user"></i><span>{{ crmPendingMeeting!.contactPerson }}</span></div>
 			</div>
 			<p class="pmw-question">What would you like to do?</p>
 		</div>
@@ -1264,6 +1264,20 @@
 				<div class="form-field full-width">
 					<label>Notes</label>
 					<textarea pTextarea formControlName="notes" placeholder="Meeting agenda, preparation notes…" rows="3" class="w-full"></textarea>
+				</div>
+
+				<!-- Customer invitation -->
+				<div class="form-field full-width invite-section">
+					<div class="invite-checkbox-row">
+						<p-checkbox formControlName="inviteCustomer" [binary]="true" inputId="crmInviteCustomer"></p-checkbox>
+						<label for="crmInviteCustomer" class="invite-label">
+							<i class="pi pi-envelope"></i> Send invitation email to customer
+						</label>
+					</div>
+					<div class="invite-email-wrap" *ngIf="meetingForm.get('inviteCustomer')?.value">
+						<input pInputText formControlName="customerEmail" placeholder="Customer email address" class="w-full" type="email" />
+						<small class="invite-hint">Customer will receive a calendar invitation (.ics) by email</small>
+					</div>
 				</div>
 			</div>
 

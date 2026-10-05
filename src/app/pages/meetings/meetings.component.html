@@ -253,6 +253,20 @@
           <label class="field-label">Notes</label>
           <textarea pTextarea formControlName="notes" placeholder="Agenda, preparation notes…" rows="3" class="w-full"></textarea>
         </div>
+
+        <!-- Invite section: only on new meeting -->
+        <div class="form-field full-width invite-section" *ngIf="!isEditMode">
+          <div class="invite-checkbox-row">
+            <p-checkbox formControlName="inviteCustomer" [binary]="true" inputId="inviteCustomer"></p-checkbox>
+            <label for="inviteCustomer" class="invite-label">
+              <i class="pi pi-envelope"></i> Send invitation email to customer
+            </label>
+          </div>
+          <div class="invite-email-wrap" *ngIf="meetingForm.get('inviteCustomer')?.value">
+            <input pInputText formControlName="customerEmail" placeholder="Customer email address" class="w-full" type="email" />
+            <small class="invite-hint">Customer will receive a calendar invitation (.ics) by email</small>
+          </div>
+        </div>
       </div>
 
       <div class="dialog-footer-row">

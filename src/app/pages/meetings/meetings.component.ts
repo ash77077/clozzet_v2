@@ -13,6 +13,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
+import { CheckboxModule } from 'primeng/checkbox';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { MeetingsService } from '../../services/meetings.service';
 import { Meeting, MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
@@ -24,7 +25,7 @@ import { Meeting, MeetingStatus, CreateMeetingDto } from '../../models/meeting.m
     CommonModule, FormsModule, ReactiveFormsModule,
     TableModule, ButtonModule, DialogModule, InputTextModule,
     TextareaModule, TagModule, ToastModule, ConfirmDialogModule,
-    SelectModule, DatePicker, TooltipModule,
+    SelectModule, DatePicker, TooltipModule, CheckboxModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './meetings.component.html',
@@ -96,6 +97,8 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       address: [''],
       notes: [''],
       status: [MeetingStatus.SCHEDULED],
+      inviteCustomer: [false],
+      customerEmail: [''],
     });
   }
 
@@ -218,6 +221,8 @@ export class MeetingsComponent implements OnInit, OnDestroy {
       duration: v.duration || undefined,
       notes: v.notes || undefined,
       status: v.status,
+      inviteCustomer: v.inviteCustomer || undefined,
+      customerEmail: v.inviteCustomer && v.customerEmail ? v.customerEmail : undefined,
     };
 
     const afterSave = () => {

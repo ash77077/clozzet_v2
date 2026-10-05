@@ -10,6 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
+import { CheckboxModule } from 'primeng/checkbox';
 import { AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -54,6 +55,7 @@ import { OverflowTooltipDirective } from '../../shared/directives/overflow-toolt
     OverflowTooltipDirective,
     TranslateModule,
     AiStatusCellComponent,
+    CheckboxModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './crm-dashboard.component.html',
@@ -1218,12 +1220,15 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       duration: [30],
       address: [''],
       notes: [''],
+      inviteCustomer: [false],
+      customerEmail: [''],
     });
   }
 
   openMeetingForCustomer(customer: Customer): void {
     this.selectedMeetingCustomer = customer;
     const firstContact = customer.contacts?.[0];
+    const email = firstContact?.email || customer.email || '';
     this.meetingForm.reset();
     this.meetingForm.patchValue({
       title: `Meeting with ${customer.companyName}`,
@@ -1232,6 +1237,8 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       phone: firstContact?.phone || customer.phone || '',
       address: customer.address || '',
       duration: 30,
+      inviteCustomer: false,
+      customerEmail: email,
     });
     this.showMeetingDialog = true;
   }
@@ -1273,6 +1280,8 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       notes: v.notes || undefined,
       status: MeetingStatus.SCHEDULED,
       customerId: this.selectedMeetingCustomer?._id || undefined,
+      inviteCustomer: v.inviteCustomer || undefined,
+      customerEmail: v.inviteCustomer && v.customerEmail ? v.customerEmail : undefined,
     };
 
     // Check for existing scheduled meeting for this customer
