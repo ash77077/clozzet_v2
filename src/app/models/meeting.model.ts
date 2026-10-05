@@ -34,4 +34,6 @@ export interface CreateMeetingDto {
   notes?: string;
   status?: MeetingStatus;
   customerId?: string;
+  inviteCustomer?: boolean;
+  customerEmail?: string;
 }

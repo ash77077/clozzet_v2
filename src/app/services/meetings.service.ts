@@ -20,12 +20,20 @@ export class MeetingsService {
     return this.http.get<ApiResponse<Meeting[]>>(this.apiUrl).pipe(map(r => r.data));
   }
 
+  getByCustomer(customerId: string): Observable<Meeting[]> {
+    return this.http.get<ApiResponse<Meeting[]>>(`${this.apiUrl}/by-customer/${customerId}`).pipe(map(r => r.data));
+  }
+
   create(dto: CreateMeetingDto): Observable<Meeting> {
     return this.http.post<ApiResponse<Meeting>>(this.apiUrl, dto).pipe(map(r => r.data));
   }
 
   update(id: string, dto: Partial<CreateMeetingDto>): Observable<Meeting> {
     return this.http.patch<ApiResponse<Meeting>>(`${this.apiUrl}/${id}`, dto).pipe(map(r => r.data));
+  }
+
+  updateStatus(id: string, status: string): Observable<Meeting> {
+    return this.http.patch<ApiResponse<Meeting>>(`${this.apiUrl}/${id}/status`, { status }).pipe(map(r => r.data));
   }
 
   delete(id: string): Observable<void> {

@@ -10,6 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
+import { CheckboxModule } from 'primeng/checkbox';
 import { AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -25,7 +26,7 @@ import { AiService } from '../../services/ai.service';
 import { MeetingsService } from '../../services/meetings.service';
 import { Customer, CustomerStatus, CreateCustomerDto, UpdateCustomerDto } from '../../models/customer.model';
 import { Interaction, InteractionType, CreateInteractionDto } from '../../models/interaction.model';
-import { MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
+import { Meeting, MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
 import { CustomerAiPayload } from '../../models/ai.models';
 import { AiStatusCellComponent } from '../../shared/components/ai-status-cell/ai-status-cell.component';
 import { AuthService } from '../../services/auth.service';
@@ -54,6 +55,7 @@ import { OverflowTooltipDirective } from '../../shared/directives/overflow-toolt
     OverflowTooltipDirective,
     TranslateModule,
     AiStatusCellComponent,
+    CheckboxModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './crm-dashboard.component.html',
@@ -120,6 +122,13 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
   meetingForm!: FormGroup;
   isSavingMeeting = false;
   MeetingStatus = MeetingStatus;
+  selectedMeetingCustomer: Customer | null = null;
+
+  // Pending meeting warning (CRM dashboard)
+  showCrmPendingWarning = false;
+  crmPendingMeeting: Meeting | null = null;
+  isCompletingCrmPending = false;
+  crmPendingNewDto: CreateMeetingDto | null = null;
 
   statusOptions = [
     { label: 'Lead', value: CustomerStatus.LEAD },
@@ -703,10 +712,9 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       nextFollowUpDate: formValue.nextFollowUpDate instanceof Date ? formValue.nextFollowUpDate.toISOString() : undefined,
     };
 
-    // Update customer
+    // Update customer status only — nextFollowUpAt is managed by interactionsService.create
     const updateDto: UpdateCustomerDto = {
       status: formValue.status || this.selectedCustomer.status,
-      nextFollowUpAt: formValue.nextFollowUpDate instanceof Date ? formValue.nextFollowUpDate.toISOString() : null,
     };
 
     // Process both operations
@@ -1212,11 +1220,15 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       duration: [30],
       address: [''],
       notes: [''],
+      inviteCustomer: [false],
+      customerEmail: [''],
     });
   }
 
   openMeetingForCustomer(customer: Customer): void {
+    this.selectedMeetingCustomer = customer;
     const firstContact = customer.contacts?.[0];
+    const email = firstContact?.email || customer.email || '';
     this.meetingForm.reset();
     this.meetingForm.patchValue({
       title: `Meeting with ${customer.companyName}`,
@@ -1225,6 +1237,8 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       phone: firstContact?.phone || customer.phone || '',
       address: customer.address || '',
       duration: 30,
+      inviteCustomer: false,
+      customerEmail: email,
     });
     this.showMeetingDialog = true;
   }
@@ -1254,7 +1268,6 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       this.meetingForm.markAllAsTouched();
       return;
     }
-    this.isSavingMeeting = true;
     const v = this.meetingForm.value;
     const dto: CreateMeetingDto = {
       title: v.title,
@@ -1266,11 +1279,39 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
       duration: v.duration || undefined,
       notes: v.notes || undefined,
       status: MeetingStatus.SCHEDULED,
+      customerId: this.selectedMeetingCustomer?._id || undefined,
+      inviteCustomer: v.inviteCustomer || undefined,
+      customerEmail: v.inviteCustomer && v.customerEmail ? v.customerEmail : undefined,
     };
+
+    // Check for existing scheduled meeting for this customer
+    this.meetingsService.getAll().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (meetings) => {
+        const pending = meetings.find(
+          m => m.status === MeetingStatus.SCHEDULED &&
+               m.customerName.toLowerCase() === v.customerName.toLowerCase()
+        );
+        if (pending) {
+          this.crmPendingMeeting = pending;
+          this.crmPendingNewDto = dto;
+          this.showMeetingDialog = false;
+          this.showCrmPendingWarning = true;
+        } else {
+          this.doCreateMeeting(dto);
+        }
+      },
+      error: () => { this.doCreateMeeting(dto); }
+    });
+  }
+
+  private doCreateMeeting(dto: CreateMeetingDto): void {
+    this.isSavingMeeting = true;
     this.meetingsService.create(dto).subscribe({
       next: () => {
         this.isSavingMeeting = false;
         this.showMeetingDialog = false;
+        this.showCrmPendingWarning = false;
+        this.crmPendingNewDto = null;
         this.messageService.add({ severity: 'success', summary: 'Meeting Scheduled', detail: `Meeting "${dto.title}" has been saved.` });
       },
       error: () => {
@@ -1278,6 +1319,33 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save meeting.' });
       }
     });
+  }
+
+  completeCrmPendingMeeting(): void {
+    if (!this.crmPendingMeeting?._id) return;
+    this.isCompletingCrmPending = true;
+    this.meetingsService.updateStatus(this.crmPendingMeeting._id, MeetingStatus.COMPLETED).subscribe({
+      next: () => {
+        this.isCompletingCrmPending = false;
+        this.showCrmPendingWarning = false;
+        this.messageService.add({ severity: 'success', summary: 'Done', detail: 'Previous meeting marked as completed.' });
+        this.loadCustomers();
+      },
+      error: () => {
+        this.isCompletingCrmPending = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to complete meeting.' });
+      }
+    });
+  }
+
+  scheduleCrmNewAnyway(): void {
+    if (!this.crmPendingNewDto) { this.showCrmPendingWarning = false; return; }
+    this.doCreateMeeting(this.crmPendingNewDto);
+  }
+
+  formatMeetingDate(d: string): string {
+    if (!d) return '—';
+    return new Date(d).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
   }
 
   getCreatedByName(createdBy: any): string | null {

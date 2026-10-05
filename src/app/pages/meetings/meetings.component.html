@@ -160,6 +160,40 @@
     </div>
   </div>
 
+  <!-- Pending Meeting Warning Dialog -->
+  <p-dialog
+    [(visible)]="showPendingWarning"
+    header="Pending Meeting Exists"
+    [modal]="true"
+    [style]="{width: '480px', maxWidth: '96vw'}"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="pendingMeeting = null; pendingNewDto = null">
+
+    <ng-container *ngIf="pendingMeeting as pm">
+      <div class="pending-meeting-warning">
+        <div class="pmw-icon"><i class="pi pi-exclamation-triangle"></i></div>
+        <p class="pmw-message">
+          <strong>{{ pm.customerName }}</strong> already has a scheduled meeting that hasn't been completed yet.
+        </p>
+        <div class="pmw-details">
+          <div class="pmw-row"><i class="pi pi-calendar"></i><span>{{ formatDate(pm.meetingDate) }}</span></div>
+          <div class="pmw-row"><i class="pi pi-tag"></i><span>{{ pm.title }}</span></div>
+          <div class="pmw-row" *ngIf="pm.contactPerson"><i class="pi pi-user"></i><span>{{ pm.contactPerson }}</span></div>
+        </div>
+        <p class="pmw-question">What would you like to do?</p>
+      </div>
+    </ng-container>
+
+    <ng-template pTemplate="footer">
+      <div class="pmw-actions">
+        <p-button label="Update Meeting" icon="pi pi-pencil" (onClick)="editPendingMeeting()" severity="info" [text]="true"></p-button>
+        <p-button label="Mark as Completed" icon="pi pi-check" (onClick)="completePendingMeeting()" severity="success" [text]="true" [loading]="isCompletingPending"></p-button>
+        <p-button label="Schedule New Anyway" icon="pi pi-calendar-plus" (onClick)="scheduleNewAnyway()" severity="secondary" [text]="true" [loading]="isSaving"></p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
   <!-- Add/Edit Meeting Dialog -->
   <p-dialog
     [(visible)]="showDialog"
@@ -218,6 +252,20 @@
         <div class="form-field full-width">
           <label class="field-label">Notes</label>
           <textarea pTextarea formControlName="notes" placeholder="Agenda, preparation notes…" rows="3" class="w-full"></textarea>
+        </div>
+
+        <!-- Invite section: only on new meeting -->
+        <div class="form-field full-width invite-section" *ngIf="!isEditMode">
+          <div class="invite-checkbox-row">
+            <p-checkbox formControlName="inviteCustomer" [binary]="true" inputId="inviteCustomer"></p-checkbox>
+            <label for="inviteCustomer" class="invite-label">
+              <i class="pi pi-envelope"></i> Send invitation email to customer
+            </label>
+          </div>
+          <div class="invite-email-wrap" *ngIf="meetingForm.get('inviteCustomer')?.value">
+            <input pInputText formControlName="customerEmail" placeholder="Customer email address" class="w-full" type="email" />
+            <small class="invite-hint">Customer will receive a calendar invitation (.ics) by email</small>
+          </div>
         </div>
       </div>
 

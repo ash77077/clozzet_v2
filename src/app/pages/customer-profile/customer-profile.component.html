@@ -926,6 +926,106 @@
     </form>
   </p-dialog>
 
+  <!-- Pending Meeting Warning -->
+  <p-dialog
+    [(visible)]="showPendingMeetingWarning"
+    header="Pending Meeting Exists"
+    [modal]="true"
+    [style]="{width: '480px', maxWidth: '96vw'}"
+    [draggable]="false"
+    [resizable]="false">
+    <div class="pending-meeting-warning" *ngIf="pendingMeeting">
+      <div class="pmw-icon"><i class="pi pi-exclamation-triangle"></i></div>
+      <p class="pmw-message">
+        There is already a scheduled meeting with this customer:
+      </p>
+      <div class="pmw-details">
+        <div class="pmw-row"><i class="pi pi-calendar"></i><strong>{{ pendingMeeting.title }}</strong></div>
+        <div class="pmw-row"><i class="pi pi-clock"></i>{{ pendingMeeting.meetingDate | date:'MMM d, y, HH:mm' }}</div>
+        <div class="pmw-row" *ngIf="pendingMeeting.contactPerson"><i class="pi pi-user"></i>{{ pendingMeeting.contactPerson }}</div>
+      </div>
+      <p class="pmw-question">What would you like to do?</p>
+    </div>
+    <ng-template pTemplate="footer">
+      <p-button
+        label="Update Meeting"
+        icon="pi pi-pencil"
+        severity="secondary"
+        (onClick)="openEditPendingMeeting()">
+      </p-button>
+      <p-button
+        label="Mark as Completed"
+        icon="pi pi-check"
+        severity="success"
+        [loading]="isCompletingMeeting"
+        (onClick)="completePendingMeeting()">
+      </p-button>
+      <p-button
+        label="Schedule New Anyway"
+        icon="pi pi-plus"
+        severity="warn"
+        (onClick)="openNewMeetingForm()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Edit Pending Meeting Dialog -->
+  <p-dialog
+    [(visible)]="showEditMeetingDialog"
+    header="Update Meeting"
+    [modal]="true"
+    [style]="{width: '520px', maxWidth: '96vw'}"
+    [draggable]="false"
+    [resizable]="false">
+    <form *ngIf="editMeetingForm" [formGroup]="editMeetingForm" (ngSubmit)="saveEditMeeting()" class="meeting-form">
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label class="required">Meeting Title</label>
+          <input pInputText formControlName="title" placeholder="e.g. Sales call" class="w-full" />
+          <small class="p-error" *ngIf="editMeetingForm.get('title')?.invalid && editMeetingForm.get('title')?.touched">Title is required</small>
+        </div>
+        <div class="form-field">
+          <label>Contact Person</label>
+          <input pInputText formControlName="contactPerson" placeholder="Contact name" class="w-full" />
+        </div>
+        <div class="form-field">
+          <label>Phone</label>
+          <input pInputText formControlName="phone" placeholder="Phone number" class="w-full" />
+        </div>
+        <div class="form-field">
+          <label class="required">Meeting Date &amp; Time</label>
+          <p-datepicker
+            formControlName="meetingDate"
+            [showIcon]="true"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            dateFormat="yy-mm-dd"
+            placeholder="Select date &amp; time"
+            appendTo="body"
+            class="w-full">
+          </p-datepicker>
+          <small class="p-error" *ngIf="editMeetingForm.get('meetingDate')?.invalid && editMeetingForm.get('meetingDate')?.touched">Date is required</small>
+        </div>
+        <div class="form-field">
+          <label>Duration (minutes)</label>
+          <input pInputText type="number" formControlName="duration" placeholder="e.g. 30" class="w-full" min="5" />
+        </div>
+        <div class="form-field full-width">
+          <label>Address</label>
+          <textarea pTextarea formControlName="address" placeholder="Meeting location / address" rows="2" class="w-full"></textarea>
+        </div>
+        <div class="form-field full-width">
+          <label>Notes</label>
+          <textarea pTextarea formControlName="notes" placeholder="Meeting agenda, preparation notes…" rows="3" class="w-full"></textarea>
+        </div>
+      </div>
+      <div class="dialog-footer" style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1rem;">
+        <p-button label="Cancel" icon="pi pi-times" (onClick)="showEditMeetingDialog = false" styleClass="p-button-text" [disabled]="isSavingEditMeeting"></p-button>
+        <p-button label="Update Meeting" icon="pi pi-check" type="submit" [loading]="isSavingEditMeeting" [disabled]="editMeetingForm.invalid || isSavingEditMeeting"></p-button>
+      </div>
+    </form>
+  </p-dialog>
+
   <!-- Assignment History Modal -->
   <p-dialog
     [(visible)]="showAssignmentLog"

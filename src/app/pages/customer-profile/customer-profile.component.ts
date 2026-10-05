@@ -26,7 +26,7 @@ import { InteractionsService } from '../../services/interactions.service';
 import { AiService } from '../../services/ai.service';
 import { UsersService, User as AppUser } from '../../services/users.service';
 import { MeetingsService } from '../../services/meetings.service';
-import { MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
+import { Meeting, MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
 import { Customer, CustomerStatus, AssignmentLogEntry } from '../../models/customer.model';
 import { Interaction, InteractionType, CallOutcome, CreateInteractionDto } from '../../models/interaction.model';
 import { CustomerAiPayload, CustomerAiResult } from '../../models/ai.models';
@@ -119,6 +119,13 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   showMeetingDialog = false;
   meetingForm!: FormGroup;
   isSavingMeeting = false;
+  customerMeetings: Meeting[] = [];
+  showPendingMeetingWarning = false;
+  pendingMeeting: Meeting | null = null;
+  isCompletingMeeting = false;
+  showEditMeetingDialog = false;
+  editMeetingForm!: FormGroup;
+  isSavingEditMeeting = false;
 
   private destroy$ = new Subject<void>();
 
@@ -216,6 +223,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     forkJoin({
       customer: this.customersService.getById(this.customerId),
       interactions: this.interactionsService.getByCustomer(this.customerId),
+      meetings: this.meetingsService.getByCustomer(this.customerId),
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -224,6 +232,7 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
           this.interactions = data.interactions.sort((a, b) =>
             new Date(b.interactionDate).getTime() - new Date(a.interactionDate).getTime()
           );
+          this.customerMeetings = data.meetings;
           this.isLoading = false;
           this.syncSelectedAssignee();
         },
@@ -898,6 +907,17 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
 
   openSetupMeetingDialog(): void {
     if (!this.customer) return;
+    const pending = this.customerMeetings.find(m => m.status === MeetingStatus.SCHEDULED);
+    if (pending) {
+      this.pendingMeeting = pending;
+      this.showPendingMeetingWarning = true;
+      return;
+    }
+    this.openNewMeetingForm();
+  }
+
+  openNewMeetingForm(): void {
+    if (!this.customer) return;
     const firstContact = this.customer.contacts?.[0];
     this.meetingForm.reset();
     this.meetingForm.patchValue({
@@ -908,7 +928,85 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
       address: this.customer.address || '',
       duration: 30,
     });
+    this.showPendingMeetingWarning = false;
     this.showMeetingDialog = true;
+  }
+
+  completePendingMeeting(): void {
+    if (!this.pendingMeeting?._id) return;
+    this.isCompletingMeeting = true;
+    this.meetingsService.updateStatus(this.pendingMeeting._id, MeetingStatus.COMPLETED)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isCompletingMeeting = false;
+          this.showPendingMeetingWarning = false;
+          this.messageService.add({ severity: 'success', summary: 'Done', detail: 'Meeting marked as completed.' });
+          this.loadCustomerData();
+        },
+        error: () => {
+          this.isCompletingMeeting = false;
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to complete meeting.' });
+        },
+      });
+  }
+
+  openEditPendingMeeting(): void {
+    if (!this.pendingMeeting) return;
+    if (!this.editMeetingForm) {
+      this.editMeetingForm = this.fb.group({
+        title:         ['', Validators.required],
+        meetingDate:   [null, Validators.required],
+        contactPerson: [''],
+        phone:         [''],
+        address:       [''],
+        duration:      [30],
+        notes:         [''],
+      });
+    }
+    this.editMeetingForm.patchValue({
+      title:         this.pendingMeeting.title,
+      meetingDate:   this.pendingMeeting.meetingDate ? new Date(this.pendingMeeting.meetingDate) : null,
+      contactPerson: this.pendingMeeting.contactPerson || '',
+      phone:         this.pendingMeeting.phone || '',
+      address:       this.pendingMeeting.address || '',
+      duration:      this.pendingMeeting.duration || 30,
+      notes:         this.pendingMeeting.notes || '',
+    });
+    this.showPendingMeetingWarning = false;
+    this.showEditMeetingDialog = true;
+  }
+
+  saveEditMeeting(): void {
+    if (!this.editMeetingForm || this.editMeetingForm.invalid || !this.pendingMeeting?._id) {
+      this.editMeetingForm?.markAllAsTouched();
+      return;
+    }
+    this.isSavingEditMeeting = true;
+    const v = this.editMeetingForm.value;
+    const dto: Partial<CreateMeetingDto> = {
+      title:         v.title,
+      meetingDate:   v.meetingDate instanceof Date ? v.meetingDate.toISOString() : v.meetingDate,
+      contactPerson: v.contactPerson || undefined,
+      phone:         v.phone || undefined,
+      address:       v.address || undefined,
+      duration:      v.duration || undefined,
+      notes:         v.notes || undefined,
+    };
+    this.meetingsService.update(this.pendingMeeting._id, dto)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isSavingEditMeeting = false;
+          this.showEditMeetingDialog = false;
+          this.messageService.add({ severity: 'success', summary: 'Updated', detail: 'Meeting updated successfully.' });
+          this.loadCustomerData();
+        },
+        error: () => {
+          this.isSavingEditMeeting = false;
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update meeting.' });
+        },
+      });
   }
 
   saveMeeting(): void {
@@ -925,12 +1023,14 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
       duration: v.duration || undefined,
       notes: v.notes || undefined,
       status: MeetingStatus.SCHEDULED,
+      customerId: this.customerId,
     };
     this.meetingsService.create(dto).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.isSavingMeeting = false;
         this.showMeetingDialog = false;
         this.messageService.add({ severity: 'success', summary: 'Meeting Saved', detail: `Meeting "${dto.title}" scheduled.` });
+        this.loadCustomerData();
       },
       error: () => {
         this.isSavingMeeting = false;

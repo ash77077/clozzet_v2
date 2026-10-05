@@ -271,7 +271,7 @@ export class RevenueComponent implements OnInit, OnDestroy {
     const year = this.selectedMonth.getFullYear();
 
     this.filteredOrders = this.allFinancialOrders.filter(order => {
-      const date = new Date(order.createdAt as string);
+      const date = new Date((order.startDate || order.createdAt) as string);
       const monthMatch = date.getMonth() === month && date.getFullYear() === year;
 
       const managerMatch = !this.selectedManager ||
