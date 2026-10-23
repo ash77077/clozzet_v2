@@ -38,7 +38,7 @@ export interface KanbanColumn {
 }
 
 export interface ActivityItem {
-  type: 'comment' | 'status_change' | 'created' | 'file_upload' | 'payment_change' | 'changes';
+  type: 'comment' | 'status_change' | 'created' | 'file_upload' | 'payment_change' | 'changes' | 'print';
   date: Date | string;
   author: string;
   content: string;
@@ -1534,7 +1534,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     if (!win) return;
 
     win.document.write(`<!DOCTYPE html>
-<html>
 <head>
   <meta charset="UTF-8">
   <title>Order ${this.selectedOrder.orderNumber}</title>
@@ -1557,6 +1556,17 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       win.print();
       win.close();
     };
+
+    // Log print action to activity feed
+    const id = (this.selectedOrder as any)._id || this.selectedOrder.id;
+    const author = this.currentUser
+      ? `${this.currentUser.firstName} ${this.currentUser.lastName}`.trim()
+      : 'System';
+    if (id) {
+      this.productDetailsService.addManufacturingNotes(id, `PRINT: Order printed`, author)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({ next: () => this.loadOrderActivityForCurrent() });
+    }
   }
 
   loadOrderActivity(order: ProductDetails): void {
@@ -1577,12 +1587,14 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       const isFile    = note.content?.startsWith('Attached files:');
       const isPayment = note.content?.startsWith('PAYMENT:');
       const isChanges = note.content?.startsWith('CHANGES:');
+      const isPrint   = note.content?.startsWith('PRINT:');
       let content = note.content;
       if (isStatus)  content = content.replace('STATUS:', '').trim();
       if (isPayment) content = content.replace('PAYMENT:', '').trim();
       if (isChanges) content = this.formatChangesNote(content.replace('CHANGES:', '').trim());
+      if (isPrint)   content = content.replace('PRINT:', '').trim();
       this.orderActivity.push({
-        type: isStatus ? 'status_change' : isFile ? 'file_upload' : isPayment ? 'payment_change' : isChanges ? 'changes' : 'comment',
+        type: isStatus ? 'status_change' : isFile ? 'file_upload' : isPayment ? 'payment_change' : isChanges ? 'changes' : isPrint ? 'print' : 'comment',
         date: note.date,
         author: note.author,
         content,
@@ -2324,6 +2336,14 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     try { return new Date(date as string).toISOString().split('T')[0]; } catch { return ''; }
   }
 
+  formatFullDate(date: Date | string): string {
+    if (!date) return '';
+    return new Date(date as string).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
   formatActivityDate(date: Date | string): string {
     if (!date) return '';
     const d = new Date(date as string);
@@ -2335,7 +2355,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     if (mins < 60) return `${mins}m ago`;
     if (hrs < 24) return `${hrs}h ago`;
     if (days < 7) return `${days}d ago`;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
   isDeadlineUrgent(deadline: string): boolean {
@@ -2508,6 +2528,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     } else {
       // Moving to a different column
       const order = event.previousContainer.data[event.previousIndex];
+      const oldStatus = order.status;
 
       // Move in the kanban arrays immediately so the UI stays in place
       transferArrayItem(
@@ -2522,12 +2543,24 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
       // Persist to backend
       if (order && order._id) {
+        const oldLabel = this.getStatusLabel(oldStatus || '');
+        const newLabel = this.getStatusLabel(targetStatus);
+        const author = this.currentUser
+          ? `${this.currentUser.firstName} ${this.currentUser.lastName}`.trim()
+          : 'System';
+
         this.productDetailsService.updateStatus(order._id, targetStatus).subscribe({
           next: () => {
+            this.productDetailsService.addManufacturingNotes(
+              order._id!,
+              `STATUS: ${oldLabel} → ${newLabel}`,
+              author
+            ).pipe(takeUntil(this.destroy$)).subscribe();
+
             this.messageService.add({
               severity: 'success',
               summary: 'Status Updated',
-              detail: `Order ${order.orderNumber} moved to ${this.getStatusLabel(targetStatus)}`,
+              detail: `Order ${order.orderNumber} moved to ${newLabel}`,
               life: 3000
             });
             // No reload — position is already correct in the UI

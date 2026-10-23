@@ -377,7 +377,7 @@ export class OrderBlankComponent implements OnInit {
 
     const apiUrl = environment.apiUrl || 'http://localhost:3000';
 
-    this.http.post(`${apiUrl}/api/orders/send-telegram`, orderData)
+    this.http.post(`${apiUrl}/orders/send-telegram`, orderData)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response: any) => {

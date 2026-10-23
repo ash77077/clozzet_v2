@@ -864,7 +864,8 @@
                   'pi-comment': item.type === 'comment',
                   'pi-paperclip': item.type === 'file_upload',
                   'pi-wallet': item.type === 'payment_change',
-                  'pi-pencil': item.type === 'changes'
+                  'pi-pencil': item.type === 'changes',
+                  'pi-print': item.type === 'print'
                 }"></i>
               </div>
 
@@ -882,10 +883,11 @@
                       item.type === 'comment'        ? 'commented'        :
                       item.type === 'file_upload'    ? 'uploaded files'   :
                       item.type === 'payment_change' ? 'updated payment'  :
-                      item.type === 'changes'        ? 'edited order'     : ''
+                      item.type === 'changes'        ? 'edited order'     :
+                      item.type === 'print'          ? 'printed order'    : ''
                     }}</span>
                   </div>
-                  <span class="act-date">{{ formatActivityDate(item.date) }}</span>
+                  <span class="act-date" [pTooltip]="formatFullDate(item.date)" tooltipPosition="top">{{ formatActivityDate(item.date) }}</span>
                 </div>
 
                 <div class="act-body">
@@ -914,6 +916,11 @@
                   <!-- Order changes (size / price / field diffs) -->
                   <div class="act-changes-list" *ngIf="item.type === 'changes'"
                        [innerHTML]="item.content"></div>
+
+                  <!-- Print -->
+                  <div class="act-text" *ngIf="item.type === 'print'">
+                    {{ item.content }}
+                  </div>
                 </div>
               </div>
             </div>
