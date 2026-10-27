@@ -4554,3 +4554,315 @@
     }
   }
 }
+
+// CRM company search in order form
+.crm-company-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.1rem 0;
+
+  .crm-company-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-color);
+  }
+
+  .crm-company-contact {
+    font-size: 0.78rem;
+    color: var(--text-color-secondary);
+  }
+}
+
+.crm-no-match-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-color-secondary);
+  flex-wrap: wrap;
+
+  i { color: var(--orange-500); flex-shrink: 0; }
+
+  .btn-create-customer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.28rem 0.75rem;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      background: var(--primary-600, #ea580c);
+      box-shadow: 0 2px 8px rgba(249,115,22,0.3);
+    }
+
+    i { color: #fff; }
+  }
+}
+
+// ─── Create New Customer Dialog (from order form) ────────────────────────────
+:host ::ng-deep .create-customer-from-order-modal {
+
+  // ── Form grid: 2-column layout, full-width spans the whole row ──
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 1.25rem;
+    margin-bottom: 0;
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+
+      .field-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-color-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+
+        &.required::after {
+          content: ' *';
+          color: var(--red-500, #ef4444);
+        }
+      }
+
+      input.full-width,
+      textarea.full-width {
+        width: 100%;
+      }
+
+      .field-error {
+        font-size: 0.75rem;
+        color: var(--red-500, #ef4444);
+        margin-top: 0.1rem;
+      }
+    }
+  }
+
+  // ── Section divider used between logical groups ──
+  .section-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0.25rem 0 0.1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--surface-200);
+    }
+
+    i {
+      color: var(--primary-color);
+      font-size: 0.8rem;
+    }
+  }
+
+  // ── Contact Persons section ──
+  .contacts-section {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .contacts-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-color-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+
+      .required-star {
+        color: var(--red-500, #ef4444);
+        margin-left: 0.15rem;
+      }
+    }
+
+    // Single contact card
+    .contact-card {
+      background: var(--surface-50);
+      border: 1px solid var(--surface-200);
+      border-radius: 10px;
+      padding: 1rem 1rem 0.75rem;
+      position: relative;
+
+      .contact-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+
+        .contact-card-title {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: var(--text-color-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+
+          i { color: var(--primary-color); }
+        }
+
+        .remove-contact-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          padding: 0.2rem 0.55rem;
+          background: none;
+          border: 1px solid var(--red-200, #fecaca);
+          color: var(--red-500, #ef4444);
+          border-radius: 5px;
+          font-size: 0.75rem;
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s;
+
+          &:hover {
+            background: var(--red-50, #fef2f2);
+            border-color: var(--red-400, #f87171);
+          }
+        }
+      }
+
+      // 2×2 fields grid inside each contact card
+      .contact-fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem 1rem;
+
+        .mini-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+
+          label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-color-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+
+            .req { color: var(--red-500, #ef4444); margin-left: 0.1rem; }
+          }
+
+          input {
+            width: 100%;
+            font-size: 0.875rem;
+          }
+        }
+      }
+    }
+
+    // Add contact button
+    .btn-add-contact {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 1rem;
+      background: none;
+      border: 1.5px dashed var(--primary-color);
+      color: var(--primary-color);
+      border-radius: 7px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: background 0.15s;
+
+      &:hover {
+        background: var(--primary-50, #fff7ed);
+      }
+    }
+  }
+
+  // ── Dialog footer ──
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--surface-200);
+
+    .btn-cancel {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 1.1rem;
+      background: none;
+      border: 1px solid var(--surface-300);
+      color: var(--text-color-secondary);
+      border-radius: 7px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+
+      &:hover:not(:disabled) {
+        background: var(--surface-100);
+        border-color: var(--surface-400);
+      }
+
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+    }
+
+    .btn-create {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.5rem 1.25rem;
+      background: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+
+      &:hover:not(:disabled) {
+        background: var(--primary-600, #ea580c);
+        box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+        transform: translateY(-1px);
+      }
+
+      &:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    }
+  }
+
+  @media (max-width: 560px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+
+      .form-field.full-width { grid-column: 1; }
+    }
+
+    .contacts-section .contact-card .contact-fields-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

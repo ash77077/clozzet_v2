@@ -451,11 +451,17 @@ export class CrmDashboardComponent implements OnInit, OnDestroy {
     // Save contacts array to backend
     formValue.contacts = validContacts;
 
-    // Convert Date object to ISO string for nextFollowUpAt
-    if (formValue.nextFollowUpAt instanceof Date && !isNaN(formValue.nextFollowUpAt.getTime())) {
-      formValue.nextFollowUpAt = formValue.nextFollowUpAt.toISOString();
+    // Convert nextFollowUpAt to ISO string regardless of whether it's a Date or string
+    if (formValue.nextFollowUpAt) {
+      const d = formValue.nextFollowUpAt instanceof Date
+        ? formValue.nextFollowUpAt
+        : new Date(formValue.nextFollowUpAt);
+      if (!isNaN(d.getTime())) {
+        formValue.nextFollowUpAt = d.toISOString();
+      } else {
+        delete formValue.nextFollowUpAt;
+      }
     } else {
-      // Remove the field entirely if it's not a valid date
       delete formValue.nextFollowUpAt;
     }
 

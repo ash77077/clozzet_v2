@@ -54,6 +54,7 @@ export interface CreateCustomerDto {
   contactPerson: string;
   phone?: string;
   email?: string;
+  contacts?: ContactPerson[];
   status?: CustomerStatus;
   address?: string;
   website?: string;
