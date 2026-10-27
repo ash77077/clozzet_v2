@@ -195,12 +195,6 @@ export class NavbarComponent implements OnInit {
     return role === 'admin' || role === 'manager';
   }
 
-  openWeddingGuests() {
-    this.closeMobileMenu();
-    this.showUserMenu = false;
-    this.router.navigate(['/wedding-guests']);
-  }
-
   openEmployees() {
     this.closeMobileMenu();
     this.showUserMenu = false;

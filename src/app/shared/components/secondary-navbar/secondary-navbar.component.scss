@@ -216,6 +216,32 @@
     padding: 0.75rem 1.25rem 1.25rem;
     flex-shrink: 0;
     border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .drawer-theme-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.72rem 1rem;
+      border: none;
+      border-radius: 0.6rem;
+      background: rgba(52, 152, 219, 0.12);
+      color: #60a5fa;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      i { font-size: 1rem; }
+
+      &:hover {
+        background: rgba(52, 152, 219, 0.22);
+        color: #93c5fd;
+      }
+    }
 
     .drawer-logout-btn {
       width: 100%;
@@ -404,10 +430,14 @@
           }
           
           &.active {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-            
+            background: linear-gradient(135deg, rgba(52,152,219,0.22), rgba(41,128,185,0.16));
+            color: #fff;
+            border-left: 3px solid #3498db;
+            padding-left: calc(1rem - 3px);
+            box-shadow: none;
+
+            i { color: #3498db; }
+
             .badge {
               background: rgba(255, 255, 255, 0.9);
               color: #3498db;

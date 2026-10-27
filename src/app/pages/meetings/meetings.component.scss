@@ -41,8 +41,8 @@
     align-items: center;
     gap: 0.45rem;
     padding: 0.6rem 1.2rem;
-    background: var(--primary-color, #f97316);
-    color: #fff;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
     border: none;
     border-radius: 8px;
     font-size: 0.875rem;
@@ -51,7 +51,7 @@
     white-space: nowrap;
     transition: background 0.2s;
 
-    &:hover { background: var(--primary-600, #ea580c); }
+    &:hover { background: var(--btn-primary-bg-hover); }
 
     @media (max-width: 600px) {
       width: 100%;
@@ -116,8 +116,8 @@
       flex: 1;
       min-width: 120px;
 
-      &.upcoming { border-left: 3px solid #3b82f6; }
-      &.done { border-left: 3px solid #10b981; }
+      &.upcoming { border-left: 3px solid var(--color-info); }
+      &.done { border-left: 3px solid var(--color-success); }
 
       .stat-icon { font-size: 1.4rem; color: var(--primary-color); }
       .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-color); line-height: 1; }
@@ -150,13 +150,13 @@
     }
 
     .overdue-badge {
-      background: #fef2f2;
-      color: #ef4444;
+      background: var(--color-danger-bg);
+      color: var(--color-danger);
       font-size: 0.68rem;
       font-weight: 700;
       padding: 0.1rem 0.45rem;
       border-radius: 4px;
-      border: 1px solid #fca5a5;
+      border: 1px solid var(--color-danger-border);
     }
 
     .contact-cell {
@@ -175,8 +175,8 @@
     .text-muted { color: var(--text-color-secondary); }
 
     ::ng-deep {
-      tr.row-overdue td { background: #fff7f7 !important; }
-      tr.row-upcoming td { background: #f0f9ff !important; }
+      tr.row-overdue td { background: var(--color-danger-bg) !important; }
+      tr.row-upcoming td { background: var(--color-info-bg) !important; }
     }
   }
 
@@ -210,8 +210,8 @@
     border-radius: 12px;
     overflow: hidden;
 
-    &--overdue { border-left: 3px solid #ef4444; background: #fff7f7; }
-    &--upcoming { border-left: 3px solid #3b82f6; background: #f0f9ff; }
+    &--overdue { border-left: 3px solid var(--color-danger); background: var(--color-danger-bg); }
+    &--upcoming { border-left: 3px solid var(--color-info); background: var(--color-info-bg); }
 
     &__header {
       display: flex;
@@ -293,7 +293,7 @@
           text-transform: uppercase;
           letter-spacing: 0.04em;
 
-          &.required::after { content: ' *'; color: #ef4444; }
+          &.required::after { content: ' *'; color: var(--color-danger); }
         }
       }
     }

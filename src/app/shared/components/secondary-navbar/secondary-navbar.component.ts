@@ -12,6 +12,7 @@ import { TranslationService, SupportedLang } from '../../../services/translation
 import { UserRole } from '../../../models/dashboard.models';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { AiService } from '../../../services/ai.service';
+import { ThemeService } from '../../../services/theme.service';
 
 interface OrderStats {
   pending: number;
@@ -68,7 +69,8 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     private router: Router,
     private translate: TranslateService,
     private translationService: TranslationService,
-    private aiService: AiService
+    private aiService: AiService,
+    public themeService: ThemeService
   ) {
     this.currentLanguage = this.translationService.getCurrentLanguage();
   }
@@ -191,6 +193,10 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
 
   onAiToggle(enabled: boolean): void {
     this.aiService.toggleAI(enabled);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
 }
