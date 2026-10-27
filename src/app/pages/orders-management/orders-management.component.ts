@@ -359,6 +359,36 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   textileTypes: string[] = [...DEFAULT_TEXTILE_TYPES];
   designMethods = DESIGN_METHODS;
 
+  readonly EXPENSE_UNITS = [
+    { label: 'pcs',  value: 'pcs'  },
+    { label: 'm',    value: 'm'    },
+    { label: 'kg',   value: 'kg'   },
+    { label: 'roll', value: 'roll' },
+    { label: 'box',  value: 'box'  },
+  ];
+
+  expenseNameSuggestions: string[] = [];
+
+  filterExpenseNames(query: string): void {
+    const q = (query || '').toLowerCase().trim();
+    const all = this.collectKnownExpenseNames();
+    this.expenseNameSuggestions = q
+      ? all.filter(n => n.toLowerCase().includes(q))
+      : all.slice(0, 10);
+  }
+
+  private collectKnownExpenseNames(): string[] {
+    const set = new Set<string>();
+    for (const order of this.allOrders) {
+      for (const product of order.products ?? []) {
+        for (const exp of (product as any).expenses ?? []) {
+          if (exp.name?.trim()) set.add(exp.name.trim());
+        }
+      }
+    }
+    return Array.from(set).sort();
+  }
+
   // State for inline "add new type" inputs per product
   showAddClothType: boolean[] = [false];
   newClothTypeLabel: string[] = [''];
@@ -610,6 +640,37 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   }
 
   // Create a product group with all necessary fields
+  createExpenseRow(): FormGroup {
+    return this.fb.group({
+      name:         [''],
+      quantity:     [null],
+      unit:         [''],
+      pricePerUnit: [null],
+    });
+  }
+
+  getExpenses(productIndex: number): FormArray {
+    return this.products.at(productIndex).get('expenses') as FormArray;
+  }
+
+  addExpense(productIndex: number): void {
+    this.getExpenses(productIndex).push(this.createExpenseRow());
+  }
+
+  removeExpense(productIndex: number, expenseIndex: number): void {
+    this.getExpenses(productIndex).removeAt(expenseIndex);
+  }
+
+  calcExpenseTotal(row: AbstractControl): number {
+    const qty = +(row.get('quantity')?.value) || 0;
+    const price = +(row.get('pricePerUnit')?.value) || 0;
+    return qty * price;
+  }
+
+  calcProductExpensesTotal(productIndex: number): number {
+    return this.getExpenses(productIndex).controls.reduce((sum, row) => sum + this.calcExpenseTotal(row), 0);
+  }
+
   createProductGroup(): FormGroup {
     return this.fb.group({
       clothType:           ['', Validators.required],
@@ -624,6 +685,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       sellingPricePerUnit:          [null],
       adultSellingPricePerUnit:     [null],
       childrenSellingPricePerUnit:  [null],
+      expenses:            this.fb.array([this.createExpenseRow()]),
       sizes:               this.fb.group({
         xs:     this.fb.group({ men: [0], women: [0], uni: [0] }),
         s:      this.fb.group({ men: [0], women: [0], uni: [0] }),
@@ -1969,6 +2031,19 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
                 uni:   product.sizes[size].uni || 0
               });
             }
+          });
+        }
+
+        // Restore expenses
+        if (product.expenses?.length) {
+          const expensesArray = productGroup.get('expenses') as FormArray;
+          product.expenses.forEach((exp: any) => {
+            expensesArray.push(this.fb.group({
+              name:         [exp.name || ''],
+              quantity:     [exp.quantity ?? null],
+              unit:         [exp.unit || ''],
+              pricePerUnit: [exp.pricePerUnit ?? null],
+            }));
           });
         }
 

@@ -131,11 +131,6 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'manufacturing',
-    loadComponent: () => import('./pages/manufacturing/manufacturing.component').then(m => m.ManufacturingComponent),
-    canActivate: [AdminGuard]
-  },
-  {
     path: 'product-management',
     loadComponent: () => import('./dashboard/pages/product-management/product-management.component').then(m => m.ProductManagementComponent),
     canActivate: [AdminGuard]
@@ -169,23 +164,6 @@ export const routes: Routes = [
     path: 'meetings',
     loadComponent: () => import('./pages/meetings/meetings.component').then(m => m.MeetingsComponent),
     canActivate: [ManagerGuard]
-  },
-  {
-    path: 'order-blank',
-    loadComponent: () => import('./components/order-blank/order-blank.component').then(m => m.OrderBlankComponent)
-  },
-  {
-    path: 'order-blank/:id',
-    loadComponent: () => import('./components/order-blank/order-blank.component').then(m => m.OrderBlankComponent)
-  },
-  {
-    path: 'financial-production',
-    loadChildren: () => import('./financial-production/financial-production-routing.module').then(m => m.FinancialProductionRoutingModule)
-  },
-  {
-    path: 'cost-configurator',
-    loadComponent: () => import('./pages/cost-configurator/cost-configurator.component').then(m => m.CostConfiguratorComponent),
-    canActivate: [AdminGuard]
   },
   {
     path: 'expo-sales',

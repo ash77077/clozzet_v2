@@ -211,6 +211,12 @@ export interface ProductDetails {
     sellingPricePerUnit?: number;
     adultSellingPricePerUnit?: number;
     childrenSellingPricePerUnit?: number;
+    expenses?: Array<{
+      name: string;
+      quantity: number;
+      unit: string;
+      pricePerUnit: number;
+    }>;
     sizes?: {
       xs?: { men?: number; women?: number; uni?: number };
       s?: { men?: number; women?: number; uni?: number };

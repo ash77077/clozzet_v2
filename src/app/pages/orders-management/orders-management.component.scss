@@ -1766,6 +1766,222 @@
   }
 
 
+  // ── Expenses section ────────────────────────────────────────────────────────
+  .expenses-section {
+    margin-top: 1.25rem;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1.5px solid #86efac;
+    border-radius: 10px;
+    overflow: hidden;
+
+    .expenses-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      border-bottom: 1px solid #86efac;
+
+      .expenses-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #15803d;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+
+        i { color: #16a34a; }
+
+        .expenses-total-badge {
+          background: #16a34a;
+          color: #fff;
+          border-radius: 20px;
+          padding: 0.1rem 0.55rem;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0;
+          text-transform: none;
+        }
+      }
+
+      .btn-add-expense {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.85rem;
+        background: #16a34a;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+
+        &:hover { background: #15803d; }
+        i { font-size: 0.72rem; }
+      }
+    }
+
+    .expenses-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: #4ade80;
+      font-style: italic;
+
+      i { font-size: 1rem; opacity: 0.6; }
+    }
+
+    .expenses-table {
+      padding: 0.5rem 0.75rem 0.75rem;
+    }
+
+    .expense-row {
+      display: grid;
+      grid-template-columns: 2fr 80px 100px 130px 110px 36px;
+      gap: 0.4rem;
+      align-items: center;
+      margin-bottom: 0.4rem;
+
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr 70px 70px 110px 90px 30px;
+        gap: 0.3rem;
+      }
+    }
+
+    .expense-header-row {
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #86efac;
+
+      .exp-col {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #15803d;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+    }
+
+    .expense-data-row {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid #bbf7d0;
+      border-radius: 7px;
+      padding: 0.35rem 0.5rem;
+
+      &:hover { background: rgba(255, 255, 255, 0.9); }
+
+      input {
+        width: 100%;
+        height: 34px;
+        padding: 0 0.6rem;
+        border: 1px solid #a7f3d0;
+        border-radius: 5px;
+        background: #fff;
+        font-size: 0.82rem;
+        color: #14532d;
+        outline: none;
+        transition: border-color 0.15s;
+
+        &:focus { border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.12); }
+        &::placeholder { color: #86efac; }
+      }
+
+      .exp-number-input {
+        text-align: right;
+      }
+
+      // PrimeNG autocomplete inside expense row
+      ::ng-deep .exp-autocomplete {
+        width: 100%;
+
+        .p-autocomplete-input {
+          width: 100%;
+          height: 34px;
+          padding: 0 0.6rem;
+          border: 1px solid #a7f3d0;
+          border-radius: 5px;
+          background: #fff;
+          font-size: 0.82rem;
+          color: #14532d;
+
+          &:focus { border-color: #16a34a; box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.12); outline: none; }
+          &::placeholder { color: #86efac; }
+        }
+      }
+
+      // PrimeNG select (unit dropdown) inside expense row
+      ::ng-deep .exp-unit-select {
+        width: 100%;
+        height: 34px;
+        border: 1px solid #a7f3d0 !important;
+        border-radius: 5px !important;
+        background: #fff !important;
+        font-size: 0.82rem;
+
+        &.p-focus { border-color: #16a34a !important; box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.12) !important; }
+
+        .p-select-label {
+          font-size: 0.82rem;
+          color: #14532d;
+          padding-top: 0;
+          padding-bottom: 0;
+          line-height: 32px;
+        }
+        .p-select-dropdown { color: #16a34a; }
+      }
+    }
+
+    .exp-total-value {
+      font-size: 0.82rem;
+      color: #86efac;
+      font-weight: 600;
+      text-align: right;
+      display: block;
+
+      &.exp-total-nonzero { color: #16a34a; }
+    }
+
+    .expense-summary-row {
+      margin-top: 0.35rem;
+      padding-top: 0.5rem;
+      border-top: 2px solid #86efac;
+
+      .exp-col { font-size: 0.78rem; font-weight: 700; color: #15803d; }
+
+      .exp-grand-total {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #15803d;
+        text-align: right;
+      }
+    }
+
+    .btn-remove-expense {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #fca5a5;
+      border-radius: 5px;
+      background: none;
+      color: #f87171;
+      cursor: pointer;
+      font-size: 0.72rem;
+      transition: background 0.15s, color 0.15s;
+
+      &:hover { background: #fee2e2; color: #ef4444; }
+    }
+  }
+
   .btn-add-product {
     display: inline-flex;
     align-items: center;

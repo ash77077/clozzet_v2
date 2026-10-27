@@ -49,14 +49,12 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
   userOrderStats: UserOrderStats | null = null;
   showUserMenu = false;
   showOtherSection = false;
+  showDrawer = false;
 
   UserRole = UserRole;
 
   get aiEnabled$() { return this.aiService.aiEnabled$; }
   aiEnabledValue = false;
-
-  // Section toggle (Sales vs Manufacturing)
-  currentSection: 'sales' | 'manufacturing' = 'sales';
 
   // Language properties
   currentLanguage: string = 'en';
@@ -73,11 +71,6 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     private aiService: AiService
   ) {
     this.currentLanguage = this.translationService.getCurrentLanguage();
-
-    const savedSection = localStorage.getItem('selectedSection') as 'sales' | 'manufacturing';
-    if (savedSection) {
-      this.currentSection = savedSection;
-    }
   }
 
   ngOnInit(): void {
@@ -157,9 +150,26 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeDrawer();
+    this.showUserMenu = false;
+  }
+
   toggleUserMenu(event: Event): void {
     event.stopPropagation();
     this.showUserMenu = !this.showUserMenu;
+  }
+
+  openDrawer(event: Event): void {
+    event.stopPropagation();
+    this.showDrawer = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeDrawer(): void {
+    this.showDrawer = false;
+    document.body.style.overflow = '';
   }
 
   toggleOtherSection(event: Event): void {
@@ -183,23 +193,4 @@ export class SecondaryNavbarComponent implements OnInit, OnDestroy {
     this.aiService.toggleAI(enabled);
   }
 
-  switchSection(section: 'sales' | 'manufacturing'): void {
-    this.currentSection = section;
-    localStorage.setItem('selectedSection', section);
-
-    // Navigate to appropriate default page for the section
-    if (section === 'sales') {
-      this.router.navigate(['/dashboard']);
-    } else if (section === 'manufacturing') {
-      this.router.navigate(['/financial-production']);
-    }
-  }
-
-  isSalesSection(): boolean {
-    return this.currentSection === 'sales';
-  }
-
-  isManufacturingSection(): boolean {
-    return this.currentSection === 'manufacturing';
-  }
 }
