@@ -17,11 +17,14 @@ import { AccordionModule } from 'primeng/accordion';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitch } from 'primeng/toggleswitch';
 import { DatePicker } from 'primeng/datepicker';
+import { AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Tooltip } from 'primeng/tooltip';
 import { AuthService, User } from '../../services/auth.service';
 import { ProductDetailsService } from '../../services/product-details.service';
 import { UsersService, User as ListUser } from '../../services/users.service';
+import { CustomersService } from '../../services/customers.service';
+import { Customer, CustomerStatus, CreateCustomerDto } from '../../models/customer.model';
 import { OrderStatus, UserRole, ProductDetails } from '../../models/dashboard.models';
 import { PriorityBadgeComponent } from '../../shared/components/priority-badge/priority-badge.component';
 import { OrderPrintTemplateComponent } from '../../shared/components/order-print-template/order-print-template.component';
@@ -89,6 +92,7 @@ const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     DatePicker,
     PriorityBadgeComponent,
     OrderPrintTemplateComponent,
+    AutoCompleteModule,
     Tooltip,
   ],
   providers: [ConfirmationService, MessageService],
@@ -329,6 +333,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   editExpectedRevenue: number | null = null;
   isSavingPayment = false;
 
+  // ─── CRM customer search ──────────────────────────────────────────────────
+  crmCustomers: Customer[] = [];
+  crmCompanySuggestions: Customer[] = [];
+  showCreateCustomerDialog = false;
+  isCreatingCustomer = false;
+  createCustomerForm!: FormGroup;
+  createCustomerContacts!: FormArray;
+  selectedCrmCustomer: Customer | null = null;
+  crmContactOptions: { label: string; value: string }[] = [];
+
   // ─── Image preview modal ───────────────────────────────────────────────────
   showImagePreview = false;
   previewImageUrl = '';
@@ -393,6 +407,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private productDetailsService: ProductDetailsService,
     private usersService: UsersService,
+    private customersService: CustomersService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private notificationService: NotificationService,
@@ -406,7 +421,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     });
     this.loadOrders();
     this.initForm();
+    this.initCreateCustomerForm();
     this.loadUsers();
+    this.loadCrmCustomers();
     this.setupRealtimeActivityListener();
     this.handleNavigationFromNotification();
     this.handleCreateOrderFromCustomer();
@@ -1022,6 +1039,165 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.sizeCategory = ['adult'];
   }
 
+  // ─── CRM customer search ──────────────────────────────────────────────────
+
+  loadCrmCustomers(): void {
+    this.customersService.getAll().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (customers) => { this.crmCustomers = customers; },
+      error: () => {}
+    });
+  }
+
+  filterCrmCompanies(event: { query: string }): void {
+    const q = (event.query || '').toLowerCase();
+    this.crmCompanySuggestions = this.crmCustomers.filter(c =>
+      c.companyName.toLowerCase().includes(q)
+    );
+  }
+
+  onCrmCompanySelected(event: AutoCompleteSelectEvent): void {
+    const customer = event.value as Customer;
+    this.selectedCrmCustomer = customer;
+
+    // Build contact options from the contacts array; fall back to legacy contactPerson
+    const contacts = customer.contacts?.filter(c => c.contactPerson?.trim()) ?? [];
+    if (contacts.length > 0) {
+      this.crmContactOptions = contacts.map(c => ({
+        label: c.position ? `${c.contactPerson} (${c.position})` : c.contactPerson,
+        value: c.contactPerson,
+      }));
+    } else if (customer.contactPerson?.trim()) {
+      this.crmContactOptions = [{ label: customer.contactPerson, value: customer.contactPerson }];
+    } else {
+      this.crmContactOptions = [];
+    }
+
+    const autoFillName = this.crmContactOptions[0]?.value ?? '';
+    this.addOrderForm.patchValue({
+      companyName: customer.companyName,
+      clientName: autoFillName,
+    });
+  }
+
+  onCrmCompanyCleared(): void {
+    this.selectedCrmCustomer = null;
+    this.crmContactOptions = [];
+    this.addOrderForm.patchValue({ companyName: '', clientName: '' });
+  }
+
+  onCrmCompanyInput(): void {
+    // User typed freely — no longer a confirmed CRM match
+    if (this.selectedCrmCustomer) {
+      this.selectedCrmCustomer = null;
+      this.crmContactOptions = [];
+      this.addOrderForm.patchValue({ clientName: '' });
+    }
+  }
+
+  get crmSearchHasNoMatch(): boolean {
+    const raw = this.addOrderForm.get('companyName')?.value;
+    // raw can be a Customer object (just selected) or a string (typing)
+    const typed = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+    if (!typed) return false;
+    return !this.crmCustomers.some(c => c.companyName.toLowerCase().includes(typed));
+  }
+
+  // ─── Create customer inline ───────────────────────────────────────────────
+
+  initCreateCustomerForm(): void {
+    this.createCustomerForm = this.fb.group({
+      companyName: ['', [Validators.required, Validators.minLength(2)]],
+      industry: ['', Validators.required],
+      contacts: this.fb.array([this.createCustomerContactGroup()]),
+      status: [CustomerStatus.LEAD, Validators.required],
+      address: [''],
+      website: [''],
+      notes: [''],
+      nextFollowUpAt: [null],
+    });
+    this.createCustomerContacts = this.createCustomerForm.get('contacts') as FormArray;
+  }
+
+  private createCustomerContactGroup(): FormGroup {
+    return this.fb.group({
+      contactPerson: [''],
+      position: [''],
+      phone: [''],
+      email: ['', Validators.email],
+      linkedinPage: [''],
+    });
+  }
+
+  get newCustomerContacts(): FormArray {
+    return this.createCustomerForm.get('contacts') as FormArray;
+  }
+
+  addNewCustomerContact(): void {
+    this.newCustomerContacts.push(this.createCustomerContactGroup());
+  }
+
+  removeNewCustomerContact(i: number): void {
+    if (this.newCustomerContacts.length > 1) this.newCustomerContacts.removeAt(i);
+  }
+
+  openCreateCustomerDialog(): void {
+    const typed = (this.addOrderForm.get('companyName')?.value || '').trim();
+    this.initCreateCustomerForm();
+    this.createCustomerForm.patchValue({ companyName: typed });
+    this.showCreateCustomerDialog = true;
+  }
+
+  submitCreateCustomer(): void {
+    if (this.createCustomerForm.invalid) {
+      this.createCustomerForm.markAllAsTouched();
+      return;
+    }
+    this.isCreatingCustomer = true;
+    const v = this.createCustomerForm.value;
+    const validContacts = (v.contacts || []).filter((c: any) => c.contactPerson?.trim());
+    if (validContacts.length === 0) {
+      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'At least one contact person is required' });
+      this.isCreatingCustomer = false;
+      return;
+    }
+    const primary = validContacts[0];
+    const dto: CreateCustomerDto = {
+      companyName: v.companyName,
+      industry: v.industry,
+      contactPerson: primary.contactPerson,
+      phone: primary.phone || undefined,
+      email: primary.email || undefined,
+      contacts: validContacts,
+      status: v.status,
+      address: v.address || undefined,
+      website: v.website || undefined,
+      notes: v.notes || undefined,
+      nextFollowUpAt: v.nextFollowUpAt ? new Date(v.nextFollowUpAt).toISOString() : undefined,
+    };
+    this.customersService.create(dto).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (created) => {
+        this.isCreatingCustomer = false;
+        this.showCreateCustomerDialog = false;
+        this.crmCustomers = [...this.crmCustomers, created];
+        this.selectedCrmCustomer = created;
+        const createdContacts = validContacts.filter((c: any) => c.contactPerson?.trim());
+        this.crmContactOptions = createdContacts.map((c: any) => ({
+          label: c.position ? `${c.contactPerson} (${c.position})` : c.contactPerson,
+          value: c.contactPerson,
+        }));
+        this.addOrderForm.patchValue({
+          companyName: created.companyName,
+          clientName: primary.contactPerson,
+        });
+        this.messageService.add({ severity: 'success', summary: 'Customer Created', detail: `${created.companyName} added to CRM` });
+      },
+      error: (err) => {
+        this.isCreatingCustomer = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Failed to create customer' });
+      }
+    });
+  }
+
   generateOrderNumber(): string {
     const date = new Date();
     const d = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`;
@@ -1058,7 +1234,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
   isCurrentStepValid(): boolean {
     switch (this.currentStep) {
-      case 1: return this.step1Fields.every(f => this.addOrderForm.get(f)?.valid);
+      case 1: return this.step1Fields.every(f => this.addOrderForm.get(f)?.valid) && (this.isEditMode || !!this.selectedCrmCustomer);
       case 2: {
         // Check if all products have required fields filled
         const productsArray = this.addOrderForm.get('products') as FormArray;
@@ -1099,7 +1275,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  private step1Fields = ['orderNumber','clientName','salesPerson','priority','status'];
+  private step1Fields = ['orderNumber','companyName','clientName','salesPerson','priority','status'];
   private step4Fields = ['deadline'];
 
   isStepDone(step: number): boolean { return step < this.currentStep; }

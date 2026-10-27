@@ -1091,13 +1091,57 @@
 
           <div class="form-field">
             <label class="field-label required">Company Name</label>
-            <input pInputText formControlName="companyName" placeholder="Company name" class="full-width" />
+            <p-autoComplete
+              formControlName="companyName"
+              [suggestions]="crmCompanySuggestions"
+              (completeMethod)="filterCrmCompanies($event)"
+              (onSelect)="onCrmCompanySelected($event)"
+              (onClear)="onCrmCompanyCleared()"
+              (onKeyUp)="onCrmCompanyInput()"
+              field="companyName"
+              [forceSelection]="false"
+              [dropdown]="false"
+              appendTo="body"
+              placeholder="Search or type company name…"
+              styleClass="full-width"
+              inputStyleClass="full-width">
+              <ng-template let-c pTemplate="item">
+                <div class="crm-company-option">
+                  <span class="crm-company-name">{{ c.companyName }}</span>
+                  <span class="crm-company-contact" *ngIf="c.contactPerson || c.contacts?.[0]?.contactPerson">
+                    {{ c.contacts?.[0]?.contactPerson || c.contactPerson }}
+                  </span>
+                </div>
+              </ng-template>
+            </p-autoComplete>
+            <div class="crm-no-match-hint" *ngIf="crmSearchHasNoMatch">
+              <i class="pi pi-info-circle"></i>
+              <span>No matching company in CRM.</span>
+              <button type="button" class="btn-create-customer" (click)="openCreateCustomerDialog()">
+                <i class="pi pi-user-plus"></i> Create Customer
+              </button>
+            </div>
             <span class="field-error" *ngIf="isFieldInvalid('companyName')">Company name is required</span>
           </div>
 
           <div class="form-field">
             <label class="field-label required">Client Name</label>
-            <input pInputText formControlName="clientName" placeholder="Client contact name" class="full-width" />
+            <p-select
+              *ngIf="crmContactOptions.length > 1"
+              formControlName="clientName"
+              [options]="crmContactOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select contact person"
+              styleClass="full-width"
+              appendTo="body">
+            </p-select>
+            <input
+              *ngIf="crmContactOptions.length <= 1"
+              pInputText
+              formControlName="clientName"
+              placeholder="Client contact name"
+              class="full-width" />
             <span class="field-error" *ngIf="isFieldInvalid('clientName')">Client name is required</span>
           </div>
 
@@ -1640,7 +1684,7 @@
           <button class="footer-btn btn-prev" (click)="prevStep()" [disabled]="currentStep === 1">
             <i class="pi pi-arrow-left"></i> Back
           </button>
-          <button class="footer-btn btn-next" (click)="nextStep()" *ngIf="currentStep < totalSteps">
+          <button class="footer-btn btn-next" (click)="nextStep()" *ngIf="currentStep < totalSteps" [disabled]="!isCurrentStepValid()">
             Next <i class="pi pi-arrow-right"></i>
           </button>
           <button class="footer-btn btn-submit" (click)="isEditMode ? saveEdit() : submitOrder()" *ngIf="currentStep === totalSteps" [disabled]="isSaving || isEditSaving">
@@ -1649,6 +1693,114 @@
         </div>
       </div>
     </ng-template>
+  </p-dialog>
+
+  <!-- ════════ Create Customer Dialog (from order form) ════════ -->
+  <p-dialog
+    header="Create New Customer"
+    [(visible)]="showCreateCustomerDialog"
+    [modal]="true"
+    [style]="{width: '600px', maxWidth: '96vw'}"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="create-customer-from-order-modal">
+
+    <form [formGroup]="createCustomerForm" (ngSubmit)="submitCreateCustomer()" *ngIf="createCustomerForm">
+
+      <!-- ── Company Info ── -->
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="field-label required">Company Name</label>
+          <input pInputText formControlName="companyName" placeholder="Company name" class="full-width" />
+          <span class="field-error" *ngIf="createCustomerForm.get('companyName')?.invalid && createCustomerForm.get('companyName')?.touched">
+            Company name is required
+          </span>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label required">Industry</label>
+          <input pInputText formControlName="industry" placeholder="e.g. Technology, Retail…" class="full-width" />
+          <span class="field-error" *ngIf="createCustomerForm.get('industry')?.invalid && createCustomerForm.get('industry')?.touched">
+            Industry is required
+          </span>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Status</label>
+          <p-select formControlName="status"
+            [options]="[{label:'Lead',value:'Lead'},{label:'Active',value:'Active'},{label:'Inactive',value:'Inactive'}]"
+            optionLabel="label" optionValue="value" styleClass="full-width" appendTo="body">
+          </p-select>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Website</label>
+          <input pInputText formControlName="website" placeholder="https://example.com" class="full-width" />
+        </div>
+
+        <div class="form-field full-width">
+          <label class="field-label">Notes</label>
+          <textarea pTextarea formControlName="notes" rows="2" placeholder="Any additional notes…" class="full-width"></textarea>
+        </div>
+      </div>
+
+      <!-- ── Contact Persons ── -->
+      <div class="contacts-section" formArrayName="contacts">
+        <span class="contacts-label">
+          <i class="pi pi-users"></i> Contact Persons <span class="required-star">*</span>
+        </span>
+
+        <div *ngFor="let contact of newCustomerContacts.controls; let i = index"
+             [formGroupName]="i"
+             class="contact-card">
+
+          <div class="contact-card-header">
+            <span class="contact-card-title">
+              <i class="pi pi-user"></i> Contact {{ i + 1 }}
+            </span>
+            <button *ngIf="newCustomerContacts.length > 1"
+                    type="button"
+                    class="remove-contact-btn"
+                    (click)="removeNewCustomerContact(i)">
+              <i class="pi pi-times"></i> Remove
+            </button>
+          </div>
+
+          <div class="contact-fields-grid">
+            <div class="mini-field">
+              <label>Name <span class="req">*</span></label>
+              <input pInputText formControlName="contactPerson" placeholder="Full name" />
+            </div>
+            <div class="mini-field">
+              <label>Position</label>
+              <input pInputText formControlName="position" placeholder="Job title" />
+            </div>
+            <div class="mini-field">
+              <label>Phone</label>
+              <input pInputText formControlName="phone" placeholder="+1 234 567 890" />
+            </div>
+            <div class="mini-field">
+              <label>Email</label>
+              <input pInputText type="email" formControlName="email" placeholder="email@example.com" />
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-add-contact" (click)="addNewCustomerContact()">
+          <i class="pi pi-plus"></i> Add Another Contact
+        </button>
+      </div>
+
+      <!-- ── Footer ── -->
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="showCreateCustomerDialog = false" [disabled]="isCreatingCustomer">
+          <i class="pi pi-times"></i> Cancel
+        </button>
+        <button type="submit" class="btn-create" [disabled]="isCreatingCustomer">
+          <i class="pi pi-check"></i> {{ isCreatingCustomer ? 'Creating…' : 'Create & Continue' }}
+        </button>
+      </div>
+    </form>
   </p-dialog>
 
   <!-- Print template — lives outside all dialogs so window.print() only sees this -->
