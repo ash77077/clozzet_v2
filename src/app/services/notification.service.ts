@@ -2,6 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
+import { environment } from '../../environments/environment';
 
 export interface Notification {
   _id?: string;
@@ -22,8 +23,8 @@ export interface Notification {
   providedIn: 'root'
 })
 export class NotificationService implements OnDestroy {
-  private apiUrl = 'http://localhost:3000/api';
-  private socketUrl = 'http://localhost:3000';
+  private apiUrl = environment.apiUrl;
+  private socketUrl = environment.socketUrl;
   private socket: Socket | null = null;
   private connectedUserId: string | null = null;
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);

@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   apiUrl: 'https://clozzet.am/api',
+  socketUrl: 'https://clozzet.am',
   features: {
     christmasTheme: false
   },
