@@ -8,6 +8,7 @@ import { AiChatWidgetComponent } from './shared/components/ai-chat-widget/ai-cha
 import { AuthService } from './services/auth.service';
 import { AiService } from './services/ai.service';
 import { SeoService } from './services/seo.service';
+import { ThemeService } from './services/theme.service';
 import { TranslationService, LANG_TO_BCP47 } from './services/translation.service';
 import { Observable } from 'rxjs';
 import { map, filter } from 'rxjs/operators';
@@ -27,6 +28,7 @@ export class AppComponent implements OnInit {
   get aiEnabled$() { return this.aiService.aiEnabled$; }
 
   private doc = inject(DOCUMENT);
+  private themeService = inject(ThemeService);
 
   constructor(
     private authService: AuthService,
@@ -45,6 +47,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.themeService.initTheme();
     this.checkRoute(window.location.pathname);
     this.seoService.init();
 
@@ -61,7 +64,7 @@ export class AppComponent implements OnInit {
   }
 
   private checkRoute(url: string) {
-    const noNavbarRoutes = [/^\/order-blank\/[^\/]+$/, /^\/login$/, /^\/register$/, /^\/reset-password$/, /^\/invitation$/, /^\/invitation2$/, /^\/ash-gog-wedding-invitation$/];
+    const noNavbarRoutes = [/^\/login$/, /^\/register$/, /^\/reset-password$/, /^\/invitation$/, /^\/invitation2$/];
     this.hideNavbars = noNavbarRoutes.some(pattern => pattern.test(url.split('?')[0]));
   }
 }

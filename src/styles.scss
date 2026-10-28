@@ -171,6 +171,193 @@
   --transition-fast: 0.2s ease-in-out;
   --transition-normal: 0.3s ease-in-out;
   --transition-slow: 0.5s ease-in-out;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CRM Theme Tokens — Light Mode (default)
+  // ═══════════════════════════════════════════════════════════════════════════
+  --bg-app: #f1f5f9;
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-input-hover: #f8fafc;
+  --bg-hover: #e9ecef;
+  --bg-table-header: #34495e;
+  --bg-table-row: #ffffff;
+  --bg-table-row-alt: #f8fafc;
+  --bg-table-row-hover: #eff6ff;
+  --border-color: #e2e8f0;
+  --border-color-strong: #cbd5e1;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-on-accent: #ffffff;
+  --accent: #3498db;
+  --accent-dark: #2980b9;
+  --accent-light: rgba(52, 152, 219, 0.1);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.10), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --input-border: #e2e8f0;
+  --input-border-focus: #3498db;
+  --input-shadow-focus: 0 0 0 3px rgba(52, 152, 219, 0.15);
+  --badge-success-bg: #dcfce7;
+  --badge-success-text: #15803d;
+  --badge-warning-bg: #fef9c3;
+  --badge-warning-text: #a16207;
+  --badge-danger-bg: #fee2e2;
+  --badge-danger-text: #b91c1c;
+  --badge-info-bg: #dbeafe;
+  --badge-info-text: #1d4ed8;
+  --badge-purple-bg: #f3e8ff;
+  --badge-purple-text: #7e22ce;
+  --badge-gray-bg: #f1f5f9;
+  --badge-gray-text: #475569;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Button semantic tokens (light mode)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Button — Primary (blue)
+  --btn-primary-bg: #3498db;
+  --btn-primary-bg-hover: #2980b9;
+  --btn-primary-text: #ffffff;
+  --btn-primary-border: #2980b9;
+
+  // Button — Success (green)
+  --btn-success-bg: #16a34a;
+  --btn-success-bg-hover: #15803d;
+  --btn-success-text: #ffffff;
+  --btn-success-border: #15803d;
+
+  // Button — Danger (red)
+  --btn-danger-bg: #dc2626;
+  --btn-danger-bg-hover: #b91c1c;
+  --btn-danger-text: #ffffff;
+  --btn-danger-border: #b91c1c;
+
+  // Button — Warning (amber)
+  --btn-warning-bg: #f59e0b;
+  --btn-warning-bg-hover: #d97706;
+  --btn-warning-text: #ffffff;
+  --btn-warning-border: #d97706;
+
+  // Button — Ghost/Outlined
+  --btn-ghost-bg: transparent;
+  --btn-ghost-bg-hover: var(--bg-hover);
+  --btn-ghost-text: var(--text-primary);
+  --btn-ghost-border: var(--border-color);
+
+  // Status colors (semantic, theme-safe)
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #6ee7b7;
+  --color-warning: #f59e0b;
+  --color-warning-dark: #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fcd34d;
+  --color-danger: #ef4444;
+  --color-danger-dark: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fca5a5;
+  --color-info: #3b82f6;
+  --color-info-dark: #2563eb;
+  --color-info-bg: #eff6ff;
+  --color-info-border: #93c5fd;
+  --color-purple: #8b5cf6;
+  --color-purple-dark: #4f46e5;
+  --color-purple-bg: #f5f3ff;
+  --color-purple-border: #c4b5fd;
+
+  // ─── Legacy PrimeNG surface aliases (light mode) ──────────────────────────
+  --surface-ground: var(--bg-app);
+  --surface-card:   var(--surface-0);
+  --surface-border: var(--surface-200);
+  --surface-hover:  var(--bg-hover);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CRM Theme Tokens — Dark Mode (opt-in via body.dark-mode)
+// ═══════════════════════════════════════════════════════════════════════════
+body.dark-mode {
+  --bg-app: #0f172a;
+  --bg-page: #0f172a;
+  --bg-card: #1e2a38;
+  --bg-card-hover: #243447;
+  --bg-input: #1e2a38;
+  --bg-input-hover: #243447;
+  --bg-hover: #243447;
+  --bg-table-header: #162032;
+  --bg-table-row: #1e2a38;
+  --bg-table-row-alt: #192535;
+  --bg-table-row-hover: rgba(52, 152, 219, 0.08);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-strong: rgba(255, 255, 255, 0.15);
+  --text-primary: #f1f5f9;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.35);
+  --text-on-accent: #ffffff;
+  --accent: #3498db;
+  --accent-dark: #2980b9;
+  --accent-light: rgba(52, 152, 219, 0.15);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --input-border-focus: #3498db;
+  --input-shadow-focus: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  --badge-success-bg: rgba(21, 128, 61, 0.2);
+  --badge-success-text: #4ade80;
+  --badge-warning-bg: rgba(161, 98, 7, 0.2);
+  --badge-warning-text: #fde047;
+  --badge-danger-bg: rgba(185, 28, 28, 0.2);
+  --badge-danger-text: #f87171;
+  --badge-info-bg: rgba(29, 78, 216, 0.2);
+  --badge-info-text: #60a5fa;
+  --badge-purple-bg: rgba(126, 34, 206, 0.2);
+  --badge-purple-text: #d8b4fe;
+  --badge-gray-bg: rgba(71, 85, 105, 0.2);
+  --badge-gray-text: rgba(255, 255, 255, 0.6);
+
+  // ─── PrimeNG surface tokens (dark mode overrides) ───
+  // PrimeNG Aura keeps --surface-0 as #fff (used as white contrast color).
+  // Our component SCSSes use --surface-0/50/100/200/300 for backgrounds &
+  // borders, so we remap them to dark equivalents here.
+  --surface-0:   #1e2a38;
+  --surface-50:  #0f172a;
+  --surface-100: #162032;
+  --surface-200: rgba(255, 255, 255, 0.08);
+  --surface-300: rgba(255, 255, 255, 0.12);
+  --surface-400: rgba(255, 255, 255, 0.25);
+  --surface-500: rgba(255, 255, 255, 0.35);
+
+  // ─── PrimeNG text tokens (dark mode overrides) ───
+  --text-color: #f1f5f9;
+  --text-color-secondary: rgba(255, 255, 255, 0.6);
+
+  // ─── Button semantic tokens (dark mode overrides) ───
+  --btn-primary-bg: #3498db;
+  --btn-primary-bg-hover: #2980b9;
+  --btn-success-bg: #16a34a;
+  --btn-success-bg-hover: #15803d;
+  --btn-danger-bg: #dc2626;
+  --btn-danger-bg-hover: #b91c1c;
+  --btn-warning-bg: #d97706;
+  --btn-warning-bg-hover: #b45309;
+  --btn-ghost-bg-hover: var(--bg-input-hover);
+
+  // ─── Status colors (dark mode overrides) ───
+  --color-success-bg: rgba(16, 185, 129, 0.15);
+  --color-success-border: rgba(16, 185, 129, 0.25);
+  --color-warning-bg: rgba(245, 158, 11, 0.15);
+  --color-warning-border: rgba(245, 158, 11, 0.25);
+  --color-danger-bg: rgba(239, 68, 68, 0.15);
+  --color-danger-border: rgba(239, 68, 68, 0.25);
+  --color-info-bg: rgba(59, 130, 246, 0.15);
+  --color-info-border: rgba(59, 130, 246, 0.25);
+  --color-purple-bg: rgba(139, 92, 246, 0.15);
+  --color-purple-border: rgba(139, 92, 246, 0.25);
 }
 
 * {
@@ -187,8 +374,8 @@ body {
   font-family: var(--font-family), serif;
   font-weight: var(--font-weight-normal);
   line-height: 1.6;
-  color: var(--neutral-gray-900);
-  background-color: var(--white);
+  color: var(--text-color);
+  background-color: var(--bg-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -823,8 +1010,8 @@ body {
 // Angular's emulated encapsulation strips scoped attributes from the preview,
 // so card styles must live here to survive outside the component tree.
 .cdk-drag-preview.order-card {
-  background: #ffffff;
-  border: 1.5px solid #94a3b8;
+  background: var(--surface-0);
+  border: 1.5px solid var(--surface-300);
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
@@ -848,7 +1035,7 @@ body {
     .card-company-name {
       font-size: 0.88rem;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-color);
       line-height: 1.3;
       flex: 1;
       min-width: 0;
@@ -863,14 +1050,14 @@ body {
     align-items: center;
     gap: 0.35rem;
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-color-secondary);
 
-    i { font-size: 0.7rem; color: #94a3b8; }
+    i { font-size: 0.7rem; color: var(--surface-400); }
   }
 
   .card-divider {
     height: 1px;
-    background: #f1f5f9;
+    background: var(--surface-200);
     margin: 0.1rem 0;
   }
 
@@ -883,20 +1070,20 @@ body {
       display: flex;
       align-items: center;
       gap: 0.2rem;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--surface-100);
+      border: 1px solid var(--surface-200);
       border-radius: 4px;
       padding: 0.12rem 0.38rem;
       font-size: 0.67rem;
-      color: #64748b;
+      color: var(--text-color-secondary);
       font-weight: 500;
 
       i { font-size: 0.62rem; }
 
       &.pill-urgent {
-        background: #fef2f2;
-        border-color: #fca5a5;
-        color: #dc2626;
+        background: var(--color-danger-bg);
+        border-color: var(--color-danger);
+        color: var(--color-danger-dark);
       }
     }
   }
@@ -908,14 +1095,652 @@ body {
     .card-order-id {
       font-size: 0.67rem;
       font-weight: 500;
-      color: #94a3b8;
+      color: var(--surface-400);
     }
   }
 
   &.card-delivered-unpaid {
-    border-color: #f59e0b;
-    border-left: 3px solid #f59e0b;
-    background: #fffdf5;
+    border-color: var(--color-warning);
+    border-left: 3px solid var(--color-warning);
+    background: var(--color-warning-bg);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ─── CRM Global Component Styles ───
+// Opt-in utility classes that respond to the active theme via CSS variables.
+// Existing component styles are not affected — classes below are prefixed
+// with `.crm-` so they never collide with legacy selectors.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── Body / app background ────────────────────────────────────────────────
+body {
+  background: var(--bg-app);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+// ─── Cards ────────────────────────────────────────────────────────────────
+.crm-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  transition: background 0.2s ease, border-color 0.2s ease,
+              box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: var(--bg-card-hover);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+  }
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────
+button.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 8px;
+  padding: 0.55rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  transition: background 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, box-shadow 0.2s ease,
+              transform 0.2s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &.crm-btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: var(--text-on-accent);
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.35);
+    }
+  }
+
+  &.crm-btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border-color: var(--accent);
+
+    &:hover:not(:disabled) {
+      background: var(--accent-light);
+    }
+  }
+
+  &.crm-btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ffffff;
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+    }
+  }
+
+  &.crm-btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: transparent;
+
+    &:hover:not(:disabled) {
+      background: var(--bg-input);
+      color: var(--text-primary);
+    }
+  }
+}
+
+// ─── Inputs ───────────────────────────────────────────────────────────────
+// Global styling for PrimeNG inputs and native form controls that opt in.
+// Scoped to themed inputs only; legacy input styling in component scss keeps
+// working because these rules only override background/border/color tokens.
+.p-inputtext,
+.p-select .p-select-label,
+input[type="text"].crm-input,
+input[type="number"].crm-input,
+input[type="email"].crm-input,
+input[type="password"].crm-input,
+input[type="search"].crm-input,
+textarea.crm-input,
+select.crm-input {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--input-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease,
+              background 0.2s ease !important;
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+
+  &:focus,
+  &:focus-visible {
+    border-color: var(--input-border-focus) !important;
+    box-shadow: var(--input-shadow-focus) !important;
+    outline: none !important;
+  }
+}
+
+.p-select,
+.p-autocomplete-input {
+  background: var(--bg-input) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.p-select-overlay,
+.p-autocomplete-overlay {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-card-hover) !important;
+}
+
+.p-select-option,
+.p-autocomplete-option {
+  color: var(--text-primary) !important;
+
+  &:hover {
+    background: var(--accent-light) !important;
+    color: var(--accent) !important;
+  }
+
+  &.p-select-option-selected,
+  &.p-autocomplete-option-selected {
+    background: var(--accent-light) !important;
+    color: var(--accent) !important;
+  }
+}
+
+// ─── Tables ───────────────────────────────────────────────────────────────
+.crm-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+
+  th {
+    background: var(--bg-table-header);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+  }
+
+  td {
+    padding: 0.85rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:nth-child(even) td {
+    background: var(--bg-table-row-alt);
+  }
+
+  tbody tr:hover td {
+    background: var(--bg-table-row-hover);
+  }
+}
+
+// ─── Status badges ────────────────────────────────────────────────────────
+.crm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.2;
+
+  &.badge-success { background: var(--badge-success-bg); color: var(--badge-success-text); }
+  &.badge-warning { background: var(--badge-warning-bg); color: var(--badge-warning-text); }
+  &.badge-danger  { background: var(--badge-danger-bg);  color: var(--badge-danger-text); }
+  &.badge-info    { background: var(--badge-info-bg);    color: var(--badge-info-text); }
+  &.badge-purple  { background: var(--badge-purple-bg);  color: var(--badge-purple-text); }
+  &.badge-gray    { background: var(--badge-gray-bg);    color: var(--badge-gray-text); }
+}
+
+// ─── Page header ──────────────────────────────────────────────────────────
+.crm-page-header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h1,
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .page-header-sub {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+}
+
+// ─── Scrollbars (dark mode only) ──────────────────────────────────────────
+body.dark-mode {
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+
+  * {
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+  }
+}
+
+// ─── PrimeNG Dialog — dark mode ───────────────────────────────────────────
+body.dark-mode {
+  .p-dialog {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+  }
+
+  .p-dialog-header {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+  }
+
+  .p-dialog-content {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .p-dialog-footer {
+    background: var(--bg-card) !important;
+    border-top: 1px solid var(--border-color) !important;
+  }
+
+  .p-dialog-header-close {
+    color: var(--text-secondary) !important;
+
+    &:hover {
+      background: var(--bg-input-hover) !important;
+    }
+  }
+}
+
+// ─── User dropdown menu — dark mode ───────────────────────────────────────
+body.dark-mode {
+  .user-dropdown-menu {
+    background: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
+
+    .user-dropdown-header {
+      .user-info {
+        .user-name { color: var(--text-primary) !important; }
+        .user-email { color: var(--text-secondary) !important; }
+      }
+    }
+
+    .user-dropdown-divider {
+      background: var(--border-color) !important;
+    }
+
+    .user-dropdown-item {
+      color: var(--text-primary) !important;
+
+      i { color: var(--text-secondary) !important; }
+
+      &:hover {
+        background: var(--bg-input-hover) !important;
+        color: var(--text-primary) !important;
+        i { color: var(--accent) !important; }
+      }
+
+      &.logout {
+        color: #f87171 !important;
+        i { color: #f87171 !important; }
+        &:hover { background: rgba(220, 38, 38, 0.15) !important; }
+      }
+    }
+
+    .user-dropdown-section {
+      .user-dropdown-section-title {
+        color: var(--text-secondary) !important;
+        i { color: var(--text-secondary) !important; }
+
+        &.dropdown-toggle:hover {
+          background: var(--bg-input-hover) !important;
+          color: var(--text-primary) !important;
+        }
+      }
+
+      .user-dropdown-item.sub-item {
+        color: var(--text-secondary) !important;
+        &:hover {
+          background: var(--bg-input-hover) !important;
+          color: var(--text-primary) !important;
+          i { color: var(--accent) !important; }
+        }
+      }
+
+      .user-dropdown-item.language-item {
+        .lang-name { color: var(--text-primary) !important; }
+        &:hover {
+          background: var(--bg-input-hover) !important;
+          .lang-name { color: var(--text-primary) !important; }
+        }
+        &.active {
+          background: rgba(52, 152, 219, 0.15) !important;
+          .lang-name { color: var(--accent) !important; }
+        }
+      }
+    }
+
+    .ai-toggle-row .ai-toggle-label {
+      color: var(--text-secondary) !important;
+    }
+  }
+
+  // PrimeNG card — dark mode
+  .p-card {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    .p-card-body { background: var(--bg-card) !important; }
+  }
+
+  // ─── Legacy PrimeNG surface tokens (used by revenue + older components) ───
+  --surface-ground: var(--bg-app);
+  --surface-card:   var(--surface-0);
+  --surface-border: var(--surface-200);
+  --surface-hover:  var(--bg-hover);
+
+  // ─── PrimeNG DataTable — dark mode ───────────────────────────────────────
+  .p-datatable {
+    .p-datatable-header {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+    }
+
+    .p-datatable-thead > tr > th {
+      background: var(--bg-table-header) !important;
+      color: var(--text-on-accent) !important;
+      border-color: var(--surface-200) !important;
+    }
+
+    .p-datatable-tbody > tr {
+      background: var(--surface-0) !important;
+      color: var(--text-color) !important;
+
+      &:nth-child(even) {
+        background: var(--bg-table-row-alt) !important;
+      }
+
+      &:hover, &.clickable-row:hover {
+        background: var(--bg-table-row-hover) !important;
+      }
+
+      > td {
+        background: inherit !important;
+        border-color: var(--surface-200) !important;
+        color: var(--text-color) !important;
+      }
+
+      // Revenue payment-status tinting in dark mode — use rgba so text stays readable
+      &.pay-paid    > td { background: var(--color-success-bg) !important; }
+      &.pay-partial > td { background: var(--color-warning-bg) !important; }
+      &.pay-deposit > td { background: var(--color-info-bg)    !important; }
+      &.pay-not_paid > td { background: var(--color-danger-bg) !important; }
+      &.row-selected > td { background: var(--color-purple-bg) !important; }
+
+      // CRM row highlights
+      &.follow-up-today > td {
+        background: var(--color-warning-bg) !important;
+        border-left: 4px solid var(--color-warning) !important;
+      }
+      &.follow-up-overdue:not(.follow-up-today) > td {
+        border-left: 4px solid var(--color-danger) !important;
+      }
+
+      // Meetings row highlights
+      &.row-overdue > td { background: var(--color-danger-bg) !important; }
+      &.row-upcoming > td { background: var(--color-info-bg) !important; }
+    }
+
+    .p-datatable-tfoot > tr > td {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+    }
+
+    .p-paginator {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+
+      .p-paginator-page, .p-paginator-next, .p-paginator-prev,
+      .p-paginator-last, .p-paginator-first {
+        color: var(--text-color) !important;
+        &:hover { background: var(--bg-hover) !important; }
+        &.p-paginator-page-selected {
+          background: var(--accent-light) !important;
+          color: var(--accent) !important;
+          font-weight: 700;
+        }
+      }
+
+      // also target by aria for extra specificity
+      button[aria-current="page"] {
+        background: var(--accent-light) !important;
+        color: var(--accent) !important;
+        font-weight: 700;
+      }
+
+      .p-paginator-current { color: var(--text-color-secondary) !important; }
+    }
+  }
+
+  // ─── PrimeNG Textarea + InputText — dark mode ─────────────────────────────
+  .p-textarea,
+  textarea.p-inputtext,
+  .p-inputtextarea {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+
+    &::placeholder { color: var(--text-muted) !important; }
+    &:focus {
+      border-color: var(--input-border-focus) !important;
+      box-shadow: var(--input-shadow-focus) !important;
+    }
+  }
+
+  // Native textareas not using PrimeNG class
+  textarea {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+
+    &::placeholder { color: var(--text-muted) !important; }
+  }
+
+  // Native text inputs (search bars, date inputs in components)
+  input[type="text"],
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  input[type="date"] {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+
+    &::placeholder { color: var(--text-muted) !important; }
+  }
+
+  // ─── PrimeNG Tag / Chip — dark mode ──────────────────────────────────────
+  .p-tag {
+    // Tags that use severity-based coloring stay as-is (they use their own bg).
+    // Only override unstyled / custom tags.
+    &:not([class*="p-tag-"]) {
+      background: var(--bg-hover) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  .p-chip {
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+
+    .p-chip-remove-icon { color: var(--text-secondary) !important; }
+  }
+
+  // ─── PrimeNG Accordion — dark mode ───────────────────────────────────────
+  .p-accordion {
+    .p-accordion-header {
+      .p-accordion-header-link {
+        background: var(--surface-0) !important;
+        border-color: var(--surface-200) !important;
+        color: var(--text-color) !important;
+      }
+      &:not(.p-disabled).p-highlight .p-accordion-header-link {
+        background: var(--surface-0) !important;
+        border-color: var(--surface-200) !important;
+        color: var(--text-color) !important;
+      }
+    }
+    .p-accordion-content {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+    }
+  }
+
+  // ─── PrimeNG InputNumber — dark mode ─────────────────────────────────────
+  .p-inputnumber-input {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+  }
+
+  // ─── PrimeNG Datepicker — dark mode ──────────────────────────────────────
+  .p-datepicker-input {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+  }
+
+  // ─── PrimeNG Datepicker panel/calendar popup — dark mode ─────────────────
+  .p-datepicker-panel,
+  .p-datepicker {
+    background: var(--surface-0) !important;
+    border-color: var(--surface-200) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+
+    .p-datepicker-header {
+      background: var(--surface-0) !important;
+      border-bottom-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+
+      .p-datepicker-title { color: var(--text-color) !important; }
+
+      .p-datepicker-prev, .p-datepicker-next {
+        color: var(--text-color) !important;
+        &:hover { background: var(--bg-hover) !important; }
+      }
+
+      button, select {
+        color: var(--text-color) !important;
+        background: transparent !important;
+        border-color: var(--surface-200) !important;
+      }
+    }
+
+    .p-datepicker-calendar-container {
+      background: var(--surface-0) !important;
+
+      table thead tr th {
+        color: var(--text-color-secondary) !important;
+        background: var(--surface-0) !important;
+      }
+
+      table tbody tr td {
+        > span, > a {
+          color: var(--text-color) !important;
+          background: transparent !important;
+
+          &:hover {
+            background: var(--bg-hover) !important;
+            color: var(--text-color) !important;
+          }
+
+          &.p-highlight {
+            background: var(--accent) !important;
+            color: #fff !important;
+          }
+
+          &.p-disabled { color: var(--text-muted) !important; }
+        }
+
+        &.p-datepicker-today > span,
+        &.p-datepicker-today > a {
+          background: var(--accent-light) !important;
+          color: var(--accent) !important;
+          font-weight: 700;
+        }
+      }
+    }
+
+    .p-datepicker-footer {
+      background: var(--surface-0) !important;
+      border-top-color: var(--surface-200) !important;
+    }
+  }
+
 }
 

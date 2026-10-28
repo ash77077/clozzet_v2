@@ -35,7 +35,6 @@ export class ProductDetailsFormComponent {
   submitSuccess = false;
   submitError = false;
   selectedClothType = '';
-  submittedOrderId: string | null = null;
 
   // File upload properties
   logoFiles: File[] = [];
@@ -557,15 +556,8 @@ export class ProductDetailsFormComponent {
           this.isSubmitting = false;
           this.submitSuccess = true;
 
-          // Store the order ID from response
-          if (response?.data?._id) {
-            this.submittedOrderId = response.data._id;
-          }
-
-          // Reset form after success (but keep submittedOrderId for the button)
           setTimeout(() => {
             this.submitSuccess = false;
-            this.submittedOrderId = null;
             this.productForm.reset();
             this.selectedClothType = '';
             // Reset file uploads
@@ -612,11 +604,5 @@ export class ProductDetailsFormComponent {
     this.productForm.patchValue({ priority });
   }
 
-  viewOrderBlank(): void {
-    if (this.submittedOrderId) {
-      this.router.navigate(['/order-blank', this.submittedOrderId]);
-    }
-  }
-
-  getPriorityDisplayName = getPriorityDisplayName;
+getPriorityDisplayName = getPriorityDisplayName;
 }

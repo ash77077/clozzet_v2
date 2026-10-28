@@ -1306,6 +1306,90 @@
             </div>
           </div>
 
+          <!-- Expenses for this product -->
+          <div class="expenses-section" formArrayName="expenses">
+            <div class="expenses-header">
+              <span class="expenses-title">
+                <i class="pi pi-receipt"></i> Expenses
+                <span class="expenses-total-badge" *ngIf="calcProductExpensesTotal(i) > 0">
+                  {{ calcProductExpensesTotal(i) | number }} ֏
+                </span>
+              </span>
+              <button type="button" class="btn-add-expense" (click)="addExpense(i)">
+                <i class="pi pi-plus"></i> Add Expense
+              </button>
+            </div>
+
+            <div class="expenses-table">
+              <!-- Header row -->
+              <div class="expense-row expense-header-row">
+                <div class="exp-col exp-col-name">Description</div>
+                <div class="exp-col exp-col-qty">Qty</div>
+                <div class="exp-col exp-col-unit">Unit</div>
+                <div class="exp-col exp-col-price">Price / Unit (֏)</div>
+                <div class="exp-col exp-col-total">Total</div>
+                <div class="exp-col exp-col-action"></div>
+              </div>
+
+              <!-- Data rows -->
+              <div *ngFor="let expRow of getExpenses(i).controls; let ei = index"
+                   [formGroupName]="ei"
+                   class="expense-row expense-data-row">
+                <div class="exp-col exp-col-name">
+                  <p-autoComplete
+                    formControlName="name"
+                    [suggestions]="expenseNameSuggestions"
+                    (completeMethod)="filterExpenseNames($event.query)"
+                    [forceSelection]="false"
+                    appendTo="body"
+                    placeholder="e.g. Thread, Buttons…"
+                    styleClass="exp-autocomplete"
+                    inputStyleClass="exp-autocomplete-input">
+                  </p-autoComplete>
+                </div>
+                <div class="exp-col exp-col-qty">
+                  <input type="number" formControlName="quantity" min="0" placeholder="0" class="exp-number-input" (wheel)="onNumberWheel($event)" />
+                </div>
+                <div class="exp-col exp-col-unit">
+                  <p-select
+                    formControlName="unit"
+                    [options]="EXPENSE_UNITS"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="—"
+                    styleClass="exp-unit-select"
+                    appendTo="body">
+                  </p-select>
+                </div>
+                <div class="exp-col exp-col-price">
+                  <input type="number" formControlName="pricePerUnit" min="0" placeholder="0" class="exp-number-input" (wheel)="onNumberWheel($event)" />
+                </div>
+                <div class="exp-col exp-col-total">
+                  <span class="exp-total-value" [class.exp-total-nonzero]="calcExpenseTotal(expRow) > 0">
+                    {{ calcExpenseTotal(expRow) | number }} ֏
+                  </span>
+                </div>
+                <div class="exp-col exp-col-action">
+                  <button type="button" class="btn-remove-expense" (click)="removeExpense(i, ei)" pTooltip="Remove">
+                    <i class="pi pi-times"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Summary row -->
+              <div class="expense-row expense-summary-row" *ngIf="calcProductExpensesTotal(i) > 0">
+                <div class="exp-col exp-col-name">Total Expenses</div>
+                <div class="exp-col exp-col-qty"></div>
+                <div class="exp-col exp-col-unit"></div>
+                <div class="exp-col exp-col-price"></div>
+                <div class="exp-col exp-col-total">
+                  <span class="exp-grand-total">{{ calcProductExpensesTotal(i) | number }} ֏</span>
+                </div>
+                <div class="exp-col exp-col-action"></div>
+              </div>
+            </div>
+          </div>
+
           <!-- Size Breakdown for this product -->
           <div formGroupName="sizes" class="sizes-section">
             <div class="sizes-header-row">

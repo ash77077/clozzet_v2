@@ -383,16 +383,6 @@
                 </button>
               </div>
               <div class="cost-price-edit-form" *ngIf="editingProductIndex === i">
-                <p-select
-                  [options]="scenarioOptions"
-                  [(ngModel)]="selectedScenario"
-                  (onChange)="onScenarioSelect($event.value)"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Select from Cost Configurator..."
-                  [disabled]="isSaving"
-                  styleClass="cost-scenario-select">
-                </p-select>
                 <div class="cost-edit-actions">
                   <p-inputNumber
                     [(ngModel)]="editingCostPrice"

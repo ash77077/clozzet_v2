@@ -1,19 +1,118 @@
+<!-- Left Drawer Backdrop -->
+<div class="drawer-backdrop" [class.active]="showDrawer" (click)="closeDrawer()"></div>
+
+<!-- Left Navigation Drawer -->
+<div class="left-drawer" [class.open]="showDrawer">
+  <div class="drawer-header">
+    <div class="drawer-logo">
+      <span class="drawer-logo-text">Clozzet</span>
+    </div>
+    <button class="drawer-close-btn" (click)="closeDrawer()">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <div class="drawer-user-info" *ngIf="currentUser">
+    <div class="drawer-avatar">
+      <i class="pi pi-user"></i>
+      <span *ngIf="aiEnabled$ | async" class="ai-dot"></span>
+    </div>
+    <div class="drawer-user-details">
+      <span class="drawer-user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</span>
+      <span class="drawer-user-role">{{ currentUser.role | titlecase }}</span>
+    </div>
+  </div>
+
+  <div class="drawer-divider"></div>
+
+  <!-- Admin Nav -->
+  <nav class="drawer-nav" *ngIf="isAdmin()">
+    <a routerLink="/dashboard" class="drawer-nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeDrawer()">
+      <i class="pi pi-home"></i><span>{{ 'secondaryNav.dashboard' | translate }}</span>
+    </a>
+    <a routerLink="/orders" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-list"></i><span>{{ 'secondaryNav.orders' | translate }}</span>
+    </a>
+    <a routerLink="/revenue" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-chart-line"></i><span>{{ 'secondaryNav.revenue' | translate }}</span>
+    </a>
+    <a routerLink="/crm-dashboard" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-sitemap"></i><span>{{ 'secondaryNav.crmDashboard' | translate }}</span>
+    </a>
+    <a routerLink="/meetings" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-calendar"></i><span>Meetings</span>
+    </a>
+    <div class="drawer-divider"></div>
+    <span class="drawer-group-label">{{ 'secondaryNav.other' | translate }}</span>
+    <a routerLink="/product-management" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-box"></i><span>{{ 'secondaryNav.products' | translate }}</span>
+    </a>
+    <a routerLink="/retail-sales" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-shopping-bag"></i><span>{{ 'secondaryNav.retailSales' | translate }}</span>
+    </a>
+    <a routerLink="/expo-sales" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-shop"></i><span>{{ 'secondaryNav.expoSales' | translate }}</span>
+    </a>
+    <a routerLink="/users" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-users"></i><span>{{ 'secondaryNav.users' | translate }}</span>
+    </a>
+    <a routerLink="/companies" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-building"></i><span>{{ 'secondaryNav.companies' | translate }}</span>
+    </a>
+    <a routerLink="/employees" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-id-card"></i><span>{{ 'secondaryNav.employees' | translate }}</span>
+    </a>
+    <a routerLink="/manager-kpi" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-chart-bar"></i><span>{{ 'secondaryNav.managerKpi' | translate }}</span>
+    </a>
+  </nav>
+
+  <!-- Manager Nav -->
+  <nav class="drawer-nav" *ngIf="isManager()">
+    <a routerLink="/dashboard" class="drawer-nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeDrawer()">
+      <i class="pi pi-home"></i><span>{{ 'secondaryNav.dashboard' | translate }}</span>
+    </a>
+    <a routerLink="/orders" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-list"></i><span>{{ 'secondaryNav.orders' | translate }}</span>
+    </a>
+    <a routerLink="/crm-dashboard" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-sitemap"></i><span>{{ 'secondaryNav.crmDashboard' | translate }}</span>
+    </a>
+    <a routerLink="/meetings" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-calendar"></i><span>Meetings</span>
+    </a>
+  </nav>
+
+  <!-- Customer/User Nav -->
+  <nav class="drawer-nav" *ngIf="isCustomerOrUser()">
+    <a routerLink="/dashboard" class="drawer-nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeDrawer()">
+      <i class="pi pi-home"></i><span>{{ 'secondaryNav.dashboard' | translate }}</span>
+    </a>
+    <a routerLink="/my-orders" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-shopping-bag"></i>
+      <span>{{ 'secondaryNav.myOrders' | translate }}</span>
+      <span class="drawer-badge" *ngIf="userOrderStats && userOrderStats.total > 0">{{ userOrderStats.total }}</span>
+    </a>
+  </nav>
+
+  <div class="drawer-footer">
+    <button class="drawer-theme-btn" (click)="toggleTheme()">
+      <i [class]="themeService.isDark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
+      <span>{{ themeService.isDark() ? 'Light Mode' : 'Dark Mode' }}</span>
+    </button>
+    <button class="drawer-logout-btn" (click)="logout()">
+      <i class="pi pi-sign-out"></i>
+      <span>{{ 'secondaryNav.logout' | translate }}</span>
+    </button>
+  </div>
+</div>
+
 <nav class="secondary-navbar" *ngIf="isAuthenticated">
   <div class="secondary-navbar-container">
-    <div class="section-toggle" *ngIf="isAdmin()">
-      <button
-        class="toggle-btn"
-        [class.active]="currentSection === 'sales'"
-        (click)="switchSection('sales')">
-        <i class="pi pi-shopping-cart"></i>
-      </button>
-      <button
-        class="toggle-btn"
-        [class.active]="currentSection === 'manufacturing'"
-        (click)="switchSection('manufacturing')">
-        <i class="pi pi-cog"></i>
-      </button>
-    </div>
+    <!-- Hamburger menu button -->
+    <button class="hamburger-btn" (click)="openDrawer($event)">
+      <i class="pi pi-bars"></i>
+    </button>
 
     <!-- Manager Navigation -->
     <div class="nav-section" *ngIf="isManager()">
@@ -50,8 +149,7 @@
     <!-- Admin Navigation -->
     <div class="nav-section" *ngIf="isAdmin()">
       <div class="nav-group">
-        <!-- Sales Section Links -->
-        <ul class="nav-list" *ngIf="isSalesSection()">
+        <ul class="nav-list">
           <li class="nav-item">
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
               <i class="pi pi-home"></i>
@@ -83,29 +181,6 @@
             </a>
           </li>
         </ul>
-
-        <!-- Manufacturing Section Links -->
-        <ul class="nav-list" *ngIf="isManufacturingSection()">
-          <li class="nav-item">
-            <a routerLink="/financial-production" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-chart-bar"></i>
-              <span>{{ 'secondaryNav.financialProduction' | translate }}</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/cost-configurator" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-calculator"></i>
-              <span>{{ 'secondaryNav.costConfigurator' | translate }}</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a routerLink="/manufacturing" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-cog"></i>
-              <span>{{ 'secondaryNav.manufacturing' | translate }}</span>
-              <span class="badge urgent" *ngIf="orderStats && orderStats.inProgress > 0">{{ orderStats.inProgress }}</span>
-            </a>
-          </li>
-        </ul>
       </div>
     </div>
 
@@ -127,29 +202,7 @@
               <span class="badge" *ngIf="userOrderStats && userOrderStats.total > 0">{{ userOrderStats.total }}</span>
             </a>
           </li>
-          <li class="nav-item" *ngIf="!isBusinessUser()">
-            <a routerLink="/order-blank" class="nav-link" routerLinkActive="active">
-              <i class="pi pi-file-plus"></i>
-              <span>{{ 'secondaryNav.newOrder' | translate }}</span>
-            </a>
-          </li>
         </ul>
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="nav-section quick-actions">
-      <div class="nav-group">
-        <div class="action-buttons">
-          <button
-            *ngIf="isAdmin()"
-            class="btn btn-sm btn-primary"
-            routerLink="/order-blank"
-            pTooltip="{{ 'secondaryNav.newOrder' | translate }}">
-            <i class="pi pi-plus"></i>
-            {{ 'secondaryNav.newOrder' | translate }}
-          </button>
-        </div>
       </div>
     </div>
 
@@ -185,7 +238,7 @@
           </button>
 
           <!-- Other Section (Admin only) -->
-          <ng-container *ngIf="isAdmin() && isSalesSection()">
+          <ng-container *ngIf="isAdmin()">
             <div class="user-dropdown-divider"></div>
             <div class="user-dropdown-section">
               <button class="user-dropdown-section-title dropdown-toggle" (click)="toggleOtherSection($event)">
@@ -227,6 +280,17 @@
           </ng-container>
 
           <div class="user-dropdown-divider"></div>
+          <!-- Dark Mode Toggle -->
+          <div class="user-dropdown-section" (click)="$event.stopPropagation()">
+            <div class="ai-toggle-row">
+              <i class="pi pi-moon" style="color:#6366f1"></i>
+              <span class="ai-toggle-label">Dark Mode</span>
+              <p-toggleswitch
+                [ngModel]="themeService.isDark()"
+                (onChange)="toggleTheme()">
+              </p-toggleswitch>
+            </div>
+          </div>
           <!-- AI Toggle -->
           <div class="user-dropdown-section" (click)="$event.stopPropagation()">
             <div class="ai-toggle-row">
