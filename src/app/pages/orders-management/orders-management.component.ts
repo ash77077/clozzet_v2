@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { environment } from '../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -2646,7 +2647,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
 
     // For backward compatibility: old local filenames
     // Use preview endpoint for inline display
-    const apiUrl = 'http://localhost:3000';
+    const apiUrl = environment.socketUrl;
     return `${apiUrl}/product-details/preview/${filename}`;
   }
 
@@ -2681,7 +2682,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     }
 
     // For backward compatibility: old local filenames
-    const apiUrl = 'http://localhost:3000';
+    const apiUrl = environment.socketUrl;
     const downloadUrl = `${apiUrl}/product-details/files/${filename}`;
     window.open(downloadUrl, '_blank');
   }
