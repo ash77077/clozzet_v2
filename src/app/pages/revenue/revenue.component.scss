@@ -1,6 +1,6 @@
 .revenue-container {
   padding: 2rem;
-  background: var(--surface-ground);
+  background: var(--bg-app);
   min-height: 100vh;
 }
 
@@ -57,8 +57,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
-    border: 1px solid var(--surface-border);
+    background: var(--surface-0);
+    border: 1px solid var(--surface-200);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
@@ -66,7 +66,7 @@
 
     &:hover {
       background: var(--primary-color);
-      color: white;
+      color: var(--text-on-accent);
       border-color: var(--primary-color);
     }
   }
@@ -92,35 +92,35 @@
     align-items: center;
     gap: 1rem;
     padding: 1.25rem;
-    background: white;
+    background: var(--surface-0);
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+    box-shadow: var(--shadow-card);
     border-left: 4px solid transparent;
     transition: all 0.25s;
 
     &:hover {
       transform: translateY(-3px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.11);
+      box-shadow: var(--shadow-card-hover);
     }
 
     &.stat-expected {
-      border-left-color: #8b5cf6;
-      .stat-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+      border-left-color: var(--color-purple);
+      .stat-icon { background: linear-gradient(135deg, var(--color-purple), var(--color-purple-dark)); }
     }
 
     &.stat-revenue {
-      border-left-color: #3b82f6;
-      .stat-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+      border-left-color: var(--color-info);
+      .stat-icon { background: linear-gradient(135deg, var(--color-info), var(--color-info-dark)); }
     }
 
     &.stat-paid {
-      border-left-color: #10b981;
-      .stat-icon { background: linear-gradient(135deg, #10b981, #059669); }
+      border-left-color: var(--color-success);
+      .stat-icon { background: linear-gradient(135deg, var(--color-success), var(--color-success-dark)); }
     }
 
     &.stat-unpaid {
-      border-left-color: #f59e0b;
-      .stat-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+      border-left-color: var(--color-warning);
+      .stat-icon { background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark)); }
     }
 
     .stat-icon {
@@ -134,7 +134,7 @@
 
       i {
         font-size: 1.4rem;
-        color: white;
+        color: var(--text-on-accent);
       }
     }
 
@@ -164,9 +164,9 @@
 .error-container {
   text-align: center;
   padding: 4rem 2rem;
-  background: white;
+  background: var(--surface-0);
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
 
   i {
     font-size: 3rem;
@@ -180,7 +180,7 @@
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid var(--surface-border);
+  border: 4px solid var(--surface-200);
   border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -196,9 +196,10 @@
   align-items: center;
   margin-bottom: 1.25rem;
   padding: 0.875rem 1rem;
-  background: white;
+  background: var(--surface-0);
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--surface-200);
 
   .search-wrap {
     flex: 1;
@@ -215,10 +216,12 @@
     .search-input {
       width: 100%;
       padding: 0.65rem 1rem 0.65rem 2.5rem;
-      border: 1px solid var(--surface-border);
+      border: 1px solid var(--surface-300);
       border-radius: 6px;
       font-size: 0.875rem;
       outline: none;
+      background: var(--surface-0);
+      color: var(--text-color);
       transition: border-color 0.2s;
 
       &:focus { border-color: var(--primary-color); }
@@ -236,10 +239,11 @@
 
 // Table Section
 .table-section {
-  background: white;
+  background: var(--surface-0);
   border-radius: 10px;
   padding: 1.25rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--surface-200);
 
   .client-cell {
     display: flex;
@@ -268,7 +272,7 @@
     font-size: 0.875rem;
 
     &.remaining-value {
-      color: var(--orange-500);
+      color: var(--color-warning);
     }
   }
 
@@ -285,14 +289,14 @@
 
     .progress-bar-wrap {
       height: 5px;
-      background: var(--surface-border);
+      background: var(--surface-200);
       border-radius: 3px;
       overflow: hidden;
       width: 100px;
 
       .progress-bar-fill {
         height: 100%;
-        background: #10b981;
+        background: var(--color-success);
         border-radius: 3px;
         transition: width 0.3s;
       }
@@ -326,7 +330,7 @@
   }
 }
 
-// Editable cell — contains inline inputs without overflow
+// Editable cell
 td.editable-cell {
   overflow: visible;
   vertical-align: middle;
@@ -370,14 +374,14 @@ td.editable-cell {
 // Order Details Modal
 ::ng-deep .order-details-modal {
   .p-dialog-header {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--color-info) 0%, var(--color-info-dark) 100%);
+    color: var(--text-on-accent);
     padding: 1.25rem 1.5rem;
 
     .p-dialog-title { font-size: 1.15rem; font-weight: 700; }
 
     .p-dialog-header-icon {
-      color: white !important;
+      color: var(--text-on-accent) !important;
       opacity: 1 !important;
       visibility: visible !important;
 
@@ -388,7 +392,7 @@ td.editable-cell {
   .p-dialog-content { padding: 0; }
   .p-dialog-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid var(--surface-border);
+    border-top: 1px solid var(--surface-200);
   }
 }
 
@@ -396,7 +400,7 @@ td.editable-cell {
   .details-header {
     padding: 1.25rem 1.5rem;
     background: var(--surface-50);
-    border-bottom: 2px solid var(--surface-border);
+    border-bottom: 2px solid var(--surface-200);
 
     .header-row {
       display: grid;
@@ -443,14 +447,14 @@ td.editable-cell {
       padding: 1.125rem;
       background: var(--surface-50);
       border-radius: 8px;
-      border: 1px solid var(--surface-border);
+      border: 1px solid var(--surface-200);
 
       &:last-child { margin-bottom: 0; }
 
       .product-header {
         margin-bottom: 0.875rem;
         padding-bottom: 0.625rem;
-        border-bottom: 2px solid var(--surface-border);
+        border-bottom: 2px solid var(--surface-200);
 
         h5 {
           margin: 0;
@@ -492,36 +496,37 @@ td.editable-cell {
 
         .financial-item {
           padding: 0.65rem 0.75rem;
-          background: white;
+          background: var(--surface-0);
           border-radius: 6px;
+          border: 1px solid var(--surface-200);
           display: flex;
           flex-direction: column;
           gap: 0.2rem;
 
           &.highlight {
-            background: #eff6ff;
-            border: 1px solid #3b82f6;
+            background: var(--color-info-bg);
+            border-color: var(--color-info-border);
 
             &.profit {
-              background: #dcfce7;
-              border-color: #10b981;
-              .fin-value { color: #15803d; }
+              background: var(--color-success-bg);
+              border-color: var(--color-success-border);
+              .fin-value { color: var(--color-success-dark); }
             }
 
             &.margin {
-              background: #f3e8ff;
-              border-color: #8b5cf6;
-              .fin-value { color: #6d28d9; }
+              background: var(--color-purple-bg);
+              border-color: var(--color-purple-border);
+              .fin-value { color: var(--color-purple-dark); }
             }
           }
 
           &.cost-price-editable {
-            background: #fef9c3;
-            border: 1px solid #eab308;
+            background: var(--color-warning-bg);
+            border: 1px solid var(--color-warning-border);
 
             &.is-editing {
               grid-column: 1 / -1;
-              background: #fefce8;
+              background: var(--color-warning-bg);
             }
 
             .cost-price-container {
@@ -531,15 +536,15 @@ td.editable-cell {
 
               .edit-cost-btn {
                 padding: 0.2rem 0.4rem;
-                background: #eab308;
-                color: white;
+                background: var(--color-warning);
+                color: var(--text-on-accent);
                 border: none;
                 border-radius: 4px;
                 cursor: pointer;
                 font-size: 0.72rem;
                 transition: all 0.2s;
 
-                &:hover { background: #ca8a04; }
+                &:hover { background: var(--color-warning-dark); }
               }
             }
 
@@ -576,15 +581,15 @@ td.editable-cell {
                 }
 
                 .save-cost-btn {
-                  background: #10b981;
-                  color: white;
-                  &:hover:not(:disabled) { background: #059669; }
+                  background: var(--btn-success-bg);
+                  color: var(--btn-success-text);
+                  &:hover:not(:disabled) { background: var(--btn-success-bg-hover); }
                 }
 
                 .cancel-cost-btn {
-                  background: #ef4444;
-                  color: white;
-                  &:hover:not(:disabled) { background: #dc2626; }
+                  background: var(--btn-danger-bg);
+                  color: var(--btn-danger-text);
+                  &:hover:not(:disabled) { background: var(--btn-danger-bg-hover); }
                 }
               }
             }
@@ -608,8 +613,8 @@ td.editable-cell {
 
   .order-totals {
     padding: 1.5rem;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border-top: 2px solid var(--primary-color);
+    background: var(--color-info-bg);
+    border-top: 2px solid var(--color-info-border);
 
     .totals-grid {
       display: grid;
@@ -618,17 +623,19 @@ td.editable-cell {
 
       .total-item {
         padding: 0.875rem 1rem;
-        background: white;
+        background: var(--surface-0);
         border-radius: 8px;
+        border: 1px solid var(--surface-200);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-card);
 
         &.highlight {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          background: linear-gradient(135deg, var(--color-info) 0%, var(--color-info-dark) 100%);
+          border-color: transparent;
 
-          .total-label, .total-value { color: white; }
+          .total-label, .total-value { color: var(--text-on-accent); }
         }
 
         .total-label {
@@ -642,8 +649,8 @@ td.editable-cell {
           font-weight: 700;
           color: var(--text-color);
 
-          &.profit { color: #10b981; }
-          &.margin { color: #8b5cf6; }
+          &.profit { color: var(--color-success); }
+          &.margin { color: var(--color-purple); }
         }
       }
     }
@@ -651,7 +658,7 @@ td.editable-cell {
     .payment-summary {
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px dashed #93c5fd;
+      border-top: 1px dashed var(--color-info-border);
 
       .payment-summary-grid {
         display: grid;
@@ -660,13 +667,14 @@ td.editable-cell {
         margin-bottom: 1rem;
 
         .payment-summary-item {
-          background: white;
+          background: var(--surface-0);
           border-radius: 8px;
+          border: 1px solid var(--surface-200);
           padding: 0.75rem 1rem;
           display: flex;
           flex-direction: column;
           gap: 0.4rem;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+          box-shadow: var(--shadow-card);
 
           .ps-label {
             font-size: 0.72rem;
@@ -681,21 +689,21 @@ td.editable-cell {
             font-weight: 700;
             color: var(--text-color);
 
-            &.paid { color: #10b981; }
-            &.remaining { color: #f59e0b; }
+            &.paid { color: var(--color-success); }
+            &.remaining { color: var(--color-warning); }
           }
         }
       }
 
       .payment-progress-wrap {
         height: 8px;
-        background: #dbeafe;
+        background: var(--color-info-bg);
         border-radius: 99px;
         overflow: hidden;
 
         .payment-progress-bar {
           height: 100%;
-          background: linear-gradient(90deg, #10b981, #059669);
+          background: linear-gradient(90deg, var(--color-success), var(--color-success-dark));
           border-radius: 99px;
           transition: width 0.4s ease;
         }
@@ -753,61 +761,45 @@ td.editable-cell {
 }
 
 // ═══ Row tinting by payment status ═══════════════════════════════════════
-// Table rows change background color based on `paymentStatus`:
-//   paid     → soft green    (bill fully collected)
-//   partial  → soft amber    (money owed)
-//   deposit  → soft blue     (down payment received)
-//   not_paid → soft red      (nothing collected yet)
 ::ng-deep .p-datatable .p-datatable-tbody > tr {
 
   &.pay-row {
     transition: background-color 0.2s ease;
     cursor: pointer;
 
-    // one shared left accent bar per row
     > td:first-child {
       border-left: 4px solid transparent;
     }
   }
 
-  // ── Paid ────────────────────────────────────────────────────────────
   &.pay-paid {
-    background: #f0fdf4 !important;
-    > td:first-child { border-left-color: #22c55e; }
-
-    &:hover { background: #dcfce7 !important; }
+    background: var(--color-success-bg) !important;
+    > td:first-child { border-left-color: var(--color-success); }
+    &:hover { background: var(--color-success-border) !important; }
   }
 
-  // ── Partial ─────────────────────────────────────────────────────────
   &.pay-partial {
-    background: #fffbeb !important;
-    > td:first-child { border-left-color: #f59e0b; }
-
-    &:hover { background: #fef3c7 !important; }
+    background: var(--color-warning-bg) !important;
+    > td:first-child { border-left-color: var(--color-warning); }
+    &:hover { background: var(--color-warning-border) !important; }
   }
 
-  // ── Deposit ─────────────────────────────────────────────────────────
   &.pay-deposit {
-    background: #eff6ff !important;
-    > td:first-child { border-left-color: #3b82f6; }
-
-    &:hover { background: #dbeafe !important; }
+    background: var(--color-info-bg) !important;
+    > td:first-child { border-left-color: var(--color-info); }
+    &:hover { background: var(--color-info-border) !important; }
   }
 
-  // ── Not paid ────────────────────────────────────────────────────────
   &.pay-not_paid {
-    background: #fecaca !important;
-    > td:first-child { border-left-color: #b91c1c; }
-
-    &:hover { background: #fca5a5 !important; }
+    background: var(--color-danger-bg) !important;
+    > td:first-child { border-left-color: var(--color-danger-dark); }
+    &:hover { background: var(--color-danger-border) !important; }
   }
 
-  // ── Selected ────────────────────────────────────────────────────────
   &.row-selected {
-    background: #ede9fe !important;
-    > td:first-child { border-left-color: #7c3aed !important; }
-
-    &:hover { background: #ddd6fe !important; }
+    background: var(--color-purple-bg) !important;
+    > td:first-child { border-left-color: var(--color-purple-dark) !important; }
+    &:hover { background: var(--color-purple-border) !important; }
   }
 }
 
@@ -829,11 +821,11 @@ td.editable-cell {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
+  background: var(--surface-0);
+  border: 1px solid var(--surface-200);
   border-radius: 12px;
   padding: 0.75rem 1.25rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-card-hover);
 
   .selection-count {
     display: flex;
@@ -841,7 +833,7 @@ td.editable-cell {
     gap: 0.4rem;
     font-weight: 700;
     font-size: 0.9rem;
-    color: #7c3aed;
+    color: var(--color-purple-dark);
 
     i { font-size: 1rem; }
   }
@@ -849,7 +841,7 @@ td.editable-cell {
   .selection-divider {
     width: 1px;
     height: 28px;
-    background: var(--surface-border);
+    background: var(--surface-200);
   }
 
   .selection-stat {
@@ -871,8 +863,8 @@ td.editable-cell {
       font-size: 0.875rem;
       color: var(--text-color);
 
-      &.paid    { color: #22c55e; }
-      &.remaining { color: var(--orange-500); }
+      &.paid    { color: var(--color-success); }
+      &.remaining { color: var(--color-warning); }
     }
   }
 
@@ -884,15 +876,15 @@ td.editable-cell {
     height: 28px;
     border: none;
     border-radius: 50%;
-    background: var(--surface-hover);
+    background: var(--surface-100);
     color: var(--text-color-secondary);
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
     margin-left: 0.25rem;
 
     &:hover {
-      background: #fee2e2;
-      color: #dc2626;
+      background: var(--color-danger-bg);
+      color: var(--color-danger-dark);
     }
   }
 }

@@ -269,6 +269,12 @@
   --color-purple-dark: #4f46e5;
   --color-purple-bg: #f5f3ff;
   --color-purple-border: #c4b5fd;
+
+  // ─── Legacy PrimeNG surface aliases (light mode) ──────────────────────────
+  --surface-ground: var(--bg-app);
+  --surface-card:   var(--surface-0);
+  --surface-border: var(--surface-200);
+  --surface-hover:  var(--bg-hover);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -314,6 +320,22 @@ body.dark-mode {
   --badge-gray-bg: rgba(71, 85, 105, 0.2);
   --badge-gray-text: rgba(255, 255, 255, 0.6);
 
+  // ─── PrimeNG surface tokens (dark mode overrides) ───
+  // PrimeNG Aura keeps --surface-0 as #fff (used as white contrast color).
+  // Our component SCSSes use --surface-0/50/100/200/300 for backgrounds &
+  // borders, so we remap them to dark equivalents here.
+  --surface-0:   #1e2a38;
+  --surface-50:  #0f172a;
+  --surface-100: #162032;
+  --surface-200: rgba(255, 255, 255, 0.08);
+  --surface-300: rgba(255, 255, 255, 0.12);
+  --surface-400: rgba(255, 255, 255, 0.25);
+  --surface-500: rgba(255, 255, 255, 0.35);
+
+  // ─── PrimeNG text tokens (dark mode overrides) ───
+  --text-color: #f1f5f9;
+  --text-color-secondary: rgba(255, 255, 255, 0.6);
+
   // ─── Button semantic tokens (dark mode overrides) ───
   --btn-primary-bg: #3498db;
   --btn-primary-bg-hover: #2980b9;
@@ -352,8 +374,8 @@ body {
   font-family: var(--font-family), serif;
   font-weight: var(--font-weight-normal);
   line-height: 1.6;
-  color: var(--neutral-gray-900);
-  background-color: var(--white);
+  color: var(--text-color);
+  background-color: var(--bg-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
@@ -988,8 +1010,8 @@ body {
 // Angular's emulated encapsulation strips scoped attributes from the preview,
 // so card styles must live here to survive outside the component tree.
 .cdk-drag-preview.order-card {
-  background: #ffffff;
-  border: 1.5px solid #94a3b8;
+  background: var(--surface-0);
+  border: 1.5px solid var(--surface-300);
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
@@ -1013,7 +1035,7 @@ body {
     .card-company-name {
       font-size: 0.88rem;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-color);
       line-height: 1.3;
       flex: 1;
       min-width: 0;
@@ -1028,14 +1050,14 @@ body {
     align-items: center;
     gap: 0.35rem;
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-color-secondary);
 
-    i { font-size: 0.7rem; color: #94a3b8; }
+    i { font-size: 0.7rem; color: var(--surface-400); }
   }
 
   .card-divider {
     height: 1px;
-    background: #f1f5f9;
+    background: var(--surface-200);
     margin: 0.1rem 0;
   }
 
@@ -1048,20 +1070,20 @@ body {
       display: flex;
       align-items: center;
       gap: 0.2rem;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--surface-100);
+      border: 1px solid var(--surface-200);
       border-radius: 4px;
       padding: 0.12rem 0.38rem;
       font-size: 0.67rem;
-      color: #64748b;
+      color: var(--text-color-secondary);
       font-weight: 500;
 
       i { font-size: 0.62rem; }
 
       &.pill-urgent {
-        background: #fef2f2;
-        border-color: #fca5a5;
-        color: #dc2626;
+        background: var(--color-danger-bg);
+        border-color: var(--color-danger);
+        color: var(--color-danger-dark);
       }
     }
   }
@@ -1073,14 +1095,14 @@ body {
     .card-order-id {
       font-size: 0.67rem;
       font-weight: 500;
-      color: #94a3b8;
+      color: var(--surface-400);
     }
   }
 
   &.card-delivered-unpaid {
-    border-color: #f59e0b;
-    border-left: 3px solid #f59e0b;
-    background: #fffdf5;
+    border-color: var(--color-warning);
+    border-left: 3px solid var(--color-warning);
+    background: var(--color-warning-bg);
   }
 }
 
@@ -1470,5 +1492,255 @@ body.dark-mode {
     border: 1px solid var(--border-color) !important;
     .p-card-body { background: var(--bg-card) !important; }
   }
+
+  // ─── Legacy PrimeNG surface tokens (used by revenue + older components) ───
+  --surface-ground: var(--bg-app);
+  --surface-card:   var(--surface-0);
+  --surface-border: var(--surface-200);
+  --surface-hover:  var(--bg-hover);
+
+  // ─── PrimeNG DataTable — dark mode ───────────────────────────────────────
+  .p-datatable {
+    .p-datatable-header {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+    }
+
+    .p-datatable-thead > tr > th {
+      background: var(--bg-table-header) !important;
+      color: var(--text-on-accent) !important;
+      border-color: var(--surface-200) !important;
+    }
+
+    .p-datatable-tbody > tr {
+      background: var(--surface-0) !important;
+      color: var(--text-color) !important;
+
+      &:nth-child(even) {
+        background: var(--bg-table-row-alt) !important;
+      }
+
+      &:hover, &.clickable-row:hover {
+        background: var(--bg-table-row-hover) !important;
+      }
+
+      > td {
+        background: inherit !important;
+        border-color: var(--surface-200) !important;
+        color: var(--text-color) !important;
+      }
+
+      // Revenue payment-status tinting in dark mode — use rgba so text stays readable
+      &.pay-paid    > td { background: var(--color-success-bg) !important; }
+      &.pay-partial > td { background: var(--color-warning-bg) !important; }
+      &.pay-deposit > td { background: var(--color-info-bg)    !important; }
+      &.pay-not_paid > td { background: var(--color-danger-bg) !important; }
+      &.row-selected > td { background: var(--color-purple-bg) !important; }
+
+      // CRM row highlights
+      &.follow-up-today > td {
+        background: var(--color-warning-bg) !important;
+        border-left: 4px solid var(--color-warning) !important;
+      }
+      &.follow-up-overdue:not(.follow-up-today) > td {
+        border-left: 4px solid var(--color-danger) !important;
+      }
+
+      // Meetings row highlights
+      &.row-overdue > td { background: var(--color-danger-bg) !important; }
+      &.row-upcoming > td { background: var(--color-info-bg) !important; }
+    }
+
+    .p-datatable-tfoot > tr > td {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+    }
+
+    .p-paginator {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+
+      .p-paginator-page, .p-paginator-next, .p-paginator-prev,
+      .p-paginator-last, .p-paginator-first {
+        color: var(--text-color) !important;
+        &:hover { background: var(--bg-hover) !important; }
+        &.p-paginator-page-selected {
+          background: var(--accent-light) !important;
+          color: var(--accent) !important;
+          font-weight: 700;
+        }
+      }
+
+      // also target by aria for extra specificity
+      button[aria-current="page"] {
+        background: var(--accent-light) !important;
+        color: var(--accent) !important;
+        font-weight: 700;
+      }
+
+      .p-paginator-current { color: var(--text-color-secondary) !important; }
+    }
+  }
+
+  // ─── PrimeNG Textarea + InputText — dark mode ─────────────────────────────
+  .p-textarea,
+  textarea.p-inputtext,
+  .p-inputtextarea {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+
+    &::placeholder { color: var(--text-muted) !important; }
+    &:focus {
+      border-color: var(--input-border-focus) !important;
+      box-shadow: var(--input-shadow-focus) !important;
+    }
+  }
+
+  // Native textareas not using PrimeNG class
+  textarea {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+
+    &::placeholder { color: var(--text-muted) !important; }
+  }
+
+  // Native text inputs (search bars, date inputs in components)
+  input[type="text"],
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  input[type="date"] {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+
+    &::placeholder { color: var(--text-muted) !important; }
+  }
+
+  // ─── PrimeNG Tag / Chip — dark mode ──────────────────────────────────────
+  .p-tag {
+    // Tags that use severity-based coloring stay as-is (they use their own bg).
+    // Only override unstyled / custom tags.
+    &:not([class*="p-tag-"]) {
+      background: var(--bg-hover) !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  .p-chip {
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+
+    .p-chip-remove-icon { color: var(--text-secondary) !important; }
+  }
+
+  // ─── PrimeNG Accordion — dark mode ───────────────────────────────────────
+  .p-accordion {
+    .p-accordion-header {
+      .p-accordion-header-link {
+        background: var(--surface-0) !important;
+        border-color: var(--surface-200) !important;
+        color: var(--text-color) !important;
+      }
+      &:not(.p-disabled).p-highlight .p-accordion-header-link {
+        background: var(--surface-0) !important;
+        border-color: var(--surface-200) !important;
+        color: var(--text-color) !important;
+      }
+    }
+    .p-accordion-content {
+      background: var(--surface-0) !important;
+      border-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+    }
+  }
+
+  // ─── PrimeNG InputNumber — dark mode ─────────────────────────────────────
+  .p-inputnumber-input {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+  }
+
+  // ─── PrimeNG Datepicker — dark mode ──────────────────────────────────────
+  .p-datepicker-input {
+    background: var(--bg-input) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-primary) !important;
+  }
+
+  // ─── PrimeNG Datepicker panel/calendar popup — dark mode ─────────────────
+  .p-datepicker-panel,
+  .p-datepicker {
+    background: var(--surface-0) !important;
+    border-color: var(--surface-200) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+
+    .p-datepicker-header {
+      background: var(--surface-0) !important;
+      border-bottom-color: var(--surface-200) !important;
+      color: var(--text-color) !important;
+
+      .p-datepicker-title { color: var(--text-color) !important; }
+
+      .p-datepicker-prev, .p-datepicker-next {
+        color: var(--text-color) !important;
+        &:hover { background: var(--bg-hover) !important; }
+      }
+
+      button, select {
+        color: var(--text-color) !important;
+        background: transparent !important;
+        border-color: var(--surface-200) !important;
+      }
+    }
+
+    .p-datepicker-calendar-container {
+      background: var(--surface-0) !important;
+
+      table thead tr th {
+        color: var(--text-color-secondary) !important;
+        background: var(--surface-0) !important;
+      }
+
+      table tbody tr td {
+        > span, > a {
+          color: var(--text-color) !important;
+          background: transparent !important;
+
+          &:hover {
+            background: var(--bg-hover) !important;
+            color: var(--text-color) !important;
+          }
+
+          &.p-highlight {
+            background: var(--accent) !important;
+            color: #fff !important;
+          }
+
+          &.p-disabled { color: var(--text-muted) !important; }
+        }
+
+        &.p-datepicker-today > span,
+        &.p-datepicker-today > a {
+          background: var(--accent-light) !important;
+          color: var(--accent) !important;
+          font-weight: 700;
+        }
+      }
+    }
+
+    .p-datepicker-footer {
+      background: var(--surface-0) !important;
+      border-top-color: var(--surface-200) !important;
+    }
+  }
+
 }
 
