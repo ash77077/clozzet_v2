@@ -65,6 +65,10 @@
     <a routerLink="/manager-kpi" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
       <i class="pi pi-chart-bar"></i><span>{{ 'secondaryNav.managerKpi' | translate }}</span>
     </a>
+    <div class="drawer-divider"></div>
+    <a routerLink="/settings" class="drawer-nav-item" routerLinkActive="active" (click)="closeDrawer()">
+      <i class="pi pi-cog"></i><span>Կարգավորումներ</span>
+    </a>
   </nav>
 
   <!-- Manager Nav -->
@@ -237,47 +241,6 @@
             {{ 'secondaryNav.dashboard' | translate }}
           </button>
 
-          <!-- Other Section (Admin only) -->
-          <ng-container *ngIf="isAdmin()">
-            <div class="user-dropdown-divider"></div>
-            <div class="user-dropdown-section">
-              <button class="user-dropdown-section-title dropdown-toggle" (click)="toggleOtherSection($event)">
-                <i class="pi pi-th-large"></i>
-                {{ 'secondaryNav.other' | translate }}
-                <i class="pi pi-chevron-down chevron-icon" [class.rotated]="showOtherSection"></i>
-              </button>
-              <div class="user-dropdown-subsection" [class.expanded]="showOtherSection">
-                <button class="user-dropdown-item sub-item" routerLink="/product-management" (click)="showUserMenu = false">
-                  <i class="pi pi-box"></i>
-                  {{ 'secondaryNav.products' | translate }}
-                </button>
-                <button class="user-dropdown-item sub-item" routerLink="/retail-sales" (click)="showUserMenu = false">
-                  <i class="pi pi-shopping-bag"></i>
-                  {{ 'secondaryNav.retailSales' | translate }}
-                </button>
-                <button class="user-dropdown-item sub-item" routerLink="/expo-sales" (click)="showUserMenu = false">
-                  <i class="pi pi-shop"></i>
-                  {{ 'secondaryNav.expoSales' | translate }}
-                </button>
-                <button class="user-dropdown-item sub-item" routerLink="/users" (click)="showUserMenu = false">
-                  <i class="pi pi-users"></i>
-                  {{ 'secondaryNav.users' | translate }}
-                </button>
-                <button class="user-dropdown-item sub-item" routerLink="/companies" (click)="showUserMenu = false">
-                  <i class="pi pi-building"></i>
-                  {{ 'secondaryNav.companies' | translate }}
-                </button>
-                <button class="user-dropdown-item sub-item" routerLink="/employees" (click)="showUserMenu = false">
-                  <i class="pi pi-id-card"></i>
-                  {{ 'secondaryNav.employees' | translate }}
-                </button>
-                <button class="user-dropdown-item sub-item" routerLink="/manager-kpi" (click)="showUserMenu = false">
-                  <i class="pi pi-chart-bar"></i>
-                  {{ 'secondaryNav.managerKpi' | translate }}
-                </button>
-              </div>
-            </div>
-          </ng-container>
 
           <div class="user-dropdown-divider"></div>
           <!-- Dark Mode Toggle -->

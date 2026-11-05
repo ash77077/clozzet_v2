@@ -193,6 +193,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/manager-kpi/manager-kpi.component').then(m => m.ManagerKpiComponent),
     canActivate: [AdminGuard]
   },
+  {
+    path: 'settings',
+    loadComponent: () => import('./pages/settings/settings.component').then(m => m.SettingsComponent),
+    canActivate: [AdminGuard],
+    data: { seo: { noIndex: true } }
+  },
 
   // ── 404 — must be last ────────────────────────────────────────────────────
   {

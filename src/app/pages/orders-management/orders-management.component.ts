@@ -10,6 +10,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -30,6 +31,10 @@ import { OrderStatus, UserRole, ProductDetails } from '../../models/dashboard.mo
 import { PriorityBadgeComponent } from '../../shared/components/priority-badge/priority-badge.component';
 import { OrderPrintTemplateComponent } from '../../shared/components/order-print-template/order-print-template.component';
 import { NotificationService } from '../../services/notification.service';
+import { ClothTypesService, ClothType } from '../../services/cloth-types.service';
+import { FabricTypesService, FabricType } from '../../services/fabric-types.service';
+import { FabricColorsService, FabricColor } from '../../services/fabric-colors.service';
+import { ConsumptionTemplatesService, ConsumptionTemplate } from '../../services/consumption-templates.service';
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -51,15 +56,6 @@ export interface ActivityItem {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_CLOTH_TYPES = [
-  'T-Shirt', 'Polo', 'Hoodie', 'Sweatshirt', 'Cap', 'Jacket',
-  'Tote Bag', 'Apron', 'Long Sleeve', 'Tank Top', 'Vest', 'Other'
-];
-
-const DEFAULT_TEXTILE_TYPES = [
-  'Cotton', 'Polyester', 'Cotton/Polyester Blend', 'Fleece',
-  'Jersey', 'Pique', 'French Terry', 'Canvas', 'Nylon', 'Other'
-];
 
 const DESIGN_METHODS = [
   'Ասեղնագործություն',
@@ -83,6 +79,7 @@ const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
     InputTextModule,
     InputNumberModule,
     SelectModule,
+    MultiSelectModule,
     TagModule,
     DialogModule,
     ConfirmDialogModule,
@@ -247,27 +244,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.newCustomSizeLabel[productIndex] = '';
   }
 
-  confirmAddClothType(productIndex: number): void {
-    const label = (this.newClothTypeLabel[productIndex] || '').trim();
-    if (!label) return;
-    if (!this.clothTypes.includes(label)) {
-      this.clothTypes = [...this.clothTypes, label];
-    }
-    this.products.at(productIndex).patchValue({ clothType: label });
-    this.showAddClothType[productIndex] = false;
-    this.newClothTypeLabel[productIndex] = '';
-  }
-
-  confirmAddTextileType(productIndex: number): void {
-    const label = (this.newTextileTypeLabel[productIndex] || '').trim();
-    if (!label) return;
-    if (!this.textileTypes.includes(label)) {
-      this.textileTypes = [...this.textileTypes, label];
-    }
-    this.products.at(productIndex).patchValue({ textileType: label });
-    this.showAddTextileType[productIndex] = false;
-    this.newTextileTypeLabel[productIndex] = '';
-  }
 
   removeCustomSize(productIndex: number, key: string): void {
     this.customSizeKeys[productIndex] = this.customSizeKeys[productIndex].filter(s => s.key !== key);
@@ -356,8 +332,13 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // ─── Constants ─────────────────────────────────────────────────────────────
   OrderStatus = OrderStatus;
   UserRole = UserRole;
-  clothTypes: string[] = [...DEFAULT_CLOTH_TYPES];
-  textileTypes: string[] = [...DEFAULT_TEXTILE_TYPES];
+  clothTypes: ClothType[] = [];
+  fabricTypes: FabricType[] = [];
+  allTemplates: ConsumptionTemplate[] = [];
+  // per-product index: fabric types available for the selected cloth type
+  fabricTypesForProduct: FabricType[][] = [];
+  // per-product index: fabric colors available for the selected fabric type
+  fabricColorsForProduct: FabricColor[][] = [];
   designMethods = DESIGN_METHODS;
 
   readonly EXPENSE_UNITS = [
@@ -390,11 +371,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     return Array.from(set).sort();
   }
 
-  // State for inline "add new type" inputs per product
-  showAddClothType: boolean[] = [false];
-  newClothTypeLabel: string[] = [''];
-  showAddTextileType: boolean[] = [false];
-  newTextileTypeLabel: string[] = [''];
 
   availableStatuses = [
     { value: '', label: 'All Statuses' },
@@ -443,13 +419,18 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private notificationService: NotificationService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private clothTypesService: ClothTypesService,
+    private fabricTypesService: FabricTypesService,
+    private fabricColorsService: FabricColorsService,
+    private consumptionTemplatesService: ConsumptionTemplatesService,
   ) {}
 
   ngOnInit(): void {
     this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => {
       this.currentUser = user;
     });
+    this.loadClothAndFabricTypes();
     this.loadOrders();
     this.initForm();
     this.initCreateCustomerForm();
@@ -679,7 +660,7 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       designMethod:        [''],
       colors:              [''],
       customColorDetails:  [''],
-      logoPosition:        [''],
+      logoPosition:        ['Ձախ կրծքին'],
       logoSize:            [''],
       comments:            [''],
       costPricePerUnit:             [null],
@@ -719,10 +700,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys.push([]);
     this.showAddCustomSize.push(false);
     this.newCustomSizeLabel.push('');
-    this.showAddClothType.push(false);
-    this.newClothTypeLabel.push('');
-    this.showAddTextileType.push(false);
-    this.newTextileTypeLabel.push('');
+    this.fabricTypesForProduct.push([...this.fabricTypes]);
+    this.fabricColorsForProduct.push([]);
     this.sizeCategory.push('adult');
   }
 
@@ -733,10 +712,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.customSizeKeys.splice(index, 1);
       this.showAddCustomSize.splice(index, 1);
       this.newCustomSizeLabel.splice(index, 1);
-      this.showAddClothType.splice(index, 1);
-      this.newClothTypeLabel.splice(index, 1);
-      this.showAddTextileType.splice(index, 1);
-      this.newTextileTypeLabel.splice(index, 1);
+      this.fabricTypesForProduct.splice(index, 1);
+      this.fabricColorsForProduct.splice(index, 1);
       this.sizeCategory.splice(index, 1);
     }
   }
@@ -1075,10 +1052,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys = [[]];
     this.showAddCustomSize = [false];
     this.newCustomSizeLabel = [''];
-    this.showAddClothType = [false];
-    this.newClothTypeLabel = [''];
-    this.showAddTextileType = [false];
-    this.newTextileTypeLabel = [''];
+    this.fabricTypesForProduct = [[...this.fabricTypes]];
+    this.fabricColorsForProduct = [[]];
     this.sizeCategory = ['adult'];
 
     this.showAddOrderDialog = true;
@@ -1095,10 +1070,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys = [[]];
     this.showAddCustomSize = [false];
     this.newCustomSizeLabel = [''];
-    this.showAddClothType = [false];
-    this.newClothTypeLabel = [''];
-    this.showAddTextileType = [false];
-    this.newTextileTypeLabel = [''];
+    this.fabricTypesForProduct = [[...this.fabricTypes]];
+    this.fabricColorsForProduct = [[]];
     this.sizeCategory = ['adult'];
   }
 
@@ -1371,8 +1344,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
   // Get user-friendly field label
   private getFieldLabel(fieldName: string): string {
     const labels: { [key: string]: string } = {
-      clothType: 'Cloth Type',
-      textileType: 'Textile Type',
+      clothType: 'Հագուստի տեսակ',
+      textileType: 'Գործվածքի տեսակ',
       designMethod: 'Design Method',
       colors: 'Colors',
       logoPosition: 'Logo Position',
@@ -1452,7 +1425,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       paymentStatus: v.paymentStatus || 'not_paid',
       paidAmount: v.paidAmount || undefined,
       expectedRevenue: v.expectedRevenue || undefined,
-      products: v.products || [],
+      products: (v.products || []).map((p: any) => ({
+        ...p,
+        colors: Array.isArray(p.colors) ? p.colors.join(', ') : (p.colors || ''),
+      })),
       quantity: this.calculateGrandTotal(),
       referenceImages: fileUrls.length > 0 ? fileUrls : undefined,
     };
@@ -1469,6 +1445,66 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create order. Please try again.' });
       },
     });
+  }
+
+  // ─── Load cloth & fabric types from Settings ───────────────────────────────
+
+  private loadClothAndFabricTypes(): void {
+    this.clothTypesService.getActive().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (types) => { this.clothTypes = types; },
+      error: () => {}
+    });
+    this.fabricTypesService.getActive().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (types) => { this.fabricTypes = types; },
+      error: () => {}
+    });
+    this.consumptionTemplatesService.getAll().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (templates) => { this.allTemplates = templates; },
+      error: () => {}
+    });
+  }
+
+  // Returns fabric types linked to a given cloth type name via consumption templates
+  getFabricTypesForCloth(clothTypeName: string): FabricType[] {
+    if (!clothTypeName) return this.fabricTypes;
+    const cloth = this.clothTypes.find(c => c.nameArm === clothTypeName);
+    if (!cloth) return this.fabricTypes;
+    const linkedFabricIds = new Set(
+      this.allTemplates
+        .filter(t => t.clothTypeId === cloth._id)
+        .map(t => t.fabricTypeId)
+    );
+    if (linkedFabricIds.size === 0) return this.fabricTypes;
+    return this.fabricTypes.filter(f => linkedFabricIds.has(f._id));
+  }
+
+  onClothTypeChange(productIndex: number): void {
+    const clothTypeName = this.products.at(productIndex).get('clothType')?.value;
+    this.fabricTypesForProduct[productIndex] = this.getFabricTypesForCloth(clothTypeName);
+    // Clear fabric and color selections since cloth type changed
+    this.products.at(productIndex).patchValue({ textileType: '', colors: [] });
+    this.fabricColorsForProduct[productIndex] = [];
+  }
+
+  onFabricTypeChange(productIndex: number): void {
+    const fabricName = this.products.at(productIndex).get('textileType')?.value;
+    this.products.at(productIndex).patchValue({ colors: [] });
+    this.fabricColorsForProduct[productIndex] = [];
+    if (!fabricName) return;
+    const fabric = this.fabricTypes.find(f => f.nameArm === fabricName);
+    if (!fabric) return;
+    this.fabricColorsService.getByFabric(fabric._id).pipe(take(1)).subscribe({
+      next: (colors) => { this.fabricColorsForProduct[productIndex] = colors; },
+      error: () => { this.fabricColorsForProduct[productIndex] = []; }
+    });
+  }
+
+  getFabricOptionsForProduct(productIndex: number): FabricType[] {
+    return this.fabricTypesForProduct[productIndex] ?? this.fabricTypes;
+  }
+
+  getColorOptionsForProduct(productIndex: number): FabricColor[] {
+    return this.fabricColorsForProduct[productIndex] ?? [];
   }
 
   // ─── Load & filter ─────────────────────────────────────────────────────────
@@ -1944,10 +1980,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
     this.customSizeKeys = [];
     this.showAddCustomSize = [];
     this.newCustomSizeLabel = [];
-    this.showAddClothType = [];
-    this.newClothTypeLabel = [];
-    this.showAddTextileType = [];
-    this.newTextileTypeLabel = [];
+    this.fabricTypesForProduct = [];
+    this.fabricColorsForProduct = [];
     this.sizeCategory = [];
 
     const knownSizeKeys = new Set([
@@ -1966,10 +2000,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         if (product.clothType && !this.clothTypes.includes(product.clothType)) {
           this.clothTypes = [...this.clothTypes, product.clothType];
         }
-        if (product.textileType && !this.textileTypes.includes(product.textileType)) {
-          this.textileTypes = [...this.textileTypes, product.textileType];
-        }
-
         // Restore custom sizes on the sizes group BEFORE patching values
         const sizesGroup = productGroup.get('sizes') as FormGroup;
         const customKeys: { label: string; key: string }[] = [];
@@ -1995,10 +2025,9 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         //   FormControl before receiving its initial value.
         this.showAddCustomSize.push(false);
         this.newCustomSizeLabel.push('');
-        this.showAddClothType.push(false);
-        this.newClothTypeLabel.push('');
-        this.showAddTextileType.push(false);
-        this.newTextileTypeLabel.push('');
+        this.fabricTypesForProduct.push(this.getFabricTypesForCloth(product.clothType || ''));
+        this.fabricColorsForProduct.push([]);
+        const editProductIdx = this.fabricColorsForProduct.length - 1;
         this.products.push(productGroup);
 
         // If the order only had the legacy sellingPricePerUnit (no split adult/children),
@@ -2007,11 +2036,16 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
         const adultPrice    = product.adultSellingPricePerUnit ?? (legacyPrice != null ? legacyPrice : null);
         const childrenPrice = product.childrenSellingPricePerUnit ?? null;
 
+        // Normalize saved colors to array (legacy orders stored as string)
+        const savedColors: string[] = Array.isArray(product.colors)
+          ? product.colors
+          : (product.colors ? (product.colors as string).split(',').map((c: string) => c.trim()).filter(Boolean) : []);
+
         productGroup.patchValue({
           clothType:                    product.clothType || '',
           textileType:                  product.textileType || '',
           designMethod:                 product.designMethod || '',
-          colors:                       product.colors || '',
+          colors:                       savedColors,
           customColorDetails:           product.customColorDetails || '',
           logoPosition:                 product.logoPosition || '',
           logoSize:                     product.logoSize || '',
@@ -2048,6 +2082,22 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
           });
         }
 
+        // Load fabric colors for the existing fabric selection
+        const editFabric = this.fabricTypes.find(f => f.nameArm === product.textileType);
+        if (editFabric) {
+          this.fabricColorsService.getByFabric(editFabric._id).pipe(take(1)).subscribe({
+            next: (colors) => {
+              this.fabricColorsForProduct[editProductIdx] = colors;
+              // Re-patch colors after options loaded so multiselect can match them
+              const colorsCtrl = productGroup.get('colors');
+              if (colorsCtrl && savedColors.length) {
+                colorsCtrl.patchValue(savedColors);
+              }
+            },
+            error: () => {}
+          });
+        }
+
         // Auto-select the tab that has data: children-only → 'children', otherwise 'adult'
         const hasSizeValue = (sizes: any, keys: string[]) =>
           !!sizes && keys.some(k => {
@@ -2063,9 +2113,6 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       // Legacy single product order - convert to products array format
       if (o.clothType && !this.clothTypes.includes(o.clothType)) {
         this.clothTypes = [...this.clothTypes, o.clothType];
-      }
-      if (o.textileType && !this.textileTypes.includes(o.textileType)) {
-        this.textileTypes = [...this.textileTypes, o.textileType];
       }
       const productGroup = this.createProductGroup();
       this.products.push(productGroup);
@@ -2084,10 +2131,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.customSizeKeys.push([]);
       this.showAddCustomSize.push(false);
       this.newCustomSizeLabel.push('');
-      this.showAddClothType.push(false);
-      this.newClothTypeLabel.push('');
-      this.showAddTextileType.push(false);
-      this.newTextileTypeLabel.push('');
+      this.fabricTypesForProduct.push(this.getFabricTypesForCloth(''));
+      this.fabricColorsForProduct.push([]);
       this.sizeCategory.push('adult');
     } else {
       // No products at all — provide one empty product
@@ -2095,10 +2140,8 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       this.customSizeKeys.push([]);
       this.showAddCustomSize.push(false);
       this.newCustomSizeLabel.push('');
-      this.showAddClothType.push(false);
-      this.newClothTypeLabel.push('');
-      this.showAddTextileType.push(false);
-      this.newTextileTypeLabel.push('');
+      this.fabricTypesForProduct.push([...this.fabricTypes]);
+      this.fabricColorsForProduct.push([]);
       this.sizeCategory.push('adult');
     }
 
@@ -2243,7 +2286,10 @@ export class OrdersManagementComponent implements OnInit, OnDestroy {
       paymentStatus:        formValue.paymentStatus || 'not_paid',
       paidAmount:           formValue.paidAmount || undefined,
       expectedRevenue:      formValue.expectedRevenue || undefined,
-      products:             formValue.products,
+      products:             (formValue.products || []).map((p: any) => ({
+        ...p,
+        colors: Array.isArray(p.colors) ? p.colors.join(', ') : (p.colors || ''),
+      })),
       quantity:             this.calculateGrandTotal(),
     };
 

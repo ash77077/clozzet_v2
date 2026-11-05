@@ -582,11 +582,11 @@
 
                   <div class="product-details-grid">
                     <div class="product-detail-row">
-                      <span class="pdk">Cloth Type</span>
+                      <span class="pdk">Հագուստի տեսակ</span>
                       <span class="pdv">{{ product.clothType }}</span>
                     </div>
                     <div class="product-detail-row" *ngIf="product.textileType">
-                      <span class="pdk">Textile</span>
+                      <span class="pdk">Գործվածք</span>
                       <span class="pdv">{{ product.textileType }}</span>
                     </div>
                     <div class="product-detail-row" *ngIf="product.designMethod">
@@ -668,11 +668,11 @@
               <h4 class="jira-section-label"><i class="pi pi-box"></i> Product Details</h4>
               <div class="detail-grid">
                 <div class="detail-row" *ngIf="selectedOrder.clothType">
-                  <span class="dk">Cloth Type</span>
+                  <span class="dk">Հագուստի տեսակ</span>
                   <span class="dv">{{ selectedOrder.clothType }}</span>
                 </div>
                 <div class="detail-row" *ngIf="selectedOrder.textileType">
-                  <span class="dk">Textile</span>
+                  <span class="dk">Գործվածք</span>
                   <span class="dv">{{ selectedOrder.textileType }}</span>
                 </div>
                 <div class="detail-row" *ngIf="selectedOrder.designMethod || selectedOrder.printingMethod">
@@ -1188,36 +1188,26 @@
           <!-- Product Details -->
           <div class="form-grid">
             <div class="form-field">
-              <label class="field-label required">Cloth Type</label>
-              <div class="select-with-add" *ngIf="!showAddClothType[i]">
-                <p-select formControlName="clothType" [options]="clothTypes" placeholder="Select cloth type" styleClass="full-width" appendTo="body" [class.ng-invalid]="isProductFieldInvalid(i, 'clothType')"></p-select>
-                <button type="button" class="btn-add-type" (click)="showAddClothType[i] = true; newClothTypeLabel[i] = ''" pTooltip="Add new cloth type">
-                  <i class="pi pi-plus"></i>
-                </button>
-              </div>
-              <div class="inline-add-type" *ngIf="showAddClothType[i]">
-                <input type="text" class="add-type-input" [(ngModel)]="newClothTypeLabel[i]" [ngModelOptions]="{standalone: true}"
-                  placeholder="New cloth type name" (keydown.enter)="confirmAddClothType(i)" (keydown.escape)="showAddClothType[i] = false" autofocus />
-                <button type="button" class="btn-confirm-type" (click)="confirmAddClothType(i)" [disabled]="!newClothTypeLabel[i]?.trim()"><i class="pi pi-check"></i></button>
-                <button type="button" class="btn-cancel-type" (click)="showAddClothType[i] = false"><i class="pi pi-times"></i></button>
-              </div>
+              <label class="field-label required">Հագուստի տեսակ</label>
+              <p-select formControlName="clothType"
+                [options]="clothTypes" optionLabel="nameArm" optionValue="nameArm"
+                placeholder="Ընտրեք տեսակ" styleClass="full-width" appendTo="body"
+                [filter]="true" filterBy="nameArm"
+                (onChange)="onClothTypeChange(i)"
+                [class.ng-invalid]="isProductFieldInvalid(i, 'clothType')">
+              </p-select>
               <span class="field-error" *ngIf="isProductFieldInvalid(i, 'clothType')">{{ getProductFieldError(i, 'clothType') }}</span>
             </div>
 
             <div class="form-field">
-              <label class="field-label required">Textile Type</label>
-              <div class="select-with-add" *ngIf="!showAddTextileType[i]">
-                <p-select formControlName="textileType" [options]="textileTypes" placeholder="Select textile" styleClass="full-width" appendTo="body" [class.ng-invalid]="isProductFieldInvalid(i, 'textileType')"></p-select>
-                <button type="button" class="btn-add-type" (click)="showAddTextileType[i] = true; newTextileTypeLabel[i] = ''" pTooltip="Add new textile type">
-                  <i class="pi pi-plus"></i>
-                </button>
-              </div>
-              <div class="inline-add-type" *ngIf="showAddTextileType[i]">
-                <input type="text" class="add-type-input" [(ngModel)]="newTextileTypeLabel[i]" [ngModelOptions]="{standalone: true}"
-                  placeholder="New textile type name" (keydown.enter)="confirmAddTextileType(i)" (keydown.escape)="showAddTextileType[i] = false" autofocus />
-                <button type="button" class="btn-confirm-type" (click)="confirmAddTextileType(i)" [disabled]="!newTextileTypeLabel[i]?.trim()"><i class="pi pi-check"></i></button>
-                <button type="button" class="btn-cancel-type" (click)="showAddTextileType[i] = false"><i class="pi pi-times"></i></button>
-              </div>
+              <label class="field-label required">Գործվածքի տեսակ</label>
+              <p-select formControlName="textileType"
+                [options]="getFabricOptionsForProduct(i)" optionLabel="nameArm" optionValue="nameArm"
+                placeholder="Ընտրեք գործվածք" styleClass="full-width" appendTo="body"
+                [filter]="true" filterBy="nameArm"
+                [class.ng-invalid]="isProductFieldInvalid(i, 'textileType')"
+                (onChange)="onFabricTypeChange(i)">
+              </p-select>
               <span class="field-error" *ngIf="isProductFieldInvalid(i, 'textileType')">{{ getProductFieldError(i, 'textileType') }}</span>
             </div>
 
@@ -1227,8 +1217,13 @@
             </div>
 
             <div class="form-field">
-              <label class="field-label">Colors</label>
-              <input pInputText formControlName="colors" placeholder="e.g. Black, White, Navy" class="full-width" />
+              <label class="field-label">Գույն</label>
+              <p-multiselect formControlName="colors"
+                [options]="getColorOptionsForProduct(i)" optionLabel="nameArm" optionValue="nameArm"
+                placeholder="Ընտրեք գույներ" styleClass="full-width" appendTo="body"
+                [filter]="true" filterBy="nameArm"
+                [emptyMessage]="getColorOptionsForProduct(i).length === 0 ? 'Նախ ընտրեք գործվածք' : 'Գույն չի գտնվել'">
+              </p-multiselect>
             </div>
 
             <div class="form-field">

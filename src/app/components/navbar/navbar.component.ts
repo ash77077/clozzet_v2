@@ -207,6 +207,12 @@ export class NavbarComponent implements OnInit {
     this.router.navigate(['/meetings']);
   }
 
+  openSettings() {
+    this.closeMobileMenu();
+    this.showUserMenu = false;
+    this.router.navigate(['/settings']);
+  }
+
   isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
   }

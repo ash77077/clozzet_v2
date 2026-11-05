@@ -1,0 +1,1124 @@
+<div class="settings-root">
+  <p-toast />
+  <p-confirmDialog />
+
+  <!-- ─── Top Bar ────────────────────────────────────────────────────────── -->
+  <header class="settings-topbar">
+    <h1 class="settings-title">
+      <i class="pi pi-cog"></i>
+      Կարգավորումներ
+    </h1>
+
+    <nav class="view-tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="view === 'cloth'"
+        [attr.aria-selected]="view === 'cloth'"
+        (click)="view = 'cloth'">
+        <i class="pi pi-tag"></i>
+        <span>Հագ. ձևեր</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="view === 'fabrics'"
+        [attr.aria-selected]="view === 'fabrics'"
+        (click)="view = 'fabrics'">
+        <i class="pi pi-palette"></i>
+        <span>Գործ.</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="view === 'suppliers'"
+        [attr.aria-selected]="view === 'suppliers'"
+        (click)="view = 'suppliers'">
+        <i class="pi pi-truck"></i>
+        <span>Մատ.</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="view === 'global'"
+        [attr.aria-selected]="view === 'global'"
+        (click)="view = 'global'">
+        <i class="pi pi-sliders-h"></i>
+        <span>Ընդ.</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ─── Loading ────────────────────────────────────────────────────────── -->
+  @if (isLoading) {
+    <div class="loading-wrap">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Բեռնում...</span>
+    </div>
+  }
+
+  <!-- ═══════════════ VIEW: CLOTH TYPES (master-detail) ═══════════════ -->
+  @if (!isLoading && view === 'cloth') {
+    <div class="cloth-layout">
+
+      <!-- ─── Sidebar: cloth type list + inline add ──────────────────── -->
+      <aside class="cloth-sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-label">ՀԱԳՈՒՍՏԻ ՏԵՍԱԿՆԵՐ</span>
+          <span class="sidebar-count">{{ clothTypes.length }}</span>
+        </div>
+
+        <ul class="cloth-list" role="listbox">
+          @for (ct of clothTypes; track ct._id) {
+            <li
+              class="cloth-list-item"
+              role="option"
+              [class.selected]="selectedClothType?._id === ct._id"
+              [class.inactive]="!ct.isActive"
+              [attr.aria-selected]="selectedClothType?._id === ct._id"
+              (click)="selectClothType(ct)">
+              <span class="list-indicator"></span>
+              <div class="list-main">
+                <span class="list-name">{{ ct.nameArm }}</span>
+                <span class="list-sub">{{ ct.nameEng }}</span>
+              </div>
+              @if (!ct.isActive) {
+                <span class="list-badge">off</span>
+              }
+              <button
+                type="button"
+                class="list-delete"
+                pTooltip="Ջնջել"
+                tooltipPosition="left"
+                (click)="deleteCloth(ct, $event)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </li>
+          }
+
+          @if (clothTypes.length === 0 && !addingCloth) {
+            <li class="empty-list">Դեռ ավելացված չէ</li>
+          }
+
+          @if (addingCloth) {
+            <li class="cloth-list-item adding">
+              <div class="list-main inline-add">
+                <input
+                  pInputText
+                  type="text"
+                  class="p-inputtext-sm"
+                  placeholder="Հայ. անուն"
+                  [(ngModel)]="newClothRow.nameArm"
+                  [disabled]="newClothRow.saving"
+                  (keydown.enter)="saveNewCloth()" />
+                <input
+                  pInputText
+                  type="text"
+                  class="p-inputtext-sm"
+                  placeholder="Eg. T-shirt"
+                  [(ngModel)]="newClothRow.nameEng"
+                  [disabled]="newClothRow.saving"
+                  (keydown.enter)="saveNewCloth()"
+                  (keydown.escape)="cancelAddCloth()" />
+              </div>
+              <div class="inline-actions">
+                <button
+                  type="button"
+                  class="icon-btn save"
+                  pTooltip="Պահել"
+                  [disabled]="newClothRow.saving"
+                  (click)="saveNewCloth()">
+                  @if (newClothRow.saving) {
+                    <i class="pi pi-spin pi-spinner"></i>
+                  } @else {
+                    <i class="pi pi-check"></i>
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn cancel"
+                  pTooltip="Չեղարկել"
+                  [disabled]="newClothRow.saving"
+                  (click)="cancelAddCloth()">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+
+        <div class="sidebar-footer">
+          @if (!addingCloth) {
+            <button
+              type="button"
+              class="sidebar-add-btn"
+              (click)="startAddCloth()">
+              <i class="pi pi-plus"></i>
+              <span>Ավ. հագուստ</span>
+            </button>
+          }
+        </div>
+      </aside>
+
+      <!-- ─── Detail: selected cloth type ──────────────────────────────── -->
+      <main class="cloth-detail">
+        @if (!selectedClothType) {
+          <div class="empty-detail">
+            <i class="pi pi-arrow-left"></i>
+            <p>Ընտրեք հագուստի տեսակ կամ ավելացրեք նոր</p>
+          </div>
+        } @else {
+          <!-- Basic info card -->
+          <section class="section-block" [formGroup]="clothInfoForm">
+            <div class="section-header">
+              <div class="section-title">
+                <i class="pi pi-info-circle"></i>
+                <span>ՀԻՄՆԱԿԱՆ ՏՎՅԱԼՆԵՐ</span>
+              </div>
+              @if (clothInfoForm.dirty) {
+                <button
+                  type="button"
+                  class="save-inline-btn"
+                  [disabled]="clothInfoForm.invalid"
+                  (click)="saveClothInfo()">
+                  <i class="pi pi-save"></i>
+                  <span>Պահել</span>
+                </button>
+              }
+            </div>
+
+            <div class="info-grid">
+              <div class="field">
+                <label>Հայ. անուն<span class="required">*</span></label>
+                <input
+                  pInputText
+                  type="text"
+                  formControlName="nameArm"
+                  placeholder="Ֆուտբոլկա" />
+              </div>
+
+              <div class="field">
+                <label>Անգ. անուն<span class="required">*</span></label>
+                <input
+                  pInputText
+                  type="text"
+                  formControlName="nameEng"
+                  placeholder="T-Shirt" />
+              </div>
+
+              <div class="field">
+                <label>Waste %</label>
+                <p-inputNumber
+                  formControlName="defaultWastePercent"
+                  [min]="0"
+                  [max]="100"
+                  [showButtons]="false"
+                  suffix=" %"
+                  placeholder="5" />
+              </div>
+
+              <div class="field toggle-field">
+                <label>Ակտիվ</label>
+                <p-toggleswitch formControlName="isActive" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Fabric norms card -->
+          <section class="section-block">
+            <div class="section-header">
+              <div class="section-title">
+                <i class="pi pi-th-large"></i>
+                <span>ԳՈՐԾՎԱԾՔԻ ՆՈՐՄ</span>
+              </div>
+              @if (!addingFabricNorm) {
+                <button
+                  type="button"
+                  class="section-add-btn"
+                  (click)="addFabricNormRow()">
+                  <i class="pi pi-plus"></i>
+                  <span>Ավ. գործ. նորմ</span>
+                </button>
+              }
+            </div>
+
+            <div class="inline-table-wrap">
+              <table class="inline-table fabric-norm-table">
+                <thead>
+                  <tr>
+                    <th>Գործվածք</th>
+                    <th class="num">Մեծահասակ</th>
+                    <th class="num">Երեխա</th>
+                    <th class="center">Def</th>
+                    <th class="center">Ակտ.</th>
+                    <th class="actions-col"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (isLoadingFabricNorms) {
+                    <tr><td colspan="6" class="loading-cell"><i class="pi pi-spin pi-spinner"></i></td></tr>
+                  }
+
+                  @for (row of fabricNormRows; track row.template?._id ?? $index) {
+                    <tr
+                      [class.editing-row]="row.editing"
+                      [class.inactive-row]="!row.isActive && !row.editing">
+
+                      @if (!row.editing) {
+                        <!-- Display mode -->
+                        <td>
+                          <span class="fabric-name">{{ row.template?.fabricTypeName }}</span>
+                        </td>
+                        <td class="num">
+                          @if (row.adultNorm != null) {
+                            {{ row.adultNorm }} {{ getFabricNormUnitLabel(row) }}
+                          } @else {
+                            <span class="muted">—</span>
+                          }
+                        </td>
+                        <td class="num">
+                          @if (row.childNorm != null) {
+                            {{ row.childNorm }} {{ getFabricNormUnitLabel(row) }}
+                          } @else {
+                            <span class="muted">—</span>
+                          }
+                        </td>
+                        <td class="center">
+                          @if (row.isDefault) {
+                            <i class="pi pi-check-circle check-icon"></i>
+                          } @else {
+                            <span class="muted">—</span>
+                          }
+                        </td>
+                        <td class="center">
+                          <span class="dot" [class.on]="row.isActive"></span>
+                        </td>
+                        <td class="actions-col">
+                          <button
+                            type="button"
+                            class="icon-btn"
+                            pTooltip="Խմբագրել"
+                            (click)="editFabricNormRow(row)">
+                            <i class="pi pi-pencil"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-btn danger"
+                            pTooltip="Ջնջել"
+                            (click)="deleteFabricNorm(row)">
+                            <i class="pi pi-trash"></i>
+                          </button>
+                        </td>
+                      } @else {
+                        <!-- Edit mode -->
+                        <td>
+                          <p-select
+                            [options]="fabricTypes"
+                            [(ngModel)]="row.fabricTypeId"
+                            optionLabel="nameArm"
+                            optionValue="_id"
+                            placeholder="Ընտրել"
+                            appendTo="body"
+                            [filter]="true"
+                            filterBy="nameArm,nameEng"
+                            [style]="{ width: '100%' }" />
+                        </td>
+                        <td class="num">
+                          <p-inputNumber
+                            [(ngModel)]="row.adultNorm"
+                            [min]="0"
+                            [maxFractionDigits]="3"
+                            [showButtons]="false"
+                            [inputStyle]="{ width: '100%', textAlign: 'right' }"
+                            [suffix]="' ' + getFabricNormUnitLabel(row)" />
+                        </td>
+                        <td class="num">
+                          <p-inputNumber
+                            [(ngModel)]="row.childNorm"
+                            [min]="0"
+                            [maxFractionDigits]="3"
+                            [showButtons]="false"
+                            [inputStyle]="{ width: '100%', textAlign: 'right' }"
+                            [suffix]="' ' + getFabricNormUnitLabel(row)" />
+                        </td>
+                        <td class="center">
+                          <p-toggleswitch [(ngModel)]="row.isDefault" />
+                        </td>
+                        <td class="center">
+                          <p-toggleswitch [(ngModel)]="row.isActive" />
+                        </td>
+                        <td class="actions-col">
+                          <button
+                            type="button"
+                            class="icon-btn save"
+                            pTooltip="Պահել"
+                            [disabled]="row.saving"
+                            (click)="saveFabricNormRow(row)">
+                            @if (row.saving) {
+                              <i class="pi pi-spin pi-spinner"></i>
+                            } @else {
+                              <i class="pi pi-check"></i>
+                            }
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-btn cancel"
+                            pTooltip="Չեղարկել"
+                            [disabled]="row.saving"
+                            (click)="cancelFabricNormRow(row)">
+                            <i class="pi pi-times"></i>
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+
+                  <!-- Inline add row -->
+                  @if (addingFabricNorm) {
+                    <tr class="new-row editing-row">
+                      <td>
+                        <p-select
+                          [options]="fabricTypes"
+                          [(ngModel)]="newFabricNormRow.fabricTypeId"
+                          optionLabel="nameArm"
+                          optionValue="_id"
+                          placeholder="Ընտրել գործվածք"
+                          appendTo="body"
+                          [filter]="true"
+                          filterBy="nameArm,nameEng"
+                          [style]="{ width: '100%' }" />
+                      </td>
+                      <td class="num">
+                        <p-inputNumber
+                          [(ngModel)]="newFabricNormRow.adultNorm"
+                          [min]="0"
+                          [maxFractionDigits]="3"
+                          [showButtons]="false"
+                          [inputStyle]="{ width: '100%', textAlign: 'right' }"
+                          [suffix]="' ' + getFabricNormUnitLabel(newFabricNormRow)" />
+                      </td>
+                      <td class="num">
+                        <p-inputNumber
+                          [(ngModel)]="newFabricNormRow.childNorm"
+                          [min]="0"
+                          [maxFractionDigits]="3"
+                          [showButtons]="false"
+                          [inputStyle]="{ width: '100%', textAlign: 'right' }"
+                          [suffix]="' ' + getFabricNormUnitLabel(newFabricNormRow)" />
+                      </td>
+                      <td class="center">
+                        <p-toggleswitch [(ngModel)]="newFabricNormRow.isDefault" />
+                      </td>
+                      <td class="center">
+                        <p-toggleswitch [(ngModel)]="newFabricNormRow.isActive" />
+                      </td>
+                      <td class="actions-col">
+                        <button
+                          type="button"
+                          class="icon-btn save"
+                          pTooltip="Պահել"
+                          [disabled]="newFabricNormRow.saving"
+                          (click)="saveFabricNormRow(newFabricNormRow)">
+                          @if (newFabricNormRow.saving) {
+                            <i class="pi pi-spin pi-spinner"></i>
+                          } @else {
+                            <i class="pi pi-check"></i>
+                          }
+                        </button>
+                        <button
+                          type="button"
+                          class="icon-btn cancel"
+                          pTooltip="Չեղարկել"
+                          [disabled]="newFabricNormRow.saving"
+                          (click)="cancelAddFabricNorm()">
+                          <i class="pi pi-times"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+
+                  @if (!isLoadingFabricNorms && fabricNormRows.length === 0 && !addingFabricNorm) {
+                    <tr><td colspan="6" class="empty-cell">Գործվածքի նորմեր չկան</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Production components card -->
+          <section class="section-block">
+            <div class="section-header">
+              <div class="section-title">
+                <i class="pi pi-wrench"></i>
+                <span>ԱՐՏ. ԲԱՂԱԴՐԻՉՆԵՐ</span>
+              </div>
+              @if (!addingProdNorm) {
+                <button
+                  type="button"
+                  class="section-add-btn"
+                  (click)="addProdNormRow()">
+                  <i class="pi pi-plus"></i>
+                  <span>Ավ. բաղադրիչ</span>
+                </button>
+              }
+            </div>
+
+            <div class="inline-table-wrap">
+              <table class="inline-table prod-norm-table">
+                <thead>
+                  <tr>
+                    <th>Անուն</th>
+                    <th class="num">Քանակ</th>
+                    <th>Միավոր</th>
+                    <th class="num">Արժ./մ.</th>
+                    <th class="num">Ընդ.</th>
+                    <th class="center">Ակտ.</th>
+                    <th class="actions-col"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (isLoadingProdNorms) {
+                    <tr><td colspan="7" class="loading-cell"><i class="pi pi-spin pi-spinner"></i></td></tr>
+                  }
+
+                  @for (row of prodNormRows; track row.norm?._id ?? $index) {
+                    <tr
+                      [class.editing-row]="row.editing"
+                      [class.inactive-row]="!row.isActive && !row.editing">
+
+                      @if (!row.editing) {
+                        <td><span class="prod-name">{{ row.name }}</span></td>
+                        <td class="num">{{ row.quantity }}</td>
+                        <td>{{ row.unit }}</td>
+                        <td class="num">{{ row.unitCostAmd | number:'1.0-2' }} ֏</td>
+                        <td class="num">
+                          <strong>{{ row.quantity * row.unitCostAmd | number:'1.0-2' }} ֏</strong>
+                        </td>
+                        <td class="center">
+                          <span class="dot" [class.on]="row.isActive"></span>
+                        </td>
+                        <td class="actions-col">
+                          <button
+                            type="button"
+                            class="icon-btn"
+                            pTooltip="Խմբագրել"
+                            (click)="editProdNormRow(row)">
+                            <i class="pi pi-pencil"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-btn danger"
+                            pTooltip="Ջնջել"
+                            (click)="deleteProdNorm(row)">
+                            <i class="pi pi-trash"></i>
+                          </button>
+                        </td>
+                      } @else {
+                        <td>
+                          <input
+                            pInputText
+                            type="text"
+                            class="p-inputtext-sm"
+                            [(ngModel)]="row.name"
+                            placeholder="Կոճակ"
+                            [disabled]="row.saving" />
+                        </td>
+                        <td class="num">
+                          <p-inputNumber
+                            [(ngModel)]="row.quantity"
+                            [min]="0"
+                            [maxFractionDigits]="3"
+                            [showButtons]="false"
+                            [inputStyle]="{ width: '100%', textAlign: 'right' }" />
+                        </td>
+                        <td>
+                          <p-select
+                            [options]="prodNormUnitOptions"
+                            [(ngModel)]="row.unit"
+                            optionLabel="label"
+                            optionValue="value"
+                            appendTo="body"
+                            [style]="{ width: '100%' }" />
+                        </td>
+                        <td class="num">
+                          <p-inputNumber
+                            [(ngModel)]="row.unitCostAmd"
+                            [min]="0"
+                            [maxFractionDigits]="2"
+                            [showButtons]="false"
+                            [inputStyle]="{ width: '100%', textAlign: 'right' }"
+                            suffix=" ֏" />
+                        </td>
+                        <td class="num muted">
+                          {{ (row.quantity || 0) * (row.unitCostAmd || 0) | number:'1.0-2' }} ֏
+                        </td>
+                        <td class="center">
+                          <p-toggleswitch [(ngModel)]="row.isActive" />
+                        </td>
+                        <td class="actions-col">
+                          <button
+                            type="button"
+                            class="icon-btn save"
+                            pTooltip="Պահել"
+                            [disabled]="row.saving"
+                            (click)="saveProdNormRow(row)">
+                            @if (row.saving) {
+                              <i class="pi pi-spin pi-spinner"></i>
+                            } @else {
+                              <i class="pi pi-check"></i>
+                            }
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-btn cancel"
+                            pTooltip="Չեղարկել"
+                            [disabled]="row.saving"
+                            (click)="cancelProdNormRow(row)">
+                            <i class="pi pi-times"></i>
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+
+                  @if (addingProdNorm) {
+                    <tr class="new-row editing-row">
+                      <td>
+                        <input
+                          pInputText
+                          type="text"
+                          class="p-inputtext-sm"
+                          [(ngModel)]="newProdNormRow.name"
+                          placeholder="Կոճակ"
+                          [disabled]="newProdNormRow.saving" />
+                      </td>
+                      <td class="num">
+                        <p-inputNumber
+                          [(ngModel)]="newProdNormRow.quantity"
+                          [min]="0"
+                          [maxFractionDigits]="3"
+                          [showButtons]="false"
+                          [inputStyle]="{ width: '100%', textAlign: 'right' }" />
+                      </td>
+                      <td>
+                        <p-select
+                          [options]="prodNormUnitOptions"
+                          [(ngModel)]="newProdNormRow.unit"
+                          optionLabel="label"
+                          optionValue="value"
+                          appendTo="body"
+                          [style]="{ width: '100%' }" />
+                      </td>
+                      <td class="num">
+                        <p-inputNumber
+                          [(ngModel)]="newProdNormRow.unitCostAmd"
+                          [min]="0"
+                          [maxFractionDigits]="2"
+                          [showButtons]="false"
+                          [inputStyle]="{ width: '100%', textAlign: 'right' }"
+                          suffix=" ֏" />
+                      </td>
+                      <td class="num muted">
+                        {{ (newProdNormRow.quantity || 0) * (newProdNormRow.unitCostAmd || 0) | number:'1.0-2' }} ֏
+                      </td>
+                      <td class="center">
+                        <p-toggleswitch [(ngModel)]="newProdNormRow.isActive" />
+                      </td>
+                      <td class="actions-col">
+                        <button
+                          type="button"
+                          class="icon-btn save"
+                          pTooltip="Պահել"
+                          [disabled]="newProdNormRow.saving"
+                          (click)="saveProdNormRow(newProdNormRow)">
+                          @if (newProdNormRow.saving) {
+                            <i class="pi pi-spin pi-spinner"></i>
+                          } @else {
+                            <i class="pi pi-check"></i>
+                          }
+                        </button>
+                        <button
+                          type="button"
+                          class="icon-btn cancel"
+                          pTooltip="Չեղարկել"
+                          [disabled]="newProdNormRow.saving"
+                          (click)="cancelAddProdNorm()">
+                          <i class="pi pi-times"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+
+                  @if (!isLoadingProdNorms && prodNormRows.length === 0 && !addingProdNorm) {
+                    <tr><td colspan="7" class="empty-cell">Բաղադրիչներ չկան</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Cost summary -->
+          <section class="section-block cost-summary-block">
+            <div class="section-header">
+              <div class="section-title">
+                <i class="pi pi-wallet"></i>
+                <span>ԱՐԺԵՔԻ ԱՄՓՈՓԱԳԻՐ</span>
+              </div>
+            </div>
+
+            <div class="cost-table">
+              <div class="cost-table-head">
+                <span></span>
+                <span>Մեծահասակ</span>
+                <span>Երեխա</span>
+              </div>
+              <div class="cost-table-row">
+                <span class="cost-label">Գործվածք</span>
+                <span class="cost-value">
+                  @if (getFabricCostAdult() !== null) {
+                    {{ getFabricCostAdult()! | number:'1.0-0' }} ֏
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </span>
+                <span class="cost-value">
+                  @if (getFabricCostChild() !== null) {
+                    {{ getFabricCostChild()! | number:'1.0-0' }} ֏
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </span>
+              </div>
+              <div class="cost-table-row">
+                <span class="cost-label">Բաղադրիչներ</span>
+                <span class="cost-value">{{ getTotalComponentCost() | number:'1.0-0' }} ֏</span>
+                <span class="cost-value">{{ getTotalComponentCost() | number:'1.0-0' }} ֏</span>
+              </div>
+              <div class="cost-table-row total">
+                <span class="cost-label">Ընդամենը</span>
+                <span class="cost-value">~{{ getTotalPerPiece('adult') | number:'1.0-0' }} ֏</span>
+                <span class="cost-value">~{{ getTotalPerPiece('child') | number:'1.0-0' }} ֏</span>
+              </div>
+            </div>
+            @if (!getFabricCostAdult() && !getFabricCostChild()) {
+              <p class="cost-hint">Գործվածքի արժեքը հաշվելու համար սահմանեք default նորմ եւ գործվածքի գինը</p>
+            }
+          </section>
+        }
+      </main>
+    </div>
+  }
+
+  <!-- ═══════════════ VIEW: FABRIC TYPES ═══════════════ -->
+  @if (!isLoading && view === 'fabrics') {
+    <div class="simple-view">
+      <div class="simple-view-header">
+        <h2>Գործվածքի տեսակներ</h2>
+        <button
+          type="button"
+          pButton
+          icon="pi pi-plus"
+          label="Ավելացնել"
+          (click)="openAddFabric()"></button>
+      </div>
+
+      <p-table
+        [value]="fabricTypes"
+        styleClass="p-datatable-sm settings-table"
+        [paginator]="fabricTypes.length > 15"
+        [rows]="15">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 2.5rem"></th>
+            <th>Հայ. անուն</th>
+            <th>Անգ. անուն</th>
+            <th>Միավոր</th>
+            <th>Կազմ</th>
+            <th class="num">Խտ. (g/m²)</th>
+            <th class="num">Լայն. (սմ)</th>
+            <th class="num">Գին (֏/մ կամ ֏/կգ)</th>
+            <th class="center">Ակտիվ</th>
+            <th class="actions-col"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-ft>
+          <tr [class.inactive-row]="!ft.isActive">
+            <td>
+              <button
+                type="button"
+                class="icon-btn"
+                pTooltip="Գույներ"
+                (click)="toggleFabricColors(ft)">
+                <i
+                  class="pi"
+                  [class.pi-chevron-right]="expandedFabricId !== ft._id"
+                  [class.pi-chevron-down]="expandedFabricId === ft._id"></i>
+              </button>
+            </td>
+            <td><strong>{{ ft.nameArm }}</strong></td>
+            <td>{{ ft.nameEng }}</td>
+            <td>{{ getUnitLabel(ft.unit) }}</td>
+            <td>{{ ft.composition || '—' }}</td>
+            <td class="num">{{ ft.densityGsm ?? '—' }}</td>
+            <td class="num">{{ ft.widthCm ?? '—' }}</td>
+            <td class="num">{{ ft.pricePerUnitAmd ? (ft.pricePerUnitAmd | number:'1.0-0') + ' ֏' : '—' }}</td>
+            <td class="center">
+              <p-toggleswitch
+                [ngModel]="ft.isActive"
+                (ngModelChange)="toggleFabricActive(ft)" />
+            </td>
+            <td class="actions-col">
+              <button
+                type="button"
+                class="icon-btn"
+                pTooltip="Խմբագրել"
+                (click)="openEditFabric(ft)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button
+                type="button"
+                class="icon-btn danger"
+                pTooltip="Ջնջել"
+                (click)="deleteFabric(ft)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </td>
+          </tr>
+
+          @if (expandedFabricId === ft._id) {
+            <tr class="color-expand-row">
+              <td colspan="9">
+                <div class="color-expand">
+                  <div class="color-expand-header">
+                    <strong>Գույներ</strong>
+                    <button
+                      type="button"
+                      pButton
+                      icon="pi pi-plus"
+                      label="Ավ. գույն"
+                      size="small"
+                      [outlined]="true"
+                      (click)="openAddColor(ft._id)"></button>
+                  </div>
+
+                  @if (loadingColorsForFabric === ft._id) {
+                    <div class="loading-cell"><i class="pi pi-spin pi-spinner"></i></div>
+                  } @else if (isColorsLoaded(ft._id) && getColors(ft._id).length === 0) {
+                    <div class="empty-cell">Գույներ չկան</div>
+                  } @else {
+                    <div class="color-chips">
+                      @for (c of getColors(ft._id); track c._id) {
+                        <div class="color-chip" [class.inactive]="!c.isActive">
+                          <span
+                            class="color-swatch"
+                            [style.background]="c.hex || '#ccc'"></span>
+                          <span class="color-name">{{ c.nameArm }}</span>
+                          <p-toggleswitch
+                            class="chip-toggle"
+                            [ngModel]="c.isActive"
+                            (ngModelChange)="toggleColorActive(c)"
+                            pTooltip="{{ c.isActive ? 'Անջատել' : 'Միացնել' }}" />
+                          <button
+                            type="button"
+                            class="icon-btn tiny danger"
+                            pTooltip="Ջնջել"
+                            (click)="deleteColor(c)">
+                            <i class="pi pi-trash"></i>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="9" class="empty-cell">Գործվածքի տեսակներ չկան</td></tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+
+  <!-- ═══════════════ VIEW: SUPPLIERS ═══════════════ -->
+  @if (!isLoading && view === 'suppliers') {
+    <div class="simple-view">
+      <div class="simple-view-header">
+        <h2>Մատակարարներ</h2>
+        <button
+          type="button"
+          pButton
+          icon="pi pi-plus"
+          label="Ավելացնել"
+          (click)="openAddSupplier()"></button>
+      </div>
+
+      <p-table
+        [value]="suppliers"
+        styleClass="p-datatable-sm settings-table"
+        [paginator]="suppliers.length > 15"
+        [rows]="15">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Անուն</th>
+            <th>Հեռ.</th>
+            <th>Email</th>
+            <th>Նշումներ</th>
+            <th class="center">Ակտիվ</th>
+            <th class="actions-col"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-s>
+          <tr [class.inactive-row]="!s.isActive">
+            <td><strong>{{ s.name }}</strong></td>
+            <td>{{ s.phone || '—' }}</td>
+            <td>{{ s.email || '—' }}</td>
+            <td>{{ s.notes || '—' }}</td>
+            <td class="center">
+              <p-toggleswitch
+                [ngModel]="s.isActive"
+                (ngModelChange)="toggleSupplierActive(s)" />
+            </td>
+            <td class="actions-col">
+              <button
+                type="button"
+                class="icon-btn"
+                pTooltip="Խմբագրել"
+                (click)="openEditSupplier(s)">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button
+                type="button"
+                class="icon-btn danger"
+                pTooltip="Ջնջել"
+                (click)="deleteSupplier(s)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="6" class="empty-cell">Մատակարարներ չկան</td></tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+
+  <!-- ═══════════════ VIEW: GLOBAL SETTINGS ═══════════════ -->
+  @if (!isLoading && view === 'global') {
+    <div class="simple-view">
+      <div class="simple-view-header">
+        <h2>Ընդհանուր կարգավորումներ</h2>
+      </div>
+
+      <section class="section-block global-settings-card" [formGroup]="settingsForm">
+        <div class="info-grid two-col">
+          <div class="field">
+            <label>Գործվածքի waste %<span class="required">*</span></label>
+            <p-inputNumber
+              formControlName="fabricWastePercent"
+              [min]="0"
+              [max]="100"
+              [maxFractionDigits]="2"
+              suffix=" %" />
+          </div>
+
+          <div class="field">
+            <label>Շրջան. հարկ %<span class="required">*</span></label>
+            <p-inputNumber
+              formControlName="turnoverTaxPercent"
+              [min]="0"
+              [max]="100"
+              [maxFractionDigits]="2"
+              suffix=" %" />
+          </div>
+
+          <div class="field">
+            <label>Պահեստի նվազ. շեմ</label>
+            <p-inputNumber
+              formControlName="lowStockThreshold"
+              [min]="0" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            pButton
+            icon="pi pi-save"
+            label="Պահել"
+            [loading]="isSettingsSaving"
+            [disabled]="settingsForm.invalid"
+            (click)="saveSettings()"></button>
+        </div>
+      </section>
+    </div>
+  }
+
+  <!-- ═══════════════ DIALOGS ═══════════════ -->
+
+  <!-- Fabric Type dialog -->
+  <p-dialog
+    header="{{ editingFabricType ? 'Խմբագրել գործվածք' : 'Ավելացնել գործվածք' }}"
+    [(visible)]="showFabricDialog"
+    [modal]="true"
+    [style]="{ width: '600px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="onFabricDialogHide()">
+    <form [formGroup]="fabricForm" class="dialog-form" (ngSubmit)="saveFabric()">
+      <div class="two-col">
+        <div class="field">
+          <label>Հայ. անուն<span class="required">*</span></label>
+          <input pInputText type="text" formControlName="nameArm" />
+        </div>
+        <div class="field">
+          <label>Անգ. անուն<span class="required">*</span></label>
+          <input pInputText type="text" formControlName="nameEng" />
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Միավոր<span class="required">*</span></label>
+          <p-select
+            [options]="unitOptions"
+            formControlName="unit"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body" />
+        </div>
+        <div class="field">
+          <label>Կազմ</label>
+          <input pInputText type="text" formControlName="composition" placeholder="100% Cotton" />
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Խտություն (g/m²)</label>
+          <p-inputNumber formControlName="densityGsm" [min]="0" />
+        </div>
+        <div class="field">
+          <label>Լայնություն (սմ)</label>
+          <p-inputNumber formControlName="widthCm" [min]="0" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Գին մ/կգ-ի համար (AMD)</label>
+        <p-inputNumber
+          formControlName="pricePerUnitAmd"
+          [min]="0"
+          [showButtons]="false"
+          suffix=" ֏"
+          placeholder="0" />
+      </div>
+      <div class="field">
+        <label>Նշումներ</label>
+        <textarea pTextarea formControlName="notes" rows="2"></textarea>
+      </div>
+      <div class="field toggle-field">
+        <label>Ակտիվ</label>
+        <p-toggleswitch formControlName="isActive" />
+      </div>
+    </form>
+    <ng-template pTemplate="footer">
+      <button type="button" pButton label="Չեղարկել" [text]="true" (click)="showFabricDialog = false"></button>
+      <button
+        type="button"
+        pButton
+        icon="pi pi-save"
+        label="Պահել"
+        [loading]="isSavingFabric"
+        [disabled]="fabricForm.invalid"
+        (click)="saveFabric()"></button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Color dialog -->
+  <p-dialog
+    header="{{ editingColor ? 'Խմբագրել գույն' : 'Ավելացնել գույն' }}"
+    [(visible)]="showColorDialog"
+    [modal]="true"
+    [style]="{ width: '500px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="onColorDialogHide()">
+    <form [formGroup]="colorForm" class="dialog-form" (ngSubmit)="saveColor()">
+      <div class="two-col">
+        <div class="field">
+          <label>Հայ. անուն<span class="required">*</span></label>
+          <input pInputText type="text" formControlName="nameArm" />
+        </div>
+        <div class="field">
+          <label>Անգ. անուն</label>
+          <input pInputText type="text" formControlName="nameEng" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Hex (#RRGGBB)</label>
+        <input pInputText type="text" formControlName="hex" placeholder="#000000" />
+      </div>
+      <div class="field toggle-field">
+        <label>Ակտիվ</label>
+        <p-toggleswitch formControlName="isActive" />
+      </div>
+    </form>
+    <ng-template pTemplate="footer">
+      <button type="button" pButton label="Չեղարկել" [text]="true" (click)="showColorDialog = false"></button>
+      <button
+        type="button"
+        pButton
+        icon="pi pi-save"
+        label="Պահել"
+        [loading]="isSavingColor"
+        [disabled]="colorForm.invalid"
+        (click)="saveColor()"></button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Supplier dialog -->
+  <p-dialog
+    header="{{ editingSupplier ? 'Խմբագրել մատակարար' : 'Ավելացնել մատակարար' }}"
+    [(visible)]="showSupplierDialog"
+    [modal]="true"
+    [style]="{ width: '550px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="onSupplierDialogHide()">
+    <form [formGroup]="supplierForm" class="dialog-form" (ngSubmit)="saveSupplier()">
+      <div class="field">
+        <label>Անուն<span class="required">*</span></label>
+        <input pInputText type="text" formControlName="name" />
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Հեռ.</label>
+          <input pInputText type="text" formControlName="phone" />
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input pInputText type="email" formControlName="email" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Նշումներ</label>
+        <textarea pTextarea formControlName="notes" rows="2"></textarea>
+      </div>
+      <div class="field toggle-field">
+        <label>Ակտիվ</label>
+        <p-toggleswitch formControlName="isActive" />
+      </div>
+    </form>
+    <ng-template pTemplate="footer">
+      <button type="button" pButton label="Չեղարկել" [text]="true" (click)="showSupplierDialog = false"></button>
+      <button
+        type="button"
+        pButton
+        icon="pi pi-save"
+        label="Պահել"
+        [loading]="isSavingSupplier"
+        [disabled]="supplierForm.invalid"
+        (click)="saveSupplier()"></button>
+    </ng-template>
+  </p-dialog>
+</div>
