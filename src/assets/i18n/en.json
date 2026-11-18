@@ -56,7 +56,97 @@
     "salesSection": "Sales",
     "manufacturingSection": "Manufacturing",
     "managerKpi": "Manager KPI",
-    "employees": "Employees"
+    "employees": "Employees",
+    "pipeline": "Pipeline",
+    "quotes": "Quotes"
+  },
+  "pipeline": {
+    "title": "Sales Pipeline",
+    "newDeal": "New Deal",
+    "noDealTitle": "Untitled Deal",
+    "estimatedValue": "Estimated Value",
+    "expectedClose": "Expected Close",
+    "daysInStage": "days",
+    "nextStep": "Next step",
+    "overdue": "Overdue",
+    "today": "Today",
+    "board": "Board",
+    "table": "Table",
+    "deals": "Deals",
+    "openDeals": "Open Deals",
+    "lifecycle": {
+      "Lead": "Lead",
+      "Active": "Active",
+      "Inactive": "Inactive"
+    },
+    "filters": {
+      "myDeals": "My Deals",
+      "allDeals": "All Deals",
+      "overdueOnly": "Overdue only",
+      "search": "Search deals..."
+    },
+    "deal": {
+      "title": "Title",
+      "company": "Company",
+      "contact": "Contact Person",
+      "owner": "Owner",
+      "stage": "Stage",
+      "value": "Value (֏)",
+      "probability": "Probability (%)",
+      "source": "Source",
+      "nextStepType": "Next Step Type",
+      "nextStepDate": "Next Step Date",
+      "nextStepNote": "Note",
+      "wonButton": "Won",
+      "lostButton": "Lost",
+      "saveNextStep": "Save Next Step",
+      "activity": "Activity",
+      "quotes": "Quotes",
+      "orders": "Orders",
+      "notes": "Notes",
+      "overview": "Overview",
+      "selectContact": "Select contact..."
+    },
+    "lost": {
+      "title": "Mark as Lost",
+      "reason": "Lost Reason",
+      "comment": "Comment",
+      "confirm": "Confirm Lost"
+    },
+    "won": {
+      "dialogTitle": "Mark Deal as Won",
+      "noOrderHint": "To mark a deal as won, an order must be created from an accepted quote.",
+      "quotesOnDeal": "Quotes on this deal:",
+      "alreadyConverted": "✓ Order created",
+      "openQuotes": "Open quotes",
+      "createQuote": "Create quote",
+      "adminSection": "Admin override",
+      "commentRequired": "Reason for marking won without order (required)",
+      "markWithoutOrder": "Mark won without order",
+      "markedWon": "Deal marked as won",
+      "error": "Failed to mark deal as won"
+    },
+    "source": {
+      "inbound_call": "Inbound Call",
+      "website": "Website",
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "linkedin": "LinkedIn",
+      "referral": "Referral",
+      "cold_call": "Cold Call",
+      "expo": "Expo",
+      "existing_customer": "Existing Customer",
+      "other": "Other"
+    },
+    "stepType": {
+      "call": "Call",
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "meeting": "Meeting",
+      "send_sample": "Send Sample",
+      "send_quote": "Send Quote",
+      "other": "Other"
+    }
   },
   "auth": {
     "login": {
@@ -873,6 +963,110 @@
       "title": "Have a unique project in mind?",
       "description": "Let's build your brand together with premium textile solutions tailored to your business needs.",
       "button": "Contact Us Today"
+    }
+  },
+  "quotes": {
+    "title": "Quotes",
+    "newQuote": "New Quote",
+    "noQuotes": "No quotes yet",
+    "noQuotesHint": "Create a quote from a deal to get started",
+    "number": "Number",
+    "client": "Client",
+    "deal": "Deal",
+    "total": "Total",
+    "date": "Date",
+    "validUntil": "Valid until",
+    "owner": "Owner",
+    "actions": "Actions",
+    "filters": {
+      "all": "All statuses",
+      "myQuotes": "My quotes",
+      "search": "Search quotes..."
+    },
+    "statuses": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "superseded": "Superseded"
+    },
+    "editor": {
+      "title": "Quote",
+      "newTitle": "New Quote",
+      "save": "Save",
+      "send": "Mark as sent",
+      "previewPdf": "Preview PDF",
+      "newVersion": "New version",
+      "downloadPdf": "PDF",
+      "accept": "Mark accepted",
+      "reject": "Mark rejected",
+      "confirmSend": "Send this quote to the client?",
+      "confirmSendHint": "Status will change to Sent and the quote will be locked for editing.",
+      "versionNote": "This quote has been superseded by a newer version.",
+      "viewLatest": "View latest version",
+      "rejectReason": "Rejection reason (optional)",
+      "section": {
+        "header": "Header details",
+        "client": "Client",
+        "items": "Items",
+        "terms": "Terms",
+        "notes": "Notes",
+        "costMargin": "Cost & Margin"
+      },
+      "field": {
+        "language": "Language",
+        "armenian": "Armenian",
+        "issueDate": "Issue date",
+        "validUntil": "Valid until",
+        "paymentType": "Payment type",
+        "cash": "Cash",
+        "invoice": "Invoice",
+        "prepayment": "Prepayment %",
+        "leadTime": "Production lead time (working days)",
+        "deliveryTerms": "Delivery terms",
+        "discountType": "Discount type",
+        "discountValue": "Discount value",
+        "notes": "Notes",
+        "termsText": "Terms & conditions text",
+        "garmentType": "Garment type",
+        "fabric": "Fabric",
+        "color": "Color",
+        "decoration": "Decoration",
+        "logoPosition": "Logo position",
+        "logoSize": "Logo size",
+        "estimatedCost": "Estimated cost/unit",
+        "english": "English",
+        "contact": "Contact person",
+        "contactPlaceholder": "Select contact"
+      },
+      "item": {
+        "add": "Add item",
+        "description": "Description",
+        "qty": "Qty",
+        "unitPrice": "Unit price ֏",
+        "discount": "Disc. %",
+        "lineTotal": "Total",
+        "remove": "Remove",
+        "sizeBreakdown": "Size breakdown"
+      },
+      "summary": {
+        "subtotal": "Subtotal",
+        "discount": "Discount",
+        "total": "Total due"
+      },
+      "costMargin": {
+        "totalCost": "Total estimated cost",
+        "margin": "Margin",
+        "marginPct": "Margin %"
+      },
+      "markSentConfirm": "Mark this quote as sent to the client?",
+      "markSentHint": "Status will change to Sent and the quote will be locked for editing.",
+      "createOrder": "Create order",
+      "acceptAndCreateOrder": "Accept and create order",
+      "orderCreated": "Order created successfully",
+      "orderCreatedBadge": "Order created",
+      "orderCreateFailed": "Failed to create order"
     }
   }
 }

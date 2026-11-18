@@ -1,0 +1,399 @@
+<p-toast></p-toast>
+
+@if (deal) {
+<p-drawer
+  [visible]="visible"
+  (visibleChange)="onVisibleChange($event)"
+  position="right"
+  [style]="{ width: '600px' }"
+  [modal]="true"
+  [dismissible]="true"
+  styleClass="deal-detail-drawer">
+
+  <ng-template pTemplate="header">
+    <div class="deal-detail-header w-full">
+
+      <!-- Title + autosave indicator -->
+      <div class="header-title-row">
+        @if (!isEditingTitle) {
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <h2 class="deal-title-text" (click)="startEditTitle()" [pTooltip]="'common.edit' | translate">
+              {{ deal.title }}
+            </h2>
+            <i class="pi pi-pencil edit-icon" (click)="startEditTitle()"></i>
+          </div>
+        } @else {
+          <div class="flex items-center gap-2 w-full">
+            <input pInputText type="text" [(ngModel)]="editedTitle" class="flex-1"
+              (keydown.enter)="saveTitle()" (keydown.escape)="cancelEditTitle()" />
+            <button pButton type="button" icon="pi pi-check" class="p-button-sm" (click)="saveTitle()"></button>
+            <button pButton type="button" icon="pi pi-times" class="p-button-sm p-button-text" (click)="cancelEditTitle()"></button>
+          </div>
+        }
+        @if (savedIndicator()) {
+          <span class="saved-indicator">
+            <i class="pi pi-check"></i> Saved
+          </span>
+        }
+      </div>
+
+      <!-- Company name link -->
+      <div class="header-company">
+        <a class="company-link" (click)="goToCustomer()">
+          <i class="pi pi-building text-xs"></i>
+          {{ companyName() || '—' }}
+        </a>
+      </div>
+
+      <!-- Stage stepper — open stages only, no won/lost here -->
+      <div class="stage-stepper">
+        @for (stage of orderedOpenStages; track trackStage($index, stage)) {
+          <button
+            type="button"
+            class="stage-pill"
+            [class.active]="deal.stageKey === stage.key"
+            [class.open]="stage.type === 'open'"
+            (click)="clickStage(stage)">
+            {{ stageLabel(stage) }}
+          </button>
+        }
+      </div>
+
+      <!-- Won / Lost buttons only -->
+      <div class="win-lose-buttons">
+        <button
+          pButton
+          type="button"
+          [label]="'pipeline.deal.wonButton' | translate"
+          icon="pi pi-check"
+          severity="success"
+          class="p-button-sm"
+          (click)="clickWon()"></button>
+        <button
+          pButton
+          type="button"
+          [label]="'pipeline.deal.lostButton' | translate"
+          icon="pi pi-times"
+          severity="danger"
+          class="p-button-sm p-button-outlined"
+          (click)="clickLost()"></button>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="deal-detail-body">
+
+    <!-- ── A. Overview ──────────────────────────────────────────── -->
+    <section class="section-card">
+      <h3 class="section-title">{{ 'pipeline.deal.overview' | translate }}</h3>
+
+      <form [formGroup]="overviewForm" class="overview-form">
+
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.contact' | translate }}</span>
+          @if (contactPersonOptions.length > 0) {
+            <p-select
+              [options]="contactPersonOptions"
+              formControlName="contactPersonId"
+              optionLabel="label"
+              optionValue="value"
+              [filter]="true"
+              [showClear]="true"
+              [placeholder]="'pipeline.deal.selectContact' | translate"
+              appendTo="body"
+              [style]="{ width: '100%' }"
+              styleClass="w-full"></p-select>
+          } @else {
+            <span class="field-val text-gray-400 text-sm">—</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.owner' | translate }}</span>
+          @if (isAdmin) {
+            <p-select
+              [options]="userOptions()"
+              formControlName="ownerId"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [style]="{ width: '100%' }"
+              styleClass="w-full"></p-select>
+          } @else {
+            <span class="field-val">{{ ownerDisplayName() }}</span>
+          }
+        </div>
+
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.expectedClose' | translate }}</span>
+          <p-datepicker
+            formControlName="expectedCloseDate"
+            dateFormat="dd.mm.yy"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+            styleClass="w-full"></p-datepicker>
+        </div>
+
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.value' | translate }}</span>
+          <p-inputnumber
+            formControlName="estimatedValue"
+            suffix=" ֏"
+            [maxFractionDigits]="0"
+            mode="decimal"
+            [style]="{ width: '100%' }"
+            styleClass="w-full"></p-inputnumber>
+        </div>
+
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.probability' | translate }}</span>
+          <p-inputnumber
+            formControlName="probability"
+            [min]="0" [max]="100"
+            suffix=" %"
+            [style]="{ width: '100%' }"
+            styleClass="w-full"></p-inputnumber>
+        </div>
+
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.source' | translate }}</span>
+          <p-select
+            [options]="sourceOptions"
+            formControlName="source"
+            optionValue="value"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+            styleClass="w-full">
+            <ng-template let-opt pTemplate="item"><span>{{ opt.label | translate }}</span></ng-template>
+            <ng-template let-opt pTemplate="selectedItem">
+              @if (opt) { <span>{{ opt.label | translate }}</span> } @else { <span class="text-gray-400">—</span> }
+            </ng-template>
+          </p-select>
+        </div>
+
+        <div class="field-row">
+          <span class="field-key">Created</span>
+          <span class="field-val">{{ formatDate(deal.createdAt) }}</span>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- ── B. Next step card ──────────────────────────────────────── -->
+    <section class="section-card next-step-card" [class.overdue]="nextStepStatus() === 'overdue'">
+      <h3 class="section-title">{{ 'pipeline.nextStep' | translate }}</h3>
+      <form [formGroup]="nextStepForm" class="flex flex-col gap-2">
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.nextStepType' | translate }}</span>
+          <p-select
+            [options]="nextStepTypeOptions"
+            formControlName="nextStepType"
+            optionValue="value"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+            styleClass="w-full">
+            <ng-template let-opt pTemplate="item"><span>{{ opt.label | translate }}</span></ng-template>
+            <ng-template let-opt pTemplate="selectedItem">
+              @if (opt) { <span>{{ opt.label | translate }}</span> } @else { <span class="text-gray-400">—</span> }
+            </ng-template>
+          </p-select>
+        </div>
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.nextStepDate' | translate }}</span>
+          <p-datepicker
+            formControlName="nextStepDate"
+            dateFormat="dd.mm.yy"
+            appendTo="body"
+            [style]="{ width: '100%' }"
+            styleClass="w-full"></p-datepicker>
+        </div>
+        <div class="field-row">
+          <span class="field-key">{{ 'pipeline.deal.nextStepNote' | translate }}</span>
+          <textarea pTextarea formControlName="nextStepNote" rows="2" class="w-full"></textarea>
+        </div>
+      </form>
+    </section>
+
+    <!-- ── C. Tabs ────────────────────────────────────────────────── -->
+    <section class="section-card">
+      <p-tabs [(value)]="activeTabIndex">
+        <p-tablist>
+          <p-tab [value]="0">
+            <i class="pi pi-history"></i><span class="tab-label">{{ 'pipeline.deal.activity' | translate }}</span>
+          </p-tab>
+          <p-tab [value]="1">
+            <i class="pi pi-file"></i><span class="tab-label">{{ 'pipeline.deal.quotes' | translate }}</span>
+          </p-tab>
+          <p-tab [value]="2">
+            <i class="pi pi-shopping-bag"></i><span class="tab-label">{{ 'pipeline.deal.orders' | translate }}</span>
+          </p-tab>
+          <p-tab [value]="3">
+            <i class="pi pi-pencil"></i><span class="tab-label">{{ 'pipeline.deal.notes' | translate }}</span>
+          </p-tab>
+        </p-tablist>
+        <p-tabpanels>
+
+          <!-- Activity -->
+          <p-tabpanel [value]="0">
+            @if (isLoadingActivity) {
+              <div class="text-center py-6">
+                <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+              </div>
+            } @else if (activityEntries.length === 0) {
+              <div class="empty-state">
+                <i class="pi pi-inbox text-4xl text-gray-300"></i>
+                <p>—</p>
+              </div>
+            } @else {
+              <div class="activity-list">
+                @for (entry of activityEntries; track trackEntry($index, entry)) {
+                  <div class="activity-item">
+                    <div class="activity-icon" [style.background-color]="entry.iconColor">
+                      <i [class]="entry.icon"></i>
+                    </div>
+                    <div class="activity-body">
+                      <div class="activity-title">{{ entry.title }}</div>
+                      @if (entry.subtitle) {
+                        <div class="activity-subtitle">{{ entry.subtitle }}</div>
+                      }
+                      <div class="activity-meta">
+                        {{ formatDateTime(entry.date) }}
+                        @if (entry.actor) { · {{ entry.actor }} }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </p-tabpanel>
+
+          <!-- Quotes -->
+          <p-tabpanel [value]="1">
+            <div class="quotes-tab-header">
+              <button
+                pButton
+                type="button"
+                [label]="'quotes.newQuote' | translate"
+                icon="pi pi-plus"
+                class="p-button-sm"
+                severity="primary"
+                [loading]="isCreatingQuote"
+                (click)="createNewQuote()"></button>
+            </div>
+
+            @if (isLoadingQuotes) {
+              <div class="text-center py-4">
+                <i class="pi pi-spin pi-spinner text-2xl"></i>
+              </div>
+            } @else if (dealQuotes.length === 0) {
+              <div class="empty-state">
+                <i class="pi pi-file-edit text-3xl text-gray-300"></i>
+                <p>{{ 'quotes.noQuotes' | translate }}</p>
+              </div>
+            } @else {
+              <div class="quote-list">
+                @for (q of dealQuotes; track q._id) {
+                  <div class="quote-list-row" (click)="openQuote(q._id)">
+                    <div class="quote-list-left">
+                      <span class="quote-num">{{ q.number }}</span>
+                      @if (q.version > 1) {
+                        <span class="q-ver">v{{ q.version }}</span>
+                      }
+                      <p-tag
+                        [value]="('quotes.statuses.' + q.status) | translate"
+                        [severity]="quoteStatusSeverity(q.status)"
+                        styleClass="text-xs"
+                      />
+                    </div>
+                    <div class="quote-list-right">
+                      <span class="q-total">{{ formatAmt(q.total) }}</span>
+                      <div class="pdf-actions" (click)="$event.stopPropagation()">
+                        <button pButton type="button"
+                          icon="pi pi-download"
+                          [text]="true"
+                          size="small"
+                          severity="secondary"
+                          pTooltip="PDF (hy)"
+                          (click)="downloadQuotePdf(q._id, 'hy', $event)"></button>
+                        <button pButton type="button"
+                          icon="pi pi-download"
+                          [text]="true"
+                          size="small"
+                          severity="secondary"
+                          pTooltip="PDF (en)"
+                          (click)="downloadQuotePdf(q._id, 'en', $event)"></button>
+                      </div>
+                      <i class="pi pi-angle-right text-gray-400"></i>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </p-tabpanel>
+
+          <!-- Orders -->
+          <p-tabpanel [value]="2">
+            @if (deal.orderIds.length) {
+              <div class="order-list">
+                @for (orderId of deal.orderIds; track trackOrder($index, orderId)) {
+                  <div class="order-item">
+                    <i class="pi pi-shopping-bag"></i>
+                    <span>Order #{{ orderId }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <i class="pi pi-inbox text-4xl text-gray-300"></i>
+                <p>—</p>
+              </div>
+            }
+          </p-tabpanel>
+
+          <!-- Notes -->
+          <p-tabpanel [value]="3">
+            <div class="flex flex-col gap-2">
+              <textarea
+                pTextarea
+                [(ngModel)]="notesText"
+                rows="6"
+                class="w-full"
+                (blur)="saveNotes()"></textarea>
+              <span class="text-xs text-gray-400">Auto-saved on blur</span>
+            </div>
+          </p-tabpanel>
+
+        </p-tabpanels>
+      </p-tabs>
+    </section>
+
+  </div>
+</p-drawer>
+
+<!-- Won-without-quote dialog -->
+<p-dialog
+  [(visible)]="showWonDialog"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+  header="Mark as Won"
+  [closable]="true">
+  <div class="flex flex-col gap-3 py-2">
+    <p class="text-sm text-gray-600">This deal has no sent quotes. What would you like to do?</p>
+    <div class="flex flex-col gap-2">
+      <button pButton type="button"
+        label="Create a quote first"
+        icon="pi pi-file-edit"
+        class="w-full"
+        (click)="wonDialogCreateQuote()"></button>
+      <button pButton type="button"
+        label="Mark Won anyway (admin override)"
+        icon="pi pi-check"
+        severity="success"
+        class="w-full p-button-outlined"
+        (click)="wonDialogProceed()"></button>
+    </div>
+  </div>
+</p-dialog>
+}

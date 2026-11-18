@@ -56,7 +56,97 @@
     "salesSection": "Վաճառք",
     "manufacturingSection": "Արտադրություն",
     "managerKpi": "Մենեջերի KPI",
-    "employees": "Աշխատակիցներ"
+    "employees": "Աշխատակիցներ",
+    "pipeline": "Վաճառքի ձագ",
+    "quotes": "Գնարաջարկներ"
+  },
+  "pipeline": {
+    "title": "Վաճառքի փուլեր",
+    "newDeal": "Նոր գործարք",
+    "noDealTitle": "Առանց անվանման գործարք",
+    "estimatedValue": "Գնահատված արժեք",
+    "expectedClose": "Սպասվող փակման ամսաթիվ",
+    "daysInStage": "օր",
+    "nextStep": "Հաջորդ քայլ",
+    "overdue": "Ուշացած",
+    "today": "Այսօր",
+    "board": "Տախտակ",
+    "table": "Աղյուսակ",
+    "deals": "Գործարքներ",
+    "openDeals": "Բաց գործարքներ",
+    "lifecycle": {
+      "Lead": "Լիդ",
+      "Active": "Ակտիվ",
+      "Inactive": "Ոչ ակտիվ"
+    },
+    "filters": {
+      "myDeals": "Իմ գործարքները",
+      "allDeals": "Բոլոր գործարքները",
+      "overdueOnly": "Միայն ուշացածները",
+      "search": "Որոնել գործարքներ..."
+    },
+    "deal": {
+      "title": "Անվանում",
+      "company": "Ընկերություն",
+      "contact": "Կոնտակտային անձ",
+      "owner": "Պատասխանատու",
+      "stage": "Փուլ",
+      "value": "Արժեք (֏)",
+      "probability": "Հավանականություն (%)",
+      "source": "Աղբյուր",
+      "nextStepType": "Հաջորդ քայլի տեսակ",
+      "nextStepDate": "Հաջորդ քայլի ամսաթիվ",
+      "nextStepNote": "Նշում",
+      "wonButton": "Հաղթած",
+      "lostButton": "Կորցրած",
+      "saveNextStep": "Պահել հաջորդ քայլը",
+      "activity": "Գործունեություն",
+      "quotes": "Գնառաջարկներ",
+      "orders": "Պատվերներ",
+      "notes": "Նշումներ",
+      "overview": "Ակնարկ",
+      "selectContact": "Ընտրել կոնտակտային անձ..."
+    },
+    "lost": {
+      "title": "Նշել որպես կորցրած",
+      "reason": "Կորստի պատճառ",
+      "comment": "Մեկնաբանություն",
+      "confirm": "Հաստատել կորուստը"
+    },
+    "won": {
+      "dialogTitle": "Նշել գործարքը որպես հաղթած",
+      "noOrderHint": "Գործարքը հաղthed նшелу хамаr стеgh лини патив ընдунваdt гнаarray аджарkіц:",
+      "quotesOnDeal": "Гнаarray аджарknerը:",
+      "alreadyConverted": "✓ Патив ստеghацвеl է",
+      "openQuotes": "Бател гнаarray аджарknerը",
+      "createQuote": "Стеghел гнаarray аджарk",
+      "adminSection": "ادmin-ի ньеркаjум",
+      "commentRequired": "Патив ычел биц гоrцарkը наshелу патчаар (парtаdir)",
+      "markWithoutOrder": "Наshел хаgтаd биц пативи",
+      "markedWon": "Гоrцарkը наshвел е орпес хаgтаd",
+      "error": "Не хаjoвецав гоrцарkը наshел"
+    },
+    "source": {
+      "inbound_call": "Մուտքային զանգ",
+      "website": "Կայք",
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "linkedin": "LinkedIn",
+      "referral": "Ուղղորդում",
+      "cold_call": "Սառը զանգ",
+      "expo": "Ցուցահանդես",
+      "existing_customer": "Գոյություն ունեցող հաճախորդ",
+      "other": "Այլ"
+    },
+    "stepType": {
+      "call": "Զանգ",
+      "email": "Էլ. փոստ",
+      "whatsapp": "WhatsApp",
+      "meeting": "Հանդիպում",
+      "send_sample": "Ուղարկել նմուշ",
+      "send_quote": "Ուղարկել գնառաջարկ",
+      "other": "Այլ"
+    }
   },
   "auth": {
     "login": {
@@ -401,7 +491,7 @@
     "badge": "Վստահված 150+ բիզնեսների կողմից",
     "title": "Ձեր Թիմը Արժանի Է Լավագույնին",
     "titleHighlight": "",
-    "description": "Բարձրորակ կորպորատիվ հագուստ՝ անհատական \u200B\u200Bլուծումներով, որոնք օգնում են արտահայտել բրենդային ինքնությունը և ստեղծել թիմային մշակույթ:",
+    "description": "Բարձրորակ կորպորատիվ հագուստ՝ անհատական ​​լուծումներով, որոնք օգնում են արտահայտել բրենդային ինքնությունը և ստեղծել թիմային մշակույթ:",
     "subDescription": " Դիցայնից մինչև արտադություն՝ մենք հոգ ենք տանում յուրաքանչյուր մանրուքի մասին",
     "features": {
       "bulkDiscount": "Անհատական բրենդավորված հագուստ տարբեր ոլորտների համար",
@@ -809,6 +899,110 @@
       "title": "Ունե՞ք եզակի նախագիծ:",
       "description": "Եկեք միասին կառուցենք ձեր բրենդը պրեմիում տեքստիլ լուծումներով, որոնք հարմարեցված են ձեր բիզնեսի կարիքներին։",
       "button": "Կապվեք Մեզ Հետ Այսօր"
+    }
+  },
+  "quotes": {
+    "title": "Գնառաջարկներ",
+    "newQuote": "Նոր գնառաջարկ",
+    "noQuotes": "Գնառաջարկներ դեռ չկան",
+    "noQuotesHint": "Ստեղծեք գնառաջարկ գործարքից՝ սկսելու համար",
+    "number": "Համար",
+    "client": "Հաճախորդ",
+    "deal": "Գործարք",
+    "total": "Ընդամենը",
+    "date": "Ամսաթիվ",
+    "validUntil": "Վավեր է մինչև",
+    "owner": "Պատասխանատու",
+    "actions": "Գործողություններ",
+    "filters": {
+      "all": "Բոլոր կարգավիճակները",
+      "myQuotes": "Իմ գնառաջարկները",
+      "search": "Որոնել գնառաջարկներ..."
+    },
+    "statuses": {
+      "draft": "Սևագիր",
+      "sent": "Ուղարկված",
+      "accepted": "Ընդունված",
+      "rejected": "Մերժված",
+      "expired": "Ժամկետանց",
+      "superseded": "Փոխարինված"
+    },
+    "editor": {
+      "title": "Գնառաջարկ",
+      "newTitle": "Նոր գնառաջարկ",
+      "save": "Պահպանել",
+      "send": "Նշել որպես ուղարկված",
+      "previewPdf": "Դիտել PDF-ը",
+      "newVersion": "Նոր տարբերակ",
+      "downloadPdf": "PDF",
+      "accept": "Նշել որպես ընդունված",
+      "reject": "Նշել որպես մերժված",
+      "confirmSend": "Ուղարկե՞լ այս գնառաջարկը հաճախորդին",
+      "confirmSendHint": "Կարգավիճակը կդառնա «Ուղարկված», և գնառաջարկը կփակվի խմբագրման համար։",
+      "versionNote": "Այս գնառաջարկը փոխարինվել է ավելի նոր տարբերակով։",
+      "viewLatest": "Դիտել վերջին տարբերակը",
+      "rejectReason": "Մերժման պատճառ (ըստ ցանկության)",
+      "section": {
+        "header": "Հիմնական տվյալներ",
+        "client": "Հաճախորդ",
+        "items": "Ապրանքներ",
+        "terms": "Պայմաններ",
+        "notes": "Նշումներ",
+        "costMargin": "Ինքնարժեք և մարժա"
+      },
+      "field": {
+        "language": "Լեզու",
+        "armenian": "Հայերեն",
+        "issueDate": "Կազմման ամսաթիվ",
+        "validUntil": "Վավեր է մինչև",
+        "paymentType": "Վճարման եղանակ",
+        "cash": "Կանխիկ",
+        "invoice": "Անկանխիկ",
+        "prepayment": "Կանխավճար %",
+        "leadTime": "Արտադրության ժամկետ (աշխատանքային օր)",
+        "deliveryTerms": "Առաքման պայմաններ",
+        "discountType": "Զեղչի տեսակ",
+        "discountValue": "Զեղչի չափ",
+        "notes": "Նշումներ",
+        "termsText": "Պայմանների տեքստ",
+        "garmentType": "Հագուստի տեսակ",
+        "fabric": "Գործվածք",
+        "color": "Գույն",
+        "decoration": "Զարդարման եղանակ",
+        "logoPosition": "Լոգոյի դիրք",
+        "logoSize": "Լոգոյի չափ",
+        "estimatedCost": "Գնահատված ինքնարժեք / հատ",
+        "english": "Անգլերեն",
+        "contact": "Կапвором անձ",
+        "contactPlaceholder": "Ընтրел капвором"
+      },
+      "item": {
+        "add": "Ավելացնել ապրանք",
+        "description": "Նկարագրություն",
+        "qty": "Քանակ",
+        "unitPrice": "Միավորի գին ֏",
+        "discount": "Զեղչ %",
+        "lineTotal": "Գումար",
+        "remove": "Հեռացնել",
+        "sizeBreakdown": "Варcharкутюннери башхутюн"
+      },
+      "summary": {
+        "subtotal": "Ենթագումար",
+        "discount": "Զեղչ",
+        "total": "Ընդամենը վճարման"
+      },
+      "markSentConfirm": "Նշե՞լ այս գնառաջարկը որպես ուղարկված հաճախորդին",
+      "markSentHint": "Կարգավիճակը կդառնա «Ուղարկված», և գնառաջարկը կփակվի խմբագրման համար։",
+      "createOrder": "Ствارел патвер",
+      "acceptAndCreateOrder": "ندунел ев ствارел патвер",
+      "orderCreated": "Патвerը stvарвАЦ е",
+      "orderCreatedBadge": "Патвер stvарвАЦ",
+      "orderCreateFailed": "Не хаjovецав патвerը ствارел",
+      "costMargin": {
+        "totalCost": "Ընդհանուր գնահատված ինքնարժեք",
+        "margin": "Մարժա",
+        "marginPct": "Մարժա %"
+      }
     }
   }
 }

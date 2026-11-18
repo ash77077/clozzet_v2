@@ -1,0 +1,621 @@
+<p-toast />
+<p-confirmdialog></p-confirmdialog>
+
+@if (loading()) {
+  <div class="editor-skeleton">
+    <p-skeleton height="40px" width="260px" styleClass="mb-3" />
+    <p-skeleton height="300px" />
+  </div>
+} @else {
+<div class="quote-editor">
+
+  <!-- Header bar -->
+  <div class="editor-header">
+    <div class="header-left">
+      <button pButton type="button" icon="pi pi-arrow-left" [text]="true" severity="secondary" (click)="goBack()"></button>
+      <div class="title-block">
+        @if (quote()) {
+          <span class="quote-num">{{ quote()!.number }}</span>
+          @if (quote()!.version > 1) {
+            <span class="version-badge">v{{ quote()!.version }}</span>
+          }
+          <p-tag
+            [value]="('quotes.statuses.' + quote()!.status) | translate"
+            [severity]="statusSeverity(quote()!.status)"
+          />
+          @if (customerName) {
+            <span class="header-customer">{{ customerName }}</span>
+          }
+          @if (dealTitle) {
+            <span class="header-sep">·</span>
+            <span class="header-deal">{{ dealTitle }}</span>
+          }
+        } @else {
+          <span class="quote-num">{{ 'quotes.editor.newTitle' | translate }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (saving()) {
+        <span class="saving-indicator"><i class="pi pi-spin pi-spinner"></i></span>
+      } @else if (saved()) {
+        <span class="saved-indicator"><i class="pi pi-check"></i> Saved</span>
+      }
+
+      @if (editable()) {
+        <button pButton type="button"
+          [label]="'quotes.editor.save' | translate"
+          icon="pi pi-save"
+          [loading]="saving()"
+          (click)="save()"
+        ></button>
+      }
+      @if (quote() && editable()) {
+        <button pButton type="button"
+          [label]="'quotes.editor.send' | translate"
+          icon="pi pi-check-circle"
+          severity="success"
+          [outlined]="true"
+          (click)="showMarkSentDialog = true"
+        ></button>
+      }
+      @if (quote() && quote()!.status === 'sent') {
+        <button pButton type="button"
+          [label]="'quotes.editor.newVersion' | translate"
+          icon="pi pi-copy"
+          severity="secondary"
+          [outlined]="true"
+          (click)="newVersion()"
+        ></button>
+      }
+      @if (canConvert) {
+        <button pButton type="button"
+          [label]="convertLabel"
+          icon="pi pi-box"
+          severity="success"
+          [loading]="converting()"
+          [disabled]="!!quote()?.convertedOrderId"
+          (click)="convertToOrder()"
+        ></button>
+      }
+      @if (quote()?.convertedOrderId) {
+        <span class="converted-badge">
+          <i class="pi pi-check-circle"></i>
+          {{ 'quotes.editor.orderCreatedBadge' | translate }}
+        </span>
+      }
+      @if (quote()) {
+        <button pButton type="button"
+          [label]="'quotes.editor.previewPdf' | translate"
+          icon="pi pi-eye"
+          severity="secondary"
+          [outlined]="true"
+          (click)="previewPdf()"
+        ></button>
+        <button pButton type="button"
+          label="PDF"
+          icon="pi pi-download"
+          severity="secondary"
+          [outlined]="true"
+          (click)="downloadPdf(form.get('language')?.value ?? 'hy')"
+        ></button>
+      }
+    </div>
+  </div>
+
+  <!-- Superseded banner -->
+  @if (quote() && quote()!.status === 'superseded') {
+    <div class="superseded-banner">
+      <i class="pi pi-exclamation-triangle"></i>
+      {{ 'quotes.editor.versionNote' | translate }}
+      @if (quote()!.latestVersionId) {
+        <a [routerLink]="['/quotes', quote()!.latestVersionId]">
+          {{ 'quotes.editor.viewLatest' | translate }}
+        </a>
+      }
+    </div>
+  }
+
+  <form [formGroup]="form" class="editor-body">
+    <div class="editor-cols">
+
+      <!-- Left: items + terms + notes -->
+      <div class="col-main">
+
+        <!-- Items section -->
+        <div class="section-card">
+          <div class="section-header-row">
+            <span class="section-title">{{ 'quotes.editor.section.items' | translate }}</span>
+          </div>
+
+          <div formArrayName="items">
+            @for (item of items.controls; track $index; let i = $index) {
+              <div class="item-card" [formGroupName]="i">
+
+                <!-- Row 1: garment → fabric → color → decoration -->
+                <div class="item-row-fields">
+                  <div class="field-group">
+                    <label class="field-lbl">{{ 'quotes.editor.field.garmentType' | translate }}</label>
+                    <p-select
+                      formControlName="garmentTypeId"
+                      [options]="clothTypeOptions()"
+                      optionLabel="label" optionValue="value"
+                      [filter]="true"
+                      [showClear]="true"
+                      [placeholder]="'quotes.editor.field.garmentType' | translate"
+                      [disabled]="!editable()"
+                      (onChange)="onGarmentTypeChange($event.value, i)"
+                    />
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-lbl">{{ 'quotes.editor.field.fabric' | translate }}</label>
+                    <p-select
+                      formControlName="fabricId"
+                      [options]="fabricTypeOptions()"
+                      optionLabel="label" optionValue="value"
+                      [filter]="true"
+                      [showClear]="true"
+                      [placeholder]="'quotes.editor.field.fabric' | translate"
+                      [disabled]="!editable()"
+                      (onChange)="onFabricChange($event.value, i)"
+                    />
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-lbl">{{ 'quotes.editor.field.color' | translate }}</label>
+                    <p-select
+                      formControlName="colorId"
+                      [options]="itemColors()[i]"
+                      optionLabel="label" optionValue="value"
+                      [showClear]="true"
+                      [placeholder]="'quotes.editor.field.color' | translate"
+                      [disabled]="!editable() || !(itemColors()[i]?.length)"
+                      (onChange)="onColorChange($event.value, i)"
+                    />
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-lbl">{{ 'quotes.editor.field.decoration' | translate }}</label>
+                    <p-select
+                      formControlName="decorationMethod"
+                      [options]="decorationOptions"
+                      optionLabel="label" optionValue="value"
+                      [showClear]="true"
+                      [placeholder]="'quotes.editor.field.decoration' | translate"
+                      [disabled]="!editable()"
+                      (onChange)="onDecorationChange(i)"
+                    />
+                  </div>
+                </div>
+
+                <!-- Row 2: logo position + size -->
+                <div class="item-row-logo">
+                  <div class="field-group">
+                    <label class="field-lbl">{{ 'quotes.editor.field.logoPosition' | translate }}</label>
+                    <div class="logo-field-wrap">
+                      <p-select
+                        formControlName="logoPosition"
+                        [options]="logoPositionOptions()"
+                        optionLabel="label" optionValue="value"
+                        [showClear]="true"
+                        [placeholder]="'quotes.editor.field.logoPosition' | translate"
+                        [disabled]="!editable()"
+                      />
+                      @if (isLogoPositionOther(i)) {
+                        <input pInputText
+                          class="logo-other-input"
+                          [(ngModel)]="logoPositionOther[i]"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="Specify position"
+                          [disabled]="!editable()" />
+                      }
+                    </div>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-lbl">{{ 'quotes.editor.field.logoSize' | translate }}</label>
+                    <div class="logo-field-wrap">
+                      <p-select
+                        formControlName="logoSize"
+                        [options]="logoSizeOptions()"
+                        optionLabel="label" optionValue="value"
+                        [showClear]="true"
+                        [placeholder]="'quotes.editor.field.logoSize' | translate"
+                        [disabled]="!editable()"
+                      />
+                      @if (isLogoSizeOther(i)) {
+                        <input pInputText
+                          class="logo-other-input"
+                          [(ngModel)]="logoSizeOther[i]"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="Specify size"
+                          [disabled]="!editable()" />
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Size breakdown toggle -->
+                @if (editable()) {
+                  <div class="size-breakdown-toggle">
+                    <p-toggleButton
+                      [ngModel]="sizeBreakdownEnabled(i)"
+                      [ngModelOptions]="{ standalone: true }"
+                      onLabel="{{ 'quotes.editor.item.sizeBreakdown' | translate }}"
+                      offLabel="{{ 'quotes.editor.item.sizeBreakdown' | translate }}"
+                      onIcon="pi pi-table"
+                      offIcon="pi pi-table"
+                      (onChange)="toggleSizeBreakdown(i, $event.checked)"
+                    />
+                  </div>
+                }
+
+                <!-- Size breakdown table -->
+                @if (sizeBreakdownEnabled(i)) {
+                  <div class="size-breakdown-table" [formGroupName]="'sizeBreakdown'" >
+                    <ng-container [formGroup]="$any(item.get('sizeBreakdown'))">
+                      <div class="sb-header-row">
+                        <span class="sb-gender-lbl"></span>
+                        @for (sz of SIZES; track sz) {
+                          <span class="sb-size-hd">{{ sz }}</span>
+                        }
+                        <span class="sb-total-hd">{{ 'quotes.editor.item.qty' | translate }}</span>
+                      </div>
+                      <!-- Male row -->
+                      <div class="sb-data-row">
+                        <span class="sb-gender-lbl">M</span>
+                        @for (sz of SIZES; track sz) {
+                          <p-inputnumber
+                            [formControlName]="'m_' + sz"
+                            [min]="0" [showButtons]="false"
+                            styleClass="sb-cell"
+                            [disabled]="!editable()"></p-inputnumber>
+                        }
+                        <span class="sb-row-total">
+                          {{ getMaleQty(i) }}
+                        </span>
+                      </div>
+                      <!-- Female row -->
+                      <div class="sb-data-row">
+                        <span class="sb-gender-lbl">F</span>
+                        @for (sz of SIZES; track sz) {
+                          <p-inputnumber
+                            [formControlName]="'f_' + sz"
+                            [min]="0" [showButtons]="false"
+                            styleClass="sb-cell"
+                            [disabled]="!editable()"></p-inputnumber>
+                        }
+                        <span class="sb-row-total">
+                          {{ getFemaleQty(i) }}
+                        </span>
+                      </div>
+                    </ng-container>
+                  </div>
+                }
+
+                <!-- Row 3: qty + unit price + disc + total -->
+                <div class="item-row-pricing">
+                  <div class="pricing-fields">
+                    <div class="field-group field-group--xs">
+                      <label class="field-lbl">{{ 'quotes.editor.item.qty' | translate }}</label>
+                      @if (sizeBreakdownEnabled(i)) {
+                        <span class="field-static qty-computed">{{ getSizeBreakdownQty(i) }}</span>
+                      } @else {
+                        <p-inputnumber formControlName="quantity"
+                          [min]="1" [showButtons]="false"
+                          [disabled]="!editable()"></p-inputnumber>
+                      }
+                    </div>
+
+                    <div class="field-group field-group--sm">
+                      <label class="field-lbl">{{ 'quotes.editor.item.unitPrice' | translate }}</label>
+                      <p-inputnumber formControlName="unitPrice"
+                        [min]="0" [showButtons]="false"
+                        [disabled]="!editable()"></p-inputnumber>
+                    </div>
+
+                    <div class="field-group field-group--xs">
+                      <label class="field-lbl">{{ 'quotes.editor.item.discount' | translate }}</label>
+                      <p-inputnumber formControlName="lineDiscountPercent"
+                        [min]="0" [max]="100" suffix="%"
+                        [showButtons]="false"
+                        [disabled]="!editable()"></p-inputnumber>
+                    </div>
+                  </div>
+
+                  <div class="pricing-total-block">
+                    <span class="pricing-total-label">{{ 'quotes.editor.item.lineTotal' | translate }}</span>
+                    <span class="line-total-value">{{ formatAmt(calcItemTotalByIndex(i)) }}</span>
+                    @if (isAdmin() && getItemEstimatedCost(i)) {
+                      <span class="estimated-cost-hint">
+                        cost: {{ getItemEstimatedCost(i) }}
+                      </span>
+                    }
+                  </div>
+
+                  @if (editable()) {
+                    <button pButton type="button" icon="pi pi-trash"
+                      [text]="true" severity="danger" size="small"
+                      class="item-remove-btn"
+                      (click)="removeItem(i)"></button>
+                  }
+                </div>
+
+                @if (isAdmin() && editable()) {
+                  <div class="item-cost-row">
+                    <div class="field-group field-group--sm">
+                      <label class="field-lbl">{{ 'quotes.editor.field.estimatedCost' | translate }} / unit</label>
+                      <p-inputnumber formControlName="estimatedUnitCost"
+                        [min]="0" [showButtons]="false"></p-inputnumber>
+                    </div>
+                  </div>
+                }
+
+                <!-- Row 4: description (auto-generated, editable) -->
+                <div class="item-desc-row">
+                  <label class="field-lbl">{{ 'quotes.editor.item.description' | translate }}</label>
+                  <input pInputText formControlName="description"
+                    class="item-desc-input"
+                    [placeholder]="'quotes.editor.item.description' | translate"
+                    [disabled]="!editable()" />
+                </div>
+
+              </div>
+            }
+          </div>
+
+          @if (editable()) {
+            <button pButton type="button"
+              [label]="'quotes.editor.item.add' | translate"
+              icon="pi pi-plus"
+              [text]="true"
+              severity="secondary"
+              size="small"
+              class="add-item-btn"
+              (click)="addItem()"
+            ></button>
+          }
+
+          <!-- Totals block with integrated discount -->
+          <div class="totals-block">
+            <div class="totals-row">
+              <span>{{ 'quotes.editor.summary.subtotal' | translate }}</span>
+              <span class="amt">{{ formatAmt(subtotal()) }}</span>
+            </div>
+
+            <!-- Inline discount controls -->
+            @if (editable()) {
+              <div class="discount-inline">
+                <span class="discount-label">{{ 'quotes.editor.summary.discount' | translate }}</span>
+                <div class="discount-controls">
+                  <div class="disc-toggle-group">
+                    <button type="button"
+                      class="disc-toggle-btn"
+                      [class.active]="form.get('discountType')?.value === 'percent'"
+                      (click)="form.get('discountType')?.setValue('percent')"
+                    >%</button>
+                    <button type="button"
+                      class="disc-toggle-btn"
+                      [class.active]="form.get('discountType')?.value === 'amount'"
+                      (click)="form.get('discountType')?.setValue('amount')"
+                    >֏</button>
+                  </div>
+                  <p-inputnumber formControlName="discountValue"
+                    [min]="0" [showButtons]="false"
+                    styleClass="disc-value-input"></p-inputnumber>
+                  @if (discountAmt() > 0) {
+                    <span class="discount-computed">− {{ formatAmt(discountAmt()) }}</span>
+                  }
+                </div>
+              </div>
+            } @else if (discountAmt() > 0) {
+              <div class="totals-row discount-row">
+                <span>{{ 'quotes.editor.summary.discount' | translate }}</span>
+                <span class="amt">− {{ formatAmt(discountAmt()) }}</span>
+              </div>
+            }
+
+            <div class="totals-row grand-total">
+              <span>{{ 'quotes.editor.summary.total' | translate }}</span>
+              <span class="amt">{{ formatAmt(total()) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terms section -->
+        <div class="section-card">
+          <div class="section-title">{{ 'quotes.editor.section.terms' | translate }}</div>
+
+          @if (isNew() && settingsHaveNoSalesDefaults) {
+            <p class="settings-hint">
+              <i class="pi pi-info-circle"></i>
+              Set defaults in <a routerLink="/settings" [queryParams]="{tab:'sales'}">Settings &rarr; Sales</a>
+            </p>
+          }
+
+          <div class="fields-grid">
+            <div class="field-row">
+              <label>{{ 'quotes.editor.field.paymentType' | translate }}</label>
+              <p-select formControlName="paymentType"
+                [options]="paymentOptions"
+                optionLabel="label" optionValue="value"
+                [disabled]="!editable()" />
+            </div>
+
+            <div class="field-row">
+              <label>{{ 'quotes.editor.field.prepayment' | translate }}</label>
+              <p-inputnumber formControlName="prepaymentPercent"
+                [min]="0" [max]="100" suffix="%"
+                [showButtons]="false"
+                [disabled]="!editable()"></p-inputnumber>
+            </div>
+
+            <div class="field-row">
+              <label>{{ 'quotes.editor.field.leadTime' | translate }}</label>
+              <p-inputnumber formControlName="productionLeadTimeDays"
+                [min]="1" [showButtons]="false"
+                [disabled]="!editable()"></p-inputnumber>
+            </div>
+
+            <div class="field-row">
+              <label>{{ 'quotes.editor.field.deliveryTerms' | translate }}</label>
+              <input pInputText formControlName="deliveryTerms"
+                [disabled]="!editable()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes section -->
+        <div class="section-card">
+          <div class="section-title">{{ 'quotes.editor.section.notes' | translate }}</div>
+
+          <div class="field-col">
+            <label>{{ 'quotes.editor.field.notes' | translate }}</label>
+            <textarea pTextarea formControlName="notes" rows="3"
+              [disabled]="!editable()"></textarea>
+          </div>
+
+          <div class="field-col">
+            <label>{{ 'quotes.editor.field.termsText' | translate }}</label>
+            <textarea pTextarea formControlName="termsText" rows="3"
+              [disabled]="!editable()"></textarea>
+          </div>
+        </div>
+
+        <!-- Admin: Cost & Margin card -->
+        @if (isAdmin() && quote()) {
+          <div class="section-card cost-margin-card">
+            <div class="section-title">{{ 'quotes.editor.section.costMargin' | translate }}</div>
+            <div class="cost-margin-grid">
+              <div class="cm-row">
+                <span>{{ 'quotes.editor.costMargin.totalCost' | translate }}</span>
+                <span class="cm-val">{{ formatAmt(estimatedTotalCost) }}</span>
+              </div>
+              <div class="cm-row">
+                <span>{{ 'quotes.editor.costMargin.margin' | translate }}</span>
+                <span class="cm-val" [class.cm-neg]="estimatedMargin < 0">{{ formatAmt(estimatedMargin) }}</span>
+              </div>
+              <div class="cm-row cm-pct">
+                <span>{{ 'quotes.editor.costMargin.marginPct' | translate }}</span>
+                <span class="cm-val" [class.cm-neg]="estimatedMarginPercent < 0">{{ estimatedMarginPercent | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- Right: header details + client card -->
+      <div class="col-side">
+
+        <div class="section-card">
+          <div class="section-title">{{ 'quotes.editor.section.header' | translate }}</div>
+
+          <div class="field-row">
+            <label>{{ 'quotes.editor.field.language' | translate }}</label>
+            <p-select formControlName="language"
+              [options]="languageOptions"
+              optionLabel="label" optionValue="value"
+              [disabled]="!editable()"
+              styleClass="language-select" />
+          </div>
+
+          <div class="field-row">
+            <label>{{ 'quotes.editor.field.issueDate' | translate }}</label>
+            @if (editable()) {
+              <p-datepicker formControlName="issueDate"
+                dateFormat="dd.mm.yy"
+                [showIcon]="true"
+                styleClass="date-picker-field"></p-datepicker>
+            } @else {
+              <span class="field-static">{{ form.get('issueDate')?.value | date:'dd.MM.yyyy' }}</span>
+            }
+          </div>
+
+          <div class="field-row">
+            <label>{{ 'quotes.editor.field.validUntil' | translate }}</label>
+            @if (editable()) {
+              <p-datepicker formControlName="validUntil"
+                dateFormat="dd.mm.yy"
+                [showIcon]="true"
+                styleClass="date-picker-field"></p-datepicker>
+            } @else {
+              <span class="field-static">{{ form.get('validUntil')?.value | date:'dd.MM.yyyy' }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- Client card -->
+        <div class="section-card client-card">
+          <div class="section-title">{{ 'quotes.editor.section.client' | translate }}</div>
+
+          @if (customerName) {
+            <div class="client-name">
+              @if (customerLink.length) {
+                <a [routerLink]="customerLink" class="client-name-link">
+                  <i class="pi pi-building"></i>
+                  {{ customerName }}
+                </a>
+              } @else {
+                <span><i class="pi pi-building"></i> {{ customerName }}</span>
+              }
+            </div>
+          }
+
+          @if (dealTitle) {
+            <div class="client-deal">
+              <a [routerLink]="dealLink" class="deal-link">
+                <i class="pi pi-briefcase"></i>
+                {{ dealTitle }}
+              </a>
+            </div>
+          }
+
+          <!-- Contact person select -->
+          @if (editable() && contactOptions.length) {
+            <div class="field-row field-row--contact">
+              <label>{{ 'quotes.editor.field.contact' | translate }}</label>
+              <p-select formControlName="contactPersonId"
+                [options]="contactOptions"
+                optionLabel="label" optionValue="value"
+                [showClear]="true"
+                [placeholder]="'quotes.editor.field.contactPlaceholder' | translate"
+                [disabled]="!editable()"
+              />
+            </div>
+          } @else if (!editable() && quote()?.contactName) {
+            <div class="client-contact">
+              <i class="pi pi-user"></i>
+              {{ quote()!.contactName }}
+            </div>
+          }
+        </div>
+
+      </div>
+    </div>
+  </form>
+
+  <!-- Mark as sent dialog -->
+  <p-dialog
+    [(visible)]="showMarkSentDialog"
+    [header]="'quotes.editor.send' | translate"
+    [modal]="true"
+    [style]="{ width: '420px' }"
+    [closable]="true"
+  >
+    <p>{{ 'quotes.editor.markSentConfirm' | translate }}</p>
+    <p class="dialog-hint">{{ 'quotes.editor.markSentHint' | translate }}</p>
+    <ng-template pTemplate="footer">
+      <button pButton type="button" [label]="'common.cancel' | translate"
+        severity="secondary" [outlined]="true"
+        (click)="showMarkSentDialog = false"></button>
+      <button pButton type="button" [label]="'quotes.editor.send' | translate"
+        icon="pi pi-check-circle" severity="success"
+        (click)="markAsSent()"></button>
+    </ng-template>
+  </p-dialog>
+
+</div>
+}

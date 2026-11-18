@@ -10,7 +10,7 @@ const PUBLIC_ENDPOINTS = [
   '/auth/register',
   '/auth/refresh',
   '/products',
-  '/quotes',
+  '/quotes/contact',
   '/assets/',
 ];
 

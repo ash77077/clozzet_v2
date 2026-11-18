@@ -1,0 +1,576 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="pipeline-page p-4 min-h-screen">
+  <!-- ── Header & filters row ───────────────────────────────────────────── -->
+  <div class="pipeline-header mb-4 flex flex-col gap-3">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+        {{ 'pipeline.title' | translate }}
+      </h1>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="view-toggle-btn"
+          [class.active]="viewMode() === 'board'"
+          (click)="viewMode.set('board')">
+          <i class="pi pi-th-large mr-1"></i>{{ 'pipeline.board' | translate }}
+        </button>
+        <button
+          type="button"
+          class="view-toggle-btn"
+          [class.active]="viewMode() === 'table'"
+          (click)="viewMode.set('table')">
+          <i class="pi pi-list mr-1"></i>{{ 'pipeline.table' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="pipeline-filters flex items-end flex-wrap gap-3">
+      <div class="filter-field">
+        <label class="filter-label">{{ 'pipeline.deal.owner' | translate }}</label>
+        <p-select
+          [options]="ownerOptions()"
+          [ngModel]="ownerFilter()"
+          (ngModelChange)="ownerFilter.set($event)"
+          optionLabel="label"
+          optionValue="value"
+          [style]="{ minWidth: '180px' }"
+          appendTo="body"></p-select>
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label">{{ 'pipeline.deal.source' | translate }}</label>
+        <p-multiselect
+          [options]="sourceOptions"
+          [ngModel]="sourceFilter()"
+          (ngModelChange)="sourceFilter.set($event)"
+          optionValue="value"
+          [style]="{ minWidth: '200px' }"
+          [filter]="false"
+          [showHeader]="false"
+          [placeholder]="'pipeline.deal.source' | translate"
+          appendTo="body">
+          <ng-template let-opt pTemplate="item">
+            <span>{{ opt.label | translate }}</span>
+          </ng-template>
+          <ng-template let-value pTemplate="selectedItems">
+            @if (value?.length) {
+              <span>{{ value.length }}</span>
+            } @else {
+              <span class="text-gray-400">{{ 'pipeline.deal.source' | translate }}</span>
+            }
+          </ng-template>
+        </p-multiselect>
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label">{{ 'pipeline.filters.search' | translate }}</label>
+        <input
+          pInputText
+          type="text"
+          [value]="searchText()"
+          (input)="onSearchInput($event)"
+          [placeholder]="'pipeline.filters.search' | translate"
+          class="w-56" />
+      </div>
+
+      <div class="filter-field flex-row items-center gap-2">
+        <p-toggleswitch
+          [ngModel]="overdueOnly()"
+          (ngModelChange)="overdueOnly.set($event)"
+          inputId="overdueOnly"></p-toggleswitch>
+        <label for="overdueOnly" class="filter-label !mb-0">{{ 'pipeline.filters.overdueOnly' | translate }}</label>
+      </div>
+
+      <button
+        type="button"
+        class="clear-filters-btn"
+        (click)="clearFilters()">
+        <i class="pi pi-filter-slash"></i>
+        <span>{{ 'common.cancel' | translate }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading ────────────────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <div class="flex items-center justify-center py-12">
+      <i class="pi pi-spin pi-spinner text-4xl text-gray-400"></i>
+    </div>
+  } @else {
+    <!-- ── Board view ──────────────────────────────────────────────────── -->
+    @if (viewMode() === 'board') {
+      <div class="board-wrapper">
+        <div class="board-columns">
+          <!-- Open stages -->
+          @for (col of openColumns(); track trackColumn($index, col)) {
+            <div class="stage-column open-column">
+              <div class="stage-header">
+                <div class="flex items-center justify-between">
+                  <span class="stage-name">{{ stageLabel(col.stage) }}</span>
+                  <span class="stage-count">{{ col.count }}</span>
+                </div>
+                <div class="stage-totals">
+                  <span class="stage-total">֏ {{ formatAmount(col.totalValue) }}</span>
+                  <span class="stage-weighted" [pTooltip]="'pipeline.deal.probability' | translate">
+                    ≈ ֏ {{ formatAmount(col.weightedValue) }}
+                  </span>
+                </div>
+              </div>
+
+              <div
+                class="stage-body"
+                cdkDropList
+                [id]="'stage-' + col.stage.key"
+                [cdkDropListData]="col.deals"
+                [cdkDropListConnectedTo]="connectedDropLists()"
+                (cdkDropListDropped)="onDealDrop($event, col.stage)">
+
+                @for (deal of col.deals; track trackDeal($index, deal)) {
+                  <div
+                    class="deal-card"
+                    cdkDrag
+                    [cdkDragData]="deal"
+                    (click)="openDealDetail(deal)">
+                    <div class="deal-top">
+                      <span class="deal-company">{{ companyName(deal) || '—' }}</span>
+                      <span class="owner-initials" [pTooltip]="ownerName(deal)">
+                        {{ ownerInitials(deal) }}
+                      </span>
+                    </div>
+                    <div class="deal-title">{{ deal.title }}</div>
+                    <div class="deal-mid">
+                      @if (deal.estimatedValue != null) {
+                        <span class="deal-value">֏ {{ formatAmount(deal.estimatedValue) }}</span>
+                      } @else {
+                        <span class="deal-value muted">—</span>
+                      }
+                      @if (deal.quoteIds.length) {
+                        <span class="quote-badge" [pTooltip]="'pipeline.deal.quotes' | translate">
+                          <i class="pi pi-file"></i>{{ deal.quoteIds.length }}
+                        </span>
+                      }
+                    </div>
+                    <div class="deal-footer">
+                      @if (deal.nextStepDate) {
+                        <span class="next-step" [class.overdue]="nextStepStatus(deal) === 'overdue'" [class.today]="nextStepStatus(deal) === 'today'">
+                          <i class="pi pi-calendar"></i>
+                          {{ formatDateShort(deal.nextStepDate) }}
+                        </span>
+                      }
+                      <span class="days-in-stage">{{ daysInStage(deal) }} {{ 'pipeline.daysInStage' | translate }}</span>
+                    </div>
+                  </div>
+                }
+
+                <button
+                  type="button"
+                  class="new-deal-btn"
+                  (click)="openNewDealDialog(col.stage)">
+                  <i class="pi pi-plus"></i>
+                  <span>{{ 'pipeline.newDeal' | translate }}</span>
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Won column -->
+          @if (wonColumn(); as col) {
+            <div class="stage-column won-column">
+              <div class="stage-header">
+                <div class="flex items-center justify-between">
+                  <span class="stage-name">{{ stageLabel(col.stage) }}</span>
+                  <span class="stage-count">{{ col.count }}</span>
+                </div>
+                <div class="stage-totals">
+                  <span class="stage-total">֏ {{ formatAmount(col.totalValue) }}</span>
+                </div>
+              </div>
+              <div
+                class="stage-body"
+                cdkDropList
+                [id]="'stage-' + col.stage.key"
+                [cdkDropListData]="col.deals"
+                [cdkDropListConnectedTo]="connectedDropLists()"
+                (cdkDropListDropped)="onDealDrop($event, col.stage)">
+                @for (deal of col.deals; track trackDeal($index, deal)) {
+                  <div class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openDealDetail(deal)">
+                    <div class="deal-top">
+                      <span class="deal-company">{{ companyName(deal) || '—' }}</span>
+                      <span class="owner-initials">{{ ownerInitials(deal) }}</span>
+                    </div>
+                    <div class="deal-title">{{ deal.title }}</div>
+                    <div class="deal-mid">
+                      <span class="deal-value">֏ {{ formatAmount(deal.estimatedValue) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Lost column -->
+          @if (lostColumn(); as col) {
+            <div class="stage-column lost-column">
+              <div class="stage-header">
+                <div class="flex items-center justify-between">
+                  <span class="stage-name">{{ stageLabel(col.stage) }}</span>
+                  <span class="stage-count">{{ col.count }}</span>
+                </div>
+              </div>
+              <div
+                class="stage-body"
+                cdkDropList
+                [id]="'stage-' + col.stage.key"
+                [cdkDropListData]="col.deals"
+                [cdkDropListConnectedTo]="connectedDropLists()"
+                (cdkDropListDropped)="onDealDrop($event, col.stage)">
+                @for (deal of col.deals; track trackDeal($index, deal)) {
+                  <div class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openDealDetail(deal)">
+                    <div class="deal-top">
+                      <span class="deal-company">{{ companyName(deal) || '—' }}</span>
+                      <span class="owner-initials">{{ ownerInitials(deal) }}</span>
+                    </div>
+                    <div class="deal-title">{{ deal.title }}</div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── Table view ──────────────────────────────────────────────────── -->
+    @if (viewMode() === 'table') {
+      <p-table
+        [value]="filteredDeals()"
+        [paginator]="true"
+        [rows]="20"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        responsiveLayout="scroll"
+        [globalFilterFields]="['title']"
+        styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="title">{{ 'pipeline.deal.title' | translate }} <p-sortIcon field="title"></p-sortIcon></th>
+            <th>{{ 'pipeline.deal.company' | translate }}</th>
+            <th>{{ 'pipeline.deal.stage' | translate }}</th>
+            <th>{{ 'pipeline.deal.owner' | translate }}</th>
+            <th pSortableColumn="estimatedValue">{{ 'pipeline.deal.value' | translate }} <p-sortIcon field="estimatedValue"></p-sortIcon></th>
+            <th pSortableColumn="probability">{{ 'pipeline.deal.probability' | translate }} <p-sortIcon field="probability"></p-sortIcon></th>
+            <th pSortableColumn="expectedCloseDate">{{ 'pipeline.expectedClose' | translate }} <p-sortIcon field="expectedCloseDate"></p-sortIcon></th>
+            <th>{{ 'pipeline.nextStep' | translate }}</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-deal>
+          <tr class="cursor-pointer" (click)="openDealDetail(deal)">
+            <td class="font-medium">{{ deal.title }}</td>
+            <td>{{ companyName(deal) || '—' }}</td>
+            <td>
+              <p-tag
+                [severity]="getStageTagSeverity(deal)"
+                [value]="stageName(undefined, deal) || deal.stageKey"></p-tag>
+            </td>
+            <td>{{ ownerName(deal) || '—' }}</td>
+            <td>{{ deal.estimatedValue ? '֏ ' + formatAmount(deal.estimatedValue) : '—' }}</td>
+            <td>{{ deal.probability }}%</td>
+            <td>{{ formatDateShort(deal.expectedCloseDate) || '—' }}</td>
+            <td>
+              @if (deal.nextStepDate) {
+                <span [class.text-red-600]="nextStepStatus(deal) === 'overdue'">
+                  {{ formatDateShort(deal.nextStepDate) }}
+                </span>
+              } @else { — }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="8" class="text-center text-gray-500 py-6">—</td></tr>
+        </ng-template>
+      </p-table>
+    }
+  }
+</div>
+
+<!-- ── New Deal Dialog ─────────────────────────────────────────────────── -->
+<p-dialog
+  [header]="'pipeline.newDeal' | translate"
+  [(visible)]="showNewDealDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '540px' }">
+  <form [formGroup]="newDealForm" class="flex flex-col gap-3 pt-2">
+    <div class="field">
+      <label class="field-label">{{ 'pipeline.deal.title' | translate }} *</label>
+      <input pInputText type="text" formControlName="title" class="w-full" />
+    </div>
+
+    <div class="field">
+      <label class="field-label">{{ 'pipeline.deal.company' | translate }} *</label>
+      <p-select
+        [options]="customers()"
+        formControlName="customerId"
+        optionLabel="companyName"
+        optionValue="_id"
+        [filter]="true"
+        filterBy="companyName"
+        [showClear]="true"
+        appendTo="body"
+        (onChange)="onCustomerChange($event.value)"
+        [style]="{ width: '100%' }"
+        styleClass="w-full"></p-select>
+    </div>
+
+    @if (contactPersonOptions.length > 0) {
+      <div class="field">
+        <label class="field-label">{{ 'pipeline.deal.contact' | translate }}</label>
+        <p-select
+          [options]="contactPersonOptions"
+          formControlName="contactPersonId"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+          styleClass="w-full"></p-select>
+      </div>
+    }
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="field">
+        <label class="field-label">{{ 'pipeline.deal.value' | translate }}</label>
+        <p-inputnumber
+          formControlName="estimatedValue"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="0"
+          suffix=" ֏"
+          mode="decimal"
+          [style]="{ width: '100%' }"
+          styleClass="w-full"></p-inputnumber>
+      </div>
+      <div class="field">
+        <label class="field-label">{{ 'pipeline.expectedClose' | translate }}</label>
+        <p-datepicker
+          formControlName="expectedCloseDate"
+          dateFormat="dd/mm/yy"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+          styleClass="w-full"></p-datepicker>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">{{ 'pipeline.deal.source' | translate }}</label>
+      <p-select
+        [options]="sourceOptions"
+        formControlName="source"
+        optionValue="value"
+        appendTo="body"
+        [showClear]="true"
+        [style]="{ width: '100%' }"
+        styleClass="w-full">
+        <ng-template let-opt pTemplate="item"><span>{{ opt.label | translate }}</span></ng-template>
+        <ng-template let-opt pTemplate="selectedItem">
+          @if (opt) { <span>{{ opt.label | translate }}</span> } @else { <span class="text-gray-400">—</span> }
+        </ng-template>
+      </p-select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="field">
+        <label class="field-label">{{ 'pipeline.deal.nextStepType' | translate }}</label>
+        <p-select
+          [options]="nextStepTypeOptions"
+          formControlName="nextStepType"
+          optionValue="value"
+          appendTo="body"
+          [showClear]="true"
+          [style]="{ width: '100%' }"
+          styleClass="w-full">
+          <ng-template let-opt pTemplate="item"><span>{{ opt.label | translate }}</span></ng-template>
+          <ng-template let-opt pTemplate="selectedItem">
+            @if (opt) { <span>{{ opt.label | translate }}</span> } @else { <span class="text-gray-400">—</span> }
+          </ng-template>
+        </p-select>
+      </div>
+      <div class="field">
+        <label class="field-label">{{ 'pipeline.deal.nextStepDate' | translate }} *</label>
+        <p-datepicker
+          formControlName="nextStepDate"
+          dateFormat="dd/mm/yy"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+          styleClass="w-full"></p-datepicker>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">{{ 'pipeline.deal.nextStepNote' | translate }}</label>
+      <textarea pTextarea formControlName="nextStepNote" rows="3" class="w-full"></textarea>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      pButton
+      [label]="'common.cancel' | translate"
+      class="p-button-text"
+      (click)="showNewDealDialog = false"
+      [disabled]="isSavingDeal"></button>
+    <button
+      type="button"
+      pButton
+      [label]="'common.save' | translate"
+      icon="pi pi-check"
+      (click)="saveNewDeal()"
+      [loading]="isSavingDeal"
+      [disabled]="newDealForm.invalid"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- ── Lost Reason Dialog ──────────────────────────────────────────────── -->
+<p-dialog
+  [header]="'pipeline.lost.title' | translate"
+  [(visible)]="showLostDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px' }">
+  <form [formGroup]="lostForm" class="flex flex-col gap-3 pt-2">
+    <div class="field">
+      <label class="field-label">{{ 'pipeline.lost.reason' | translate }} *</label>
+      <p-select
+        [options]="lostReasonOptions"
+        formControlName="lostReasonId"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        (onChange)="onLostReasonChange($event.value)"
+        [style]="{ width: '100%' }"
+        styleClass="w-full"></p-select>
+    </div>
+
+    <div class="field">
+      <label class="field-label">
+        {{ 'pipeline.lost.comment' | translate }}
+        @if (selectedLostRequiresComment) { <span>*</span> }
+      </label>
+      <textarea pTextarea formControlName="lostComment" rows="3" class="w-full"></textarea>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button
+      type="button"
+      pButton
+      [label]="'common.cancel' | translate"
+      class="p-button-text"
+      (click)="showLostDialog = false"
+      [disabled]="isSavingLost"></button>
+    <button
+      type="button"
+      pButton
+      [label]="'pipeline.lost.confirm' | translate"
+      icon="pi pi-check"
+      severity="danger"
+      (click)="confirmLost()"
+      [loading]="isSavingLost"
+      [disabled]="lostForm.invalid"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- ── Deal Detail Drawer ──────────────────────────────────────────────── -->
+@if (selectedDeal) {
+  <app-deal-detail
+    [visible]="showDetailDrawer"
+    [deal]="selectedDeal"
+    [stages]="stages()"
+    [users]="users()"
+    [sourceOptions]="sourceOptions"
+    [nextStepTypeOptions]="nextStepTypeOptions"
+    (close)="closeDealDetail()"
+    (dealUpdated)="onDealUpdated($event)"
+    (stageChangeRequest)="onDealStageChangeRequest($event)"
+    (lostRequest)="openLostDialog($event)">
+  </app-deal-detail>
+}
+
+<!-- ── Won Guard Dialog ───────────────────────────────────────────────── -->
+<p-dialog
+  [(visible)]="showWonGuardDialog"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '480px' }"
+  [header]="'pipeline.won.dialogTitle' | translate"
+  (onHide)="closeWonGuard()">
+
+  <div class="won-guard-body">
+    @if (wonGuardLoading) {
+      <div class="won-guard-loading">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'common.loading' | translate }}</span>
+      </div>
+    } @else {
+      <p class="won-guard-hint">{{ 'pipeline.won.noOrderHint' | translate }}</p>
+
+      @if (wonGuardQuotes.length > 0) {
+        <p class="won-guard-quotes-label">{{ 'pipeline.won.quotesOnDeal' | translate }}</p>
+        <ul class="won-guard-quotes-list">
+          @for (q of wonGuardQuotes; track q._id) {
+            <li>
+              <span class="q-num">{{ q.number }}</span>
+              <span class="q-status" [class]="'q-status--' + q.status">
+                {{ ('quotes.statuses.' + q.status) | translate }}
+              </span>
+              @if (q.convertedOrderId) {
+                <span class="q-converted">{{ 'pipeline.won.alreadyConverted' | translate }}</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="won-guard-actions">
+        <button pButton type="button"
+          icon="pi pi-list"
+          [label]="'pipeline.won.openQuotes' | translate"
+          severity="secondary"
+          [outlined]="true"
+          (click)="wonGuardOpenQuotes()"></button>
+        <button pButton type="button"
+          icon="pi pi-plus"
+          [label]="'pipeline.won.createQuote' | translate"
+          severity="primary"
+          [outlined]="true"
+          (click)="wonGuardCreateQuote()"></button>
+      </div>
+
+      @if (isAdmin) {
+        <div class="won-guard-admin">
+          <p class="won-guard-admin-label">{{ 'pipeline.won.adminSection' | translate }}</p>
+          <div class="won-guard-admin-actions">
+            <span class="p-float-label" style="flex:1">
+              <input pInputText id="wonComment"
+                [(ngModel)]="wonWithoutOrderComment"
+                style="width:100%"
+                [placeholder]="'pipeline.won.commentRequired' | translate" />
+            </span>
+            <button pButton type="button"
+              icon="pi pi-check"
+              [label]="'pipeline.won.markWithoutOrder' | translate"
+              severity="warn"
+              [loading]="wonMarkingWithoutOrder"
+              [disabled]="!wonWithoutOrderComment.trim()"
+              (click)="wonGuardMarkWithoutOrder()"></button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</p-dialog>

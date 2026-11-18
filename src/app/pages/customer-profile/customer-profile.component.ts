@@ -26,6 +26,9 @@ import { InteractionsService } from '../../services/interactions.service';
 import { AiService } from '../../services/ai.service';
 import { UsersService, User as AppUser } from '../../services/users.service';
 import { MeetingsService } from '../../services/meetings.service';
+import { DealsService, Deal, CreateDealPayload } from '../../services/deals.service';
+import { PipelineStagesService, PipelineStage } from '../../services/pipeline-stages.service';
+import { AuthService } from '../../services/auth.service';
 import { Meeting, MeetingStatus, CreateMeetingDto } from '../../models/meeting.model';
 import { Customer, CustomerStatus, AssignmentLogEntry } from '../../models/customer.model';
 import { Interaction, InteractionType, CallOutcome, CreateInteractionDto } from '../../models/interaction.model';
@@ -127,6 +130,15 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
   editMeetingForm!: FormGroup;
   isSavingEditMeeting = false;
 
+  // Deals (pipeline) — inline section
+  customerDeals: Deal[] = [];
+  isLoadingDeals = false;
+  pipelineStages: PipelineStage[] = [];
+  showNewDealDialog = false;
+  profileDealForm!: FormGroup;
+  isSavingDeal = false;
+  openStageOptions: { label: string; value: string }[] = [];
+
   private destroy$ = new Subject<void>();
 
   get aiEnabled$() { return this.aiService.aiEnabled$; }
@@ -163,6 +175,9 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     private aiService: AiService,
     private usersService: UsersService,
     private meetingsService: MeetingsService,
+    private dealsService: DealsService,
+    private pipelineStagesService: PipelineStagesService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -181,10 +196,134 @@ export class CustomerProfileComponent implements OnInit, OnDestroy {
     this.initializeAddContactForm();
     this.initializeProfileEditForm();
     this.initializeMeetingForm();
+    this.initializeProfileDealForm();
     this.loadCustomerData();
     this.loadAssignableUsers();
+    this.loadDealsAndStages();
     const cached = this.aiService.getCachedAnalysis(this.customerId);
     if (cached) this.aiResult = cached;
+  }
+
+  private initializeProfileDealForm(): void {
+    this.profileDealForm = this.fb.group({
+      title:          ['', [Validators.required, Validators.minLength(2)]],
+      stageId:        [null, Validators.required],
+      estimatedValue: [null],
+      nextStepDate:   [null, Validators.required],
+    });
+  }
+
+  private loadDealsAndStages(): void {
+    this.isLoadingDeals = true;
+    forkJoin({
+      deals:  this.dealsService.getAll({ customerId: this.customerId, isDeleted: false }),
+      stages: this.pipelineStagesService.getAll(),
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.pipelineStages = data.stages.filter(s => s.isActive);
+          this.customerDeals = data.deals.filter(d => {
+            const stage = this.pipelineStages.find(s => s.key === d.stageKey);
+            // Hide lost deals from "open deals" list; show open+won
+            return stage?.type !== 'lost';
+          });
+          const openStages = this.pipelineStages
+            .filter(s => s.type === 'open')
+            .sort((a, b) => a.order - b.order);
+          this.openStageOptions = openStages.map(s => ({
+            label: s.nameHy || s.nameEn,
+            value: s._id,
+          }));
+          this.isLoadingDeals = false;
+        },
+        error: () => { this.isLoadingDeals = false; },
+      });
+  }
+
+  openNewDealForCustomer(): void {
+    const first = this.openStageOptions[0];
+    this.profileDealForm.reset({
+      title: '',
+      stageId: first?.value || null,
+      estimatedValue: null,
+      nextStepDate: null,
+    });
+    this.showNewDealDialog = true;
+  }
+
+  saveCustomerDeal(): void {
+    if (this.profileDealForm.invalid) {
+      this.profileDealForm.markAllAsTouched();
+      return;
+    }
+    const me = this.authService.getCurrentUser();
+    if (!me) return;
+    const v = this.profileDealForm.value;
+    const dto: CreateDealPayload = {
+      title: v.title.trim(),
+      customerId: this.customerId,
+      ownerId: me.id,
+      stageId: v.stageId,
+      estimatedValue: v.estimatedValue ?? undefined,
+      nextStepDate: v.nextStepDate instanceof Date ? v.nextStepDate.toISOString() : undefined,
+    };
+    this.isSavingDeal = true;
+    this.dealsService.create(dto).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (created) => {
+        this.customerDeals = [created, ...this.customerDeals];
+        this.isSavingDeal = false;
+        this.showNewDealDialog = false;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Deal created',
+        });
+      },
+      error: () => {
+        this.isSavingDeal = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to create deal',
+        });
+      },
+    });
+  }
+
+  getDealStageName(deal: Deal): string {
+    if (typeof deal.stageId !== 'string' && deal.stageId) {
+      return (deal.stageId as PipelineStage).nameHy || (deal.stageId as PipelineStage).nameEn;
+    }
+    const stage = this.pipelineStages.find(s => s.key === deal.stageKey);
+    return stage ? (stage.nameHy || stage.nameEn) : deal.stageKey;
+  }
+
+  getDealStageSeverity(deal: Deal): 'success' | 'danger' | 'info' {
+    const stage = this.pipelineStages.find(s => s.key === deal.stageKey);
+    if (!stage) return 'info';
+    if (stage.type === 'won') return 'success';
+    if (stage.type === 'lost') return 'danger';
+    return 'info';
+  }
+
+  isDealOverdue(deal: Deal): boolean {
+    if (!deal.nextStepDate) return false;
+    return new Date(deal.nextStepDate).getTime() < Date.now();
+  }
+
+  formatAmount(value: number | undefined | null): string {
+    if (value == null) return '';
+    return new Intl.NumberFormat('hy-AM', { maximumFractionDigits: 0 }).format(value);
+  }
+
+  formatDealDate(value: string | Date | undefined | null): string {
+    if (!value) return '';
+    return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  goToPipeline(_dealId: string): void {
+    this.router.navigate(['/pipeline']);
   }
 
   ngOnDestroy(): void {

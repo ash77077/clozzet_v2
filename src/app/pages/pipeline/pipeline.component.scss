@@ -1,0 +1,454 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.pipeline-page {
+  background-color: #f8fafc;
+  min-height: calc(100vh - 64px);
+}
+
+:host-context(.dark) .pipeline-page {
+  background-color: #0f172a;
+}
+
+// ─── Filters ─────────────────────────────────────────────────────────────
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+:host-context(.dark) .filter-label {
+  color: #94a3b8;
+}
+
+.view-toggle-btn {
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  background-color: #fff;
+  color: #475569;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &.active {
+    background-color: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+  }
+
+  &:hover:not(.active) {
+    background-color: #f1f5f9;
+  }
+}
+
+:host-context(.dark) .view-toggle-btn {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+
+  &.active {
+    background-color: #2563eb;
+    color: #fff;
+  }
+  &:hover:not(.active) {
+    background-color: #334155;
+  }
+}
+
+.clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid #e2e8f0;
+  background-color: #fff;
+  color: #64748b;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  &:hover { background-color: #f1f5f9; }
+}
+:host-context(.dark) .clear-filters-btn {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+  &:hover { background-color: #334155; }
+}
+
+// ─── Board layout ────────────────────────────────────────────────────────
+.board-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.board-columns {
+  display: flex;
+  gap: 12px;
+  min-height: 60vh;
+  width: max-content;
+}
+
+.stage-column {
+  width: 280px;
+  min-width: 280px;
+  background-color: #f1f5f9;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &.won-column {
+    background-color: rgba(16, 185, 129, 0.08);
+    .stage-header { border-left: 3px solid #10b981; }
+  }
+  &.lost-column {
+    background-color: rgba(239, 68, 68, 0.06);
+    .stage-header { border-left: 3px solid #ef4444; }
+  }
+  &.open-column .stage-header { border-left: 3px solid #2563eb; }
+}
+:host-context(.dark) .stage-column {
+  background-color: #1e293b;
+  &.won-column { background-color: rgba(16, 185, 129, 0.12); }
+  &.lost-column { background-color: rgba(239, 68, 68, 0.12); }
+}
+
+.stage-header {
+  padding: 10px 12px;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+:host-context(.dark) .stage-header {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.stage-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+:host-context(.dark) .stage-name { color: #f1f5f9; }
+
+.stage-count {
+  background-color: #e2e8f0;
+  color: #475569;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+:host-context(.dark) .stage-count {
+  background-color: #334155;
+  color: #cbd5e1;
+}
+
+.stage-totals {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+:host-context(.dark) .stage-totals { color: #94a3b8; }
+
+.stage-total {
+  font-weight: 600;
+  color: #0f172a;
+}
+:host-context(.dark) .stage-total { color: #f8fafc; }
+
+.stage-body {
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+  overflow-y: auto;
+}
+
+// ─── Deal card ───────────────────────────────────────────────────────────
+.deal-card {
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.08s ease;
+
+  &:hover {
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+  }
+
+  &.cdk-drag-preview {
+    opacity: 0.9;
+  }
+  &.cdk-drag-placeholder {
+    opacity: 0.4;
+  }
+  &.cdk-drag-dragging {
+    opacity: 0.6;
+  }
+}
+:host-context(.dark) .deal-card {
+  background-color: #0f172a;
+  border-color: #334155;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  &:hover { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); }
+}
+
+.deal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  gap: 6px;
+}
+
+.deal-company {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+:host-context(.dark) .deal-company { color: #94a3b8; }
+
+.owner-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #6366f1;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.deal-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+:host-context(.dark) .deal-title { color: #f1f5f9; }
+
+.deal-mid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.deal-value {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: #0f172a;
+
+  &.muted {
+    color: #94a3b8;
+    font-weight: 500;
+  }
+}
+:host-context(.dark) .deal-value {
+  color: #f1f5f9;
+  &.muted { color: #64748b; }
+}
+
+.quote-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background-color: #eef2ff;
+  color: #4338ca;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  i { font-size: 0.6875rem; }
+}
+:host-context(.dark) .quote-badge {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+.deal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.6875rem;
+}
+
+.next-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #10b981;
+  font-weight: 500;
+
+  &.today { color: #f59e0b; }
+  &.overdue { color: #ef4444; }
+}
+
+.days-in-stage {
+  color: #94a3b8;
+}
+
+// ─── + New deal button ──────────────────────────────────────────────────
+.new-deal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  background-color: transparent;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  transition: all 0.15s ease;
+  margin-top: auto;
+
+  &:hover {
+    background-color: rgba(37, 99, 235, 0.08);
+    border-color: #2563eb;
+    color: #2563eb;
+  }
+}
+
+:host-context(.dark) .new-deal-btn {
+  color: #94a3b8;
+  border-color: #475569;
+  &:hover {
+    background-color: rgba(37, 99, 235, 0.15);
+    color: #93c5fd;
+    border-color: #2563eb;
+  }
+}
+
+// ─── CDK drop list visual states ───────────────────────────────────────
+.cdk-drop-list-dragging .deal-card:not(.cdk-drag-placeholder) {
+  transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.stage-body.cdk-drop-list-receiving {
+  background-color: rgba(37, 99, 235, 0.05);
+  border-radius: 8px;
+}
+
+// ─── Dialog field ───────────────────────────────────────────────────────
+.field {
+  display: flex;
+  flex-direction: column;
+}
+.field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+}
+:host-context(.dark) .field-label {
+  color: #cbd5e1;
+}
+
+// ─── Won guard dialog ────────────────────────────────────────────────────
+.won-guard-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.won-guard-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--p-text-muted-color);
+  font-size: 13px;
+}
+.won-guard-hint {
+  font-size: 13px;
+  color: var(--p-text-color);
+  margin: 0;
+}
+.won-guard-quotes-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+  margin: 0;
+}
+.won-guard-quotes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .q-num { font-weight: 600; }
+  .q-status {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--p-surface-100);
+    color: var(--p-text-muted-color);
+    &--accepted { background: #dcfce7; color: #16a34a; }
+    &--sent     { background: #dbeafe; color: #2563eb; }
+    &--rejected { background: #fee2e2; color: #dc2626; }
+  }
+  .q-converted { font-size: 11px; color: #16a34a; font-weight: 500; }
+}
+.won-guard-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.won-guard-admin {
+  border-top: 1px solid var(--p-content-border-color);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.won-guard-admin-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #d97706;
+  margin: 0;
+}
+.won-guard-admin-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+

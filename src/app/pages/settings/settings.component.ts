@@ -26,7 +26,7 @@ import { SuppliersService, Supplier } from '../../services/suppliers.service';
 import { GlobalSettingsService, GlobalSettings } from '../../services/global-settings.service';
 import { ProductionNormsService, ProductionNorm, PRODUCTION_NORM_UNITS } from '../../services/production-norms.service';
 
-type ViewMode = 'cloth' | 'fabrics' | 'suppliers' | 'global';
+type ViewMode = 'cloth' | 'fabrics' | 'suppliers' | 'global' | 'sales';
 
 const UNIT_OPTIONS = [
   { label: 'մ (Մետր)', value: 'm' },
@@ -215,6 +215,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
       fabricWastePercent: [5, [Validators.required, Validators.min(0), Validators.max(100)]],
       turnoverTaxPercent: [7, [Validators.required, Validators.min(0), Validators.max(100)]],
       lowStockThreshold: [null],
+      quoteDefaultPrepaymentPercent: [null],
+      quoteDefaultValidityDays: [null],
+      quoteDefaultLeadTimeDays: [null],
+      quoteDefaultDeliveryTerms: [''],
+      quoteDefaultTermsText: [''],
     });
   }
 
@@ -239,6 +244,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
             fabricWastePercent: settings.fabricWastePercent,
             turnoverTaxPercent: settings.turnoverTaxPercent,
             lowStockThreshold: settings.lowStockThreshold ?? null,
+            quoteDefaultPrepaymentPercent: settings.quoteDefaultPrepaymentPercent ?? null,
+            quoteDefaultValidityDays: settings.quoteDefaultValidityDays ?? null,
+            quoteDefaultLeadTimeDays: settings.quoteDefaultLeadTimeDays ?? null,
+            quoteDefaultDeliveryTerms: settings.quoteDefaultDeliveryTerms ?? '',
+            quoteDefaultTermsText: settings.quoteDefaultTermsText ?? '',
           }, { emitEvent: false });
         }
 

@@ -1,0 +1,720 @@
+﻿.editor-skeleton {
+  padding: 32px;
+}
+
+.quote-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--p-content-background);
+}
+
+// -- Header bar
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--p-content-border-color);
+  background: var(--p-content-background);
+  flex-wrap: wrap;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .title-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .quote-num {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--p-text-color);
+  }
+
+  .version-badge {
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--p-primary-color);
+    color: #fff;
+    border-radius: 5px;
+    padding: 2px 7px;
+  }
+
+  .header-customer {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--p-text-color);
+  }
+
+  .header-sep {
+    font-size: 13px;
+    color: var(--p-text-muted-color);
+  }
+
+  .header-deal {
+    font-size: 13px;
+    color: var(--p-text-muted-color);
+    font-style: italic;
+  }
+
+  .saving-indicator {
+    font-size: 13px;
+    color: var(--p-text-muted-color);
+  }
+
+  .saved-indicator {
+    font-size: 13px;
+    color: #16a34a;
+    font-weight: 500;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+// -- Superseded banner
+.superseded-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  border-bottom: 1px solid #fde68a;
+
+  i { color: #d97706; }
+
+  a {
+    color: var(--p-primary-color);
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 4px;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// -- Body layout
+.editor-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.editor-cols {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// -- Section cards
+.section-card {
+  background: var(--p-surface-card);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+  margin-bottom: 14px;
+}
+
+// -- Item card
+.item-card {
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: var(--p-content-background);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// Row 1: garment -> fabric -> color -> decoration
+.item-row-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+
+  ::ng-deep p-select .p-select {
+    width: 100% !important;
+  }
+}
+
+// Row 2: logo position + size
+.item-row-logo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.logo-field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  ::ng-deep p-select .p-select { width: 100% !important; }
+  .logo-other-input { width: 100%; }
+}
+
+// Size breakdown toggle
+.size-breakdown-toggle {
+  ::ng-deep .p-togglebutton {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
+
+// Size breakdown table
+.size-breakdown-table {
+  overflow-x: auto;
+
+  .sb-header-row,
+  .sb-data-row {
+    display: grid;
+    grid-template-columns: 36px repeat(8, 60px) 46px;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .sb-header-row {
+    margin-bottom: 4px;
+  }
+
+  .sb-gender-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--p-text-muted-color);
+    text-align: center;
+  }
+
+  .sb-size-hd {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--p-text-muted-color);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .sb-total-hd {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--p-text-muted-color);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .sb-row-total {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--p-primary-color);
+    text-align: center;
+  }
+
+  .sb-data-row {
+    margin-bottom: 4px;
+  }
+
+  ::ng-deep .sb-cell {
+    .p-inputnumber-input {
+      width: 60px !important;
+      padding: 4px 6px !important;
+      font-size: 12px !important;
+      text-align: center !important;
+    }
+  }
+}
+
+// Row 3: qty + unit price + disc + total
+.item-row-pricing {
+  display: grid;
+  grid-template-columns: 1fr 130px 32px;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.pricing-fields {
+  display: grid;
+  grid-template-columns: 80px 1fr 90px;
+  gap: 8px;
+  align-items: end;
+
+  ::ng-deep p-inputnumber .p-inputnumber-input {
+    width: 100% !important;
+  }
+}
+
+.pricing-total-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  width: 130px;
+  text-align: right;
+
+  .pricing-total-label {
+    font-size: 11px;
+    color: var(--p-text-muted-color);
+    white-space: nowrap;
+  }
+}
+
+// Admin-only estimated cost row
+.item-cost-row {
+  .field-group {
+    max-width: 200px;
+  }
+}
+
+.line-total-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--p-primary-color);
+  white-space: nowrap;
+}
+
+.estimated-cost-hint {
+  font-size: 11px;
+  color: var(--p-text-muted-color);
+  white-space: nowrap;
+}
+
+.qty-computed {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--p-text-color);
+  line-height: 2.2;
+}
+
+.item-remove-btn {
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
+
+.item-desc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .field-lbl { min-width: 80px; }
+  .item-desc-input { flex: 1; min-width: 0; width: 100%; box-sizing: border-box; }
+}
+
+.add-item-btn {
+  margin-top: 4px;
+}
+
+// -- Field helpers
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+
+  ::ng-deep {
+    p-select .p-select,
+    p-datepicker .p-datepicker,
+    p-inputnumber .p-inputnumber {
+      width: 100% !important;
+    }
+
+    p-inputnumber .p-inputnumber-input,
+    input.p-inputtext {
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+  }
+
+  input, p-select, p-inputnumber, p-datepicker {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  &--sm { min-width: 110px; flex: 1 1 110px; }
+  &--xs { min-width: 70px; flex: 0 0 70px; }
+  &--total {
+    flex: 0 0 auto;
+    align-items: flex-end;
+  }
+}
+
+.field-lbl {
+  font-size: 11.5px;
+  color: var(--p-text-muted-color);
+  white-space: nowrap;
+}
+
+// -- Totals block
+.totals-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.totals-row {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--p-text-muted-color);
+  min-width: 300px;
+  max-width: 380px;
+  width: 100%;
+  justify-content: space-between;
+
+  .amt { font-weight: 500; color: var(--p-text-color); }
+
+  &.discount-row .amt { color: #dc2626; }
+
+  &.grand-total {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--p-text-color);
+    padding-top: 6px;
+    border-top: 2px solid var(--p-content-border-color);
+
+    .amt { color: var(--p-primary-color); }
+  }
+}
+
+.discount-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 300px;
+  max-width: 380px;
+  width: 100%;
+
+  .discount-label {
+    font-size: 13px;
+    color: var(--p-text-muted-color);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .discount-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .discount-computed {
+    font-size: 13px;
+    font-weight: 500;
+    color: #dc2626;
+    white-space: nowrap;
+    min-width: 70px;
+    text-align: right;
+  }
+
+  ::ng-deep .disc-value-input {
+    .p-inputnumber-input {
+      width: 80px !important;
+    }
+  }
+}
+
+// Compact % / AMD toggle
+.disc-toggle-group {
+  display: flex;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 6px;
+  overflow: hidden;
+
+  .disc-toggle-btn {
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--p-text-muted-color);
+    transition: background 0.15s, color 0.15s;
+
+    &:hover { background: var(--p-content-hover-background); }
+
+    &.active {
+      background: var(--p-primary-color);
+      color: #fff;
+    }
+
+    &:not(:last-child) {
+      border-right: 1px solid var(--p-content-border-color);
+    }
+  }
+}
+
+// -- Fields in terms / header
+.fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  label {
+    font-size: 12.5px;
+    color: var(--p-text-muted-color);
+    min-width: 110px;
+    white-space: nowrap;
+  }
+
+  ::ng-deep {
+    p-select, p-datepicker, p-inputnumber {
+      flex: 1;
+      min-width: 0;
+
+      .p-select,
+      .p-datepicker,
+      .p-inputnumber { width: 100% !important; }
+
+      .p-inputnumber-input,
+      .p-datepicker-input { width: 100% !important; }
+    }
+  }
+
+  input, p-select, p-datepicker, p-inputnumber {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  &--contact {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    margin-top: 10px;
+
+    label { min-width: auto; }
+
+    ::ng-deep p-select .p-select { width: 100% !important; }
+    p-select { width: 100%; }
+  }
+}
+
+.field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+
+  label {
+    font-size: 12.5px;
+    color: var(--p-text-muted-color);
+  }
+
+  textarea {
+    width: 100%;
+    resize: vertical;
+  }
+}
+
+// -- Clear icon position adjustment
+::ng-deep p-select .p-select-clear-icon {
+  margin-right: 0.5rem !important;
+}
+
+// -- Language select
+::ng-deep .language-select {
+  min-width: 130px !important;
+}
+
+// -- Date picker field
+::ng-deep .date-picker-field {
+  width: 100%;
+
+  .p-datepicker-input {
+    width: 100%;
+  }
+}
+
+// -- Client card
+.client-card {
+  .client-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--p-text-color);
+    margin-bottom: 6px;
+
+    .client-name-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--p-text-color);
+      text-decoration: none;
+
+      i { font-size: 13px; color: var(--p-text-muted-color); }
+
+      &:hover { color: var(--p-primary-color); i { color: var(--p-primary-color); } }
+    }
+  }
+
+  .client-deal { margin-bottom: 8px; }
+
+  .client-contact {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--p-text-muted-color);
+    margin-bottom: 8px;
+
+    i { font-size: 12px; }
+  }
+
+  .deal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--p-primary-color);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover { text-decoration: underline; }
+
+    i { font-size: 12px; }
+  }
+}
+
+// -- Cost & Margin card
+.cost-margin-card {
+  border-color: #d1fae5;
+  background: #f0fdf4;
+}
+
+.cost-margin-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cm-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--p-text-muted-color);
+
+  .cm-val {
+    font-weight: 600;
+    color: var(--p-text-color);
+  }
+
+  &.cm-pct {
+    padding-top: 6px;
+    border-top: 1px solid #bbf7d0;
+    font-weight: 600;
+    color: var(--p-text-color);
+  }
+}
+
+.cm-neg { color: #dc2626 !important; }
+
+// -- Static field display
+.field-static {
+  font-size: 13px;
+  color: var(--p-text-color);
+  font-weight: 500;
+}
+
+// -- Dialog hint
+.dialog-hint {
+  font-size: 13px;
+  color: var(--p-text-muted-color);
+  margin-top: 4px;
+}
+
+// -- Settings hint
+.settings-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--p-text-muted-color);
+  margin-bottom: 12px;
+
+  i { font-size: 12px; }
+
+  a {
+    color: var(--p-primary-color);
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// -- Converted order badge
+.converted-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+  background: #dcfce7;
+  border-radius: 6px;
+  padding: 4px 10px;
+  white-space: nowrap;
+
+  i { font-size: 12px; }
+}

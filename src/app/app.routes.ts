@@ -166,6 +166,21 @@ export const routes: Routes = [
     canActivate: [ManagerGuard]
   },
   {
+    path: 'pipeline',
+    loadComponent: () => import('./pages/pipeline/pipeline.component').then(m => m.PipelineComponent),
+    canActivate: [ManagerGuard]
+  },
+  {
+    path: 'quotes',
+    loadComponent: () => import('./pages/quotes/quotes.component').then(m => m.QuotesComponent),
+    canActivate: [ManagerGuard]
+  },
+  {
+    path: 'quotes/:id',
+    loadComponent: () => import('./pages/quotes/quote-editor/quote-editor.component').then(m => m.QuoteEditorComponent),
+    canActivate: [ManagerGuard]
+  },
+  {
     path: 'expo-sales',
     loadComponent: () => import('./pages/expo-sales/expo-sales.component').then(m => m.ExpoSalesComponent),
     canActivate: [AdminGuard]

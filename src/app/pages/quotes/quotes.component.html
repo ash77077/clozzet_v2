@@ -1,0 +1,105 @@
+<div class="quotes-page">
+  <div class="page-header">
+    <h1>{{ 'quotes.title' | translate }}</h1>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <input
+      pInputText
+      class="search-input"
+      [placeholder]="'quotes.filters.search' | translate"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+    />
+
+    <p-select
+      [options]="statusOptions"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="statusFilter.set($event)"
+      [style]="{ minWidth: '160px' }"
+    />
+
+    <button
+      pButton
+      type="button"
+      [label]="'quotes.filters.myQuotes' | translate"
+      [outlined]="!myOnly()"
+      severity="secondary"
+      size="small"
+      (click)="myOnly.set(!myOnly())"
+    ></button>
+  </div>
+
+  <!-- Loading skeletons -->
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3,4,5]; track i) {
+        <p-skeleton height="52px" styleClass="skeleton-row" />
+      }
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading() && filtered().length === 0) {
+    <div class="empty-state">
+      <i class="pi pi-file-edit empty-icon"></i>
+      <p class="empty-title">{{ 'quotes.noQuotes' | translate }}</p>
+      <p class="empty-hint">{{ 'quotes.noQuotesHint' | translate }}</p>
+    </div>
+  }
+
+  <!-- Table -->
+  @if (!loading() && filtered().length > 0) {
+    <div class="quotes-table-wrap">
+      <table class="quotes-table">
+        <thead>
+          <tr>
+            <th>{{ 'quotes.number'     | translate }}</th>
+            <th>{{ 'quotes.client'     | translate }}</th>
+            <th>{{ 'quotes.date'       | translate }}</th>
+            <th>{{ 'quotes.validUntil' | translate }}</th>
+            <th class="right">{{ 'quotes.total' | translate }}</th>
+            <th>{{ 'quotes.owner'      | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (q of filtered(); track q._id) {
+            <tr class="quote-row" (click)="openQuote(q._id)">
+              <td>
+                <span class="quote-number">{{ q.number }}</span>
+                @if (q.version > 1) {
+                  <span class="version-badge">v{{ q.version }}</span>
+                }
+                <span class="status-cell">
+                  <p-tag
+                    [value]="('quotes.statuses.' + q.status) | translate"
+                    [severity]="statusSeverity(q.status)"
+                  />
+                </span>
+              </td>
+              <td>{{ q.customerName || '—' }}</td>
+              <td>{{ formatDate(q.issueDate) }}</td>
+              <td>{{ formatDate(q.validUntil) }}</td>
+              <td class="right amount">{{ formatAmt(q.total) }}</td>
+              <td>{{ q.ownerName }}</td>
+              <td class="actions-cell">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-arrow-right"
+                  [text]="true"
+                  size="small"
+                  (click)="$event.stopPropagation(); openQuote(q._id)"
+                ></button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

@@ -1,0 +1,145 @@
+.quotes-page {
+  padding: 24px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--p-text-color);
+    margin: 0;
+  }
+}
+
+.filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 320px;
+  }
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  :deep(.skeleton-row) {
+    border-radius: 8px;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  color: var(--p-text-muted-color);
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0 0 6px;
+  }
+
+  .empty-hint {
+    font-size: 13px;
+    margin: 0;
+    opacity: 0.7;
+  }
+}
+
+.quotes-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--p-content-border-color);
+}
+
+.quotes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+
+  thead tr {
+    background: var(--p-content-background);
+    border-bottom: 1px solid var(--p-content-border-color);
+
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--p-text-muted-color);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+
+      &.right { text-align: right; }
+    }
+  }
+
+  tbody .quote-row {
+    border-bottom: 1px solid var(--p-content-border-color);
+    cursor: pointer;
+    transition: background 0.12s;
+
+    &:last-child { border-bottom: none; }
+
+    &:hover { background: var(--p-content-hover-background); }
+
+    td {
+      padding: 11px 14px;
+      vertical-align: middle;
+      color: var(--p-text-color);
+
+      &.right  { text-align: right; }
+      &.amount { font-weight: 600; }
+    }
+  }
+}
+
+.quote-number {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.version-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--p-primary-color);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.status-cell {
+  vertical-align: middle;
+}
+
+.actions-cell {
+  width: 48px;
+  text-align: center;
+}

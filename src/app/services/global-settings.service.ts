@@ -8,6 +8,11 @@ export interface GlobalSettings {
   fabricWastePercent: number;
   turnoverTaxPercent: number;
   lowStockThreshold?: number;
+  quoteDefaultPrepaymentPercent?: number;
+  quoteDefaultValidityDays?: number;
+  quoteDefaultLeadTimeDays?: number;
+  quoteDefaultDeliveryTerms?: string;
+  quoteDefaultTermsText?: string;
 }
 
 @Injectable({ providedIn: 'root' })
